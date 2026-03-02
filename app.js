@@ -263,6 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileActionBar: document.getElementById('mobileActionBar'),
         privacyToggleBtn: document.getElementById('privacyToggleBtn'),
         mobilePrivacyToggleBtn: document.getElementById('mobilePrivacyToggleBtn'),
+        savingsMovementTypeContainer: document.getElementById('savingsMovementTypeContainer'),
+        savingsMovementIncomeToggle: document.getElementById('savingsMovementIncomeToggle'),
+        savingsMovementExpenseToggle: document.getElementById('savingsMovementIncomeToggle'), // wait there is a typo in my previous edit or here? let me check index.html
+        // I will re-read index.html to be sure about the IDs.
+        savingsMovementType: document.getElementById('savingsMovementType'),
+        savingsMovementTypeHint: document.getElementById('savingsMovementTypeHint'),
 
         // Nomina Elements
         nominaSection: document.getElementById('nominaSection'),
@@ -355,6 +361,29 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nominaMovementTypeHint.textContent = `Este movimiento se contará como un ${isIncome ? 'ingreso (valor positivo)' : 'gasto (valor negativo)'}.`;
         }
     };
+
+    const updateSavingsMovementType = (type) => {
+        if (!elements.savingsMovementType) return;
+        elements.savingsMovementType.value = type;
+        const isIncome = type === 'income';
+
+        if (elements.savingsMovementIncomeToggle) {
+            elements.savingsMovementIncomeToggle.style.background = isIncome ? 'var(--primary)' : 'rgba(59, 130, 246, 0.05)';
+            elements.savingsMovementIncomeToggle.style.color = isIncome ? 'white' : 'inherit';
+        }
+        if (elements.savingsMovementExpenseToggle) {
+            elements.savingsMovementExpenseToggle.style.background = !isIncome ? 'var(--primary)' : 'rgba(59, 130, 246, 0.05)';
+            elements.savingsMovementExpenseToggle.style.color = !isIncome ? 'white' : 'inherit';
+        }
+        if (elements.savingsMovementTypeHint) {
+            elements.savingsMovementTypeHint.textContent = isIncome
+                ? 'El importe se sumará al saldo.'
+                : 'El importe se restará del saldo (se guardará como negativo).';
+        }
+    };
+
+    // Fix the typo in elements object
+    elements.savingsMovementExpenseToggle = document.getElementById('savingsMovementExpenseToggle');
 
     // Authentication removed as requested
     function showApp() {
@@ -2123,6 +2152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (amountInput) amountInput.placeholder = "Saldo Inicial (€)";
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
+        if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
@@ -2154,6 +2184,12 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
 
+        // Show toggle for manual movements
+        if (elements.savingsMovementTypeContainer) {
+            elements.savingsMovementTypeContainer.classList.remove('hidden');
+            updateSavingsMovementType('income');
+        }
+
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
     }
@@ -2184,6 +2220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         transferTargetGroup?.classList.remove('hidden');
         conceptGroup?.classList.remove('hidden');
         if (amountInput) amountInput.placeholder = "Importe a transferir";
+        if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
 
         // Populate target dropdown (exclude source and Bolsa)
         transferTargetSelect.innerHTML = savingsDrawers
@@ -2234,6 +2271,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
+        if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
@@ -2396,7 +2434,14 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
 
-        if (amountInput) amountInput.value = movement.amount;
+        // Hide toggle when editing (since it's baked into the value) 
+        // OR we can show it and set it correctly based on current amount
+        if (elements.savingsMovementTypeContainer) {
+            elements.savingsMovementTypeContainer.classList.remove('hidden');
+            updateSavingsMovementType(movement.amount >= 0 ? 'income' : 'expense');
+        }
+
+        if (amountInput) amountInput.value = Math.abs(movement.amount);
         if (conceptInput) conceptInput.value = movement.description;
 
         modal.classList.remove('hidden');
@@ -3007,10 +3052,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const drawer = savingsDrawers.find(d => d.id === drawerId);
                 if (drawer) {
                     const concept = elements.movementConceptInput.value.trim() || 'Ajuste manual';
-                    drawer.balance += amount;
+                    const type = elements.savingsMovementType.value;
+                    const finalAmount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
+
+                    drawer.balance += finalAmount;
                     drawer.movements.push({
                         date: new Date().toISOString().split('T')[0],
-                        amount: amount,
+                        amount: finalAmount,
                         description: concept
                     });
                 }
@@ -3077,9 +3125,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const movement = drawer.movements[mIndex];
                     const concept = elements.movementConceptInput.value.trim() || movement.description;
                     const oldAmount = movement.amount;
-                    movement.amount = amount;
+
+                    const type = elements.savingsMovementType.value;
+                    const finalAmount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
+
+                    movement.amount = finalAmount;
                     movement.description = concept;
-                    drawer.balance += (amount - oldAmount);
+                    drawer.balance += (finalAmount - oldAmount);
                 }
             }
 
@@ -3260,6 +3312,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (editIndex !== '') showNominaDrawerDetails(drawerId);
             }
         });
+
+        elements.savingsMovementIncomeToggle?.addEventListener('click', () => updateSavingsMovementType('income'));
+        elements.savingsMovementExpenseToggle?.addEventListener('click', () => updateSavingsMovementType('expense'));
 
         elements.nominaMovementIncomeToggle?.addEventListener('click', () => updateNominaMovementType('income'));
         elements.nominaMovementExpenseToggle?.addEventListener('click', () => updateNominaMovementType('expense'));

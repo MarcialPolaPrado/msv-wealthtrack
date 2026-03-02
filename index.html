@@ -492,10 +492,19 @@
 
                 <div class="form-group" id="movementAmountGroup">
                     <label for="movementAmountInput">Importe (€)</label>
+                    <div id="savingsMovementTypeContainer" class="hidden"
+                        style="display: flex; gap: 10px; margin-bottom: 0.8rem;">
+                        <button type="button" id="savingsMovementIncomeToggle" class="btn-secondary btn-sm"
+                            style="flex:1; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--border-color);">📈
+                            Ingreso</button>
+                        <button type="button" id="savingsMovementExpenseToggle" class="btn-secondary btn-sm"
+                            style="flex:1; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--border-color);">📉
+                            Gasto</button>
+                    </div>
+                    <input type="hidden" id="savingsMovementType" value="income">
                     <input type="number" id="movementAmountInput" step="0.01" placeholder="Ej: 50.00" required>
-                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Usa importes negativos (-)
-                        para
-                        gastos.</small>
+                    <small id="savingsMovementTypeHint" style="opacity:0.6; display:block; margin-top:0.3rem;">Usa
+                        importes negativos (-) para gastos.</small>
                 </div>
 
                 <div class="form-group hidden" id="transferTargetGroup">
