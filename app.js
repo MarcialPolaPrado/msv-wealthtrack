@@ -1354,11 +1354,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const qty = parseFloat(s.qty) || 0;
                 const valueEUR = qty * (parseFloat(currentPriceEUR) || 0);
+                const investedEUR = qty * (parseFloat(s.price) || 0);
 
                 if (!acc[s.ticker]) {
-                    acc[s.ticker] = { ticker: s.ticker, name: s.name || s.ticker, value: 0 };
+                    acc[s.ticker] = { ticker: s.ticker, name: s.name || s.ticker, value: 0, invested: 0 };
                 }
                 acc[s.ticker].value += valueEUR;
+                acc[s.ticker].invested += investedEUR;
                 return acc;
             }, {});
 
@@ -1388,7 +1390,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sweep = pct * 360;
                 const sa = startAngle;
                 startAngle += sweep;
-                return { ticker: s.ticker, name: s.name, value: s.value, pct, sweep, sa, color: COLORS[i % COLORS.length] };
+                return {
+                    ticker: s.ticker,
+                    name: s.name,
+                    value: s.value,
+                    invested: s.invested,
+                    pct,
+                    sweep,
+                    sa,
+                    color: COLORS[i % COLORS.length]
+                };
             });
 
             function arcPath(cx, cy, r, startDeg, endDeg) {
@@ -1405,17 +1416,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 const path = arcPath(cx, cy, r, s.sa, s.sa + s.sweep);
                 const amtStr = fmtEUR(s.value);
                 const pctStr = (s.pct * 100).toFixed(1) + '%';
+                const pl = s.value - s.invested;
+                const plPct = s.invested > 0 ? (pl / s.invested) * 100 : 0;
+                const plStr = `${pl >= 0 ? '+' : ''}${fmtEUR(pl)} (${plPct.toFixed(1)}%)`;
+
                 return `<path d="${path}" fill="${s.color}" opacity="0.85"
                             stroke="#0f172a" stroke-width="2.5"
                             style="cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
                             onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
                             onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
                             onclick="showFinancialDetails('${s.ticker}')">
-                            <title>${s.name} (${s.ticker})\n${amtStr} (${pctStr})</title>
+                            <title>${s.name} (${s.ticker})\nValor: ${amtStr} (${pctStr})\nG/P: ${plStr}</title>
                         </path>`;
             }).join('');
 
-            const legendHtml = slices.map(s => `
+            const legendHtml = slices.map(s => {
+                const pl = s.value - s.invested;
+                const plPct = s.invested > 0 ? (pl / s.invested) * 100 : 0;
+                const plColor = pl >= 0 ? '#10b981' : '#ef4444';
+
+                return `
                 <div style="display:flex; align-items:center; gap:12px; font-size:0.9rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); cursor:pointer; transition: background 0.2s;" onclick="showFinancialDetails('${s.ticker}')"
                      onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.03)'">
                     <div style="width:14px; height:14px; border-radius:4px; background:${s.color}; flex-shrink:0; box-shadow: 0 0 8px ${s.color}66;"></div>
@@ -1424,11 +1444,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span style="font-size:0.75rem; opacity:0.5;">${s.ticker}</span>
                     </div>
                     <div style="text-align: right; flex-shrink: 0;">
-                        <div style="font-weight:700; color:${s.color};">${fmtEUR(s.value)}</div>
-                        <div style="font-size:0.75rem; opacity:0.6;">${(s.pct * 100).toFixed(1)}%</div>
+                        <div style="font-weight:700; color:white;">${fmtEUR(s.value)}</div>
+                        <div style="font-size:0.75rem; color:${plColor}; font-weight: 600;">
+                            ${pl >= 0 ? '+' : ''}${fmtEUR(pl)} (${plPct.toFixed(1)}%)
+                        </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             container.style.display = 'flex';
             container.style.flexDirection = 'column';
