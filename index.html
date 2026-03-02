@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest_v4.json">
+    <link rel="apple-touch-icon" href="stock_app_icon_v1.svg">
+    <title>Premium Stock Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+
+<body>
+    <div id="loginOverlay" class="login-overlay hidden">
+        <div class="login-card glass-panel">
+            <div class="logo" style="margin-bottom: 2rem; justify-content: center;">
+                <span class="logo-icon">✨</span>
+                <h1>Wealth<span class="highlight">Track</span></h1>
+            </div>
+            <h2>Acceso Privado</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Ingresa tus credenciales para continuar</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <input type="text" id="usernameInput" placeholder="Nombre de usuario" required
+                        autocomplete="username">
+                </div>
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label>Contraseña</label>
+                    <input type="password" id="passwordInput" placeholder="••••" required
+                        autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-primary full-width">Iniciar Sesión</button>
+                <p id="loginError" class="error-text hidden"
+                    style="margin-top: 1rem; color: var(--danger); font-size: 0.9rem; text-align: center;">Credenciales
+                    incorrectas</p>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container" id="mainApp">
+        <header class="glass-header">
+            <div class="logo">
+                <span class="logo-icon">✨</span>
+                <h1>Wealth<span class="highlight">Track</span></h1>
+            </div>
+            <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
+            <div id="pwaStatusText"
+                style="font-size: 0.7em; opacity: 0.5; display: flex; align-items: center; margin-right: 5px;">
+            </div>
+            <button id="pwaResetBtn" class="btn-secondary" title="PWA Hard Reset"
+                style="padding: 0.5rem; font-size: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--danger); cursor: pointer; margin-right: 5px; opacity: 1; transition: opacity 0.2s;">
+                🔄 Reset
+            </button>
+            <div id="pwaManualGuide" class="hidden"
+                style="position: absolute; top: 100%; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); padding: 1rem; border-radius: 12px; font-size: 0.8rem; z-index: 1000; width: 200px; margin-top: 10px; backdrop-filter: blur(20px);">
+                <p style="margin-bottom: 0.5rem; color: var(--success);"><strong>Instalación Manual:</strong></p>
+                <p style="margin-bottom: 0.5rem; opacity: 0.8;">Si el botón no aparece, busca este icono en la
+                    <strong>barra de direcciones</strong> de arriba:
+                </p>
+                <div style="text-align: center; font-size: 1.5rem; margin: 0.5rem 0;">📥 o (⊕)</div>
+                <p style="opacity: 0.8;">O en el menú (⋮) -> <strong>Guardar y Compartir</strong> ->
+                    <strong>Instalar App</strong>.
+                </p>
+            </div>
+            <button id="pwaInstallBtn" class="btn-secondary hidden"
+                style="padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-color); cursor: pointer;">
+                📥 Instalar App
+            </button>
+            <button id="privacyToggleBtn" class="btn-privacy" title="Ocultar/Mostrar Datos Privados">
+                👁️
+            </button>
+            <button id="addStockBtn" class="btn-primary">+ Add Investment</button>
+        </header>
+
+        <nav class="main-nav">
+            <button class="nav-item active" data-view="bolsa">📈 Bolsa</button>
+            <button class="nav-item" data-view="ahorro">💰 Ahorro</button>
+            <button class="nav-item" data-view="nomina">📄 Nomina</button>
+            <button class="nav-item" data-view="analisis">📊 Análisis</button>
+            <div class="nav-spacer"></div>
+            <button id="globalExportBtn" class="nav-icon-btn" title="Guardar todo en JSON">💾</button>
+            <button id="globalImportBtn" class="nav-icon-btn" title="Leer todo desde JSON">📂</button>
+            <input type="file" id="globalJsonInput" class="hidden" accept=".json">
+        </nav>
+
+        <main id="appMain">
+            <!-- Bolsa Section -->
+            <div id="bolsaSection" class="view-section">
+                <!-- Dashboard Section -->
+                <section class="dashboard-grid">
+                    <div class="card summary-card glass-panel">
+                        <div
+                            style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
+                            <span id="connStatusDot" class="status-dot simulated" title="Estado de conexión"></span>
+                            <h3 style="margin: 0;">Total Value <span id="marketStatusIcon"
+                                    style="margin-left:5px; font-size:0.9em;" title="Estado del Mercado">🔒</span></h3>
+                            <button id="manualRefreshBtn" class="btn-icon" title="Actualizar Datos"
+                                style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1; margin-left: 8px; transition: transform 0.3s ease;">🔄</button>
+                        </div>
+                        <p class="amount" id="totalValue">€0.00</p>
+                        <span class="trend neutral" id="totalTrend">0%</span>
+                    </div>
+                    <div class="card summary-card glass-panel">
+                        <h3>Total Invested</h3>
+                        <p class="amount" id="totalInvested">€0.00</p>
+                    </div>
+                    <div class="card summary-card glass-panel">
+                        <h3>Total Profit/Loss</h3>
+                        <p class="amount" id="totalPL">€0.00</p>
+                        <div id="fxIndicator" style="font-size:0.75em; color:var(--text-muted); margin-top:0.5rem">FX
+                            Rate:
+                            1 USD = 0.92 EUR</div>
+                        <div id="liveStatus" style="font-size: 0.7em; opacity: 0.6; margin-top: 2px;">Modo: Simulado
+                            (añade
+                            API Key para tiempo real)</div>
+                    </div>
+                    <div class="card summary-card glass-panel" id="portfolioCandleCard">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; width: 100%;">
+                            <h3 style="margin:0">Portfolio 24h</h3>
+                            <span id="candleDate" style="font-size: 0.8rem; color: var(--text-muted);">--/--/----</span>
+                        </div>
+                        <div id="candleContainer" class="candle-container">
+                            <div class="candle-graphics" id="portfolioCandleGraphic"></div>
+                            <div class="candle-values" id="portfolioCandleValues">
+                                <div class="val-row"><span class="label">O:</span> <span id="valOpen">-</span></div>
+                                <div class="val-row"><span class="label">C:</span> <span id="valClose">-</span></div>
+                                <div class="val-row"><span class="label">H:</span> <span id="valHigh">-</span></div>
+                                <div class="val-row"><span class="label">L:</span> <span id="valLow">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- Stock List Actions (Visible on Mobile) -->
+                <div class="savings-container">
+                    <div
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin:0">Sus Inversiones</h2>
+                        <div style="display:flex; gap: 0.8rem;">
+                            <button id="importDataBtn" class="btn-secondary" title="Importar CSV"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">📥</button>
+                            <button id="exportDataBtn" class="btn-secondary" title="Exportar CSV"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock List Section (Hidden on Mobile) -->
+                <section class="stock-list-section glass-panel">
+                    <div class="section-header">
+                        <h2>Detalles de Cartera</h2>
+                        <div class="filter-tabs">
+                            <button class="tab active" data-filter="all">All</button>
+                            <button class="tab" data-filter="SP500">S&P 500</button>
+                            <button class="tab" data-filter="IBEX35">IBEX 35</button>
+                            <button class="tab" data-filter="NASDAQ">NASDAQ</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="stockTable">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name">Asset <span class="sort-icon"></span></th>
+                                    <th data-sort="market">Market <span class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.price">Current Price <span class="sort-icon"></span></th>
+                                    <th data-sort="qty">Quantity <span class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.stockInvested">Invested <span class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.stockCurrentVal">Current Value (EUR) <span
+                                            class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.stockPL">P/L (€) <span class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.stockPLPercent">P/L (%) <span class="sort-icon"></span></th>
+                                    <th>Signals</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockTableBody">
+                                <!-- Rows will be injected by JS -->
+                            </tbody>
+                        </table>
+                        <div id="emptyState" class="empty-state hidden">
+                            <p>No investments found. Start by adding a stock.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="portfolioChartSection" class="glass-panel" style="margin-bottom: 2rem; padding: 1.5rem;">
+                    <h2
+                        style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+                        <span>📊</span> Distribución de Cartera
+                    </h2>
+                    <div id="portfolioPieChart" style="min-height: 200px;"></div>
+                </section>
+            </div><!-- End Bolsa Section -->
+
+            <!-- Ahorro Section -->
+            <div id="ahorroSection" class="view-section hidden">
+                <div class="savings-container" style="margin-top: 1rem;">
+                    <div
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 id="misCajonesTitle" style="margin:0">Mis Cajones</h2>
+                        <div style="display:flex; gap: 0.8rem;">
+                            <button id="importSavingsBtn" class="btn-secondary" title="Importar CSV"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">📥</button>
+                            <button id="exportSavingsBtn" class="btn-secondary" title="Exportar CSV"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
+                            <button id="addDrawerBtn" class="btn-primary" style="padding: 0.5rem 1rem;">+ Añadir
+                                Cajón</button>
+                        </div>
+                        <input type="file" id="savingsCsvInput" accept=".csv" class="hidden">
+                    </div>
+
+                    <div id="drawersGrid" class="drawers-grid">
+                        <!-- Drawers will be rendered here -->
+                    </div>
+
+                    <!-- Pie Chart Section -->
+                    <div style="margin-top: 2rem;">
+                        <div
+                            style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="margin:0">Distribución de Ahorros</h2>
+                        </div>
+                        <div id="savingsPieChartContainer" class="glass-panel"
+                            style="padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <div id="savingsPieChart"
+                                style="width: 100%; max-width: 520px; margin: 0 auto; display: block;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nomina Section -->
+            <div id="nominaSection" class="view-section hidden">
+
+                <!-- Unified Title and Action Buttons -->
+                <div
+                    style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                    <h2 style="margin:0">Conceptos Mensuales</h2>
+                    <div style="display:flex; align-items: center; gap: 0.8rem;">
+                        <button id="importNominaBtn" class="btn-secondary" title="Importar CSV"
+                            style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">📥</button>
+                        <button id="exportNominaBtn" class="btn-secondary" title="Exportar CSV"
+                            style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
+                        <button id="addNominaBtn" class="btn-primary" style="padding: 0.5rem 1rem;">+ Añadir
+                            Cajón</button>
+                        <input type="file" id="nominaCsvInput" accept=".csv" class="hidden">
+                    </div>
+                </div>
+
+                <!-- Hidden anchors kept for JS compatibility -->
+                <span id="totalNominaIncome" class="hidden"></span>
+                <span id="totalNominaExpense" class="hidden"></span>
+                <span id="totalNominaUndestined" class="hidden"></span>
+                <span id="totalNominaSaving" class="hidden"></span>
+                <span id="totalNominaNetSaving" class="hidden"></span>
+                <span id="paydayDate" class="hidden"></span>
+                <span id="paydayCountdown" class="hidden"></span>
+                <span id="currentFiscalMonthDisplay" class="hidden"></span>
+                <span id="fiscalMonthTitle" class="hidden"></span>
+
+                <!-- Drawer Grid + Summary (expense summary rendered last by JS) -->
+                <div class="savings-container">
+                    <div id="nominaGrid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <!-- Nomina cards will be rendered here -->
+                    </div>
+                    <!-- Summary table rendered by JS at the bottom -->
+                    <div id="nominaSummaryTable" style="margin-top: 2rem;"></div>
+                </div>
+            </div>
+
+            <!-- Analisis Section -->
+            <div id="analisisSection" class="view-section hidden">
+
+
+                <div class="savings-container">
+                    <div
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin:0">Distribución por Meses</h2>
+                    </div>
+                    <div class="table-container glass-panel" style="margin-bottom: 2rem; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary);">
+                                    <th style="padding: 1rem; text-align: left;">Mes</th>
+                                    <th style="padding: 1rem; text-align: right;">Ingresos</th>
+                                    <th style="padding: 1rem; text-align: right;">Gastos</th>
+                                    <th style="padding: 1rem; text-align: right;">Ahorro Neto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analisisTableBody">
+                                <!-- Rows will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="analisisDeficitContainer" style="margin-bottom: 2rem;"></div>
+
+                    <div
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin:0">Gráfica Mensual</h2>
+                    </div>
+                    <div id="analisisChartContainer" class="glass-panel"
+                        style="height: 350px; padding: 1.5rem; display: flex; flex-direction: column;">
+                        <!-- Chart or SVG will be rendered here -->
+                        <div id="analisisChart" style="flex-grow: 1; min-height: 250px;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- Mobile Action Bar (only visible on mobile, since header is hidden) -->
+        <div id="mobileActionBar" class="mobile-action-bar">
+            <button id="mobilePrivacyToggleBtn" title="Ocultar/Mostrar Datos Privados">👁️</button>
+            <button id="mobileAddStockBtn" title="Añadir Inversión">➕</button>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Stock -->
+    <div id="addStockModal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalTitle">Add New Investment</h2>
+            <form id="addStockForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Stock Ticker / Name</label>
+                    <input type="text" id="tickerInput" placeholder="e.g., AAPL, SAN.MC" autocomplete="off" required>
+                    <div id="searchResults" class="search-results hidden"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Market</label>
+                        <select id="marketSelect">
+                            <option value="SP500">S&P 500</option>
+                            <option value="IBEX35">IBEX 35</option>
+                            <option value="NASDAQ">NASDAQ</option>
+                            <option value="XETRA">XETRA (DE)</option>
+                            <option value="Other">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="dateInput" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="qtyInput" step="0.000001" placeholder="0.000000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Invested (€)</label>
+                        <input type="number" id="priceInput" step="0.01" placeholder="0.00 €" required>
+                    </div>
+                </div>
+                <button type="submit" id="submitStockBtn" class="btn-primary full-width">Add Investment</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Modal for Financial Details -->
+    <div id="financialDetailsModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <span class="close-modal" id="closeFinModal">&times;</span>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                <div id="financialModalIcon" style="font-size: 2.5rem;">🏢</div>
+                <div>
+                    <h2 id="financialModalTitle" style="margin-bottom: 0.2rem;">Company Name</h2>
+                    <p id="financialModalTicker" style="color: var(--text-muted); font-size: 1rem;">TICKER</p>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <div class="timeframe-tabs">
+                    <button class="time-tab active" data-tf="D">D</button>
+                    <button class="time-tab" data-tf="W">W</button>
+                    <button class="time-tab" data-tf="M">M</button>
+                    <button class="time-tab" data-tf="Y">A</button>
+                </div>
+                <div id="chartContainer" class="chart-container"></div>
+            </div>
+
+            <div class="financials-grid">
+                <div class="fin-item">
+                    <label title="Último dividendo bruto repartido por acción.">Last Dividend</label>
+                    <div id="finLastDiv" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label title="Próximo dividendo anunciado o estimado a repartir.">Next Dividend</label>
+                    <div id="finNextDiv" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label title="Fecha límite para tener acciones y cobrar el próximo dividendo.">Ex-Dividend
+                        Date</label>
+                    <div id="finExDiv" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label title="Fecha en la que se hará efectivo el abono del dividendo en la cuenta.">Payment
+                        Date</label>
+                    <div id="finPayDiv" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label title="Rentabilidad por dividendo anualizada respecto al precio actual.">Dividend
+                        Yield</label>
+                    <div id="finYield" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label
+                        title="Relación entre el precio de la acción y el beneficio por acción (Price/Earnings). Indica cuántas veces se paga el beneficio anual.">P/E
+                        Ratio</label>
+                    <div id="finPE" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label
+                        title="Relación entre el precio y el valor contable (Price/Book). Compara el valor de mercado con el valor en libros.">P/B
+                        Ratio</label>
+                    <div id="finPB" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label
+                        title="Relación entre el precio y las ventas (Price/Sales). Útil para valorar empresas con beneficios negativos.">P/S
+                        Ratio</label>
+                    <div id="finPS" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label
+                        title="Beneficio neto por acción (Earnings Per Share). Indica la ganancia que corresponde a cada título.">EPS</label>
+                    <div id="finEPS" class="fin-value">-</div>
+                </div>
+            </div>
+
+            <div class="tech-section">
+                <h3
+                    style="margin: 1.5rem 0 1rem; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    Análisis Técnico (Simulado)</h3>
+                <div id="techAnalysisContainer" class="tech-analysis-container">
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <label>Tendencia</label>
+                            <div id="techTrend" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Soporte Fuerte</label>
+                            <div id="techSupport" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Resistencia</label>
+                            <div id="techResistance" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Rango de Compra</label>
+                            <div id="techBuyRange" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Stop Técnico</label>
+                            <div id="techStop" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Volatilidad Promedio</label>
+                            <div id="techVolatility" class="tech-value">-</div>
+                        </div>
+                    </div>
+                    <div class="tech-extra">
+                        <div id="techMA" class="tech-ma-status"></div>
+                        <div id="techPatterns" class="tech-patterns"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Input Modal (New Drawer or New Movement) -->
+    <div id="savingsInputModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="savingsModalTitle">Nuevo Movimiento</h2>
+                <span id="closeSavingsModal" class="close-modal">&times;</span>
+            </div>
+            <form id="savingsInputForm">
+                <input type="hidden" id="savingsTargetId">
+                <input type="hidden" id="savingsActionType"> <!-- 'drawer' or 'movement' -->
+                <input type="hidden" id="savingsMovementIndex">
+
+                <div class="form-group" id="drawerNameGroup">
+                    <label for="drawerNameInput">Nombre del Cajón</label>
+                    <input type="text" id="drawerNameInput" placeholder="Ej: Tesoro Público, Cuenta Meta">
+                </div>
+
+                <div class="form-group" id="movementAmountGroup">
+                    <label for="movementAmountInput">Importe (€)</label>
+                    <input type="number" id="movementAmountInput" step="0.01" placeholder="Ej: 50.00" required>
+                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Usa importes negativos (-)
+                        para
+                        gastos.</small>
+                </div>
+
+                <div class="form-group hidden" id="transferTargetGroup">
+                    <label for="transferTargetSelect">Cajón de Destino</label>
+                    <select id="transferTargetSelect">
+                        <!-- Options filled by JS -->
+                    </select>
+                </div>
+
+                <div class="form-group" id="movementConceptGroup">
+                    <label for="movementConceptInput">Concepto (Opcional)</label>
+                    <input type="text" id="movementConceptInput" placeholder="Ej: Ingreso nómina, Compra letra">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary" id="saveSavingsBtn" style="width:100%">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+    <!-- Nomina Input Modal (For creating/editing drawers) -->
+    <div id="nominaModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="nominaModalTitle">Añadir Nuevo Cajón</h2>
+                <span id="closeNominaModal" class="close-modal">&times;</span>
+            </div>
+            <form id="nominaForm">
+                <input type="hidden" id="nominaEditId">
+                <div class="form-group">
+                    <label for="nominaNameInput">Nombre del Concepto/Cajón</label>
+                    <input type="text" id="nominaNameInput" placeholder="Ej: Salario, Alquiler, Luz" required>
+                </div>
+                <div class="form-group">
+                    <label for="nominaAmountInput">Saldo Inicial (€)</label>
+                    <input type="number" id="nominaAmountInput" step="0.01" placeholder="Ej: 1500.00" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="nominaTypeSelect">Tipo de Cajón</label>
+                    <select id="nominaTypeSelect"
+                        style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-color);">
+                        <option value="income">📈 Ingreso (Añadir a ingresos)</option>
+                        <option value="saving">🏦 Ahorro (Añadir a ahorro)</option>
+                        <option value="expense">📉 Gasto (Añadir a gastos)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Meses que afecta la provisión</label>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.75rem; opacity: 0.6;">Días en los que se cuenta este saldo
+                            inicial</span>
+                        <button type="button" id="selectAllDrawerMonths" class="btn-sm"
+                            style="background:transparent; color:var(--primary); border:1px solid var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer;">Todos</button>
+                    </div>
+                    <div id="nominaDrawerMonthsCheckboxes"
+                        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="1" checked> Ene</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="2" checked> Feb</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="3" checked> Mar</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="4" checked> Abr</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="5" checked> May</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="6" checked> Jun</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="7" checked> Jul</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="8" checked> Ago</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="9" checked> Sep</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="10" checked> Oct</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="11" checked> Nov</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="12" checked> Dic</label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary" style="width:100%">Guardar Cajón</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Nomina Movement Modal -->
+    <div id="nominaMovementModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="nominaMovementModalTitle">Añadir Movimiento</h2>
+                <span id="closeNominaMovementModal" class="close-modal">&times;</span>
+            </div>
+            <form id="nominaMovementForm">
+                <input type="hidden" id="nominaMovementTargetId">
+                <input type="hidden" id="nominaMovementEditIndex">
+                <div class="form-group">
+                    <label for="nominaMovementAmountInput">Importe (€)</label>
+                    <div id="nominaMovementTypeContainer" style="display: flex; gap: 10px; margin-bottom: 0.8rem;">
+                        <button type="button" id="nominaMovementIncomeToggle" class="btn-secondary btn-sm"
+                            style="flex:1; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--border-color);">📈
+                            Ingreso</button>
+                        <button type="button" id="nominaMovementExpenseToggle" class="btn-secondary btn-sm"
+                            style="flex:1; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--border-color);">📉
+                            Gasto</button>
+                    </div>
+                    <input type="hidden" id="nominaMovementType" value="income">
+                    <input type="number" id="nominaMovementAmountInput" step="0.01" placeholder="Ej: 50.00" required>
+                    <small id="nominaMovementTypeHint" style="opacity:0.6; display:block; margin-top:0.3rem;">Este
+                        movimiento se contará como un ingreso (valor positivo).</small>
+                </div>
+                <div class="form-group">
+                    <label for="nominaMovementConceptInput">Concepto (Opcional)</label>
+                    <input type="text" id="nominaMovementConceptInput" placeholder="Ej: Pago extra, Devolución">
+                </div>
+                <div class="form-group">
+                    <label>Meses que afecta</label>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.75rem; opacity: 0.6;">Marca los meses donde contará el valor</span>
+                        <button type="button" id="selectAllMonths" class="btn-sm"
+                            style="background:transparent; color:var(--primary); border:1px solid var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer;">Todos</button>
+                    </div>
+                    <div id="nominaMonthsCheckboxes"
+                        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="1" checked> Ene</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="2" checked> Feb</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="3" checked> Mar</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="4" checked> Abr</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="5" checked> May</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="6" checked> Jun</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="7" checked> Jul</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="8" checked> Ago</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="9" checked> Sep</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="10" checked> Oct</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="11" checked> Nov</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;"><input
+                                type="checkbox" value="12" checked> Dic</label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary" style="width:100%">Guardar Movimiento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Month Detail Modal -->
+    <div id="monthDetailModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 800px; width: 95%;">
+            <div class="modal-header">
+                <h2 id="monthDetailTitle">Detalles del Mes</h2>
+                <span id="closeMonthDetailModal" class="close-modal">&times;</span>
+            </div>
+            <div id="monthDetailContent"
+                style="margin-top: 1rem; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
+                <!-- Summary and movements will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Nomina History Modal -->
+    <div id="nominaHistoryModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="nominaHistoryTitle">Historial de Nomina</h2>
+                <span id="closeNominaHistoryModal" class="close-modal">&times;</span>
+            </div>
+            <div id="nominaMovementsList" class="movements-list"
+                style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+                <!-- Movements will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="mock_data.js"></script>
+    <script src="storage.js"></script>
+    <script src="app.js"></script>
+    <!-- Consolidated PWA Logic (Reliable) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => {
+                        reg.onupdatefound = () => {
+                            const worker = reg.installing;
+                            worker.onstatechange = () => {
+                                if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    window.location.reload();
+                                }
+                            };
+                        };
+                    })
+                    .catch(e => console.error('PWA SW: Error', e));
+            });
+        }
+
+        // PWA Install & Reset Logic
+        let deferredPrompt;
+        const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+        const pwaResetBtn = document.getElementById('pwaResetBtn');
+        const pwaStatusText = document.getElementById('pwaStatusText');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
+            if (pwaStatusText) pwaStatusText.textContent = '🏠 App instalable';
+        });
+
+        if (pwaInstallBtn) {
+            pwaInstallBtn.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    pwaInstallBtn.classList.add('hidden');
+                }
+                deferredPrompt = null;
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            if (pwaInstallBtn) pwaInstallBtn.classList.add('hidden');
+            if (pwaStatusText) pwaStatusText.textContent = '✅ App instalada';
+        });
+
+        // Hard Reset: Unregister SW and clear Cache
+        if (pwaResetBtn) {
+            pwaResetBtn.addEventListener('click', async () => {
+                if (!confirm('¿Realizar hard-reset de la App?\nSe borrará la caché del código y se reiniciará para descargar la última versión.\n\n(Tus datos guardados NO se perderán)')) return;
+
+                try {
+                    // 1. Unregister all service workers
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+
+                    // 2. Clear all caches
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        for (let key of keys) {
+                            await caches.delete(key);
+                        }
+                    }
+
+                    alert('✅ Reset completado. La página se recargará ahora.');
+                    window.location.reload(true);
+                } catch (err) {
+                    console.error('Reset error:', err);
+                    alert('Error durante el reset. Por favor, recarga manualmente.');
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

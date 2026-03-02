@@ -1,0 +1,101 @@
+[
+  {
+    "id": "1771434258577",
+    "name": "AGNC Investment Corp.",
+    "ticker": "AGNC",
+    "market": "SP500",
+    "date": "2026-02-18",
+    "qty": 77.259948,
+    "price": 9.733374399889579
+  },
+  {
+    "id": "1771436241712",
+    "name": "Realty Income Corp.",
+    "ticker": "O",
+    "market": "SP500",
+    "date": "2026-02-18",
+    "qty": 115.130312,
+    "price": 49.657035585901994
+  },
+  {
+    "id": "1771436597551",
+    "name": "Pfizer Inc.",
+    "ticker": "PFE",
+    "market": "SP500",
+    "date": "2026-02-18",
+    "qty": 69.430046,
+    "price": 21.647688379754204
+  },
+  {
+    "id": "1771437071819",
+    "name": "Main Street Capital",
+    "ticker": "MAIN",
+    "market": "SP500",
+    "date": "2026-02-18",
+    "qty": 24.887417,
+    "price": 54.41022666193121
+  },
+  {
+    "id": "1771437461893",
+    "name": "Naturgy Energy Group",
+    "ticker": "NTGY.MC",
+    "market": "IBEX35",
+    "date": "2026-02-18",
+    "qty": 40.225261,
+    "price": 24.934580287745053
+  },
+  {
+    "id": "1771442239672",
+    "name": "Redeia (REE)",
+    "ticker": "RED.MC",
+    "market": "IBEX35",
+    "date": "2026-02-18",
+    "qty": 27.593818,
+    "price": 18.19248064910771
+  },
+  {
+    "id": "1771444380808",
+    "name": "Ares Capital Corp.",
+    "ticker": "ARCC",
+    "market": "SP500",
+    "date": "2026-02-18",
+    "qty": 40.029933,
+    "price": 18.78594200994541
+  },
+  {
+    "id": "1771444437944",
+    "name": "Verizon Communications",
+    "ticker": "VZ",
+    "market": "SP500",
+    "date": "2026-02-18",
+    "qty": 98.643092,
+    "price": 35.80058094691517
+  },
+  {
+    "id": "1771444556419",
+    "name": "Banco Sabadell",
+    "ticker": "SAB.MC",
+    "market": "IBEX35",
+    "date": "2026-02-18",
+    "qty": 73.206442,
+    "price": 3.4354900078329176
+  },
+  {
+    "id": "1771444596260",
+    "name": "Tubacex",
+    "ticker": "TUB.MC",
+    "market": "IBEX35",
+    "date": "2026-02-18",
+    "qty": 59.101654,
+    "price": 4.246920060815895
+  },
+  {
+    "id": "1771444721915",
+    "name": "Dynex Capital, Inc.",
+    "ticker": "DX",
+    "market": "SP500",
+    "date": "2026-02-18",
+    "qty": 20.185708,
+    "price": 12.434540319318995
+  }
+]
