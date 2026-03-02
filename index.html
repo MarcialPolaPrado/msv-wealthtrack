@@ -311,6 +311,7 @@
         </main>
         <!-- Mobile Action Bar (only visible on mobile, since header is hidden) -->
         <div id="mobileActionBar" class="mobile-action-bar">
+            <button id="mobileResetBtn" title="🔄 Reset App" style="color: var(--danger);">🔄</button>
             <button id="mobilePrivacyToggleBtn" title="Ocultar/Mostrar Datos Privados">👁️</button>
             <button id="mobileAddStockBtn" title="Añadir Inversión">➕</button>
         </div>
@@ -765,33 +766,35 @@
         });
 
         // Hard Reset: Unregister SW and clear Cache
-        if (pwaResetBtn) {
-            pwaResetBtn.addEventListener('click', async () => {
-                if (!confirm('¿Realizar hard-reset de la App?\nSe borrará la caché del código y se reiniciará para descargar la última versión.\n\n(Tus datos guardados NO se perderán)')) return;
+        const handleReset = async () => {
+            if (!confirm('¿Realizar hard-reset de la App?\nSe borrará la caché del código y se reiniciará para descargar la última versión.\n\n(Tus datos guardados NO se perderán)')) return;
 
-                try {
-                    // 1. Unregister all service workers
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let registration of registrations) {
-                        await registration.unregister();
-                    }
-
-                    // 2. Clear all caches
-                    if ('caches' in window) {
-                        const keys = await caches.keys();
-                        for (let key of keys) {
-                            await caches.delete(key);
-                        }
-                    }
-
-                    alert('✅ Reset completado. La página se recargará ahora.');
-                    window.location.reload(true);
-                } catch (err) {
-                    console.error('Reset error:', err);
-                    alert('Error durante el reset. Por favor, recarga manualmente.');
+            try {
+                // 1. Unregister all service workers
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
                 }
-            });
-        }
+
+                // 2. Clear all caches
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    for (let key of keys) {
+                        await caches.delete(key);
+                    }
+                }
+
+                alert('✅ Reset completado. La página se recargará ahora.');
+                window.location.reload(true);
+            } catch (err) {
+                console.error('Reset error:', err);
+                alert('Error durante el reset. Por favor, recarga manualmente.');
+            }
+        };
+
+        if (pwaResetBtn) pwaResetBtn.addEventListener('click', handleReset);
+        const mobileResetBtn = document.getElementById('mobileResetBtn');
+        if (mobileResetBtn) mobileResetBtn.addEventListener('click', handleReset);
     </script>
 </body>
 
