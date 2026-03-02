@@ -1327,7 +1327,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const valueEUR = qty * (parseFloat(currentPriceEUR) || 0);
 
                 if (!acc[s.ticker]) {
-                    acc[s.ticker] = { ticker: s.ticker, value: 0 };
+                    acc[s.ticker] = { ticker: s.ticker, name: s.name || s.ticker, value: 0 };
                 }
                 acc[s.ticker].value += valueEUR;
                 return acc;
@@ -1341,16 +1341,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const total = validStocks.reduce((s, d) => s + d.value, 0);
 
-            // Color palette
+            // Color palette (vibrant, premium)
             const COLORS = [
                 '#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899',
                 '#14b8a6', '#f97316', '#8b5cf6', '#22c55e', '#06b6d4',
                 '#e11d48', '#a855f7'
             ];
 
-            const cx = 150;
-            const cy = 150;
-            const r = 120; // Slightly smaller to avoid clipping
+            const cx = 200;
+            const cy = 200;
+            const r = 160;
             const toRad = deg => (deg * Math.PI) / 180;
 
             let startAngle = -90;
@@ -1359,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sweep = pct * 360;
                 const sa = startAngle;
                 startAngle += sweep;
-                return { ticker: s.ticker, value: s.value, pct, sweep, sa, color: COLORS[i % COLORS.length] };
+                return { ticker: s.ticker, name: s.name, value: s.value, pct, sweep, sa, color: COLORS[i % COLORS.length] };
             });
 
             function arcPath(cx, cy, r, startDeg, endDeg) {
@@ -1377,41 +1377,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 const amtStr = fmtEUR(s.value);
                 const pctStr = (s.pct * 100).toFixed(1) + '%';
                 return `<path d="${path}" fill="${s.color}" opacity="0.85"
-                            stroke="#0f172a" stroke-width="2"
-                            style="cursor:pointer; transition: opacity 0.2s;"
-                            onmouseenter="this.setAttribute('opacity','1');"
-                            onmouseleave="this.setAttribute('opacity','0.85');"
+                            stroke="#0f172a" stroke-width="2.5"
+                            style="cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
+                            onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
+                            onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
                             onclick="showFinancialDetails('${s.ticker}')">
-                            <title>${s.ticker}\n${amtStr} (${pctStr})</title>
+                            <title>${s.name} (${s.ticker})\n${amtStr} (${pctStr})</title>
                         </path>`;
             }).join('');
 
             const legendHtml = slices.map(s => `
-                <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem; min-width:110px; cursor:pointer;" onclick="showFinancialDetails('${s.ticker}')">
-                    <div style="width:12px; height:12px; border-radius:3px; background:${s.color}; flex-shrink:0;"></div>
-                    <span style="opacity:0.8; font-weight: 600; white-space: nowrap;">${s.ticker}</span>
-                    <span style="font-weight:700; color:${s.color}; margin-left:auto;">${(s.pct * 100).toFixed(1)}%</span>
+                <div style="display:flex; align-items:center; gap:12px; font-size:0.9rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); cursor:pointer; transition: background 0.2s;" onclick="showFinancialDetails('${s.ticker}')"
+                     onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width:14px; height:14px; border-radius:4px; background:${s.color}; flex-shrink:0; box-shadow: 0 0 8px ${s.color}66;"></div>
+                    <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                        <span style="font-weight:700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.name}</span>
+                        <span style="font-size:0.75rem; opacity:0.5;">${s.ticker}</span>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0;">
+                        <div style="font-weight:700; color:${s.color};">${fmtEUR(s.value)}</div>
+                        <div style="font-size:0.75rem; opacity:0.6;">${(s.pct * 100).toFixed(1)}%</div>
+                    </div>
                 </div>
             `).join('');
 
             container.style.display = 'flex';
-            container.style.flexDirection = 'row';
-            container.style.flexWrap = 'wrap';
+            container.style.flexDirection = 'column';
             container.style.alignItems = 'center';
             container.style.justifyContent = 'center';
-            container.style.gap = '2rem';
-            container.style.padding = '0.5rem';
+            container.style.gap = '2.5rem';
+            container.style.padding = '1rem';
 
             container.innerHTML = `
-                <div style="flex: 1; min-width: 200px; max-width: 280px; position: relative; aspect-ratio: 1/1;">
-                    <svg viewBox="0 0 300 300" width="100%" height="100%" style="display:block; overflow:visible;">
+                <div style="width: 100%; max-width: 380px; position: relative; aspect-ratio: 1/1;">
+                    <svg viewBox="0 0 400 400" width="100%" height="100%" style="display:block; overflow:visible;">
                         ${slicePaths}
-                        <circle cx="${cx}" cy="${cy}" r="50" fill="#0f172a" />
-                        <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10" font-family="Outfit, sans-serif">Portfolio</text>
-                        <text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="white" font-size="14" font-weight="700" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
+                        <circle cx="${cx}" cy="${cy}" r="65" fill="#0f172a" />
+                        <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Mi Cartera</text>
+                        <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="white" font-size="20" font-weight="800" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
                     </svg>
                 </div>
-                <div style="flex: 2; min-width: 200px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.6rem; align-content: center;">
+                <div style="width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.8rem;">
                     ${legendHtml}
                 </div>`;
         } catch (err) {
@@ -2005,13 +2011,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffDays = Math.ceil((payday - now) / (1000 * 60 * 60 * 24));
             const dayColor = diffDays <= 3 ? 'var(--danger)' : (diffDays <= 10 ? 'var(--primary)' : 'inherit');
 
+            // Formatting Date 25/mm/aaaa
+            const dd = 25;
+            const mm = String(payday.getMonth() + 1).padStart(2, '0');
+            const yyyy = payday.getFullYear();
+            const paydayFormatted = `${dd}/${mm}/${yyyy}`;
+
             const rows = [
-                { label: '💰 Ingresos', value: fmtEUR(externalNetIncome), color: 'var(--success)' },
-                { label: '💸 Gastos', value: `${fmtEUR(totalPaidExpensesManual)} de ${fmtEUR(totalPlannedExpensesManual)}`, color: 'var(--danger)' },
-                { label: '✨ Ahorro Neto', value: fmtEUR(totalAhorroNetoManual), color: '#f59e0b' },
-                { label: '🟣 No Destinado', value: fmtEUR(undestined), color: undestined >= 0 ? 'var(--success)' : 'var(--danger)' },
-                { label: '📅 Mes en Curso', value: formatFiscalMonth(fiscalMonthStr), color: 'inherit' },
-                { label: '⏳ Días para el 25', value: `${diffDays} días`, color: dayColor }
+                { label: '📅 Mes en Curso', value: formatFiscalMonth(fiscalMonthStr) || '---', color: 'inherit' },
+                { label: `⏳ Dias para el ${paydayFormatted}`, value: `${diffDays || 0} dias`, color: dayColor || 'inherit' },
+                { label: '💰 Ingresos', value: fmtEUR(externalNetIncome || 0), color: 'var(--success)' },
+                { label: '💸 Gastos', value: `${fmtEUR(totalPaidExpensesManual || 0)} de ${fmtEUR(totalPlannedExpensesManual || 0)}`, color: 'var(--danger)' },
+                { label: '✨ Ahorro Neto', value: fmtEUR(totalAhorroNetoManual || 0), color: '#f59e0b' },
+                { label: '🟣 No Destinado', value: fmtEUR(undestined || 0), color: (undestined || 0) >= 0 ? 'var(--success)' : 'var(--danger)' }
             ];
 
             summaryTable.innerHTML = `
@@ -3344,14 +3356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        elements.filterTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                elements.filterTabs.forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                currentFilter = e.target.dataset.filter;
-                render();
-            });
-        });
+
 
         // Table sorting listeners
         document.querySelectorAll('th[data-sort]').forEach(th => {

@@ -1,0 +1,5 @@
+Resumen de uso de los archivos:
+
+subir_a_github.bat: Úsalo para guardar tus cambios en la nube y que la web (y la App instalada) se actualicen solas.
+crear_apk.bat: Úsalo solo si quieres un nuevo archivo .apk para pasarle a alguien o si cambias el icono.
+actualizar_app.bat: Es el "todo en uno" que te preguntará paso a paso qué quieres hacer.
