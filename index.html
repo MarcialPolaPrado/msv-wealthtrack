@@ -157,7 +157,7 @@
 
                 <!-- Stock List Section (Hidden on Mobile) -->
                 <section class="stock-list-section glass-panel">
-                    <div class="section-header"
+                    <div class="section-header" id="bolsaListHeader"
                         style="display:flex; justify-content: space-between; align-items: center;">
                         <h2>Detalles de Cartera</h2>
                         <div class="view-toggle"
@@ -199,10 +199,7 @@
                 </section>
 
                 <section id="portfolioChartSection" class="glass-panel" style="margin-bottom: 2rem; padding: 1.5rem;">
-                    <h2
-                        style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-                        <span>📊</span> Distribución de Cartera
-                    </h2>
+
                     <div id="portfolioPieChart" style="min-height: 200px;"></div>
                 </section>
             </div><!-- End Bolsa Section -->
@@ -235,14 +232,10 @@
 
                     <!-- Pie Chart Section -->
                     <div style="margin-top: 2rem;">
-                        <div
-                            style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h2 style="margin:0">Distribución de Ahorros</h2>
-                        </div>
+
                         <div id="savingsPieChartContainer" class="glass-panel"
-                            style="padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                            <div id="savingsPieChart"
-                                style="width: 100%; max-width: 520px; margin: 0 auto; display: block;"></div>
+                            style="padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;">
+                            <div id="savingsPieChart" style="width: 100%; display: block;"></div>
                         </div>
                     </div>
                 </div>

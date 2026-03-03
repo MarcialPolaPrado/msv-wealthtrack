@@ -974,6 +974,10 @@ select:focus {
         border-right: none !important;
     }
 
+    #bolsaListHeader {
+        display: none !important;
+    }
+
     .app-container {
         height: auto;
         min-height: auto;
