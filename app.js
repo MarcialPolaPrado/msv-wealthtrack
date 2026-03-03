@@ -4029,9 +4029,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bolsaMobileTitle) {
             bolsaMobileTitle.style.cursor = 'pointer';
             const updateMobileTitle = () => {
-                bolsaMobileTitle.textContent = bolsaViewMode === 'cards'
-                    ? 'Sus Inversiones 🃏'
-                    : 'Sus Inversiones 📋';
+                bolsaMobileTitle.textContent = 'Sus Inversiones';
             };
             updateMobileTitle();
             bolsaMobileTitle.addEventListener('click', () => {
