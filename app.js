@@ -1705,35 +1705,32 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             }).join('');
 
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.alignItems = 'center';
-            container.style.justifyContent = 'center';
-            container.style.gap = '2.5rem';
-            container.style.padding = '1rem';
+            container.style.cssText = '';  // Reset any previous inline styles
 
             container.innerHTML = `
-                <div class="drawer-header" id="bolsaPieHeader" style="cursor:pointer; width: 100%; margin-bottom: 0;">
-                    <div style="display:flex; align-items:center; gap: 10px; flex: 1;">
-                        <span class="drawer-icon">📊</span>
-                        <div class="drawer-info">
-                            <h4 style="margin:0">Distribución de Cartera <span class="toggle-arrow ${isBolsaPieExpanded ? 'expanded' : ''}">▼</span></h4>
-                            <p style="font-size: 0.8rem; opacity: 0.7;">Reparto de valor por activos</p>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:1rem; padding:1rem; width:100%; box-sizing:border-box;">
+                    <div class="drawer-header" id="bolsaPieHeader" style="cursor:pointer; width:100%;">
+                        <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                            <span class="drawer-icon">📊</span>
+                            <div class="drawer-info">
+                                <h4 style="margin:0">Distribución de Cartera <span class="toggle-arrow ${isBolsaPieExpanded ? 'expanded' : ''}">▼</span></h4>
+                                <p style="font-size:0.8rem; opacity:0.7;">Reparto de valor por activos</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 2.5rem; width: 100%; padding-top: 1.5rem;">
-                    <div style="width: 100%; max-width: 380px; position: relative; aspect-ratio: 1/1;">
-                        <svg viewBox="0 0 400 400" width="100%" height="100%" style="display:block; overflow:visible;">
-                            ${slicePaths}
-                            <circle cx="${cx}" cy="${cy}" r="65" fill="#0f172a" />
-                            <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Mi Cartera</text>
-                            <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="white" font-size="20" font-weight="800" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
-                        </svg>
-                    </div>
-                    <div class="collapsible-content ${isBolsaPieExpanded ? 'expanded' : ''}" style="width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.8rem;">
-                        ${legendHtml}
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:2.5rem; width:100%;">
+                        <div style="width:100%; max-width:380px; position:relative; aspect-ratio:1/1;">
+                            <svg viewBox="0 0 400 400" width="100%" height="100%" style="display:block; overflow:visible;">
+                                ${slicePaths}
+                                <circle cx="${cx}" cy="${cy}" r="65" fill="#0f172a" />
+                                <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Mi Cartera</text>
+                                <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="white" font-size="20" font-weight="800" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
+                            </svg>
+                        </div>
+                        <div class="collapsible-content ${isBolsaPieExpanded ? 'expanded' : ''}" style="width:100%; display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:0.8rem;">
+                            ${legendHtml}
+                        </div>
                     </div>
                 </div>`;
 
