@@ -5,10 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0f172a">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+    <!-- iOS support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WealthTrack">
     <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link rel="manifest" href="manifest.json">
     <title>Premium Stock Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -757,16 +761,44 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => {
+                        // Check for updates periodically
+                        setInterval(() => {
+                            reg.update();
+                        }, 1000 * 60 * 60); // Check every hour
+
                         reg.onupdatefound = () => {
                             const worker = reg.installing;
                             worker.onstatechange = () => {
                                 if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    window.location.reload();
+                                    showUpdateNotification();
                                 }
                             };
                         };
                     })
                     .catch(e => console.error('PWA SW: Error', e));
+            });
+        }
+
+        function showUpdateNotification() {
+            const toast = document.createElement('div');
+            toast.className = 'pwa-update-toast';
+            toast.innerHTML = `
+                <div class="pwa-toast-content">
+                    <span class="pwa-toast-icon">✨</span>
+                    <div class="pwa-toast-text">
+                        <strong>Nueva versión disponible</strong>
+                        <p>Actualiza para disfrutar de las últimas mejoras.</p>
+                    </div>
+                </div>
+                <button id="pwaReloadBtn" class="btn-primary btn-sm">Actualizar</button>
+            `;
+            document.body.appendChild(toast);
+
+            // Animation
+            setTimeout(() => toast.classList.add('visible'), 100);
+
+            document.getElementById('pwaReloadBtn').addEventListener('click', () => {
+                window.location.reload();
             });
         }
 

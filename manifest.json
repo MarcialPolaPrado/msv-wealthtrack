@@ -1,22 +1,98 @@
 {
+  "id": "msv-wealthtrack",
   "short_name": "WealthTrack",
   "name": "MSV WealthTrack",
+  "description": "Seguimiento premium de inversiones, ahorros y nómina.",
+  "lang": "es-ES",
+  "categories": [
+    "finance",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
     },
     {
       "src": "icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot_bolsa.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Vista de Cartera de Inversiones"
+    },
+    {
+      "src": "screenshot_ahorro.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Gestión de Cajones de Ahorro"
+    },
+    {
+      "src": "screenshot_nomina.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Resumen de Nómina Mensual"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Bolsa",
+      "short_name": "Bolsa",
+      "description": "Ver mi cartera de inversiones",
+      "url": "./index.html?view=bolsa",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Ahorro",
+      "short_name": "Ahorro",
+      "description": "Gestionar mis ahorros",
+      "url": "./index.html?view=ahorro",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Nómina",
+      "short_name": "Nómina",
+      "description": "Ver resumen de nómina",
+      "url": "./index.html?view=nomina",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ],
   "start_url": "./index.html",
   "background_color": "#0f172a",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "./",
-  "theme_color": "#10b981",
-  "description": "Seguimiento de inversiones, ahorros y nómina."
+  "theme_color": "#10b981"
 }

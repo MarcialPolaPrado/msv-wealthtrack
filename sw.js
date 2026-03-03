@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stock-app-v17';
+const CACHE_NAME = 'msv-wealthtrack-v1';
 const ASSETS = [
     './',
     './index.html',
@@ -8,7 +8,10 @@ const ASSETS = [
     './mock_data.js',
     './manifest.json',
     './icon-192.png',
-    './icon-512.png'
+    './icon-512.png',
+    './screenshot_bolsa.png',
+    './screenshot_ahorro.png',
+    './screenshot_nomina.png'
 ];
 
 self.addEventListener('message', (event) => {
