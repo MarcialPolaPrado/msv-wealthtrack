@@ -687,6 +687,11 @@ select {
     font-family: inherit;
 }
 
+select option {
+    background-color: #1e293b;
+    color: var(--text-main);
+}
+
 input:focus,
 select:focus {
     outline: none;
@@ -1557,6 +1562,7 @@ select:focus {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }

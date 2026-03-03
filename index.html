@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0f172a">
-    <link rel="manifest" href="manifest_v4.json">
-    <link rel="apple-touch-icon" href="stock_app_icon_v1.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <title>Premium Stock Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -224,6 +226,11 @@
 
                     <div id="drawersGrid" class="drawers-grid">
                         <!-- Drawers will be rendered here -->
+                    </div>
+
+                    <!-- Summary Drawer Section -->
+                    <div id="ahorroSummaryDrawer" style="margin-top: 2rem;">
+                        <!-- Category distribution will be rendered here -->
                     </div>
 
                     <!-- Pie Chart Section -->
@@ -502,7 +509,6 @@
                 </div>
 
                 <div class="form-group" id="movementAmountGroup">
-                    <label for="movementAmountInput">Importe (€)</label>
                     <div id="savingsMovementTypeContainer" class="hidden"
                         style="display: flex; gap: 10px; margin-bottom: 0.8rem;">
                         <button type="button" id="savingsMovementIncomeToggle" class="btn-secondary btn-sm"
@@ -513,7 +519,17 @@
                             Gasto</button>
                     </div>
                     <input type="hidden" id="savingsMovementType" value="income">
-                    <input type="number" id="movementAmountInput" step="0.01" placeholder="Ej: 50.00" required>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="movementAmountInput">Importe (€)</label>
+                            <input type="number" id="movementAmountInput" step="0.01" placeholder="Ej: 50.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="savingsDateInput">Fecha</label>
+                            <input type="date" id="savingsDateInput" required>
+                        </div>
+                    </div>
                     <small id="savingsMovementTypeHint" style="opacity:0.6; display:block; margin-top:0.3rem;">Usa
                         importes negativos (-) para gastos.</small>
                 </div>
@@ -528,6 +544,13 @@
                 <div class="form-group" id="movementConceptGroup">
                     <label for="movementConceptInput">Concepto (Opcional)</label>
                     <input type="text" id="movementConceptInput" placeholder="Ej: Ingreso nómina, Compra letra">
+                </div>
+
+                <div class="form-group hidden" id="savingsCategoryGroup">
+                    <label for="savingsCategorySelect">Categoría</label>
+                    <select id="savingsCategorySelect">
+                        <!-- Options filled by JS based on type -->
+                    </select>
                 </div>
 
                 <div class="modal-actions">
@@ -558,8 +581,7 @@
                 </div>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label for="nominaTypeSelect">Tipo de Cajón</label>
-                    <select id="nominaTypeSelect"
-                        style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-color);">
+                    <select id="nominaTypeSelect">
                         <option value="income">📈 Ingreso (Añadir a ingresos)</option>
                         <option value="saving">🏦 Ahorro (Añadir a ahorro)</option>
                         <option value="expense">📉 Gasto (Añadir a gastos)</option>

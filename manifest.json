@@ -1,23 +1,22 @@
 {
-    "name": "Portfolio WealthTrack",
-    "short_name": "WealthTrack",
-    "description": "Professional Stock Portfolio Tracker",
-    "start_url": "./index.html",
-    "display": "standalone",
-    "background_color": "#0f172a",
-    "theme_color": "#0f172a",
-    "icons": [
-        {
-            "src": "stock_app_icon_192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "stock_app_icon_512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any"
-        }
-    ]
+  "short_name": "WealthTrack",
+  "name": "MSV WealthTrack",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#10b981",
+  "description": "Seguimiento de inversiones, ahorros y nómina."
 }

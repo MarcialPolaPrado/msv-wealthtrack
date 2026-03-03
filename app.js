@@ -266,10 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
         mobilePrivacyToggleBtn: document.getElementById('mobilePrivacyToggleBtn'),
         savingsMovementTypeContainer: document.getElementById('savingsMovementTypeContainer'),
         savingsMovementIncomeToggle: document.getElementById('savingsMovementIncomeToggle'),
-        savingsMovementExpenseToggle: document.getElementById('savingsMovementIncomeToggle'), // wait there is a typo in my previous edit or here? let me check index.html
-        // I will re-read index.html to be sure about the IDs.
+        savingsMovementExpenseToggle: document.getElementById('savingsMovementExpenseToggle'),
         savingsMovementType: document.getElementById('savingsMovementType'),
         savingsMovementTypeHint: document.getElementById('savingsMovementTypeHint'),
+        savingsDateInput: document.getElementById('savingsDateInput'),
 
         // Nomina Elements
         nominaSection: document.getElementById('nominaSection'),
@@ -346,7 +346,9 @@ document.addEventListener('DOMContentLoaded', () => {
         bolsaGrid: document.getElementById('bolsaGrid'),
         bolsaTableViewBtn: document.getElementById('bolsaTableViewBtn'),
         bolsaCardViewBtn: document.getElementById('bolsaCardViewBtn'),
-        stockTable: document.getElementById('stockTable')
+        stockTable: document.getElementById('stockTable'),
+        savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
+        savingsCategorySelect: document.getElementById('savingsCategorySelect')
     };
 
     const updateNominaMovementType = (type) => {
@@ -384,6 +386,15 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.savingsMovementTypeHint.textContent = isIncome
                 ? 'El importe se sumará al saldo.'
                 : 'El importe se restará del saldo (se guardará como negativo).';
+        }
+
+        // Update Categories
+        if (elements.savingsCategorySelect) {
+            const incomeCats = ['Ahorro', 'Intereses', 'Dividendos', 'Especulación'];
+            const expenseCats = ['Inversión', 'Gasto'];
+            const cats = isIncome ? incomeCats : expenseCats;
+
+            elements.savingsCategorySelect.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
         }
     };
 
@@ -1265,6 +1276,61 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = chartHtml;
     }
 
+    function renderAhorroSummaryDrawer() {
+        const container = document.getElementById('ahorroSummaryDrawer');
+        if (!container) return;
+
+        const currentFiscalMonth = getFiscalMonth(); // e.g., "2026-03"
+        const categoryTotals = {};
+        let totalIncome = 0;
+        let totalExpense = 0;
+
+        savingsDrawers.forEach(drawer => {
+            if (drawer.isAuto) return;
+            (drawer.movements || []).forEach(m => {
+                const mDate = new Date(m.date);
+                if (isNaN(mDate.getTime())) return;
+
+                const mFiscal = getFiscalMonth(mDate);
+                if (mFiscal === currentFiscalMonth) {
+                    const cat = m.category || (m.amount >= 0 ? 'Ahorro' : 'Gasto');
+                    categoryTotals[cat] = (categoryTotals[cat] || 0) + m.amount;
+                    if (m.amount >= 0) totalIncome += m.amount;
+                    else totalExpense += Math.abs(m.amount);
+                }
+            });
+        });
+
+        if (Object.keys(categoryTotals).length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const sortedCats = Object.entries(categoryTotals).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+
+        container.innerHTML = `
+            <div class="card drawer-card glass-panel summary-drawer" style="grid-column: 1 / -1; border: 1px solid var(--primary); padding: 1.5rem; width: 100%;">
+                <div class="drawer-header">
+                    <div style="display:flex; align-items:center; gap: 10px;">
+                        <span class="drawer-icon">📊</span>
+                        <div class="drawer-info">
+                            <h4 style="margin:0">Distribución por Categoría: ${formatFiscalMonth(currentFiscalMonth)}</h4>
+                            <p style="font-size: 0.8rem; opacity: 0.7;">Resumen de movimientos del mes fiscal (desde el día 25)</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    ${sortedCats.map(([cat, total]) => `
+                        <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
+                            <div style="font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">${cat}</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};">${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
     function renderSavings() {
         if (!elements.drawersGrid) return;
 
@@ -1334,6 +1400,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         renderSavingsPieChart();
+        renderAhorroSummaryDrawer();
     }
 
     function renderBolsaCards(displayStocksData) {
@@ -2388,6 +2455,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSavingsMovementType('income');
         }
 
+        if (elements.savingsCategoryGroup) {
+            elements.savingsCategoryGroup.classList.remove('hidden');
+        }
+
+        // Default to today's date
+        if (elements.savingsDateInput) {
+            elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
+        }
+
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
     }
@@ -2470,6 +2546,7 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
+        if (elements.savingsCategoryGroup) elements.savingsCategoryGroup.classList.add('hidden');
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
@@ -2528,7 +2605,10 @@ document.addEventListener('DOMContentLoaded', () => {
             : drawer.movements.map((m, idx) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.8rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
                     <div style="flex-grow:1;">
-                        <div style="font-weight:600;">${m.description}</div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="font-weight:600;">${m.description}</div>
+                            ${m.category ? `<span style="font-size: 0.7rem; padding: 2px 6px; background: rgba(255,255,255,0.05); border-radius: 4px; opacity: 0.7;">${m.category}</span>` : ''}
+                        </div>
                         <div style="font-size:0.75rem; opacity:0.6;">${m.date}</div>
                     </div>
                     <div style="display:flex; align-items:center; gap:1rem;">
@@ -2632,15 +2712,27 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
 
-        // Hide toggle when editing (since it's baked into the value) 
-        // OR we can show it and set it correctly based on current amount
         if (elements.savingsMovementTypeContainer) {
             elements.savingsMovementTypeContainer.classList.remove('hidden');
             updateSavingsMovementType(movement.amount >= 0 ? 'income' : 'expense');
         }
 
+        if (elements.savingsCategoryGroup) {
+            elements.savingsCategoryGroup.classList.remove('hidden');
+        }
+
+        // Delay setting the value slightly to ensure options are generated
+        setTimeout(() => {
+            if (elements.savingsCategorySelect && movement.category) {
+                elements.savingsCategorySelect.value = movement.category;
+            }
+        }, 10);
+
         if (amountInput) amountInput.value = Math.abs(movement.amount);
         if (conceptInput) conceptInput.value = movement.description;
+        if (elements.savingsDateInput && movement.date) {
+            elements.savingsDateInput.value = movement.date;
+        }
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
@@ -3147,6 +3239,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
 
     function setupEventListeners() {
+        // Global Date Picker Trigger: open calendar on field click
+        document.addEventListener('click', (e) => {
+            const dateInput = e.target.closest('input[type="date"]');
+            if (dateInput && 'showPicker' in HTMLInputElement.prototype) {
+                try {
+                    dateInput.showPicker();
+                } catch (err) {
+                    console.error("showPicker error:", err);
+                }
+            }
+        });
+
         elements.addStockBtn?.addEventListener('click', () => {
             elements.addStockForm.reset();
             elements.editId.value = '';
@@ -3252,12 +3356,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const concept = elements.movementConceptInput.value.trim() || 'Ajuste manual';
                     const type = elements.savingsMovementType.value;
                     const finalAmount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
+                    const category = elements.savingsCategorySelect.value;
+                    const date = elements.savingsDateInput.value || new Date().toISOString().split('T')[0];
 
                     drawer.balance += finalAmount;
                     drawer.movements.push({
-                        date: new Date().toISOString().split('T')[0],
+                        date: date,
                         amount: finalAmount,
-                        description: concept
+                        description: concept,
+                        category: category
                     });
                 }
             } else if (action === 'transfer') {
@@ -3323,12 +3430,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const movement = drawer.movements[mIndex];
                     const concept = elements.movementConceptInput.value.trim() || movement.description;
                     const oldAmount = movement.amount;
+                    const category = elements.savingsCategorySelect.value;
+                    const date = elements.savingsDateInput.value || movement.date;
 
                     const type = elements.savingsMovementType.value;
                     const finalAmount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
 
                     movement.amount = finalAmount;
                     movement.description = concept;
+                    movement.category = category;
+                    movement.date = date;
                     drawer.balance += (finalAmount - oldAmount);
                 }
             }
@@ -3893,12 +4004,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function exportSavingsToCSV() {
-        const headers = ['Type', 'DrawerID', 'Name/Description', 'Icon/Date', 'Balance/Amount'];
+        const headers = ['Type', 'DrawerID', 'Name/Description', 'Icon/Date', 'Balance/Amount', 'Category'];
         const csvRows = [headers.join(',')];
         savingsDrawers.forEach(drawer => {
-            csvRows.push(['DRAWER', drawer.id, drawer.name, drawer.icon, drawer.balance].join(','));
+            csvRows.push(['DRAWER', drawer.id, drawer.name, drawer.icon, drawer.balance, ''].join(','));
             drawer.movements.forEach(m => {
-                csvRows.push(['MOVEMENT', drawer.id, m.description, m.date, m.amount].join(','));
+                csvRows.push(['MOVEMENT', drawer.id, m.description, m.date, m.amount, m.category || ''].join(','));
             });
         });
         const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
@@ -3924,7 +4035,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (index === 0 || !line.trim()) return;
                 const parts = line.split(',').map(p => p.trim());
                 if (parts.length < 5) return;
-                const [type, id, nameDesc, iconDate, amountVal] = parts;
+                const [type, id, nameDesc, iconDate, amountVal, category] = parts;
                 const value = parseFloat(amountVal);
                 if (type === 'DRAWER') {
                     const drawer = { id: id, name: nameDesc, icon: iconDate, balance: value, movements: [], isAuto: (id === 'bolsa') };
@@ -3932,7 +4043,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     drawersMap[id] = drawer;
                 } else if (type === 'MOVEMENT') {
                     if (drawersMap[id]) {
-                        drawersMap[id].movements.push({ description: nameDesc, date: iconDate, amount: value });
+                        drawersMap[id].movements.push({
+                            description: nameDesc,
+                            date: iconDate,
+                            amount: value,
+                            category: category || ''
+                        });
                     }
                 }
             });
