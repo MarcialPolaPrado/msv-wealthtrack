@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isExpenseSummaryExpanded = false; // Collapsed by default
     let isSavingsPieExpanded = false;    // Collapsed by default
     let isAhorroSummaryExpanded = false; // Collapsed by default
+    let isNominaPieExpanded = false;    // Collapsed by default
     let bolsaViewMode = 'cards'; // 'list' or 'cards'
 
     // Global Formatters
@@ -2167,22 +2168,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const pieCard = document.createElement('div');
             pieCard.className = 'card glass-panel';
-            pieCard.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1rem; min-height:160px;';
+            pieCard.style.cssText = 'display:flex; flex-direction:column; padding:1.2rem; min-height:160px;';
 
             if (pieSlices.length === 0) {
                 pieCard.innerHTML = '<p style="opacity:0.4;font-size:0.85rem;text-align:center;">Sin distribución</p>';
             } else {
                 const total = pieSlices.reduce((s, sl) => s + sl.value, 0);
                 const toR = d => d * Math.PI / 180;
-                const cx = 100, cy = 100, r = 90; // larger (was 72/58)
+                const cx = 100, cy = 100, r = 90;
                 let startAngle = -90;
                 const slices = pieSlices.map(sl => {
                     const pct = sl.value / total;
                     const sweep = pct * 360;
-                    const mid = startAngle + sweep / 2;
                     const sa = startAngle;
                     startAngle += sweep;
-                    return { ...sl, pct, sweep, sa, mid };
+                    return { ...sl, pct, sweep, sa };
                 });
 
                 const paths = slices.map(s => {
@@ -2207,25 +2207,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `).join('');
 
-                pieCard.style.flexDirection = 'row';
-                pieCard.style.flexWrap = 'wrap';
-                pieCard.style.gap = '1.2rem';
-                pieCard.style.minHeight = '180px';
-                pieCard.style.padding = '1.2rem';
-
                 pieCard.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 140px;">
-                        <div style="font-size:0.8rem; opacity:0.5; margin-bottom:0.8rem; text-align:center; font-weight:600;">Distribución del ingreso</div>
-                        <svg viewBox="0 0 200 200" width="150" height="150" style="display:block; overflow:visible;">
-                            ${paths}
-                            <circle cx="${cx}" cy="${cy}" r="40" fill="#0f172a" />
-                            <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="Outfit,sans-serif">Total</text>
-                            <text x="${cx}" y="${cy + 8}" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Outfit,sans-serif">${totalStr}</text>
-                        </svg>
+                    <div class="drawer-header" id="nominaPieHeader" style="cursor:pointer; margin-bottom: 1rem; width: 100%;">
+                        <div style="display:flex; align-items:center; gap: 10px;">
+                            <span class="drawer-icon">📈</span>
+                            <div class="drawer-info">
+                                <h4 style="margin:0">Distribución de Cartera <span class="toggle-arrow ${isNominaPieExpanded ? 'expanded' : ''}">▼</span></h4>
+                                <p style="font-size: 0.8rem; opacity: 0.7;">Reparto total de tus ingresos</p>
+                            </div>
+                        </div>
                     </div>
-                    <div style="flex: 1.2; min-width: 160px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
-                        ${legendHtml}
+                    
+                    <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.2rem; align-items: center; justify-content: center; width: 100%;">
+                        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 140px;">
+                            <svg viewBox="0 0 200 200" width="150" height="150" style="display:block; overflow:visible;">
+                                ${paths}
+                                <circle cx="${cx}" cy="${cy}" r="40" fill="#0f172a" />
+                                <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="Outfit,sans-serif">Total</text>
+                                <text x="${cx}" y="${cy + 8}" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Outfit,sans-serif">${totalStr}</text>
+                            </svg>
+                        </div>
+                        <div class="collapsible-content ${isNominaPieExpanded ? 'expanded' : ''}" style="flex: 1.2; min-width: 160px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
+                            ${legendHtml}
+                        </div>
                     </div>`;
+
+                const header = pieCard.querySelector('#nominaPieHeader');
+                header.onclick = (e) => {
+                    e.stopPropagation();
+                    isNominaPieExpanded = !isNominaPieExpanded;
+                    renderNomina();
+                };
             }
             incomeSubGrid.appendChild(pieCard);
         }
