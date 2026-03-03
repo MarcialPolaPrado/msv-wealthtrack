@@ -989,6 +989,10 @@ select:focus {
         display: none !important;
     }
 
+    #bolsaMobileTitle {
+        font-size: 1rem;
+    }
+
     .app-container {
         height: auto;
         min-height: auto;
