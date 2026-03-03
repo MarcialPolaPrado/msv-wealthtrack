@@ -4023,6 +4023,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 render();
             });
         }
+
+        // Mobile: tap "Sus Inversiones" title to toggle list/cards view
+        const bolsaMobileTitle = document.getElementById('bolsaMobileTitle');
+        if (bolsaMobileTitle) {
+            bolsaMobileTitle.style.cursor = 'pointer';
+            const updateMobileTitle = () => {
+                bolsaMobileTitle.textContent = bolsaViewMode === 'cards'
+                    ? 'Sus Inversiones 🃏'
+                    : 'Sus Inversiones 📋';
+            };
+            updateMobileTitle();
+            bolsaMobileTitle.addEventListener('click', () => {
+                bolsaViewMode = bolsaViewMode === 'cards' ? 'list' : 'cards';
+                if (elements.bolsaCardViewBtn && elements.bolsaTableViewBtn) {
+                    if (bolsaViewMode === 'cards') {
+                        elements.bolsaCardViewBtn.classList.add('active');
+                        elements.bolsaCardViewBtn.style.background = 'var(--primary)';
+                        elements.bolsaCardViewBtn.style.color = 'white';
+                        elements.bolsaTableViewBtn.classList.remove('active');
+                        elements.bolsaTableViewBtn.style.background = 'transparent';
+                        elements.bolsaTableViewBtn.style.color = 'var(--text-muted)';
+                    } else {
+                        elements.bolsaTableViewBtn.classList.add('active');
+                        elements.bolsaTableViewBtn.style.background = 'var(--primary)';
+                        elements.bolsaTableViewBtn.style.color = 'white';
+                        elements.bolsaCardViewBtn.classList.remove('active');
+                        elements.bolsaCardViewBtn.style.background = 'transparent';
+                        elements.bolsaCardViewBtn.style.color = 'var(--text-muted)';
+                    }
+                }
+                updateMobileTitle();
+                render();
+            });
+        }
     }
 
     function toggleModal(show) {
