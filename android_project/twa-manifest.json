@@ -20,8 +20,8 @@
     "path": "C:\\Users\\marci\\OneDrive\\MSV\\android_project\\android.keystore",
     "alias": "android"
   },
-  "appVersionName": "6",
-  "appVersionCode": 6,
+  "appVersionName": "8",
+  "appVersionCode": 8,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/manifest.json",
@@ -36,12 +36,16 @@
   "fullScopeUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/",
   "minSdkVersion": 21,
   "orientation": "default",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "sha256": "23:FE:33:15:B8:49:F1:BC:97:0A:C1:21:B0:A5:10:88:F3:D7:5C:FD:0B:32:18:C4:B7:9F:F7:3F:9B:B8:5E:53"
+    }
+  ],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
   "protocolHandlers": [],
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "6"
+  "appVersion": "8"
 }
