@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stock-app-v16';
+const CACHE_NAME = 'stock-app-v17';
 const ASSETS = [
     './',
     './index.html',
@@ -6,10 +6,9 @@ const ASSETS = [
     './app.js',
     './storage.js',
     './mock_data.js',
-    './manifest_v4.json',
-    './stock_app_icon_192.png',
-    './stock_app_icon_512.png',
-    './stock_app_icon_v1.svg'
+    './manifest.json',
+    './icon-192.png',
+    './icon-512.png'
 ];
 
 self.addEventListener('message', (event) => {

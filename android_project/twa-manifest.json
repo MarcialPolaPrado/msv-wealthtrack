@@ -1,8 +1,8 @@
 {
   "packageId": "io.github.marcialpolaprado.twa",
   "host": "marcialpolaprado.github.io",
-  "name": "WealthTrack Portfolio Tracker",
-  "launcherName": "Portfolio",
+  "name": "MSV WealthTrack",
+  "launcherName": "WealthTrack",
   "display": "standalone",
   "themeColor": "#0F172A",
   "themeColorDark": "#000000",
@@ -13,18 +13,18 @@
   "backgroundColor": "#0F172A",
   "enableNotifications": true,
   "startUrl": "/msv-wealthtrack/index.html",
-  "iconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/stock_app_icon_512.png",
-  "maskableIconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/stock_app_icon_512.png",
+  "iconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/icon-512.png",
+  "maskableIconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "C:\\Users\\marci\\OneDrive\\MSV\\android_project\\android.keystore",
     "alias": "android"
   },
-  "appVersionName": "1",
-  "appVersionCode": 1,
+  "appVersionName": "3",
+  "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/manifest_v4.json",
+  "webManifestUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/manifest.json",
   "fallbackType": "customtabs",
   "features": {},
   "alphaDependencies": {
@@ -43,5 +43,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1"
+  "appVersion": "3"
 }

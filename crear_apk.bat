@@ -46,7 +46,7 @@ if not exist android_project (
     cd android_project
     echo.
     echo [Paso 5] Inicializando el proyecto Android por primera vez...
-    call bubblewrap init --manifest=%PWA_URL%manifest_v4.json
+    call bubblewrap init --manifest=%PWA_URL%manifest.json
 ) else (
     cd android_project
     echo.
