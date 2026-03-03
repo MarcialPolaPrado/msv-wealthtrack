@@ -1,0 +1,25 @@
+# Android build artifacts
+**/build/
+android_project/.gradle/
+android_project/local.properties
+android_project/app/build/
+*.apk
+*.aar
+*.jks
+*.keystore
+
+# Backups and snapshots
+MSV_Snapshot_*.zip
+MSV_Snapshot_*/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs and temp files
+server_log.txt
+*.log
+tmp/

@@ -61,6 +61,15 @@ if not exist android_project (
 echo.
 echo [FINAL] Construyendo el APK...
 echo (Este paso puede tardar unos minutos)
+
+:: Asegurar que el limite de memoria persiste (Bubblewrap lo resetea al actualizar)
+if exist android_project\gradle.properties (
+    powershell -Command "(gc android_project\gradle.properties) -replace '-Xmx1536m', '-Xmx800m' | Out-File -encoding ASCII android_project\gradle.properties"
+) else if exist gradle.properties (
+    powershell -Command "(gc gradle.properties) -replace '-Xmx1536m', '-Xmx800m' | Out-File -encoding ASCII gradle.properties"
+)
+
+set GRADLE_OPTS=-Xmx800m
 call bubblewrap build
 
 if %errorlevel% neq 0 (

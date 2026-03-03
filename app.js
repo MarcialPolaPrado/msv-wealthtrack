@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = 'bolsa';
     let isPrivacyActive = (window.loadPrivacy) ? window.loadPrivacy() : true;
     let isExpenseSummaryExpanded = false; // Collapsed by default
+    let isSavingsPieExpanded = false;    // Collapsed by default
+    let isAhorroSummaryExpanded = false; // Collapsed by default
     let bolsaViewMode = 'cards'; // 'list' or 'cards'
 
     // Global Formatters
@@ -1307,28 +1309,70 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const sortedCats = Object.entries(categoryTotals).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+        const totalAbs = sortedCats.reduce((s, [, v]) => s + Math.abs(v), 0);
+
+        // Simple Pie Chart for Categories
+        const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+        let startAngle = -90;
+        const slices = sortedCats.map(([cat, val], i) => {
+            const pct = Math.abs(val) / totalAbs;
+            const sweep = pct * 360;
+            const sa = startAngle;
+            startAngle += sweep;
+            return { cat, val, pct, sa, sweep, color: COLORS[i % COLORS.length] };
+        });
+
+        function arcPath(cx, cy, r, startDeg, endDeg) {
+            const toRad = deg => (deg * Math.PI) / 180;
+            const s = { x: cx + r * Math.cos(toRad(startDeg)), y: cy + r * Math.sin(toRad(startDeg)) };
+            const e = { x: cx + r * Math.cos(toRad(endDeg)), y: cy + r * Math.sin(toRad(endDeg)) };
+            const large = (endDeg - startDeg) > 180 ? 1 : 0;
+            return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y} Z`;
+        }
+
+        const piePaths = slices.map(s => {
+            const path = arcPath(60, 60, 55, s.sa, s.sa + s.sweep);
+            return `<path d="${path}" fill="${s.color}" opacity="0.85" stroke="#0f172a" stroke-width="1.5">
+                        <title>${s.cat}: ${fmtEUR(s.val)} (${(s.pct * 100).toFixed(1)}%)</title>
+                    </path>`;
+        }).join('');
 
         container.innerHTML = `
             <div class="card drawer-card glass-panel summary-drawer" style="grid-column: 1 / -1; border: 1px solid var(--primary); padding: 1.5rem; width: 100%;">
-                <div class="drawer-header">
-                    <div style="display:flex; align-items:center; gap: 10px;">
+                <div class="drawer-header" id="ahorroSummaryHeader" style="cursor:pointer;">
+                    <div style="display:flex; align-items:center; gap: 10px; flex: 1;">
                         <span class="drawer-icon">📊</span>
                         <div class="drawer-info">
-                            <h4 style="margin:0">Distribución por Categoría: ${formatFiscalMonth(currentFiscalMonth)}</h4>
+                            <h4 style="margin:0">Distribución por Categoría: ${formatFiscalMonth(currentFiscalMonth)} <span class="toggle-arrow ${isAhorroSummaryExpanded ? 'expanded' : ''}">▼</span></h4>
                             <p style="font-size: 0.8rem; opacity: 0.7;">Resumen de movimientos del mes fiscal (desde el día 25)</p>
                         </div>
                     </div>
+                    <div style="width: 80px; height: 80px; flex-shrink: 0; position: relative;">
+                        <svg viewBox="0 0 120 120" style="width: 100%; height: 100%; overflow: visible;">
+                            ${piePaths}
+                            <circle cx="60" cy="60" r="25" fill="#0f172a" />
+                        </svg>
+                    </div>
                 </div>
-                <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                    ${sortedCats.map(([cat, total]) => `
-                        <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
-                            <div style="font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">${cat}</div>
-                            <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};">${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
-                        </div>
-                    `).join('')}
+                
+                <div class="collapsible-content ${isAhorroSummaryExpanded ? 'expanded' : ''}" id="ahorroSummaryContent">
+                    <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        ${sortedCats.map(([cat, total]) => `
+                            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
+                                <div style="font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">${cat}</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};">${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
         `;
+
+        const header = container.querySelector('#ahorroSummaryHeader');
+        header.onclick = () => {
+            isAhorroSummaryExpanded = !isAhorroSummaryExpanded;
+            renderAhorroSummaryDrawer();
+        };
     }
 
     function renderSavings() {
@@ -1786,6 +1830,36 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
+        // Container structure updated with toggle header
+        const parent = container.parentElement;
+        const headerId = 'savingsPieHeader';
+        if (!parent.querySelector(`#${headerId}`)) {
+            const header = document.createElement('div');
+            header.id = headerId;
+            header.className = 'drawer-header';
+            header.style.cursor = 'pointer';
+            header.style.marginBottom = '1rem';
+            header.innerHTML = `
+                <div style="display:flex; align-items:center; gap: 10px;">
+                    <span class="drawer-icon">🍰</span>
+                    <div class="drawer-info">
+                        <h4 style="margin:0">Distribución de Ahorros <span class="toggle-arrow ${isSavingsPieExpanded ? 'expanded' : ''}">▼</span></h4>
+                        <p style="font-size: 0.8rem; opacity: 0.7;">Reparto total por cajones de ahorro</p>
+                    </div>
+                </div>
+            `;
+            header.onclick = () => {
+                isSavingsPieExpanded = !isSavingsPieExpanded;
+                renderSavingsPieChart();
+            };
+            parent.insertBefore(header, container);
+        } else {
+            const arrow = parent.querySelector(`#${headerId} .toggle-arrow`);
+            if (arrow) {
+                arrow.className = `toggle-arrow ${isSavingsPieExpanded ? 'expanded' : ''}`;
+            }
+        }
+
         container.style.display = 'flex';
         container.style.flexDirection = 'row';
         container.style.flexWrap = 'wrap';
@@ -1795,7 +1869,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.padding = '1rem';
 
         container.innerHTML = `
-            <div style="flex: 1; min-width: 280px; max-width: 400px; position: relative;">
+            <div style="flex: 1; min-width: 200px; max-width: 400px; position: relative;">
                 <svg viewBox="0 0 300 300" width="100%" height="auto" style="display:block; overflow:visible;">
                     ${slicePaths}
                     <circle cx="${cx}" cy="${cy}" r="60" fill="#0f172a" />
@@ -1803,7 +1877,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="white" font-size="18" font-weight="700" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
                 </svg>
             </div>
-            <div style="flex: 1; min-width: 250px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; align-content: center;">
+            <div class="collapsible-content ${isSavingsPieExpanded ? 'expanded' : ''}" style="flex: 1.5; min-width: 250px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; align-content: center;">
                 ${legendHtml}
             </div>`;
     }

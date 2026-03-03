@@ -24,8 +24,8 @@ def twaManifest = [
     applicationId: 'io.github.marcialpolaprado.twa',
     hostName: 'marcialpolaprado.github.io', // The domain being opened in the TWA.
     launchUrl: '/msv-wealthtrack/index.html', // The start path for the TWA. Must be relative to the domain.
-    name: 'WealthTrack Portfolio Tracker', // The application name.
-    launcherName: 'Portfolio', // The name shown on the Android Launcher.
+    name: 'MSV WealthTrack', // The application name.
+    launcherName: 'WealthTrack', // The name shown on the Android Launcher.
     themeColor: '#0F172A', // The color used for the status bar.
     themeColorDark: '#000000', // The color used for the dark status bar.
     navigationColor: '#000000', // The color used for the navigation bar.
@@ -57,8 +57,8 @@ android {
         applicationId "io.github.marcialpolaprado.twa"
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 3
-        versionName "3"
+        versionCode 6
+        versionName "6"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
@@ -76,7 +76,7 @@ android {
             // The URL the Web Manifest for the Progressive Web App that the TWA points to. This
             // is used by Chrome OS and Meta Quest to open the Web version of the PWA instead of
             // the TWA, as it will probably give a better user experience for non-mobile devices.
-            resValue "string", "webManifestUrl", 'https://marcialpolaprado.github.io/msv-wealthtrack/manifest_v4.json'
+            resValue "string", "webManifestUrl", 'https://marcialpolaprado.github.io/msv-wealthtrack/manifest.json'
         
 
         
