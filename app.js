@@ -1412,7 +1412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div>
                         <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Current Price</div>
-                        <div style="font-weight: 600;">${info.price !== null ? (info.currency === 'EUR' ? fmtEUR(info.price) : fmtNum(info.price) + ' ' + info.currency) : '-'}</div>
+                        <div style="font-weight: 600;">${info.currentPriceEUR !== null ? fmtEUR(info.currentPriceEUR) : '-'}</div>
                     </div>
                     <div>
                         <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Quantity</div>
