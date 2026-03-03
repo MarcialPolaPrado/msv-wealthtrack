@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("App initialized");
 
     // State
     let stocks = (window.loadStocks) ? window.loadStocks() : [];
@@ -10,10 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = 'bolsa';
     let isPrivacyActive = (window.loadPrivacy) ? window.loadPrivacy() : true;
     let isExpenseSummaryExpanded = false; // Collapsed by default
-    let isSavingsPieExpanded = false;    // Collapsed by default
-    let isAhorroSummaryExpanded = false; // Collapsed by default
-    let isNominaPieExpanded = false;    // Collapsed by default
     let bolsaViewMode = 'cards'; // 'list' or 'cards'
+    let isAhorroSummaryExpanded = false;
+    let isSavingsPieExpanded = true;
+    let isBolsaPieExpanded = false;
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -1283,10 +1282,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('ahorroSummaryDrawer');
         if (!container) return;
 
-        const currentFiscalMonth = getFiscalMonth(); // e.g., "2026-03"
+        const currentFiscalMonth = getFiscalMonth();
         const categoryTotals = {};
-        let totalIncome = 0;
-        let totalExpense = 0;
 
         savingsDrawers.forEach(drawer => {
             if (drawer.isAuto) return;
@@ -1298,45 +1295,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (mFiscal === currentFiscalMonth) {
                     const cat = m.category || (m.amount >= 0 ? 'Ahorro' : 'Gasto');
                     categoryTotals[cat] = (categoryTotals[cat] || 0) + m.amount;
-                    if (m.amount >= 0) totalIncome += m.amount;
-                    else totalExpense += Math.abs(m.amount);
                 }
             });
         });
 
         if (Object.keys(categoryTotals).length === 0) {
-            container.innerHTML = '';
+            container.innerHTML = `
+                <div class="card drawer-card glass-panel summary-drawer" style="grid-column: 1 / -1; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; width: 100%; text-align: center;">
+                    <p style="opacity: 0.5;">No hay movimientos en el mes fiscal actual (${formatFiscalMonth(currentFiscalMonth)}).</p>
+                </div>`;
             return;
         }
 
         const sortedCats = Object.entries(categoryTotals).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
-        const totalAbs = sortedCats.reduce((s, [, v]) => s + Math.abs(v), 0);
-
-        // Simple Pie Chart for Categories
-        const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
-        let startAngle = -90;
-        const slices = sortedCats.map(([cat, val], i) => {
-            const pct = Math.abs(val) / totalAbs;
-            const sweep = pct * 360;
-            const sa = startAngle;
-            startAngle += sweep;
-            return { cat, val, pct, sa, sweep, color: COLORS[i % COLORS.length] };
-        });
-
-        function arcPath(cx, cy, r, startDeg, endDeg) {
-            const toRad = deg => (deg * Math.PI) / 180;
-            const s = { x: cx + r * Math.cos(toRad(startDeg)), y: cy + r * Math.sin(toRad(startDeg)) };
-            const e = { x: cx + r * Math.cos(toRad(endDeg)), y: cy + r * Math.sin(toRad(endDeg)) };
-            const large = (endDeg - startDeg) > 180 ? 1 : 0;
-            return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y} Z`;
-        }
-
-        const piePaths = slices.map(s => {
-            const path = arcPath(60, 60, 55, s.sa, s.sa + s.sweep);
-            return `<path d="${path}" fill="${s.color}" opacity="0.85" stroke="#0f172a" stroke-width="1.5">
-                        <title>${s.cat}: ${fmtEUR(s.val)} (${(s.pct * 100).toFixed(1)}%)</title>
-                    </path>`;
-        }).join('');
 
         container.innerHTML = `
             <div class="card drawer-card glass-panel summary-drawer" style="grid-column: 1 / -1; border: 1px solid var(--primary); padding: 1.5rem; width: 100%;">
@@ -1348,20 +1319,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p style="font-size: 0.8rem; opacity: 0.7;">Resumen de movimientos del mes fiscal (desde el día 25)</p>
                         </div>
                     </div>
-                    <div style="width: 80px; height: 80px; flex-shrink: 0; position: relative;">
-                        <svg viewBox="0 0 120 120" style="width: 100%; height: 100%; overflow: visible;">
-                            ${piePaths}
-                            <circle cx="60" cy="60" r="25" fill="#0f172a" />
-                        </svg>
-                    </div>
                 </div>
-                
+
                 <div class="collapsible-content ${isAhorroSummaryExpanded ? 'expanded' : ''}" id="ahorroSummaryContent">
                     <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                         ${sortedCats.map(([cat, total]) => `
                             <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
                                 <div style="font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">${cat}</div>
-                                <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};">${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};"> ${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -1748,17 +1713,36 @@ document.addEventListener('DOMContentLoaded', () => {
             container.style.padding = '1rem';
 
             container.innerHTML = `
-                <div style="width: 100%; max-width: 380px; position: relative; aspect-ratio: 1/1;">
-                    <svg viewBox="0 0 400 400" width="100%" height="100%" style="display:block; overflow:visible;">
-                        ${slicePaths}
-                        <circle cx="${cx}" cy="${cy}" r="65" fill="#0f172a" />
-                        <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Mi Cartera</text>
-                        <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="white" font-size="20" font-weight="800" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
-                    </svg>
+                <div class="drawer-header" id="bolsaPieHeader" style="cursor:pointer; width: 100%; margin-bottom: 0;">
+                    <div style="display:flex; align-items:center; gap: 10px; flex: 1;">
+                        <span class="drawer-icon">📊</span>
+                        <div class="drawer-info">
+                            <h4 style="margin:0">Distribución de Cartera <span class="toggle-arrow ${isBolsaPieExpanded ? 'expanded' : ''}">▼</span></h4>
+                            <p style="font-size: 0.8rem; opacity: 0.7;">Reparto de valor por activos</p>
+                        </div>
+                    </div>
                 </div>
-                <div style="width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.8rem;">
-                    ${legendHtml}
+
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2.5rem; width: 100%; padding-top: 1.5rem;">
+                    <div style="width: 100%; max-width: 380px; position: relative; aspect-ratio: 1/1;">
+                        <svg viewBox="0 0 400 400" width="100%" height="100%" style="display:block; overflow:visible;">
+                            ${slicePaths}
+                            <circle cx="${cx}" cy="${cy}" r="65" fill="#0f172a" />
+                            <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Mi Cartera</text>
+                            <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="white" font-size="20" font-weight="800" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
+                        </svg>
+                    </div>
+                    <div class="collapsible-content ${isBolsaPieExpanded ? 'expanded' : ''}" style="width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.8rem;">
+                        ${legendHtml}
+                    </div>
                 </div>`;
+
+            const header = container.querySelector('#bolsaPieHeader');
+            header.onclick = (e) => {
+                e.stopPropagation();
+                isBolsaPieExpanded = !isBolsaPieExpanded;
+                renderPortfolioPieChart();
+            };
         } catch (err) {
             container.innerHTML = `<p style="color:var(--danger); font-size:0.8rem;">Error al renderizar gráfico: ${err.message}</p>`;
         }
@@ -2168,21 +2152,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const pieCard = document.createElement('div');
             pieCard.className = 'card glass-panel';
-            pieCard.style.cssText = 'display:flex; flex-direction:column; padding:1.2rem; min-height:160px;';
+            pieCard.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1rem; min-height:160px;';
 
             if (pieSlices.length === 0) {
                 pieCard.innerHTML = '<p style="opacity:0.4;font-size:0.85rem;text-align:center;">Sin distribución</p>';
             } else {
                 const total = pieSlices.reduce((s, sl) => s + sl.value, 0);
                 const toR = d => d * Math.PI / 180;
-                const cx = 100, cy = 100, r = 90;
+                const cx = 100, cy = 100, r = 90; // larger (was 72/58)
                 let startAngle = -90;
                 const slices = pieSlices.map(sl => {
                     const pct = sl.value / total;
                     const sweep = pct * 360;
+                    const mid = startAngle + sweep / 2;
                     const sa = startAngle;
                     startAngle += sweep;
-                    return { ...sl, pct, sweep, sa };
+                    return { ...sl, pct, sweep, sa, mid };
                 });
 
                 const paths = slices.map(s => {
@@ -2207,37 +2192,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `).join('');
 
-                pieCard.innerHTML = `
-                    <div class="drawer-header" id="nominaPieHeader" style="cursor:pointer; margin-bottom: 1rem; width: 100%;">
-                        <div style="display:flex; align-items:center; gap: 10px;">
-                            <span class="drawer-icon">📈</span>
-                            <div class="drawer-info">
-                                <h4 style="margin:0">Distribución de Cartera <span class="toggle-arrow ${isNominaPieExpanded ? 'expanded' : ''}">▼</span></h4>
-                                <p style="font-size: 0.8rem; opacity: 0.7;">Reparto total de tus ingresos</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.2rem; align-items: center; justify-content: center; width: 100%;">
-                        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 140px;">
-                            <svg viewBox="0 0 200 200" width="150" height="150" style="display:block; overflow:visible;">
-                                ${paths}
-                                <circle cx="${cx}" cy="${cy}" r="40" fill="#0f172a" />
-                                <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="Outfit,sans-serif">Total</text>
-                                <text x="${cx}" y="${cy + 8}" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Outfit,sans-serif">${totalStr}</text>
-                            </svg>
-                        </div>
-                        <div class="collapsible-content ${isNominaPieExpanded ? 'expanded' : ''}" style="flex: 1.2; min-width: 160px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
-                            ${legendHtml}
-                        </div>
-                    </div>`;
+                pieCard.style.flexDirection = 'row';
+                pieCard.style.flexWrap = 'wrap';
+                pieCard.style.gap = '1.2rem';
+                pieCard.style.minHeight = '180px';
+                pieCard.style.padding = '1.2rem';
 
-                const header = pieCard.querySelector('#nominaPieHeader');
-                header.onclick = (e) => {
-                    e.stopPropagation();
-                    isNominaPieExpanded = !isNominaPieExpanded;
-                    renderNomina();
-                };
+                pieCard.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 140px;">
+                        <div style="font-size:0.8rem; opacity:0.5; margin-bottom:0.8rem; text-align:center; font-weight:600;">Distribución del ingreso</div>
+                        <svg viewBox="0 0 200 200" width="150" height="150" style="display:block; overflow:visible;">
+                            ${paths}
+                            <circle cx="${cx}" cy="${cy}" r="40" fill="#0f172a" />
+                            <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="Outfit,sans-serif">Total</text>
+                            <text x="${cx}" y="${cy + 8}" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Outfit,sans-serif">${totalStr}</text>
+                        </svg>
+                    </div>
+                    <div style="flex: 1.2; min-width: 160px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
+                        ${legendHtml}
+                    </div>`;
             }
             incomeSubGrid.appendChild(pieCard);
         }
