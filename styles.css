@@ -985,7 +985,7 @@ select:focus {
         border-right: none !important;
     }
 
-    #bolsaListHeader {
+    #bolsaListHeader h2 {
         display: none !important;
     }
 
