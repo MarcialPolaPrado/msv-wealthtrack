@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = 'bolsa';
     let isPrivacyActive = (window.loadPrivacy) ? window.loadPrivacy() : true;
     let isExpenseSummaryExpanded = false; // Collapsed by default
-    let bolsaViewMode = 'list'; // 'list' or 'cards'
+    let bolsaViewMode = 'cards'; // 'list' or 'cards'
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -389,6 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fix the typo in elements object
     elements.savingsMovementExpenseToggle = document.getElementById('savingsMovementExpenseToggle');
+    elements.savingsMovementIncomeToggle = document.getElementById('savingsMovementIncomeToggle');
 
     // Authentication removed as requested
     function showApp() {

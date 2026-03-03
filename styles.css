@@ -245,7 +245,7 @@ header {
 }
 
 .drawer-card:hover {
-    transform: translateY(-8px) rotateX(4deg) rotateY(-2deg);
+    transform: translateY(-8px);
     border-color: var(--primary);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.1);
 }
@@ -408,7 +408,7 @@ header {
 }
 
 .summary-card:hover {
-    transform: translateY(-8px) rotateX(4deg) rotateY(2deg);
+    transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.1);
     border-color: var(--primary);
 }
