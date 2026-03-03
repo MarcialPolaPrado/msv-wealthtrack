@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = 'bolsa';
     let isPrivacyActive = (window.loadPrivacy) ? window.loadPrivacy() : true;
     let isExpenseSummaryExpanded = false; // Collapsed by default
+    let bolsaViewMode = 'list'; // 'list' or 'cards'
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -341,7 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
         monthDetailModal: document.getElementById('monthDetailModal'),
         monthDetailTitle: document.getElementById('monthDetailTitle'),
         closeMonthDetailModal: document.getElementById('closeMonthDetailModal'),
-        monthDetailContent: document.getElementById('monthDetailContent')
+        monthDetailContent: document.getElementById('monthDetailContent'),
+        bolsaGrid: document.getElementById('bolsaGrid'),
+        bolsaTableViewBtn: document.getElementById('bolsaTableViewBtn'),
+        bolsaCardViewBtn: document.getElementById('bolsaCardViewBtn'),
+        stockTable: document.getElementById('stockTable')
     };
 
     const updateNominaMovementType = (type) => {
@@ -611,6 +616,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     elements.totalTrend.className = `trend ${pl >= 0 ? 'positive' : 'negative'}`;
                 }
             }
+        }
+
+        // Toggle Table vs Cards
+        if (bolsaViewMode === 'cards') {
+            if (elements.stockTable) elements.stockTable.parentElement.classList.add('hidden');
+            if (elements.bolsaGrid) {
+                elements.bolsaGrid.classList.remove('hidden');
+                renderBolsaCards(displayStocksData);
+            }
+        } else {
+            if (elements.stockTable) elements.stockTable.parentElement.classList.remove('hidden');
+            if (elements.bolsaGrid) elements.bolsaGrid.classList.add('hidden');
         }
 
         // 2.6 Group Data by Ticker
@@ -1316,6 +1333,163 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         renderSavingsPieChart();
+    }
+
+    function renderBolsaCards(displayStocksData) {
+        if (!elements.bolsaGrid) return;
+        elements.bolsaGrid.innerHTML = '';
+
+        // Group by ticker
+        const groupedData = {};
+        displayStocksData.forEach(item => {
+            if (currentFilter !== 'all' && item.market !== currentFilter) return;
+            if (!groupedData[item.ticker]) {
+                groupedData[item.ticker] = {
+                    ticker: item.ticker,
+                    name: item.name,
+                    market: item.market,
+                    totalQty: 0,
+                    totalInvested: 0,
+                    totalCurrentVal: 0,
+                    items: [],
+                    liveInfo: item.liveInfo
+                };
+            }
+            groupedData[item.ticker].totalQty += item.qty;
+            groupedData[item.ticker].totalInvested += item.liveInfo.stockInvested;
+            if (item.liveInfo.stockCurrentVal !== null) {
+                groupedData[item.ticker].totalCurrentVal += item.liveInfo.stockCurrentVal;
+            } else {
+                groupedData[item.ticker].totalCurrentVal = null;
+            }
+            groupedData[item.ticker].items.push(item);
+        });
+
+        const displayGroups = Object.values(groupedData).filter(g => g.totalQty > 0);
+
+        if (displayGroups.length === 0) {
+            elements.bolsaGrid.innerHTML = '<div class="empty-state"><p>No investments found.</p></div>';
+            return;
+        }
+
+        displayGroups.forEach(group => {
+            const info = group.liveInfo;
+            const plGroup = group.totalCurrentVal - group.totalInvested;
+            const plPercentGroup = group.totalInvested > 0 ? (plGroup / group.totalInvested) * 100 : 0;
+            const isExpanded = expandedTickers.has(group.ticker);
+
+            const card = document.createElement('div');
+            card.className = `card drawer-card glass-panel bolsa-drawer`;
+
+            // Color theme: similar to Nomina but for Bolsa (maybe blue/indigo)
+            card.style.background = 'rgba(99, 102, 241, 0.15)';
+            card.style.backgroundColor = '#1e1b4b';
+            card.style.backgroundImage = 'linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(15, 23, 42, 0.8) 100%)';
+            card.style.border = '2px solid #6366f1';
+
+            const performanceClass = (plPercentGroup === null) ? 'neutral' : (plPercentGroup < 0 ? 'loss' : 'profit');
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="drawer-icon">📈</span>
+                        <div style="display: flex; flex-direction: column;">
+                            <span class="drawer-name" style="color: white !important; font-weight: 700; margin: 0;">${group.name || group.ticker}</span>
+                            <span style="font-size: 0.75rem; opacity: 0.6;">${group.ticker} • ${group.market}</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="drawer-amount ${performanceClass}" style="font-weight: 800; font-size: 1.2rem; display: block;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
+                        <span class="${performanceClass}" style="font-size: 0.85rem; font-weight: 600;">${plGroup !== null ? (plGroup >= 0 ? '+' : '') + fmtEUR(plGroup) : '-'} (${fmtPct(plPercentGroup)})</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05); display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                    <div>
+                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Invested</div>
+                        <div style="font-weight: 600;">${fmtEUR(group.totalInvested)}</div>
+                    </div>
+                    <div>
+                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Current Price</div>
+                        <div style="font-weight: 600;">${info.price !== null ? (info.currency === 'EUR' ? fmtEUR(info.price) : fmtNum(info.price) + ' ' + info.currency) : '-'}</div>
+                    </div>
+                    <div>
+                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Quantity</div>
+                        <div style="font-weight: 600;">${fmtNum(group.totalQty, 4)}</div>
+                    </div>
+                    <div>
+                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Market</div>
+                        <div style="font-weight: 600;">${group.market}</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button class="add-mvmt-btn btn-primary" data-ticker="${group.ticker}" style="padding:0.4rem 0.8rem; font-size:0.8rem;">+</button>
+                    <button class="history-btn btn-secondary" data-ticker="${group.ticker}" style="padding:0.4rem 0.8rem; font-size:0.8rem;">Hist.</button>
+                    <button class="details-btn btn-secondary" data-ticker="${group.ticker}" style="padding:0.4rem 0.8rem; font-size:0.8rem;">🔍 Det.</button>
+                </div>
+
+                <div id="history-${group.ticker.replace(/[^a-zA-Z0-9]/g, '_')}" class="hidden" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        ${group.items.sort((a, b) => new Date(b.date) - new Date(a.date)).map(item => {
+                const itemPL = item.liveInfo.stockPL;
+                const isSale = item.qty < 0;
+                return `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.8rem;">
+                                    <div>
+                                        <div style="font-weight: 600; color: ${isSale ? 'var(--danger)' : 'var(--success)'}">${isSale ? '🔴 Venta' : '🟢 Compra'}</div>
+                                        <div style="opacity: 0.6; font-size: 0.7rem;">${new Date(item.date).toLocaleDateString()} • ${fmtNum(item.qty, 4)} @ ${fmtEUR(item.price)}</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 600;">${fmtEUR(item.liveInfo.stockCurrentVal || 0)}</div>
+                                        <div class="${itemPL >= 0 ? 'profit' : 'loss'}" style="font-size: 0.75rem;">${itemPL !== null ? (itemPL >= 0 ? '+' : '') + fmtEUR(itemPL) : '-'}</div>
+                                    </div>
+                                    <div style="display: flex; gap: 5px; margin-left: 10px;">
+                                        <button class="edit-btn-small" data-id="${item.id}" style="background:none; border:none; cursor:pointer; opacity:0.6;">✏️</button>
+                                        <button class="delete-btn-small" data-id="${item.id}" style="background:none; border:none; cursor:pointer; opacity:0.6;">🗑️</button>
+                                    </div>
+                                </div>
+                            `;
+            }).join('')}
+                    </div>
+                </div>
+            `;
+
+            card.addEventListener('click', (e) => {
+                const ticker = group.ticker;
+                if (e.target.closest('.add-mvmt-btn')) {
+                    addMoreFromStockByTicker(ticker);
+                } else if (e.target.closest('.history-btn')) {
+                    const historyDiv = card.querySelector(`#history-${ticker.replace(/[^a-zA-Z0-9]/g, '_')}`);
+                    historyDiv.classList.toggle('hidden');
+                } else if (e.target.closest('.details-btn')) {
+                    showFinancialDetails(ticker);
+                } else if (e.target.closest('.edit-btn-small')) {
+                    editStock(e.target.closest('.edit-btn-small').dataset.id);
+                } else if (e.target.closest('.delete-btn-small')) {
+                    if (confirm('¿Borrar esta operación?')) {
+                        removeStock(e.target.closest('.delete-btn-small').dataset.id);
+                    }
+                }
+            });
+
+            elements.bolsaGrid.appendChild(card);
+        });
+    }
+
+    function addMoreFromStockByTicker(ticker) {
+        const stock = stocks.find(s => s.ticker === ticker);
+        if (stock) {
+            addMoreFromStock(stock.id);
+        } else {
+            // If somehow we don't have it but it's in the group
+            elements.addStockForm.reset();
+            elements.editId.value = '';
+            elements.tickerInput.value = ticker;
+            elements.dateInput.valueAsDate = new Date();
+            elements.modalTitle.textContent = `Añadir Inversión - ${ticker}`;
+            toggleModal(true);
+        }
     }
 
     function renderPortfolioPieChart() {
@@ -3653,6 +3827,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 } finally {
                     btn.classList.remove('spin-animation');
                 }
+            });
+        }
+
+        // Bolsa View Toggle
+        if (elements.bolsaTableViewBtn) {
+            elements.bolsaTableViewBtn.addEventListener('click', () => {
+                bolsaViewMode = 'list';
+                elements.bolsaTableViewBtn.classList.add('active');
+                elements.bolsaTableViewBtn.style.background = 'var(--primary)';
+                elements.bolsaTableViewBtn.style.color = 'white';
+                elements.bolsaCardViewBtn.classList.remove('active');
+                elements.bolsaCardViewBtn.style.background = 'transparent';
+                elements.bolsaCardViewBtn.style.color = 'var(--text-muted)';
+                render();
+            });
+        }
+        if (elements.bolsaCardViewBtn) {
+            elements.bolsaCardViewBtn.addEventListener('click', () => {
+                bolsaViewMode = 'cards';
+                elements.bolsaCardViewBtn.classList.add('active');
+                elements.bolsaCardViewBtn.style.background = 'var(--primary)';
+                elements.bolsaCardViewBtn.style.color = 'white';
+                elements.bolsaTableViewBtn.classList.remove('active');
+                elements.bolsaTableViewBtn.style.background = 'transparent';
+                elements.bolsaTableViewBtn.style.color = 'var(--text-muted)';
+                render();
             });
         }
     }

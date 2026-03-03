@@ -155,8 +155,15 @@
 
                 <!-- Stock List Section (Hidden on Mobile) -->
                 <section class="stock-list-section glass-panel">
-                    <div class="section-header">
+                    <div class="section-header" style="display:flex; justify-content: space-between; align-items: center;">
                         <h2>Detalles de Cartera</h2>
+                        <div class="view-toggle" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button id="bolsaTableViewBtn" class="btn-sm active" style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s;">Lista</button>
+                            <button id="bolsaCardViewBtn" class="btn-sm" style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Cajones</button>
+                        </div>
+                    </div>
+                    <div id="bolsaGrid" class="drawers-grid hidden" style="margin-top: 1rem;">
+                        <!-- Cards will be injected by JS -->
                     </div>
                     <div class="table-container">
                         <table id="stockTable">
