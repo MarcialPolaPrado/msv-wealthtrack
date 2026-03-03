@@ -4524,6 +4524,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start
     const initApp = function () {
+        // Manejar accesos directos / deep links desde la URL
+        const params = new URLSearchParams(window.location.search);
+        const viewParam = params.get('view');
+        if (viewParam) {
+            currentView = viewParam;
+            // Actualizar estado activo en la navegación
+            elements.navItems.forEach(item => {
+                item.classList.toggle('active', item.dataset.view === viewParam);
+            });
+        }
+
         render();
         setupEventListeners();
         // Automatic update cycle removed. Now manual via refresh button.

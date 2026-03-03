@@ -20,9 +20,28 @@
     "path": "C:\\Users\\marci\\OneDrive\\MSV\\android_project\\android.keystore",
     "alias": "android"
   },
-  "appVersionName": "10",
-  "appVersionCode": 10,
-  "shortcuts": [],
+  "appVersionName": "13",
+  "appVersionCode": 13,
+  "shortcuts": [
+    {
+      "name": "Bolsa",
+      "shortName": "Bolsa",
+      "url": "https://marcialpolaprado.github.io/msv-wealthtrack/index.html?view=bolsa",
+      "chosenIconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/icon-192.png"
+    },
+    {
+      "name": "Ahorro",
+      "shortName": "Ahorro",
+      "url": "https://marcialpolaprado.github.io/msv-wealthtrack/index.html?view=ahorro",
+      "chosenIconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/icon-192.png"
+    },
+    {
+      "name": "Nómina",
+      "shortName": "Nómina",
+      "url": "https://marcialpolaprado.github.io/msv-wealthtrack/index.html?view=nomina",
+      "chosenIconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/icon-192.png"
+    }
+  ],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/manifest.json",
   "fallbackType": "customtabs",
@@ -47,5 +66,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "10"
+  "appVersion": "13"
 }
