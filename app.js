@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSavingsPieExpanded = true;
     let isBolsaPieExpanded = false;
     let selectedAhorroFiscalMonth = getFiscalMonth();
+    let analisisViewMode = 'list'; // 'list' or 'cards'
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -1014,30 +1015,96 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentFiscalMonthStr = getFiscalMonth();
         const currentMonthNum = parseInt(currentFiscalMonthStr.split('-')[1]);
 
-        const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        elements.analisisTableBody.innerHTML = monthlyData.map((d, i) => {
-            const isCurrentMonth = d.month === currentMonthNum;
-            const isInsufficient = (d.expenses + d.netSaving) > d.income;
+        const monthNamesFull = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-            let rowClasses = [];
-            if (isCurrentMonth) rowClasses.push('current-month-row');
-            if (isInsufficient) rowClasses.push('insufficient-income-row');
+        if (analisisViewMode === 'cards') {
+            elements.analisisTableContainer.classList.add('hidden');
+            elements.analisisGrid.classList.remove('hidden');
+            elements.analisisTableViewBtn.classList.remove('active');
+            elements.analisisCardViewBtn.classList.add('active');
+            elements.analisisTableViewBtn.style.background = 'transparent';
+            elements.analisisTableViewBtn.style.color = 'var(--text-muted)';
+            elements.analisisCardViewBtn.style.background = 'var(--primary)';
+            elements.analisisCardViewBtn.style.color = 'white';
 
-            const classAttr = rowClasses.length > 0 ? ` class="${rowClasses.join(' ')}"` : '';
+            elements.analisisGrid.innerHTML = monthlyData.map((d, i) => {
+                const isCurrentMonth = d.month === currentMonthNum;
+                const isInsufficient = (d.expenses + d.netSaving) > d.income;
+                const savingPct = d.income > 0 ? (d.netSaving / d.income * 100).toFixed(1) : 0;
 
-            return `<tr${classAttr} style="border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="showMonthDetailModal(${d.month})">` +
-                '<td style="padding: 0.8rem 1rem; font-weight: 500;">' + monthNames[i] + '</td>' +
-                '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--success);">' + fmtEUR(d.income) + '</td>' +
-                '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--danger); opacity: 0.8;">' + fmtEUR(d.expenses) + '</td>' +
-                '<td style="padding: 0.8rem 1rem; text-align: right; color: #f59e0b; font-weight: 600;">' + fmtEUR(d.netSaving) + '</td>' +
+                return `
+                    <div class="card drawer-card glass-panel ${isCurrentMonth ? 'current-month-card' : ''}" 
+                         style="cursor: pointer; border: 1px solid ${isCurrentMonth ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
+                                background: ${isCurrentMonth ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)'};
+                                padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;"
+                         onclick="showMonthDetailModal(${d.month})">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary);">${monthNamesFull[i]}</h4>
+                            ${isCurrentMonth ? '<span class="badge-live">Actual</span>' : ''}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Ingresos</div>
+                                <div style="font-weight: 700; color: var(--success);">${fmtEUR(d.income)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Gastos</div>
+                                <div style="font-weight: 700; color: var(--danger);">${fmtEUR(d.expenses)}</div>
+                            </div>
+                            <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Ahorro Neto</div>
+                                    <div style="font-weight: 700; color: #f59e0b; font-size: 1.1rem;">${fmtEUR(d.netSaving)}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.75rem; opacity: 0.6;">Tasa Ahorro</div>
+                                    <div style="font-weight: 600; color: var(--text-main);">${savingPct}%</div>
+                                </div>
+                            </div>
+                        </div>
+                        ${isInsufficient ? `
+                            <div style="margin-top: 0.2rem; font-size: 0.7rem; color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                                ⚠️ Saldo insuficiente (${fmtEUR(d.income - (d.expenses + d.netSaving))})
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            elements.analisisTableContainer.classList.remove('hidden');
+            elements.analisisGrid.classList.add('hidden');
+            elements.analisisTableViewBtn.classList.add('active');
+            elements.analisisCardViewBtn.classList.remove('active');
+            elements.analisisTableViewBtn.style.background = 'var(--primary)';
+            elements.analisisTableViewBtn.style.color = 'white';
+            elements.analisisCardViewBtn.style.background = 'transparent';
+            elements.analisisCardViewBtn.style.color = 'var(--text-muted)';
+
+            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            elements.analisisTableBody.innerHTML = monthlyData.map((d, i) => {
+                const isCurrentMonth = d.month === currentMonthNum;
+                const isInsufficient = (d.expenses + d.netSaving) > d.income;
+
+                let rowClasses = [];
+                if (isCurrentMonth) rowClasses.push('current-month-row');
+                if (isInsufficient) rowClasses.push('insufficient-income-row');
+
+                const classAttr = rowClasses.length > 0 ? ` class="${rowClasses.join(' ')}"` : '';
+
+                return `<tr${classAttr} style="border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="showMonthDetailModal(${d.month})">` +
+                    '<td style="padding: 0.8rem 1rem; font-weight: 500;">' + monthNames[i] + '</td>' +
+                    '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--success);">' + fmtEUR(d.income) + '</td>' +
+                    '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--danger); opacity: 0.8;">' + fmtEUR(d.expenses) + '</td>' +
+                    '<td style="padding: 0.8rem 1rem; text-align: right; color: #f59e0b; font-weight: 600;">' + fmtEUR(d.netSaving) + '</td>' +
+                    '</tr>';
+            }).join('') +
+                '<tr style="border-top: 2px solid var(--primary); background: rgba(255,255,255,0.03);">' +
+                '<td style="padding: 0.8rem 1rem; font-weight: 700;">Total</td>' +
+                '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--success); font-weight: 700;">' + fmtEUR(totalInc) + '</td>' +
+                '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--danger); font-weight: 700;">' + fmtEUR(totalExp) + '</td>' +
+                '<td style="padding: 0.8rem 1rem; text-align: right; color: #f59e0b; font-weight: 700;">' + fmtEUR(totalNetSaving) + '</td>' +
                 '</tr>';
-        }).join('') +
-            '<tr style="border-top: 2px solid var(--primary); background: rgba(255,255,255,0.03);">' +
-            '<td style="padding: 0.8rem 1rem; font-weight: 700;">Total</td>' +
-            '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--success); font-weight: 700;">' + fmtEUR(totalInc) + '</td>' +
-            '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--danger); font-weight: 700;">' + fmtEUR(totalExp) + '</td>' +
-            '<td style="padding: 0.8rem 1rem; text-align: right; color: #f59e0b; font-weight: 700;">' + fmtEUR(totalNetSaving) + '</td>' +
-            '</tr>';
+        }
 
         renderAnalisisChart(monthlyData);
 
@@ -3631,6 +3698,26 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleNominaModal(false);
             renderNomina();
         });
+
+        // Analisis Listeners
+        if (elements.analisisTableViewBtn) {
+            elements.analisisTableViewBtn.onclick = () => {
+                analisisViewMode = 'list';
+                renderAnalisis();
+            };
+        }
+        if (elements.analisisCardViewBtn) {
+            elements.analisisCardViewBtn.onclick = () => {
+                analisisViewMode = 'cards';
+                renderAnalisis();
+            };
+        }
+        if (elements.analisisMobileTitle) {
+            elements.analisisMobileTitle.onclick = () => {
+                analisisViewMode = analisisViewMode === 'list' ? 'cards' : 'list';
+                renderAnalisis();
+            };
+        }
 
         elements.nominaMovementForm?.addEventListener('submit', (e) => {
             e.preventDefault();

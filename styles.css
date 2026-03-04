@@ -1649,3 +1649,22 @@ select:focus {
     }
 }
 
+
+/* Analisis View Styles */
+.current-month-row {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-left: 3px solid var(--primary);
+}
+
+.insufficient-income-row {
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.insufficient-income-row td {
+    color: var(--danger) !important;
+}
+
+.current-month-card {
+    border: 1px solid var(--primary) !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}

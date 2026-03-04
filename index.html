@@ -290,11 +290,23 @@
 
 
                 <div class="savings-container">
-                    <div
+                    <div class="section-header"
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                        <h2 style="margin:0">Distribución por Meses</h2>
+                        <h2 style="margin:0" id="analisisMobileTitle">Distribución por Meses</h2>
+                        <div class="view-toggle"
+                            style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button id="analisisTableViewBtn" class="btn-sm active"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Lista</button>
+                            <button id="analisisCardViewBtn" class="btn-sm"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Cajones</button>
+                        </div>
                     </div>
-                    <div class="table-container glass-panel" style="margin-bottom: 2rem; overflow-x: auto;">
+                    <div id="analisisGrid" class="drawers-grid hidden" style="margin-bottom: 2rem;">
+                        <!-- Cards will be rendered here -->
+                    </div>
+
+                    <div id="analisisTableContainer" class="table-container glass-panel"
+                        style="margin-bottom: 2rem; overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="border-bottom: 2px solid var(--primary);">
