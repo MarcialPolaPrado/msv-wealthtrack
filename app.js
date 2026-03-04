@@ -11,10 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let isExpenseSummaryExpanded = false; // Collapsed by default
     let bolsaViewMode = 'cards'; // 'list' or 'cards'
     let isAhorroSummaryExpanded = false;
-    let isSavingsPieExpanded = true;
+    let isSavingsPieExpanded = false;
     let isBolsaPieExpanded = false;
     let selectedAhorroFiscalMonth = getFiscalMonth();
     let analisisViewMode = 'list'; // 'list' or 'cards'
+    let analisisSortConfig = { key: 'month', direction: 'asc' };
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -1030,6 +1031,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const monthNamesFull = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+        // Sort monthlyData for display
+        const displayData = [...monthlyData];
+        if (analisisSortConfig.key) {
+            displayData.sort((a, b) => {
+                let valA = a[analisisSortConfig.key];
+                let valB = b[analisisSortConfig.key];
+                if (analisisSortConfig.direction === 'asc') return valA - valB;
+                return valB - valA;
+            });
+        }
+
+        // Update Sort Icons in Table Headers
+        elements.analisisSection?.querySelectorAll('th[data-sort]').forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (icon) {
+                if (th.dataset.sort === analisisSortConfig.key) {
+                    icon.textContent = analisisSortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+                    th.style.color = 'var(--primary)';
+                } else {
+                    icon.textContent = '';
+                    th.style.color = 'inherit';
+                }
+            }
+        });
+
         if (analisisViewMode === 'cards' && elements.analisisGrid && elements.analisisTableContainer) {
             elements.analisisTableContainer.classList.add('hidden');
             elements.analisisGrid.classList.remove('hidden');
@@ -1044,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.analisisCardViewBtn.style.color = 'white';
             }
 
-            elements.analisisGrid.innerHTML = monthlyData.map((d, i) => {
+            elements.analisisGrid.innerHTML = displayData.map((d) => {
                 const isCurrentMonth = d.month === currentMonthNum;
                 const isInsufficient = (d.expenses + d.netSaving) > d.income;
                 const savingPct = d.income > 0 ? (d.netSaving / d.income * 100).toFixed(1) : 0;
@@ -1056,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;"
                          data-month="${d.month}" role="button" tabindex="0">
                         <div style="display: flex; justify-content: space-between; align-items: center; pointer-events: none;">
-                            <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary);">${monthNamesFull[i]}</h4>
+                            <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary);">${monthNamesFull[d.month - 1]}</h4>
                             ${isCurrentMonth ? '<span class="badge-live">Actual</span>' : ''}
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; pointer-events: none;">
@@ -1101,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.analisisCardViewBtn.style.color = 'var(--text-muted)';
             }
 
-            elements.analisisTableBody.innerHTML = monthlyData.map((d, i) => {
+            elements.analisisTableBody.innerHTML = displayData.map((d) => {
                 const isCurrentMonth = d.month === currentMonthNum;
                 const isInsufficient = (d.expenses + d.netSaving) > d.income;
 
@@ -1112,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const classAttr = rowClasses.length > 0 ? ` class="${rowClasses.join(' ')}"` : '';
 
                 return `<tr${classAttr} style="border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" data-month="${d.month}">` +
-                    '<td style="padding: 0.8rem 1rem; font-weight: 500;">' + monthNames[i] + '</td>' +
+                    '<td style="padding: 0.8rem 1rem; font-weight: 500;">' + monthNames[d.month - 1] + '</td>' +
                     '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--success);">' + fmtEUR(d.income) + '</td>' +
                     '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--danger); opacity: 0.8;">' + fmtEUR(d.expenses) + '</td>' +
                     '<td style="padding: 0.8rem 1rem; text-align: right; color: #f59e0b; font-weight: 600;">' + fmtEUR(d.netSaving) + '</td>' +
@@ -1962,16 +1988,18 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.padding = '1rem';
 
         container.innerHTML = `
-            <div style="flex: 1; min-width: 200px; max-width: 400px; position: relative;">
-                <svg viewBox="0 0 300 300" width="100%" height="auto" style="display:block; overflow:visible;">
-                    ${slicePaths}
-                    <circle cx="${cx}" cy="${cy}" r="60" fill="#0f172a" />
-                    <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Total</text>
-                    <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="white" font-size="18" font-weight="700" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
-                </svg>
-            </div>
-            <div class="collapsible-content ${isSavingsPieExpanded ? 'expanded' : ''}" style="flex: 1.5; min-width: 250px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; align-content: center;">
-                ${legendHtml}
+            <div class="collapsible-content ${isSavingsPieExpanded ? 'expanded' : ''}" style="width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;">
+                <div style="flex: 1; min-width: 200px; max-width: 400px; position: relative;">
+                    <svg viewBox="0 0 300 300" width="100%" height="auto" style="display:block; overflow:visible;">
+                        ${slicePaths}
+                        <circle cx="${cx}" cy="${cy}" r="60" fill="#0f172a" />
+                        <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Total</text>
+                        <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="white" font-size="18" font-weight="700" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
+                    </svg>
+                </div>
+                <div style="flex: 1.5; min-width: 250px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; align-content: center;">
+                    ${legendHtml}
+                </div>
             </div>`;
     }
 
@@ -3865,6 +3893,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             addStock(stockData);
+        });
+
+        elements.analisisSection?.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.dataset.sort;
+                if (analisisSortConfig.key === key) {
+                    analisisSortConfig.direction = analisisSortConfig.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    analisisSortConfig.key = key;
+                    analisisSortConfig.direction = 'asc';
+                }
+                renderAnalisis();
+            });
         });
 
         // Search logic
