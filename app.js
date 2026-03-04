@@ -1037,12 +1037,12 @@ document.addEventListener('DOMContentLoaded', () => {
                          style="cursor: pointer; border: 1px solid ${isCurrentMonth ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
                                 background: ${isCurrentMonth ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)'};
                                 padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;"
-                         onclick="showMonthDetailModal(${d.month})">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                         data-month="${d.month}" role="button" tabindex="0">
+                        <div style="display: flex; justify-content: space-between; align-items: center; pointer-events: none;">
                             <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary);">${monthNamesFull[i]}</h4>
                             ${isCurrentMonth ? '<span class="badge-live">Actual</span>' : ''}
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; pointer-events: none;">
                             <div>
                                 <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Ingresos</div>
                                 <div style="font-weight: 700; color: var(--success);">${fmtEUR(d.income)}</div>
@@ -1063,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         ${isInsufficient ? `
-                            <div style="margin-top: 0.2rem; font-size: 0.7rem; color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                            <div style="margin-top: 0.2rem; font-size: 0.7rem; color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px; pointer-events: none;">
                                 ⚠️ Saldo insuficiente (${fmtEUR(d.income - (d.expenses + d.netSaving))})
                             </div>
                         ` : ''}
@@ -1091,7 +1091,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const classAttr = rowClasses.length > 0 ? ` class="${rowClasses.join(' ')}"` : '';
 
-                return `<tr${classAttr} style="border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="showMonthDetailModal(${d.month})">` +
+                return `<tr${classAttr} style="border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" data-month="${d.month}">` +
                     '<td style="padding: 0.8rem 1rem; font-weight: 500;">' + monthNames[i] + '</td>' +
                     '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--success);">' + fmtEUR(d.income) + '</td>' +
                     '<td style="padding: 0.8rem 1rem; text-align: right; color: var(--danger); opacity: 0.8;">' + fmtEUR(d.expenses) + '</td>' +
@@ -3717,6 +3717,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 analisisViewMode = analisisViewMode === 'list' ? 'cards' : 'list';
                 renderAnalisis();
             };
+        }
+
+        // Analisis Click Listener
+        if (elements.analisisSection) {
+            elements.analisisSection.addEventListener('click', (e) => {
+                const trigger = e.target.closest('[data-month]');
+                if (trigger) {
+                    const monthNum = parseInt(trigger.dataset.month);
+                    if (monthNum && window.showMonthDetailModal) {
+                        window.showMonthDetailModal(monthNum);
+                    }
+                }
+            });
         }
 
         elements.nominaMovementForm?.addEventListener('submit', (e) => {
