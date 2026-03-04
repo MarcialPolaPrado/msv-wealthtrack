@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isAhorroSummaryExpanded = false;
     let isSavingsPieExpanded = true;
     let isBolsaPieExpanded = false;
+    let selectedAhorroFiscalMonth = getFiscalMonth();
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -1282,9 +1283,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('ahorroSummaryDrawer');
         if (!container) return;
 
-        const currentFiscalMonth = getFiscalMonth();
-        const categoryTotals = {};
+        // Collect all months with data
+        const allMonths = new Set();
+        allMonths.add(getFiscalMonth()); // Always include current
+        savingsDrawers.forEach(drawer => {
+            (drawer.movements || []).forEach(m => {
+                const d = new Date(m.date);
+                if (!isNaN(d.getTime())) allMonths.add(getFiscalMonth(d));
+            });
+        });
+        const sortedMonths = Array.from(allMonths).sort().reverse();
 
+        const categoryTotals = {};
         savingsDrawers.forEach(drawer => {
             if (drawer.isAuto) return;
             (drawer.movements || []).forEach(m => {
@@ -1292,51 +1302,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isNaN(mDate.getTime())) return;
 
                 const mFiscal = getFiscalMonth(mDate);
-                if (mFiscal === currentFiscalMonth) {
+                if (mFiscal === selectedAhorroFiscalMonth) {
                     const cat = m.category || (m.amount >= 0 ? 'Ahorro' : 'Gasto');
                     categoryTotals[cat] = (categoryTotals[cat] || 0) + m.amount;
                 }
             });
         });
 
-        if (Object.keys(categoryTotals).length === 0) {
-            container.innerHTML = `
-                <div class="card drawer-card glass-panel summary-drawer" style="grid-column: 1 / -1; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; width: 100%; text-align: center;">
-                    <p style="opacity: 0.5;">No hay movimientos en el mes fiscal actual (${formatFiscalMonth(currentFiscalMonth)}).</p>
-                </div>`;
-            return;
-        }
-
+        const hasData = Object.keys(categoryTotals).length > 0;
         const sortedCats = Object.entries(categoryTotals).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
 
         container.innerHTML = `
             <div class="card drawer-card glass-panel summary-drawer" style="grid-column: 1 / -1; border: 1px solid var(--primary); padding: 1.5rem; width: 100%;">
-                <div class="drawer-header" id="ahorroSummaryHeader" style="cursor:pointer;">
+                <div class="drawer-header" id="ahorroSummaryHeader" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div style="display:flex; align-items:center; gap: 10px; flex: 1;">
                         <span class="drawer-icon">📊</span>
                         <div class="drawer-info">
-                            <h4 style="margin:0">Distribución por Categoría: ${formatFiscalMonth(currentFiscalMonth)} <span class="toggle-arrow ${isAhorroSummaryExpanded ? 'expanded' : ''}">▼</span></h4>
-                            <p style="font-size: 0.8rem; opacity: 0.7;">Resumen de movimientos del mes fiscal (desde el día 25)</p>
+                            <h4 style="margin:0">Distribución por Categoría <span class="toggle-arrow ${isAhorroSummaryExpanded ? 'expanded' : ''}">▼</span></h4>
+                            <p style="font-size: 0.8rem; opacity: 0.7;">Resumen de movimientos por mes fiscal</p>
                         </div>
+                    </div>
+                    <div class="month-selector-container" style="display: flex; align-items: center; gap: 8px;">
+                        <label style="font-size: 0.8rem; opacity: 0.8;">Mes:</label>
+                        <select id="ahorroMonthSelect" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                            ${sortedMonths.map(m => `
+                                <option value="${m}" ${m === selectedAhorroFiscalMonth ? 'selected' : ''}>${formatFiscalMonth(m)}</option>
+                            `).join('')}
+                        </select>
                     </div>
                 </div>
 
                 <div class="collapsible-content ${isAhorroSummaryExpanded ? 'expanded' : ''}" id="ahorroSummaryContent">
-                    <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        ${sortedCats.map(([cat, total]) => `
-                            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
-                                <div style="font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">${cat}</div>
-                                <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};"> ${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
+                    ${!hasData ? `
+                        <div style="margin-top: 1.5rem; text-align: center; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+                            <p style="opacity: 0.5; margin: 0;">No hay movimientos en el mes fiscal seleccionado (${formatFiscalMonth(selectedAhorroFiscalMonth)}).</p>
+                        </div>
+                    ` : `
+                        <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            ${sortedCats.map(([cat, total]) => `
+                                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
+                                    <div style="font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">${cat}</div>
+                                    <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};"> ${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
                 </div>
             </div>
         `;
 
         const header = container.querySelector('#ahorroSummaryHeader');
-        header.onclick = () => {
+        header.onclick = (e) => {
+            if (e.target.closest('#ahorroMonthSelect')) return;
             isAhorroSummaryExpanded = !isAhorroSummaryExpanded;
+            renderAhorroSummaryDrawer();
+        };
+
+        const select = container.querySelector('#ahorroMonthSelect');
+        select.onchange = (e) => {
+            selectedAhorroFiscalMonth = e.target.value;
             renderAhorroSummaryDrawer();
         };
     }
