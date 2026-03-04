@@ -3767,12 +3767,27 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        // Analisis Click Listener
+        // Analisis Click Listener (Delegated for Sorting and Month Detail)
         if (elements.analisisSection) {
             elements.analisisSection.addEventListener('click', (e) => {
-                const trigger = e.target.closest('[data-month]');
-                if (trigger) {
-                    const monthNum = parseInt(trigger.dataset.month);
+                // Check for sorting click
+                const sortTrigger = e.target.closest('th[data-sort]');
+                if (sortTrigger) {
+                    const key = sortTrigger.dataset.sort;
+                    if (analisisSortConfig.key === key) {
+                        analisisSortConfig.direction = analisisSortConfig.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        analisisSortConfig.key = key;
+                        analisisSortConfig.direction = 'asc';
+                    }
+                    renderAnalisis();
+                    return; // Sorting handled
+                }
+
+                // Check for month detail click (row or card)
+                const monthTrigger = e.target.closest('[data-month]');
+                if (monthTrigger) {
+                    const monthNum = parseInt(monthTrigger.dataset.month);
                     if (monthNum && window.showMonthDetailModal) {
                         window.showMonthDetailModal(monthNum);
                     }
@@ -3893,19 +3908,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             addStock(stockData);
-        });
-
-        elements.analisisSection?.querySelectorAll('th[data-sort]').forEach(th => {
-            th.addEventListener('click', () => {
-                const key = th.dataset.sort;
-                if (analisisSortConfig.key === key) {
-                    analisisSortConfig.direction = analisisSortConfig.direction === 'asc' ? 'desc' : 'asc';
-                } else {
-                    analisisSortConfig.key = key;
-                    analisisSortConfig.direction = 'asc';
-                }
-                renderAnalisis();
-            });
         });
 
         // Search logic

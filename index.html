@@ -309,11 +309,15 @@
                         style="margin-bottom: 2rem; overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
-                                <tr style="border-bottom: 2px solid var(--primary);">
-                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="month">Mes <span class="sort-icon"></span></th>
-                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="income">Ingresos <span class="sort-icon"></span></th>
-                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="expenses">Gastos <span class="sort-icon"></span></th>
-                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="netSaving">Ahorro Neto <span class="sort-icon"></span></th>
+                                <tr style="border-bottom: 2px solid var(--primary); user-select: none;">
+                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="month"
+                                        onclick="">Mes <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="income"
+                                        onclick="">Ingresos <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="expenses"
+                                        onclick="">Gastos <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="netSaving"
+                                        onclick="">Ahorro Neto <span class="sort-icon"></span></th>
                                 </tr>
                             </thead>
                             <tbody id="analisisTableBody">
