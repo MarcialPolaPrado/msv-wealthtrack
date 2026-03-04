@@ -318,6 +318,14 @@ document.addEventListener('DOMContentLoaded', () => {
         analisisTableBody: document.getElementById('analisisTableBody'),
         analisisDeficitContainer: document.getElementById('analisisDeficitContainer'),
         analisisChart: document.getElementById('analisisChart'),
+        analisisTableContainer: document.getElementById('analisisTableContainer'),
+        analisisGrid: document.getElementById('analisisGrid'),
+        analisisTableViewBtn: document.getElementById('analisisTableViewBtn'),
+        analisisCardViewBtn: document.getElementById('analisisCardViewBtn'),
+        analisisMobileTitle: document.getElementById('analisisMobileTitle'),
+        totalYearlyIncome: document.getElementById('totalYearlyIncome'),
+        totalYearlyExpense: document.getElementById('totalYearlyExpense'),
+        totalYearlyNetSaving: document.getElementById('totalYearlyNetSaving'),
         nominaMovementForm: document.getElementById('nominaMovementForm'),
         nominaMovementModalTitle: document.getElementById('nominaMovementModalTitle'),
         closeNominaMovementModal: document.getElementById('closeNominaMovementModal'),
@@ -1011,21 +1019,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalExp = monthlyData.reduce((s, d) => s + d.expenses, 0);
         const totalNetSaving = monthlyData.reduce((s, d) => s + d.netSaving, 0);
 
+        // Update Yearly Totals
+        if (elements.totalYearlyIncome) elements.totalYearlyIncome.textContent = fmtEUR(totalInc);
+        if (elements.totalYearlyExpense) elements.totalYearlyExpense.textContent = fmtEUR(totalExp);
+        if (elements.totalYearlyNetSaving) elements.totalYearlyNetSaving.textContent = fmtEUR(totalNetSaving);
 
         const currentFiscalMonthStr = getFiscalMonth();
         const currentMonthNum = parseInt(currentFiscalMonthStr.split('-')[1]);
 
         const monthNamesFull = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-        if (analisisViewMode === 'cards') {
+        if (analisisViewMode === 'cards' && elements.analisisGrid && elements.analisisTableContainer) {
             elements.analisisTableContainer.classList.add('hidden');
             elements.analisisGrid.classList.remove('hidden');
-            elements.analisisTableViewBtn.classList.remove('active');
-            elements.analisisCardViewBtn.classList.add('active');
-            elements.analisisTableViewBtn.style.background = 'transparent';
-            elements.analisisTableViewBtn.style.color = 'var(--text-muted)';
-            elements.analisisCardViewBtn.style.background = 'var(--primary)';
-            elements.analisisCardViewBtn.style.color = 'white';
+            if (elements.analisisTableViewBtn) {
+                elements.analisisTableViewBtn.classList.remove('active');
+                elements.analisisTableViewBtn.style.background = 'transparent';
+                elements.analisisTableViewBtn.style.color = 'var(--text-muted)';
+            }
+            if (elements.analisisCardViewBtn) {
+                elements.analisisCardViewBtn.classList.add('active');
+                elements.analisisCardViewBtn.style.background = 'var(--primary)';
+                elements.analisisCardViewBtn.style.color = 'white';
+            }
 
             elements.analisisGrid.innerHTML = monthlyData.map((d, i) => {
                 const isCurrentMonth = d.month === currentMonthNum;
@@ -1070,17 +1087,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             }).join('');
-        } else {
+        } else if (elements.analisisTableContainer && elements.analisisGrid) {
             elements.analisisTableContainer.classList.remove('hidden');
             elements.analisisGrid.classList.add('hidden');
-            elements.analisisTableViewBtn.classList.add('active');
-            elements.analisisCardViewBtn.classList.remove('active');
-            elements.analisisTableViewBtn.style.background = 'var(--primary)';
-            elements.analisisTableViewBtn.style.color = 'white';
-            elements.analisisCardViewBtn.style.background = 'transparent';
-            elements.analisisCardViewBtn.style.color = 'var(--text-muted)';
+            if (elements.analisisTableViewBtn) {
+                elements.analisisTableViewBtn.classList.add('active');
+                elements.analisisTableViewBtn.style.background = 'var(--primary)';
+                elements.analisisTableViewBtn.style.color = 'white';
+            }
+            if (elements.analisisCardViewBtn) {
+                elements.analisisCardViewBtn.classList.remove('active');
+                elements.analisisCardViewBtn.style.background = 'transparent';
+                elements.analisisCardViewBtn.style.color = 'var(--text-muted)';
+            }
 
-            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             elements.analisisTableBody.innerHTML = monthlyData.map((d, i) => {
                 const isCurrentMonth = d.month === currentMonthNum;
                 const isInsufficient = (d.expenses + d.netSaving) > d.income;
