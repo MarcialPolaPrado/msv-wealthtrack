@@ -1586,6 +1586,7 @@ select:focus {
         transform: rotate(360deg);
     }
 }
+
 /* PWA Update Toast */
 .pwa-update-toast {
     position: fixed;
@@ -1638,12 +1639,14 @@ select:focus {
 
 @media (max-width: 480px) {
     .pwa-update-toast {
-        bottom: 5rem; /* Up from mobile nav */
+        bottom: 5rem;
+        /* Up from mobile nav */
         flex-direction: column;
         align-items: stretch;
         gap: 1rem;
         text-align: center;
     }
+
     .pwa-toast-content {
         flex-direction: column;
     }
@@ -1667,4 +1670,100 @@ select:focus {
 .current-month-card {
     border: 1px solid var(--primary) !important;
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+/* Ahorro List View Styles */
+.ahorro-list-header {
+    background: rgba(255, 255, 255, 0.08);
+    font-weight: bold;
+    border-bottom: 1px solid var(--primary);
+}
+
+.ahorro-list-header td {
+    padding: 0.8rem 1rem;
+}
+
+.ahorro-list-header .header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.ahorro-list-header .list-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.ahorro-list-header .balance {
+    text-align: right;
+    color: var(--primary);
+    font-weight: 800;
+}
+
+.ahorro-list-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.ahorro-list-row td {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+}
+
+.ahorro-list-row .date {
+    padding-left: 2rem;
+    opacity: 0.8;
+}
+
+.ahorro-list-row .concept {
+    /* Flexible concept column */
+}
+
+.ahorro-list-row .amount {
+    text-align: right;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.ahorro-list-empty-row td {
+    padding: 0.6rem 1rem;
+    font-style: italic;
+    opacity: 0.4;
+    font-size: 0.8rem;
+    padding-left: 2rem;
+}
+
+/* Specific to VERY narrow screens (like Fold front) */
+@media (max-width: 380px) {
+    .ahorro-list-header td {
+        padding: 0.5rem 0.6rem;
+    }
+
+    .ahorro-list-header .header-content {
+        gap: 0.5rem;
+    }
+
+    .ahorro-list-header .list-actions button {
+        padding: 0.2rem 0.3rem !important;
+        font-size: 0.6rem !important;
+    }
+
+    .ahorro-list-row td {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .ahorro-list-row .date {
+        padding-left: 0.5rem;
+    }
+
+    #ahorroCurrentMonthLabel {
+        font-size: 1rem;
+        min-width: 120px !important;
+    }
+
+    .list-navigation {
+        gap: 0.5rem !important;
+        padding: 0.5rem !important;
+    }
 }
