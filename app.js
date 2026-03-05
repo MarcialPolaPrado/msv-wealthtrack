@@ -2250,9 +2250,29 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // Pre-calculate totals for headers (matching renderNomina summary logic)
+        let totalPrimaryIncome = 0;
+        let totalBudgetedProvisions = 0;
+
+        nominaData.forEach(drawer => {
+            const isIncomeType = drawer.type === 'income';
+            const monthlyMovements = (drawer.movements || [])
+                .filter(m => (m.activeMonths || []).map(Number).includes(currentMonthNum));
+
+            monthlyMovements.forEach(m => {
+                if (m.amount > 0) {
+                    if (isIncomeType) totalPrimaryIncome += m.amount;
+                    else if (isProvision(m) && !drawer.isAutomatic) totalBudgetedProvisions += m.amount;
+                } else if (m.amount < 0 && isIncomeType) {
+                    totalPrimaryIncome += m.amount;
+                }
+            });
+        });
+
+        const calculatedUndestined = totalPrimaryIncome - totalBudgetedProvisions;
+
         const categoryTotals = nominaData.reduce((acc, drawer) => {
             const monthlyMovements = (drawer.movements || [])
-                .filter(m => (m.activeMonths || []).includes(currentMonthNum));
+                .filter(m => (m.activeMonths || []).map(Number).includes(currentMonthNum));
 
             if (drawer.type === 'income') {
                 const monthlySum = monthlyMovements.reduce((s, m) => s + m.amount, 0);
@@ -2291,7 +2311,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const headerTr = document.createElement('tr');
             headerTr.className = 'ahorro-list-header'; // Reusing consistency
 
-            const monthlyBalance = drawerMovements.reduce((sum, m) => sum + m.amount, 0);
+            let monthlyBalance = drawerMovements.reduce((sum, m) => sum + m.amount, 0);
+            if (drawer.isAutomatic) {
+                monthlyBalance = calculatedUndestined;
+            }
 
             headerTr.innerHTML = `
                 <td colspan="2">
