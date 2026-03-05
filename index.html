@@ -13,11 +13,11 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link rel="manifest" href="manifest.json">
-    <title>Premium Stock Portfolio</title>
+    <title>Premium Stock Portfolio - v2026.03.05.16</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=2026030515">
+    <link rel="stylesheet" href="styles.css?v=2026030516">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -57,7 +57,7 @@
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
                     <p
                         style="margin:0; font-size: 0.6rem; opacity: 0.6; color: var(--primary); letter-spacing: 0.05em;">
-                        v2026.03.05.15</p>
+                        v2026.03.05.16</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -854,14 +854,14 @@
         </div>
     </div>
 
-    <script src="mock_data.js?v=2026030515"></script>
-    <script src="storage.js?v=2026030515"></script>
-    <script src="app.js?v=2026030515"></script>
+    <script src="mock_data.js?v=2026030516"></script>
+    <script src="storage.js?v=2026030516"></script>
+    <script src="app.js?v=2026030516"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026030515')
+                navigator.serviceWorker.register('./sw.js?v=2026030516')
                     .then(reg => {
                         // Check for updates periodically
                         setInterval(() => {

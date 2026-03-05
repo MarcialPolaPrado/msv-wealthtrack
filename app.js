@@ -282,6 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileActionBar: document.getElementById('mobileActionBar'),
         privacyToggleBtn: document.getElementById('privacyToggleBtn'),
         mobilePrivacyToggleBtn: document.getElementById('mobilePrivacyToggleBtn'),
+        savingsInputForm: document.getElementById('savingsInputForm'),
+        savingsMovementIndex: document.getElementById('savingsMovementIndex'),
         savingsMovementTypeContainer: document.getElementById('savingsMovementTypeContainer'),
         savingsMovementIncomeToggle: document.getElementById('savingsMovementIncomeToggle'),
         savingsMovementExpenseToggle: document.getElementById('savingsMovementExpenseToggle'),
