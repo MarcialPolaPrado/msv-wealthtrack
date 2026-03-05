@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSavingsPieExpanded = false;
     let isBolsaPieExpanded = false;
     let selectedAhorroFiscalMonth = getFiscalMonth();
+    let ahorroViewMode = localStorage.getItem('ahorroViewMode') || 'cards'; // 'cards' or 'list'
+    let ahorroListMonth = getFiscalMonth();
+    let ahorroSortConfig = { key: 'name', direction: 'asc' }; // Sort drawers by name, balance, etc.
     let analisisViewMode = 'list'; // 'list' or 'cards'
     let analisisSortConfig = { key: 'month', direction: 'asc' };
 
@@ -254,7 +257,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Savings Modal Elements
         savingsInputModal: document.getElementById('savingsInputModal'),
-        savingsInputForm: document.getElementById('savingsInputForm'),
+        addDrawerBtn: document.getElementById('addDrawerBtn'),
+        ahorroCardViewBtn: document.getElementById('ahorroCardViewBtn'),
+        ahorroTableViewBtn: document.getElementById('ahorroTableViewBtn'),
+        ahorroTableContainer: document.getElementById('ahorroTableContainer'),
+        ahorroTableBody: document.getElementById('ahorroTableBody'),
+        ahorroCurrentMonthLabel: document.getElementById('ahorroCurrentMonthLabel'),
+        prevAhorroMonthBtn: document.getElementById('prevAhorroMonthBtn'),
+        nextAhorroMonthBtn: document.getElementById('nextAhorroMonthBtn'),
         savingsModalTitle: document.getElementById('savingsModalTitle'),
         closeSavingsModal: document.getElementById('closeSavingsModal'),
         savingsTargetId: document.getElementById('savingsTargetId'),
@@ -1478,6 +1488,126 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    function renderSavingsList() {
+        if (!elements.ahorroTableBody || !elements.ahorroCurrentMonthLabel) return;
+
+        // Update Label
+        const [year, month] = ahorroListMonth.split('-');
+        const dateObj = new Date(year, parseInt(month) - 1, 1);
+        const monthName = dateObj.toLocaleString('es-ES', { month: 'long' });
+        elements.ahorroCurrentMonthLabel.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+
+        elements.ahorroTableBody.innerHTML = '';
+
+        if (savingsDrawers.length === 0) {
+            elements.ahorroTableBody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5;">No hay cajones configurados</td></tr>';
+            return;
+        }
+
+        // Apply Sorting to Drawers
+        const sortedDrawers = [...savingsDrawers].sort((a, b) => {
+            let valA, valB;
+            if (ahorroSortConfig.key === 'name') {
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+            } else if (ahorroSortConfig.key === 'balance') {
+                valA = a.balance;
+                valB = b.balance;
+            } else if (ahorroSortConfig.key === 'concept') {
+                // Determine "leading" concept for this month
+                const getLeadConcept = (drawer) => {
+                    const mvmts = (drawer.movements || []).filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+                    if (mvmts.length === 0) return '';
+                    // Use most recent movement for sorting
+                    const sortedMvmts = [...mvmts].sort((m1, m2) => new Date(m2.date) - new Date(m1.date));
+                    return (sortedMvmts[0].description || sortedMvmts[0].concept || '').toLowerCase();
+                };
+                valA = getLeadConcept(a);
+                valB = getLeadConcept(b);
+            }
+
+            if (valA < valB) return ahorroSortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return ahorroSortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        // Update Sort Icons in Headers
+        const headerIcons = document.querySelectorAll('.sort-icon-ahorro');
+        const headers = ['name', 'concept', 'balance'];
+        headerIcons.forEach((icon, idx) => {
+            const key = headers[idx];
+            if (ahorroSortConfig.key === key) {
+                icon.textContent = ahorroSortConfig.direction === 'asc' ? '🔼' : '🔽';
+                icon.style.opacity = '1';
+            } else {
+                icon.textContent = '↕️';
+                icon.style.opacity = '0.3';
+            }
+        });
+
+        sortedDrawers.forEach(drawer => {
+            // Drawer Header Row
+            const headerTr = document.createElement('tr');
+            headerTr.style.background = 'rgba(255,255,255,0.08)';
+            headerTr.style.fontWeight = 'bold';
+            headerTr.style.borderBottom = '1px solid var(--primary)';
+            headerTr.innerHTML = `
+                <td colspan="2" style="padding: 0.8rem 1rem;">
+                    <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                        <span>${drawer.icon} ${drawer.name}</span>
+                        ${!drawer.isAuto ? `
+                            <div class="list-actions" style="display:flex; gap:0.4rem;">
+                                <button class="add-mvmt-list-btn btn-primary" data-id="${drawer.id}" style="padding:0.2rem 0.5rem; font-size:0.7rem;">+ Mov</button>
+                                <button class="transfer-list-btn btn-secondary" data-id="${drawer.id}" style="padding:0.2rem 0.5rem; font-size:0.7rem;">⇆ Tx</button>
+                                <button class="edit-drawer-list-btn btn-secondary" data-id="${drawer.id}" style="padding:0.2rem 0.4rem; font-size:0.7rem;">✏️</button>
+                                <button class="delete-drawer-list-btn btn-danger" data-id="${drawer.id}" style="padding:0.2rem 0.4rem; font-size:0.7rem; border:none; background:rgba(239,68,68,0.1); color:var(--danger);">🗑️</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </td>
+                <td style="padding: 0.8rem 1rem; text-align: right; color: var(--primary); font-weight:800;">${fmtEUR(drawer.balance)}</td>
+            `;
+
+            // Add event listeners to list buttons
+            if (!drawer.isAuto) {
+                headerTr.querySelector('.add-mvmt-list-btn').onclick = (e) => { e.stopPropagation(); showAddMovementModal(drawer.id); };
+                headerTr.querySelector('.transfer-list-btn').onclick = (e) => { e.stopPropagation(); showTransferModal(drawer.id); };
+                headerTr.querySelector('.edit-drawer-list-btn').onclick = (e) => { e.stopPropagation(); showEditDrawerModal(drawer.id); };
+                headerTr.querySelector('.delete-drawer-list-btn').onclick = (e) => { e.stopPropagation(); deleteSavingsDrawer(drawer.id); };
+            }
+
+            elements.ahorroTableBody.appendChild(headerTr);
+
+            // Filter movements for this drawer and month (Fiscal)
+            const drawerMovements = (drawer.movements || []).filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+
+            if (drawerMovements.length === 0) {
+                const emptyTr = document.createElement('tr');
+                emptyTr.innerHTML = `<td colspan="4" style="padding: 0.6rem 1rem; font-style: italic; opacity: 0.4; font-size: 0.8rem; padding-left: 2rem;">Sin movimientos este mes</td>`;
+                elements.ahorroTableBody.appendChild(emptyTr);
+            } else {
+                // Sort by date descending
+                drawerMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                drawerMovements.forEach(m => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+
+                    const isIncome = m.amount > 0;
+                    const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
+                    const concept = m.description || m.concept || '-';
+
+                    tr.innerHTML = `
+                        <td style="padding: 0.6rem 1rem; font-size: 0.8rem; padding-left: 2rem; opacity: 0.8;">${new Date(m.date).toLocaleDateString('es-ES')}</td>
+                        <td style="padding: 0.6rem 1rem; font-size: 0.8rem;">${concept}</td>
+                        <td style="padding: 0.6rem 1rem; text-align: right; font-weight: 500; font-size: 0.85rem; color: ${amountColor}">${fmtEUR(m.amount)}</td>
+                    `;
+                    elements.ahorroTableBody.appendChild(tr);
+                });
+            }
+        });
+    }
+
     function renderSavings() {
         if (!elements.drawersGrid) return;
 
@@ -1486,6 +1616,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const total = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
         if (elements.misCajonesTitle) {
             elements.misCajonesTitle.textContent = `Mis Cajones: ${fmtEUR(total)}`;
+        }
+
+        // Toggle visibility based on view mode
+        if (ahorroViewMode === 'list') {
+            elements.drawersGrid?.classList.add('hidden');
+            elements.ahorroTableContainer?.classList.remove('hidden');
+
+            elements.ahorroCardViewBtn?.classList.remove('active');
+            elements.ahorroCardViewBtn.style.background = 'transparent';
+            elements.ahorroCardViewBtn.style.color = 'var(--text-muted)';
+
+            elements.ahorroTableViewBtn?.classList.add('active');
+            elements.ahorroTableViewBtn.style.background = 'var(--primary)';
+            elements.ahorroTableViewBtn.style.color = 'white';
+
+            renderSavingsList();
+        } else {
+            elements.drawersGrid?.classList.remove('hidden');
+            elements.ahorroTableContainer?.classList.add('hidden');
+
+            elements.ahorroCardViewBtn?.classList.add('active');
+            elements.ahorroCardViewBtn.style.background = 'var(--primary)';
+            elements.ahorroCardViewBtn.style.color = 'white';
+
+            elements.ahorroTableViewBtn?.classList.remove('active');
+            elements.ahorroTableViewBtn.style.background = 'transparent';
+            elements.ahorroTableViewBtn.style.color = 'var(--text-muted)';
         }
 
         elements.drawersGrid.innerHTML = '';
@@ -3908,6 +4065,58 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             addStock(stockData);
+        });
+
+        // Ahorro View Toggles
+        elements.ahorroCardViewBtn?.addEventListener('click', () => {
+            ahorroViewMode = 'cards';
+            localStorage.setItem('ahorroViewMode', 'cards');
+            renderSavings();
+        });
+
+        elements.ahorroTableViewBtn?.addEventListener('click', () => {
+            ahorroViewMode = 'list';
+            localStorage.setItem('ahorroViewMode', 'list');
+            renderSavings();
+        });
+
+        // Ahorro Month Navigation
+        elements.prevAhorroMonthBtn?.addEventListener('click', () => {
+            let [y, m] = ahorroListMonth.split('-').map(Number);
+            m--;
+            if (m < 1) {
+                m = 12;
+                y--;
+            }
+            ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
+            renderSavingsList();
+        });
+
+        elements.nextAhorroMonthBtn?.addEventListener('click', () => {
+            let [y, m] = ahorroListMonth.split('-').map(Number);
+            m++;
+            if (m > 12) {
+                m = 1;
+                y++;
+            }
+            ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
+            renderSavingsList();
+        });
+
+        // Ahorro Table Sorting Listener (Event Delegation)
+        const ahorroTable = elements.ahorroTableContainer?.querySelector('table');
+        ahorroTable?.querySelector('thead')?.addEventListener('click', (e) => {
+            const th = e.target.closest('th');
+            if (!th || !th.dataset.sort) return;
+
+            const key = th.dataset.sort;
+            if (ahorroSortConfig.key === key) {
+                ahorroSortConfig.direction = ahorroSortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                ahorroSortConfig.key = key;
+                ahorroSortConfig.direction = 'asc';
+            }
+            renderSavingsList();
         });
 
         // Search logic

@@ -216,7 +216,16 @@
                 <div class="savings-container" style="margin-top: 1rem;">
                     <div
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                        <h2 id="misCajonesTitle" style="margin:0">Mis Cajones</h2>
+                        <div style="display:flex; align-items:center; gap:1rem;">
+                            <h2 id="misCajonesTitle" style="margin:0">Mis Cajones</h2>
+                            <div class="view-toggle"
+                                style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <button id="ahorroCardViewBtn" class="btn-sm active"
+                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Cajones</button>
+                                <button id="ahorroTableViewBtn" class="btn-sm"
+                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Listado</button>
+                            </div>
+                        </div>
                         <div style="display:flex; gap: 0.8rem;">
                             <button id="importSavingsBtn" class="btn-secondary" title="Importar CSV"
                                 style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">📥</button>
@@ -230,6 +239,41 @@
 
                     <div id="drawersGrid" class="drawers-grid">
                         <!-- Drawers will be rendered here -->
+                    </div>
+
+                    <!-- List View Container (Initially Hidden) -->
+                    <div id="ahorroTableContainer" class="table-container glass-panel hidden"
+                        style="margin-bottom: 2rem;">
+                        <div class="list-navigation"
+                            style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color);">
+                            <button id="prevAhorroMonthBtn" class="btn-icon"
+                                style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
+                            <h3 id="ahorroCurrentMonthLabel"
+                                style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
+                                Marzo 2024</h3>
+                            <button id="nextAhorroMonthBtn" class="btn-icon"
+                                style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">➡️</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid var(--primary);">
+                                        <th data-sort="name" onclick=""
+                                            style="padding: 1rem; text-align: left; cursor:pointer; user-select:none;">
+                                            Cajón <span class="sort-icon-ahorro">↕️</span></th>
+                                        <th data-sort="concept" onclick=""
+                                            style="padding: 1rem; text-align: left; cursor:pointer; user-select:none;">
+                                            Concepto <span class="sort-icon-ahorro">↕️</span></th>
+                                        <th data-sort="balance" onclick=""
+                                            style="padding: 1rem; text-align: right; cursor:pointer; user-select:none;">
+                                            Importe <span class="sort-icon-ahorro">↕️</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ahorroTableBody">
+                                    <!-- Movements will be rendered here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Summary Drawer Section -->
