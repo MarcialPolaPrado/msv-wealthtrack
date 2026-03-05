@@ -2249,6 +2249,15 @@ document.addEventListener('DOMContentLoaded', () => {
             'expense': 'DISTRIBUCIÓN DE GASTOS'
         };
 
+        // Pre-calculate totals for headers
+        const categoryTotals = nominaData.reduce((acc, drawer) => {
+            const monthlySum = (drawer.movements || [])
+                .filter(m => (m.activeMonths || []).includes(currentMonthNum))
+                .reduce((s, m) => s + m.amount, 0);
+            acc[drawer.type] = (acc[drawer.type] || 0) + monthlySum;
+            return acc;
+        }, {});
+
         sortedDrawers.forEach(drawer => {
             // Check if drawer is active for this month
             const drawerMovements = (drawer.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum));
@@ -2257,7 +2266,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Type Header separator (only if sorting by type)
             if (nominaSortConfig.key === 'type' && drawer.type !== lastType) {
                 const sepTr = document.createElement('tr');
-                sepTr.innerHTML = `<td colspan="3" style="padding: 0.75rem 1rem; background: rgba(var(--primary-rgb), 0.1); color: var(--primary); font-size: 0.7rem; font-weight: bold; letter-spacing: 0.05rem; border-top: 1px solid var(--border-color);">${typeLabels[drawer.type]}</td>`;
+                sepTr.className = 'list-section-header';
+                sepTr.innerHTML = `
+                    <td colspan="2">${typeLabels[drawer.type]}</td>
+                    <td style="text-align: right; padding-right: 1rem;">${fmtEUR(categoryTotals[drawer.type] || 0)}</td>
+                `;
                 elements.nominaTableBody.appendChild(sepTr);
                 lastType = drawer.type;
             }

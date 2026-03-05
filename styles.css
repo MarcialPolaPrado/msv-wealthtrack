@@ -3,6 +3,7 @@
     --bg-card: rgba(30, 41, 59, 0.7);
     --glass-border: rgba(255, 255, 255, 0.1);
     --primary: #3b82f6;
+    --primary-rgb: 59, 130, 246;
     /* Blue */
     --primary-glow: rgba(59, 130, 246, 0.5);
     --accent: #8b5cf6;
@@ -1699,6 +1700,21 @@ select:focus {
     text-align: right;
     color: var(--primary);
     font-weight: 800;
+}
+
+.list-section-header {
+    background: rgba(var(--primary-rgb), 0.25) !important;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08rem;
+    border-top: 2px solid rgba(var(--primary-rgb), 0.3) !important;
+    border-bottom: 1px solid rgba(var(--primary-rgb), 0.2) !important;
+    text-transform: uppercase;
+}
+
+.list-section-header td {
+    padding: 0.75rem 1rem !important;
 }
 
 .ahorro-list-row {
