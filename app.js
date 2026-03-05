@@ -2242,10 +2242,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        let lastType = null;
+        const typeLabels = {
+            'income': 'DISTRIBUCIÓN DE INGRESOS',
+            'saving': 'DISTRIBUCIÓN DE AHORRO',
+            'expense': 'DISTRIBUCIÓN DE GASTOS'
+        };
+
         sortedDrawers.forEach(drawer => {
             // Check if drawer is active for this month
             const drawerMovements = (drawer.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum));
             if (drawerMovements.length === 0 && !drawer.isAutomatic) return;
+
+            // Type Header separator (only if sorting by type)
+            if (nominaSortConfig.key === 'type' && drawer.type !== lastType) {
+                const sepTr = document.createElement('tr');
+                sepTr.innerHTML = `<td colspan="3" style="padding: 0.75rem 1rem; background: rgba(var(--primary-rgb), 0.1); color: var(--primary); font-size: 0.7rem; font-weight: bold; letter-spacing: 0.05rem; border-top: 1px solid var(--border-color);">${typeLabels[drawer.type]}</td>`;
+                elements.nominaTableBody.appendChild(sepTr);
+                lastType = drawer.type;
+            }
 
             // Drawer Header Row
             const headerTr = document.createElement('tr');
