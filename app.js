@@ -1530,7 +1530,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Sort Icons in Headers
         const headerIcons = document.querySelectorAll('.sort-icon-ahorro');
-        const headers = ['name', 'concept', 'balance'];
+        const headers = ['name', 'balance'];
         headerIcons.forEach((icon, idx) => {
             const key = headers[idx];
             if (ahorroSortConfig.key === key) {
