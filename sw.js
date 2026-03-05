@@ -1,11 +1,11 @@
-const CACHE_NAME = 'msv-wealthtrack-v13';
+const CACHE_NAME = 'msv-wealthtrack-v18';
 const ASSETS = [
     './',
     './index.html',
-    './styles.css',
-    './app.js',
-    './storage.js',
-    './mock_data.js',
+    './styles.css?v=2026030509',
+    './app.js?v=2026030508', // Keep this or update? I'll update all for consistency
+    './storage.js?v=2026030509',
+    './mock_data.js?v=2026030509',
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
