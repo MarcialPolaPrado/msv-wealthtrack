@@ -93,6 +93,8 @@ header a {
     font-weight: 700;
     flex-shrink: 0;
     white-space: nowrap;
+    color: #ffffff;
+    /* Explicitly white for visibility on dark background */
 }
 
 .highlight {
