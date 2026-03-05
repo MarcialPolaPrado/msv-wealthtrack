@@ -2249,12 +2249,24 @@ document.addEventListener('DOMContentLoaded', () => {
             'expense': 'DISTRIBUCIÓN DE GASTOS'
         };
 
-        // Pre-calculate totals for headers
+        // Pre-calculate totals for headers (matching renderNomina summary logic)
         const categoryTotals = nominaData.reduce((acc, drawer) => {
-            const monthlySum = (drawer.movements || [])
-                .filter(m => (m.activeMonths || []).includes(currentMonthNum))
-                .reduce((s, m) => s + m.amount, 0);
-            acc[drawer.type] = (acc[drawer.type] || 0) + monthlySum;
+            const monthlyMovements = (drawer.movements || [])
+                .filter(m => (m.activeMonths || []).includes(currentMonthNum));
+
+            if (drawer.type === 'income') {
+                const monthlySum = monthlyMovements.reduce((s, m) => s + m.amount, 0);
+                acc[drawer.type] = (acc[drawer.type] || 0) + monthlySum;
+            } else if (drawer.type === 'saving') {
+                const provisionMvmt = monthlyMovements.find(m => isProvision(m));
+                const provision = provisionMvmt ? provisionMvmt.amount : 0;
+                acc[drawer.type] = (acc[drawer.type] || 0) + provision;
+            } else if (drawer.type === 'expense') {
+                const plannedExpenses = monthlyMovements
+                    .filter(m => m.amount < 0)
+                    .reduce((s, m) => s + Math.abs(m.amount), 0);
+                acc[drawer.type] = (acc[drawer.type] || 0) + plannedExpenses;
+            }
             return acc;
         }, {});
 
