@@ -2400,8 +2400,6 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nominaTableViewBtn?.classList.add('active');
             elements.nominaTableViewBtn.style.background = 'var(--primary)';
             elements.nominaTableViewBtn.style.color = 'white';
-
-            renderNominaList();
         } else {
             elements.nominaGridContainer?.classList.remove('hidden');
             elements.nominaTableContainer?.classList.add('hidden');
@@ -2413,6 +2411,24 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nominaTableViewBtn?.classList.remove('active');
             elements.nominaTableViewBtn.style.background = 'transparent';
             elements.nominaTableViewBtn.style.color = 'var(--text-muted)';
+        }
+
+        // Helper to ensure the automatic drawer exists - DO THIS BEFORE RENDERING LIST
+        let autoDrawer = nominaData.find(d => d.isAutomatic);
+        if (!autoDrawer) {
+            autoDrawer = {
+                id: 'auto_undestined',
+                name: 'Dinero No Destinado',
+                icon: '💰',
+                type: 'expense',
+                isAutomatic: true,
+                movements: []
+            };
+            nominaData.push(autoDrawer);
+        }
+
+        if (nominaViewMode === 'list') {
+            renderNominaList();
         }
 
         const grid = elements.nominaGrid;
@@ -2436,19 +2452,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const allMonthlyExpenses = [];
 
-        // Helper to ensure the automatic drawer exists
-        let autoDrawer = nominaData.find(d => d.isAutomatic);
-        if (!autoDrawer) {
-            autoDrawer = {
-                id: 'auto_undestined',
-                name: 'Dinero No Destinado',
-                icon: '💰',
-                type: 'expense',
-                isAutomatic: true,
-                movements: []
-            };
-            nominaData.push(autoDrawer);
-        }
+        // Helper to ensure the automatic drawer exists (removed from here, moved up)
 
         // 1. First Pass: Calculate all global sums
         nominaData.forEach((concept) => {

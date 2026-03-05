@@ -1,11 +1,11 @@
-const CACHE_NAME = 'msv-wealthtrack-v19';
+const CACHE_NAME = 'msv-wealthtrack-v23';
 const ASSETS = [
     './',
     './index.html',
-    './styles.css?v=2026030509',
-    './app.js?v=2026030508', // Keep this or update? I'll update all for consistency
-    './storage.js?v=2026030509',
-    './mock_data.js?v=2026030509',
+    './styles.css?v=2026030515',
+    './app.js?v=2026030515',
+    './storage.js?v=2026030515',
+    './mock_data.js?v=2026030515',
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
@@ -46,12 +46,15 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetching: Stale-While-Revalidate strategy
+// Fetching: Mixed strategy
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            const fetchPromise = fetch(event.request).then((networkResponse) => {
-                // If we got a valid response, update the cache
+    const url = new URL(event.request.url);
+    const isNavigation = event.request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html');
+
+    if (isNavigation) {
+        // Network-First for main page to ensure version updates are seen
+        event.respondWith(
+            fetch(event.request).then((networkResponse) => {
                 if (networkResponse && networkResponse.status === 200) {
                     const responseClone = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => {
@@ -59,12 +62,23 @@ self.addEventListener('fetch', (event) => {
                     });
                 }
                 return networkResponse;
-            }).catch(() => {
-                // Network failed, nothing to update
-            });
-
-            // Return cached version immediately, or wait for network if not in cache
-            return cachedResponse || fetchPromise;
-        })
-    );
+            }).catch(() => caches.match(event.request))
+        );
+    } else {
+        // Stale-While-Revalidate for other assets
+        event.respondWith(
+            caches.match(event.request).then((cachedResponse) => {
+                const fetchPromise = fetch(event.request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, responseClone);
+                        });
+                    }
+                    return networkResponse;
+                }).catch(() => { });
+                return cachedResponse || fetchPromise;
+            })
+        );
+    }
 });
