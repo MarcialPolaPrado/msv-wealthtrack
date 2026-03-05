@@ -1545,24 +1545,22 @@ document.addEventListener('DOMContentLoaded', () => {
         sortedDrawers.forEach(drawer => {
             // Drawer Header Row
             const headerTr = document.createElement('tr');
-            headerTr.style.background = 'rgba(255,255,255,0.08)';
-            headerTr.style.fontWeight = 'bold';
-            headerTr.style.borderBottom = '1px solid var(--primary)';
+            headerTr.className = 'ahorro-list-header';
             headerTr.innerHTML = `
-                <td colspan="2" style="padding: 0.8rem 1rem;">
-                    <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <td colspan="2">
+                    <div class="header-content">
                         <span>${drawer.icon} ${drawer.name}</span>
                         ${!drawer.isAuto ? `
-                            <div class="list-actions" style="display:flex; gap:0.4rem;">
-                                <button class="add-mvmt-list-btn btn-primary" data-id="${drawer.id}" style="padding:0.2rem 0.5rem; font-size:0.7rem;">+ Mov</button>
-                                <button class="transfer-list-btn btn-secondary" data-id="${drawer.id}" style="padding:0.2rem 0.5rem; font-size:0.7rem;">⇆ Tx</button>
-                                <button class="edit-drawer-list-btn btn-secondary" data-id="${drawer.id}" style="padding:0.2rem 0.4rem; font-size:0.7rem;">✏️</button>
-                                <button class="delete-drawer-list-btn btn-danger" data-id="${drawer.id}" style="padding:0.2rem 0.4rem; font-size:0.7rem; border:none; background:rgba(239,68,68,0.1); color:var(--danger);">🗑️</button>
+                            <div class="list-actions">
+                                <button class="add-mvmt-list-btn btn-primary">+ Mov</button>
+                                <button class="transfer-list-btn btn-secondary">⇆ Tx</button>
+                                <button class="edit-drawer-list-btn btn-secondary">✏️</button>
+                                <button class="delete-drawer-list-btn btn-danger">🗑️</button>
                             </div>
                         ` : ''}
                     </div>
                 </td>
-                <td style="padding: 0.8rem 1rem; text-align: right; color: var(--primary); font-weight:800;">${fmtEUR(drawer.balance)}</td>
+                <td class="balance">${fmtEUR(drawer.balance)}</td>
             `;
 
             // Add event listeners to list buttons
@@ -1580,7 +1578,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (drawerMovements.length === 0) {
                 const emptyTr = document.createElement('tr');
-                emptyTr.innerHTML = `<td colspan="4" style="padding: 0.6rem 1rem; font-style: italic; opacity: 0.4; font-size: 0.8rem; padding-left: 2rem;">Sin movimientos este mes</td>`;
+                emptyTr.className = 'ahorro-list-empty-row';
+                emptyTr.innerHTML = `<td colspan="3">Sin movimientos este mes</td>`;
                 elements.ahorroTableBody.appendChild(emptyTr);
             } else {
                 // Sort by date descending
@@ -1588,16 +1587,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 drawerMovements.forEach(m => {
                     const tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+                    tr.className = 'ahorro-list-row';
 
                     const isIncome = m.amount > 0;
                     const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
                     const concept = m.description || m.concept || '-';
 
                     tr.innerHTML = `
-                        <td style="padding: 0.6rem 1rem; font-size: 0.8rem; padding-left: 2rem; opacity: 0.8;">${new Date(m.date).toLocaleDateString('es-ES')}</td>
-                        <td style="padding: 0.6rem 1rem; font-size: 0.8rem;">${concept}</td>
-                        <td style="padding: 0.6rem 1rem; text-align: right; font-weight: 500; font-size: 0.85rem; color: ${amountColor}">${fmtEUR(m.amount)}</td>
+                        <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
+                        <td class="concept">${concept}</td>
+                        <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
                     `;
                     elements.ahorroTableBody.appendChild(tr);
                 });
