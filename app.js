@@ -1492,10 +1492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!elements.ahorroTableBody || !elements.ahorroCurrentMonthLabel) return;
 
         // Update Label
-        const [year, month] = ahorroListMonth.split('-');
-        const dateObj = new Date(year, parseInt(month) - 1, 1);
-        const monthName = dateObj.toLocaleString('es-ES', { month: 'long' });
-        elements.ahorroCurrentMonthLabel.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+        elements.ahorroCurrentMonthLabel.textContent = formatFiscalMonth(ahorroListMonth);
 
         elements.ahorroTableBody.innerHTML = '';
 
