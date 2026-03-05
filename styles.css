@@ -1767,3 +1767,46 @@ select:focus {
         padding: 0.5rem !important;
     }
 }
+
+/* Ultra-narrow screens (Fold 5 TWA / Small devices) */
+@media (max-width: 350px) {
+
+    .ahorro-list-header td,
+    .ahorro-list-row td,
+    .ahorro-list-empty-row td {
+        padding: 0.3rem 0.4rem !important;
+        font-size: 0.7rem !important;
+    }
+
+    .ahorro-list-header .header-content {
+        gap: 0.2rem !important;
+    }
+
+    .list-actions {
+        gap: 0.2rem !important;
+    }
+
+    .list-actions button {
+        padding: 0.15rem 0.25rem !important;
+        font-size: 0.55rem !important;
+        min-width: unset !important;
+    }
+
+    .ahorro-list-row .date {
+        padding-left: 0.2rem !important;
+    }
+
+    .ahorro-list-row .amount {
+        font-size: 0.75rem !important;
+    }
+
+    .list-navigation {
+        gap: 0.3rem !important;
+        padding: 0.3rem 0.5rem !important;
+    }
+
+    #ahorroCurrentMonthLabel {
+        font-size: 0.85rem !important;
+        min-width: 100px !important;
+    }
+}
