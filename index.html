@@ -295,7 +295,16 @@
                 <!-- Unified Title and Action Buttons -->
                 <div
                     style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
-                    <h2 style="margin:0">Conceptos Mensuales</h2>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <h2 style="margin:0">Conceptos Mensuales</h2>
+                        <div class="view-toggle"
+                            style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button id="nominaTableViewBtn" class="btn-sm"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Listado</button>
+                            <button id="nominaCardViewBtn" class="btn-sm active"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Cajones</button>
+                        </div>
+                    </div>
                     <div style="display:flex; align-items: center; gap: 0.8rem;">
                         <button id="importNominaBtn" class="btn-secondary" title="Importar CSV"
                             style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">📥</button>
@@ -318,8 +327,39 @@
                 <span id="currentFiscalMonthDisplay" class="hidden"></span>
                 <span id="fiscalMonthTitle" class="hidden"></span>
 
+                <!-- List View Container (Initially Hidden) -->
+                <div id="nominaTableContainer" class="table-container glass-panel hidden" style="margin-bottom: 2rem;">
+                    <div class="list-navigation"
+                        style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color);">
+                        <button id="prevNominaMonthBtn" class="btn-icon"
+                            style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
+                        <h3 id="nominaCurrentMonthLabel"
+                            style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
+                            Marzo 2024</h3>
+                        <button id="nextNominaMonthBtn" class="btn-icon"
+                            style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">➡️</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary);">
+                                    <th data-sort="name" colspan="2"
+                                        style="padding: 1rem; text-align: left; cursor:pointer; user-select:none;">
+                                        Concepto <span class="sort-icon-nomina">↕️</span></th>
+                                    <th data-sort="balance"
+                                        style="padding: 1rem; text-align: right; cursor:pointer; user-select:none;">
+                                        Importe <span class="sort-icon-nomina">↕️</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="nominaTableBody">
+                                <!-- Movements will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Drawer Grid + Summary (expense summary rendered last by JS) -->
-                <div class="savings-container">
+                <div id="nominaGridContainer" class="savings-container">
                     <div id="nominaGrid"
                         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
                         <!-- Nomina cards will be rendered here -->

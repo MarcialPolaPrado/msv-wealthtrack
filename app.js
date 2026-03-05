@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let ahorroSortConfig = { key: 'name', direction: 'asc' }; // Sort drawers by name, balance, etc.
     let analisisViewMode = 'list'; // 'list' or 'cards'
     let analisisSortConfig = { key: 'month', direction: 'asc' };
+    let nominaViewMode = localStorage.getItem('nominaViewMode') || 'cards'; // 'cards' or 'list'
+    let nominaListMonth = getFiscalMonth();
+    let nominaSortConfig = { key: 'type', direction: 'asc' };
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -289,6 +292,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Nomina Elements
         nominaSection: document.getElementById('nominaSection'),
         nominaGrid: document.getElementById('nominaGrid'),
+        nominaGridContainer: document.getElementById('nominaGridContainer'),
+        nominaCardViewBtn: document.getElementById('nominaCardViewBtn'),
+        nominaTableViewBtn: document.getElementById('nominaTableViewBtn'),
+        nominaTableContainer: document.getElementById('nominaTableContainer'),
+        nominaTableBody: document.getElementById('nominaTableBody'),
+        nominaCurrentMonthLabel: document.getElementById('nominaCurrentMonthLabel'),
+        prevNominaMonthBtn: document.getElementById('prevNominaMonthBtn'),
+        nextNominaMonthBtn: document.getElementById('nextNominaMonthBtn'),
         totalNominaIncome: document.getElementById('totalNominaIncome'),
         incomeCard: document.getElementById('incomeCard'),
         totalNominaExpense: document.getElementById('totalNominaExpense'),
@@ -2177,8 +2188,169 @@ document.addEventListener('DOMContentLoaded', () => {
         return subGrid;
     }
 
+    function renderNominaList() {
+        if (!elements.nominaTableBody || !elements.nominaCurrentMonthLabel) return;
+
+        // Update Label
+        elements.nominaCurrentMonthLabel.textContent = formatFiscalMonth(nominaListMonth);
+
+        elements.nominaTableBody.innerHTML = '';
+
+        if (nominaData.length === 0) {
+            elements.nominaTableBody.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; opacity:0.5;">No hay conceptos configurados</td></tr>';
+            return;
+        }
+
+        const currentMonthNum = parseInt(nominaListMonth.split('-')[1]);
+
+        // Group drawers by type or apply sorting
+        const sortedDrawers = [...nominaData].sort((a, b) => {
+            let valA, valB;
+            if (nominaSortConfig.key === 'name') {
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+            } else if (nominaSortConfig.key === 'balance') {
+                const getBal = (d) => (d.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum)).reduce((s, m) => s + m.amount, 0);
+                valA = getBal(a);
+                valB = getBal(b);
+            } else {
+                // Default: Sort by type: income, then saving, then expense
+                const typeOrder = { 'income': 1, 'saving': 2, 'expense': 3 };
+                const orderA = typeOrder[a.type] || 4;
+                const orderB = typeOrder[b.type] || 4;
+                if (orderA !== orderB) return orderA - orderB;
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+            }
+
+            if (valA < valB) return nominaSortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return nominaSortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        // Update Sort Icons in Headers
+        const headerIcons = document.querySelectorAll('.sort-icon-nomina');
+        const headers = ['name', 'balance'];
+        headerIcons.forEach((icon, idx) => {
+            const key = headers[idx];
+            if (nominaSortConfig.key === key) {
+                icon.textContent = nominaSortConfig.direction === 'asc' ? '🔼' : '🔽';
+                icon.style.opacity = '1';
+            } else {
+                icon.textContent = '↕️';
+                icon.style.opacity = '0.3';
+            }
+        });
+
+        sortedDrawers.forEach(drawer => {
+            // Check if drawer is active for this month
+            const drawerMovements = (drawer.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum));
+            if (drawerMovements.length === 0 && !drawer.isAutomatic) return;
+
+            // Drawer Header Row
+            const headerTr = document.createElement('tr');
+            headerTr.className = 'ahorro-list-header'; // Reusing consistency
+
+            const monthlyBalance = drawerMovements.reduce((sum, m) => sum + m.amount, 0);
+
+            headerTr.innerHTML = `
+                <td colspan="2">
+                    <div class="header-content">
+                        <span>${drawer.icon || getNominaIcon(drawer.name, drawer.type)} ${drawer.name}</span>
+                        ${!drawer.isAutomatic ? `
+                            <div class="list-actions">
+                                <button class="add-nomina-mvmt-list-btn btn-primary">+ Mov</button>
+                                <button class="edit-nomina-drawer-list-btn btn-secondary">✏️</button>
+                                <button class="delete-nomina-drawer-list-btn btn-danger">🗑️</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </td>
+                <td class="balance">${fmtEUR(monthlyBalance)}</td>
+            `;
+
+            // Add event listeners
+            if (!drawer.isAutomatic) {
+                headerTr.querySelector('.add-nomina-mvmt-list-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    showAddNominaMovement(drawer.id);
+                };
+                headerTr.querySelector('.edit-nomina-drawer-list-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    showEditNominaDrawer(drawer.id);
+                };
+                headerTr.querySelector('.delete-nomina-drawer-list-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    deleteNominaDrawer(drawer.id);
+                };
+            }
+
+            elements.nominaTableBody.appendChild(headerTr);
+
+            if (drawerMovements.length === 0) {
+                const emptyTr = document.createElement('tr');
+                emptyTr.className = 'ahorro-list-empty-row';
+                emptyTr.innerHTML = `<td colspan="3">Sin movimientos este mes</td>`;
+                elements.nominaTableBody.appendChild(emptyTr);
+            } else {
+                // Movements list
+                drawerMovements.forEach((m) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'ahorro-list-row';
+
+                    const isIncome = m.amount > 0;
+                    const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
+                    const concept = m.description || m.concept || '-';
+
+                    tr.innerHTML = `
+                        <td class="date" style="font-size: 0.75rem; opacity: 0.6;">${m.date ? new Date(m.date).toLocaleDateString('es-ES') : '--/--/--'}</td>
+                        <td class="concept">${concept}</td>
+                        <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
+                    `;
+
+                    // Detail/Edit on click
+                    tr.onclick = () => {
+                        const originalIndex = drawer.movements.indexOf(m);
+                        if (originalIndex !== -1) {
+                            showEditNominaMovement(drawer.id, originalIndex);
+                        }
+                    };
+
+                    elements.nominaTableBody.appendChild(tr);
+                });
+            }
+        });
+    }
+
     function renderNomina() {
         if (!elements.nominaSection || currentView !== 'nomina') return;
+
+        // Toggle visibility based on view mode
+        if (nominaViewMode === 'list') {
+            elements.nominaGridContainer?.classList.add('hidden');
+            elements.nominaTableContainer?.classList.remove('hidden');
+
+            elements.nominaCardViewBtn?.classList.remove('active');
+            elements.nominaCardViewBtn.style.background = 'transparent';
+            elements.nominaCardViewBtn.style.color = 'var(--text-muted)';
+
+            elements.nominaTableViewBtn?.classList.add('active');
+            elements.nominaTableViewBtn.style.background = 'var(--primary)';
+            elements.nominaTableViewBtn.style.color = 'white';
+
+            renderNominaList();
+        } else {
+            elements.nominaGridContainer?.classList.remove('hidden');
+            elements.nominaTableContainer?.classList.add('hidden');
+
+            elements.nominaCardViewBtn?.classList.add('active');
+            elements.nominaCardViewBtn.style.background = 'var(--primary)';
+            elements.nominaCardViewBtn.style.color = 'white';
+
+            elements.nominaTableViewBtn?.classList.remove('active');
+            elements.nominaTableViewBtn.style.background = 'transparent';
+            elements.nominaTableViewBtn.style.color = 'var(--text-muted)';
+        }
 
         const grid = elements.nominaGrid;
         if (!grid) return;
@@ -3796,6 +3968,40 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleSavingsModal(false);
             render();
         });
+
+        // Nomina View Mode Listeners
+        if (elements.nominaTableViewBtn) {
+            elements.nominaTableViewBtn.onclick = () => {
+                nominaViewMode = 'list';
+                localStorage.setItem('nominaViewMode', 'list');
+                renderNomina();
+            };
+        }
+        if (elements.nominaCardViewBtn) {
+            elements.nominaCardViewBtn.onclick = () => {
+                nominaViewMode = 'cards';
+                localStorage.setItem('nominaViewMode', 'cards');
+                renderNomina();
+            };
+        }
+
+        // Nomina Month Navigation
+        if (elements.prevNominaMonthBtn) {
+            elements.prevNominaMonthBtn.onclick = () => {
+                const [y, m] = nominaListMonth.split('-').map(Number);
+                const d = new Date(y, m - 2);
+                nominaListMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                renderNominaList();
+            };
+        }
+        if (elements.nextNominaMonthBtn) {
+            elements.nextNominaMonthBtn.onclick = () => {
+                const [y, m] = nominaListMonth.split('-').map(Number);
+                const d = new Date(y, m);
+                nominaListMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                renderNominaList();
+            };
+        }
         // Nomina Listeners
 
         if (elements.exportSavingsBtn) {
@@ -4197,6 +4403,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.exportDataBtn?.addEventListener('click', () => {
             exportToCSV(false); // standard CSV
+        });
+
+        // Nomina Table Sorting Listener (Event Delegation)
+        const nominaTable = elements.nominaTableContainer?.querySelector('table');
+        nominaTable?.querySelector('thead')?.addEventListener('click', (e) => {
+            const th = e.target.closest('th');
+            if (!th || !th.dataset.sort) return;
+
+            const key = th.dataset.sort;
+            if (nominaSortConfig.key === key) {
+                nominaSortConfig.direction = nominaSortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                nominaSortConfig.key = key;
+                nominaSortConfig.direction = 'asc';
+            }
+            renderNominaList();
         });
 
         window.onclick = (event) => {
