@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let nominaListMonth = getFiscalMonth();
     let nominaSortConfig = { key: 'type', direction: 'asc' };
     let ahorroFilterMode = localStorage.getItem('ahorroFilterMode') || 'month'; // 'month', 'year', 'all'
+    let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -1432,6 +1433,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const sortedMonths = Array.from(allMonths).sort().reverse();
 
+        // Calculate Category Totals
         const categoryTotals = {};
         savingsDrawers.forEach(drawer => {
             if (drawer.isAuto) return;
@@ -1440,7 +1442,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isNaN(mDate.getTime())) return;
 
                 const mFiscal = getFiscalMonth(mDate);
-                if (mFiscal === selectedAhorroFiscalMonth) {
+                let match = false;
+                if (ahorroSummaryFilterMode === 'month') {
+                    match = (mFiscal === selectedAhorroFiscalMonth);
+                } else if (ahorroSummaryFilterMode === 'year') {
+                    match = (mFiscal.startsWith(selectedAhorroFiscalMonth.split('-')[0]));
+                } else {
+                    match = true; // All
+                }
+
+                if (match) {
                     const cat = m.category || (m.amount >= 0 ? 'Ahorro' : 'Gasto');
                     categoryTotals[cat] = (categoryTotals[cat] || 0) + m.amount;
                 }
@@ -1457,23 +1468,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="drawer-icon">📊</span>
                         <div class="drawer-info">
                             <h4 style="margin:0">Distribución por Categoría <span class="toggle-arrow ${isAhorroSummaryExpanded ? 'expanded' : ''}">▼</span></h4>
-                            <p style="font-size: 0.8rem; opacity: 0.7;">Resumen de movimientos por mes fiscal</p>
+                            <p style="font-size: 0.8rem; opacity: 0.7;">Resumen de movimientos por categoría</p>
                         </div>
                     </div>
-                    <div class="month-selector-container" style="display: flex; align-items: center; gap: 8px;">
-                        <label style="font-size: 0.8rem; opacity: 0.8;">Mes:</label>
-                        <select id="ahorroMonthSelect" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
-                            ${sortedMonths.map(m => `
-                                <option value="${m}" ${m === selectedAhorroFiscalMonth ? 'selected' : ''}>${formatFiscalMonth(m)}</option>
-                            `).join('')}
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <select id="ahorroSummaryFilterMode" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                            <option value="month" ${ahorroSummaryFilterMode === 'month' ? 'selected' : ''}>📅 Mes</option>
+                            <option value="year" ${ahorroSummaryFilterMode === 'year' ? 'selected' : ''}>🗓️ Año</option>
+                            <option value="all" ${ahorroSummaryFilterMode === 'all' ? 'selected' : ''}>♾️ Todo</option>
                         </select>
+                        ${ahorroSummaryFilterMode !== 'all' ? `
+                            <select id="ahorroMonthSelect" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                                ${sortedMonths.map(m => {
+            const label = ahorroSummaryFilterMode === 'year' ? m.split('-')[0] : formatFiscalMonth(m);
+            // If year mode, only show unique years
+            return `<option value="${m}" ${m === selectedAhorroFiscalMonth ? 'selected' : ''}>${label}</option>`;
+        }).filter((v, i, a) => {
+            if (ahorroSummaryFilterMode === 'year') {
+                const year = v.match(/>(.*)</)[1];
+                return a.findIndex(x => x.includes(`>${year}<`)) === i;
+            }
+            return true;
+        }).join('')}
+                            </select>
+                        ` : ''}
                     </div>
                 </div>
 
                 <div class="collapsible-content ${isAhorroSummaryExpanded ? 'expanded' : ''}" id="ahorroSummaryContent">
                     ${!hasData ? `
                         <div style="margin-top: 1.5rem; text-align: center; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-                            <p style="opacity: 0.5; margin: 0;">No hay movimientos en el mes fiscal seleccionado (${formatFiscalMonth(selectedAhorroFiscalMonth)}).</p>
+                            <p style="opacity: 0.5; margin: 0;">No hay movimientos en el periodo seleccionado.</p>
                         </div>
                     ` : `
                         <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
@@ -1491,16 +1516,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const header = container.querySelector('#ahorroSummaryHeader');
         header.onclick = (e) => {
-            if (e.target.closest('#ahorroMonthSelect')) return;
+            if (e.target.closest('select')) return;
             isAhorroSummaryExpanded = !isAhorroSummaryExpanded;
             renderAhorroSummaryDrawer();
         };
 
-        const select = container.querySelector('#ahorroMonthSelect');
-        select.onchange = (e) => {
-            selectedAhorroFiscalMonth = e.target.value;
+        const modeSelect = container.querySelector('#ahorroSummaryFilterMode');
+        modeSelect.onchange = (e) => {
+            ahorroSummaryFilterMode = e.target.value;
+            localStorage.setItem('ahorroSummaryFilterMode', ahorroSummaryFilterMode);
             renderAhorroSummaryDrawer();
         };
+
+        const monthSelect = container.querySelector('#ahorroMonthSelect');
+        if (monthSelect) {
+            monthSelect.onchange = (e) => {
+                selectedAhorroFiscalMonth = e.target.value;
+                renderAhorroSummaryDrawer();
+            };
+        }
     }
 
     function renderSavingsList() {
@@ -1542,8 +1576,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 valA = a.balance;
                 valB = b.balance;
             } else if (ahorroSortConfig.key === 'concept') {
-                // Determine "leading" concept for this month
-                const getLeadConcept = (drawer) => {
+                // Determine "leading" category for this month
+                const getLeadCategory = (drawer) => {
                     const mvmts = (drawer.movements || []).filter(m => {
                         if (ahorroFilterMode === 'month') return m.date && getFiscalMonth(m.date) === ahorroListMonth;
                         if (ahorroFilterMode === 'year') return m.date && m.date.startsWith(ahorroListMonth.split('-')[0]);
@@ -1552,10 +1586,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (mvmts.length === 0) return '';
                     // Use most recent movement for sorting
                     const sortedMvmts = [...mvmts].sort((m1, m2) => new Date(m2.date) - new Date(m1.date));
-                    return (sortedMvmts[0].description || sortedMvmts[0].concept || '').toLowerCase();
+                    return (sortedMvmts[0].category || '').toLowerCase();
                 };
-                valA = getLeadConcept(a);
-                valB = getLeadConcept(b);
+                valA = getLeadCategory(a);
+                valB = getLeadCategory(b);
             }
 
             if (valA < valB) return ahorroSortConfig.direction === 'asc' ? -1 : 1;
@@ -1630,11 +1664,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isIncome = m.amount > 0;
                 const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
-                const concept = m.description || m.concept || '-';
+                const category = m.category || '-';
 
                 tr.innerHTML = `
                     <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
-                    <td class="concept">${concept}</td>
+                    <td class="concept">${category}</td>
                     <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
                 `;
                 elements.ahorroTableBody.appendChild(tr);
