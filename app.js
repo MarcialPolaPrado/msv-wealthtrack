@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let nominaSortConfig = { key: 'type', direction: 'asc' };
     let ahorroFilterMode = localStorage.getItem('ahorroFilterMode') || 'month'; // 'month', 'year', 'all'
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
+    let nominaListFilterMode = localStorage.getItem('nominaListFilterMode') || 'detail'; // 'detail' or 'totals'
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -387,7 +388,8 @@ document.addEventListener('DOMContentLoaded', () => {
         stockTable: document.getElementById('stockTable'),
         savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
         savingsCategorySelect: document.getElementById('savingsCategorySelect'),
-        ahorroFilterMode: document.getElementById('ahorroFilterMode')
+        ahorroFilterMode: document.getElementById('ahorroFilterMode'),
+        nominaListFilterMode: document.getElementById('nominaListFilterMode')
     };
 
     const updateNominaMovementType = (type) => {
@@ -2259,6 +2261,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update Label
         elements.nominaCurrentMonthLabel.textContent = formatFiscalMonth(nominaListMonth);
 
+        if (elements.nominaListFilterMode) {
+            elements.nominaListFilterMode.value = nominaListFilterMode;
+        }
+
         elements.nominaTableBody.innerHTML = '';
 
         if (nominaData.length === 0) {
@@ -2385,7 +2391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td colspan="2">
                     <div class="header-content">
                         <span>${drawer.icon || getNominaIcon(drawer.name, drawer.type)} ${drawer.name}</span>
-                        ${!drawer.isAutomatic ? `
+                        ${(!drawer.isAutomatic && nominaListFilterMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-nomina-mvmt-list-btn btn-primary">+ Mov</button>
                                 <button class="edit-nomina-drawer-list-btn btn-secondary">✏️</button>
@@ -2397,8 +2403,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="balance">${fmtEUR(monthlyBalance)}</td>
             `;
 
-            // Add event listeners
-            if (!drawer.isAutomatic) {
+            // Add event listeners (only in detail mode)
+            if (!drawer.isAutomatic && nominaListFilterMode === 'detail') {
                 headerTr.querySelector('.add-nomina-mvmt-list-btn').onclick = (e) => {
                     e.stopPropagation();
                     showAddNominaMovement(drawer.id);
@@ -2414,6 +2420,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             elements.nominaTableBody.appendChild(headerTr);
+
+            if (nominaListFilterMode === 'totals') return;
 
             if (drawerMovements.length === 0) {
                 const emptyTr = document.createElement('tr');
@@ -4449,6 +4457,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ahorroFilterMode = e.target.value;
             localStorage.setItem('ahorroFilterMode', ahorroFilterMode);
             renderSavingsList();
+        });
+
+        elements.nominaListFilterMode?.addEventListener('change', (e) => {
+            nominaListFilterMode = e.target.value;
+            localStorage.setItem('nominaListFilterMode', nominaListFilterMode);
+            renderNominaList();
         });
 
         // Ahorro Table Sorting Listener (Event Delegation)
