@@ -13,11 +13,11 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link rel="manifest" href="manifest.json">
-    <title>Premium Stock Portfolio - v2026.03.06.18</title>
+    <title>Premium Stock Portfolio - v2026.03.06.19</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=2026030618">
+    <link rel="stylesheet" href="styles.css?v=2026030619">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -57,7 +57,7 @@
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
                     <p
                         style="margin:0; font-size: 0.6rem; opacity: 0.6; color: var(--primary); letter-spacing: 0.05em;">
-                        v2026.03.06.18</p>
+                        v2026.03.06.19</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -249,6 +249,11 @@
                         <div class="list-navigation"
                             style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color); flex-wrap: wrap;">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <select id="ahorroListDisplayMode"
+                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                                    <option value="detail">📝 Detalle</option>
+                                    <option value="totals">📊 Totales</option>
+                                </select>
                                 <select id="ahorroFilterMode"
                                     style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
                                     <option value="month">📅 Mes</option>
@@ -873,14 +878,14 @@
         </div>
     </div>
 
-    <script src="mock_data.js?v=2026030618"></script>
-    <script src="storage.js?v=2026030618"></script>
-    <script src="app.js?v=2026030618"></script>
+    <script src="mock_data.js?v=2026030619"></script>
+    <script src="storage.js?v=2026030619"></script>
+    <script src="app.js?v=2026030619"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026030618')
+                navigator.serviceWorker.register('./sw.js?v=2026030619')
                     .then(reg => {
                         // Check for updates periodically
                         setInterval(() => {

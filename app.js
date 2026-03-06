@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ahorroFilterMode = localStorage.getItem('ahorroFilterMode') || 'month'; // 'month', 'year', 'all'
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
     let nominaListFilterMode = localStorage.getItem('nominaListFilterMode') || 'detail'; // 'detail' or 'totals'
+    let ahorroListDisplayMode = localStorage.getItem('ahorroListDisplayMode') || 'detail'; // 'detail' or 'totals'
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -389,7 +390,8 @@ document.addEventListener('DOMContentLoaded', () => {
         savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
         savingsCategorySelect: document.getElementById('savingsCategorySelect'),
         ahorroFilterMode: document.getElementById('ahorroFilterMode'),
-        nominaListFilterMode: document.getElementById('nominaListFilterMode')
+        nominaListFilterMode: document.getElementById('nominaListFilterMode'),
+        ahorroListDisplayMode: document.getElementById('ahorroListDisplayMode')
     };
 
     const updateNominaMovementType = (type) => {
@@ -1561,6 +1563,10 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroFilterMode.value = ahorroFilterMode;
         }
 
+        if (elements.ahorroListDisplayMode) {
+            elements.ahorroListDisplayMode.value = ahorroListDisplayMode;
+        }
+
         elements.ahorroTableBody.innerHTML = '';
 
         if (savingsDrawers.length === 0) {
@@ -1634,7 +1640,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td colspan="2">
                     <div class="header-content">
                         <span>${drawer.icon} ${drawer.name}</span>
-                        ${!drawer.isAuto ? `
+                        ${(!drawer.isAuto && ahorroListDisplayMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-mvmt-list-btn btn-primary">+ Mov</button>
                                 <button class="transfer-list-btn btn-secondary">⇆ Tx</button>
@@ -1647,8 +1653,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="balance">${fmtEUR(drawer.balance)}</td>
             `;
 
-            // Add event listeners to list buttons
-            if (!drawer.isAuto) {
+            // Add event listeners to list buttons (only in detail mode)
+            if (!drawer.isAuto && ahorroListDisplayMode === 'detail') {
                 headerTr.querySelector('.add-mvmt-list-btn').onclick = (e) => { e.stopPropagation(); showAddMovementModal(drawer.id); };
                 headerTr.querySelector('.transfer-list-btn').onclick = (e) => { e.stopPropagation(); showTransferModal(drawer.id); };
                 headerTr.querySelector('.edit-drawer-list-btn').onclick = (e) => { e.stopPropagation(); showEditDrawerModal(drawer.id); };
@@ -1656,6 +1662,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             elements.ahorroTableBody.appendChild(headerTr);
+
+            if (ahorroListDisplayMode === 'totals') return;
 
             // Sort by date descending
             drawerMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -4466,6 +4474,12 @@ document.addEventListener('DOMContentLoaded', () => {
             nominaListFilterMode = e.target.value;
             localStorage.setItem('nominaListFilterMode', nominaListFilterMode);
             renderNominaList();
+        });
+
+        elements.ahorroListDisplayMode?.addEventListener('change', (e) => {
+            ahorroListDisplayMode = e.target.value;
+            localStorage.setItem('ahorroListDisplayMode', ahorroListDisplayMode);
+            renderSavingsList();
         });
 
         // Ahorro Table Sorting Listener (Event Delegation)
