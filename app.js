@@ -2382,9 +2382,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const headerTr = document.createElement('tr');
             headerTr.className = 'ahorro-list-header'; // Reusing consistency
 
-            let monthlyBalance = drawerMovements.reduce((sum, m) => sum + m.amount, 0);
+            let headerAmount = 0;
             if (drawer.isAutomatic) {
-                monthlyBalance = calculatedUndestined;
+                headerAmount = calculatedUndestined;
+            } else {
+                const provisionMvmt = drawerMovements.find(m => isProvision(m));
+                headerAmount = provisionMvmt ? provisionMvmt.amount : 0;
             }
 
             headerTr.innerHTML = `
@@ -2400,7 +2403,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ` : ''}
                     </div>
                 </td>
-                <td class="balance">${fmtEUR(monthlyBalance)}</td>
+                <td class="balance">${fmtEUR(headerAmount)}</td>
             `;
 
             // Add event listeners (only in detail mode)
