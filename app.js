@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let nominaViewMode = localStorage.getItem('nominaViewMode') || 'cards'; // 'cards' or 'list'
     let nominaListMonth = getFiscalMonth();
     let nominaSortConfig = { key: 'type', direction: 'asc' };
+    let ahorroFilterMode = localStorage.getItem('ahorroFilterMode') || 'month'; // 'month', 'year', 'all'
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -384,7 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bolsaCardViewBtn: document.getElementById('bolsaCardViewBtn'),
         stockTable: document.getElementById('stockTable'),
         savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
-        savingsCategorySelect: document.getElementById('savingsCategorySelect')
+        savingsCategorySelect: document.getElementById('savingsCategorySelect'),
+        ahorroFilterMode: document.getElementById('ahorroFilterMode')
     };
 
     const updateNominaMovementType = (type) => {
@@ -1505,7 +1507,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!elements.ahorroTableBody || !elements.ahorroCurrentMonthLabel) return;
 
         // Update Label
-        elements.ahorroCurrentMonthLabel.textContent = formatFiscalMonth(ahorroListMonth);
+        if (ahorroFilterMode === 'month') {
+            elements.ahorroCurrentMonthLabel.textContent = formatFiscalMonth(ahorroListMonth);
+            elements.prevAhorroMonthBtn.style.visibility = 'visible';
+            elements.nextAhorroMonthBtn.style.visibility = 'visible';
+        } else if (ahorroFilterMode === 'year') {
+            elements.ahorroCurrentMonthLabel.textContent = ahorroListMonth.split('-')[0];
+            elements.prevAhorroMonthBtn.style.visibility = 'visible';
+            elements.nextAhorroMonthBtn.style.visibility = 'visible';
+        } else {
+            elements.ahorroCurrentMonthLabel.textContent = 'Todos los registros';
+            elements.prevAhorroMonthBtn.style.visibility = 'hidden';
+            elements.nextAhorroMonthBtn.style.visibility = 'hidden';
+        }
+
+        if (elements.ahorroFilterMode) {
+            elements.ahorroFilterMode.value = ahorroFilterMode;
+        }
 
         elements.ahorroTableBody.innerHTML = '';
 
@@ -1526,7 +1544,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (ahorroSortConfig.key === 'concept') {
                 // Determine "leading" concept for this month
                 const getLeadConcept = (drawer) => {
-                    const mvmts = (drawer.movements || []).filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+                    const mvmts = (drawer.movements || []).filter(m => {
+                        if (ahorroFilterMode === 'month') return m.date && getFiscalMonth(m.date) === ahorroListMonth;
+                        if (ahorroFilterMode === 'year') return m.date && m.date.startsWith(ahorroListMonth.split('-')[0]);
+                        return true;
+                    });
                     if (mvmts.length === 0) return '';
                     // Use most recent movement for sorting
                     const sortedMvmts = [...mvmts].sort((m1, m2) => new Date(m2.date) - new Date(m1.date));
@@ -1556,6 +1578,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         sortedDrawers.forEach(drawer => {
+            // Filter movements for this drawer and selected mode
+            let drawerMovements = [];
+            if (ahorroFilterMode === 'month') {
+                drawerMovements = (drawer.movements || []).filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+            } else if (ahorroFilterMode === 'year') {
+                const year = ahorroListMonth.split('-')[0];
+                drawerMovements = (drawer.movements || []).filter(m => m.date && m.date.startsWith(year));
+            } else {
+                drawerMovements = (drawer.movements || []);
+            }
+
+            if (drawerMovements.length === 0) return; // Don't show drawer if no movements in this view
+
             // Drawer Header Row
             const headerTr = document.createElement('tr');
             headerTr.className = 'ahorro-list-header';
@@ -1586,35 +1621,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
             elements.ahorroTableBody.appendChild(headerTr);
 
-            // Filter movements for this drawer and month (Fiscal)
-            const drawerMovements = (drawer.movements || []).filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+            // Sort by date descending
+            drawerMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            if (drawerMovements.length === 0) {
-                const emptyTr = document.createElement('tr');
-                emptyTr.className = 'ahorro-list-empty-row';
-                emptyTr.innerHTML = `<td colspan="3">Sin movimientos este mes</td>`;
-                elements.ahorroTableBody.appendChild(emptyTr);
-            } else {
-                // Sort by date descending
-                drawerMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
+            drawerMovements.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.className = 'ahorro-list-row';
 
-                drawerMovements.forEach(m => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'ahorro-list-row';
+                const isIncome = m.amount > 0;
+                const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
+                const concept = m.description || m.concept || '-';
 
-                    const isIncome = m.amount > 0;
-                    const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
-                    const concept = m.description || m.concept || '-';
-
-                    tr.innerHTML = `
-                        <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
-                        <td class="concept">${concept}</td>
-                        <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
-                    `;
-                    elements.ahorroTableBody.appendChild(tr);
-                });
-            }
+                tr.innerHTML = `
+                    <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
+                    <td class="concept">${concept}</td>
+                    <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
+                `;
+                elements.ahorroTableBody.appendChild(tr);
+            });
         });
+
+        if (elements.ahorroTableBody.innerHTML === '') {
+            elements.ahorroTableBody.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; opacity:0.5;">No hay movimientos en este periodo</td></tr>';
+        }
     }
 
     function renderSavings() {
@@ -4354,10 +4383,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Ahorro Month Navigation
         elements.prevAhorroMonthBtn?.addEventListener('click', () => {
             let [y, m] = ahorroListMonth.split('-').map(Number);
-            m--;
-            if (m < 1) {
-                m = 12;
+            if (ahorroFilterMode === 'year') {
                 y--;
+            } else {
+                m--;
+                if (m < 1) {
+                    m = 12;
+                    y--;
+                }
             }
             ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
             renderSavingsList();
@@ -4365,12 +4398,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.nextAhorroMonthBtn?.addEventListener('click', () => {
             let [y, m] = ahorroListMonth.split('-').map(Number);
-            m++;
-            if (m > 12) {
-                m = 1;
+            if (ahorroFilterMode === 'year') {
                 y++;
+            } else {
+                m++;
+                if (m > 12) {
+                    m = 1;
+                    y++;
+                }
             }
             ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
+            renderSavingsList();
+        });
+
+        elements.ahorroFilterMode?.addEventListener('change', (e) => {
+            ahorroFilterMode = e.target.value;
+            localStorage.setItem('ahorroFilterMode', ahorroFilterMode);
             renderSavingsList();
         });
 
