@@ -1903,12 +1903,12 @@ select:focus {
         white-space: nowrap;
     }
 
-    #stockTable th:nth-child(2),
-    #stockTable td:nth-child(2),
-    #stockTable th:nth-child(4),
-    #stockTable td:nth-child(4),
-    #stockTable th:nth-child(9),
-    #stockTable td:nth-child(9) {
+    #stockTable:not(.bolsa-totals-compact) th:nth-child(2),
+    #stockTable:not(.bolsa-totals-compact) td:nth-child(2),
+    #stockTable:not(.bolsa-totals-compact) th:nth-child(4),
+    #stockTable:not(.bolsa-totals-compact) td:nth-child(4),
+    #stockTable:not(.bolsa-totals-compact) th:nth-child(9),
+    #stockTable:not(.bolsa-totals-compact) td:nth-child(9) {
         display: none;
     }
 
