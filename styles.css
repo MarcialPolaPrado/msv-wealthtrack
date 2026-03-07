@@ -1682,6 +1682,23 @@ select:focus {
     border-left: 3px solid var(--primary);
 }
 
+/* Specific to very narrow screens for Analisis */
+@media (max-width: 400px) {
+    #analisisTable {
+        font-size: 0.65rem;
+    }
+
+    #analisisTable th,
+    #analisisTable td {
+        padding: 0.3rem 0.25rem !important;
+        white-space: nowrap;
+    }
+
+    #analisisTable .sort-icon {
+        font-size: 0.6rem;
+    }
+}
+
 .insufficient-income-row {
     background: rgba(239, 68, 68, 0.05);
 }

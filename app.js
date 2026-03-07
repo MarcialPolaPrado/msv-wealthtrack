@@ -3,7 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let stocks = (window.loadStocks) ? window.loadStocks() : [];
     let currentFilter = 'all';
-    let sortConfig = { key: null, direction: 'asc' };
+    const getSortConfig = (key, defaultObj) => {
+        try {
+            const saved = localStorage.getItem(key);
+            return saved ? JSON.parse(saved) : defaultObj;
+        } catch { return defaultObj; }
+    };
+
+    let sortConfig = getSortConfig('bolsaSortConfig', { key: null, direction: 'asc' });
     let expandedTickers = new Set(); // Track which positions are expanded to show details
     let lastSyncTime = new Date().toLocaleTimeString();
     let currentView = 'bolsa';
@@ -17,12 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedAhorroFiscalMonth = getFiscalMonth();
     let ahorroViewMode = localStorage.getItem('ahorroViewMode') || 'cards'; // 'cards' or 'list'
     let ahorroListMonth = getFiscalMonth();
-    let ahorroSortConfig = { key: 'name', direction: 'asc' }; // Sort drawers by name, balance, etc.
+    let ahorroSortConfig = getSortConfig('ahorroSortConfig', { key: 'name', direction: 'asc' });
     let analisisViewMode = 'list'; // 'list' or 'cards'
-    let analisisSortConfig = { key: 'month', direction: 'asc' };
+    let analisisSortConfig = getSortConfig('analisisSortConfig', { key: 'month', direction: 'asc' });
     let nominaViewMode = localStorage.getItem('nominaViewMode') || 'cards'; // 'cards' or 'list'
     let nominaListMonth = getFiscalMonth();
-    let nominaSortConfig = { key: 'type', direction: 'asc' };
+    let nominaSortConfig = getSortConfig('nominaSortConfig', { key: 'type', direction: 'asc' });
     let nominaListFilterMode = localStorage.getItem('nominaListFilterMode') || 'detail'; // 'detail' or 'totals'
     let ahorroFilterMode = localStorage.getItem('ahorroFilterMode') || 'month'; // 'month', 'year', 'all'
     let ahorroListFilterMode = localStorage.getItem('ahorroListFilterMode') || 'detail'; // 'detail', 'totals'
@@ -780,15 +787,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mark table as compact mode for CSS targeting
                 elements.stockTable.className = 'bolsa-totals-compact';
 
+                // Helper to render sort arrow
+                const getArrow = (key) => {
+                    if (sortConfig.key === key) return sortConfig.direction === 'asc' ? '▲' : '▼';
+                    return '';
+                };
+
                 // Update thead for compact view
                 const thead = elements.stockTable?.querySelector('thead');
                 if (thead) {
                     thead.innerHTML = `
                         <tr>
-                            <th data-sort="name" class="btc-siglas" style="text-align:left; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Siglas <span class="sort-icon"></span></th>
-                            <th data-sort="liveInfo.stockInvested" class="btc-inv" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Invertido <span class="sort-icon"></span></th>
-                            <th data-sort="liveInfo.stockCurrentVal" class="btc-val" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Valor Act. <span class="sort-icon"></span></th>
-                            <th data-sort="liveInfo.stockPL" class="btc-gp" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">G/P <span class="sort-icon"></span></th>
+                            <th data-sort="name" class="btc-siglas" style="text-align:left; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Siglas <span class="sort-icon">${getArrow('name')}</span></th>
+                            <th data-sort="liveInfo.stockInvested" class="btc-inv" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Invertido <span class="sort-icon">${getArrow('liveInfo.stockInvested')}</span></th>
+                            <th data-sort="liveInfo.stockCurrentVal" class="btc-val" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Valor Act. <span class="sort-icon">${getArrow('liveInfo.stockCurrentVal')}</span></th>
+                            <th data-sort="liveInfo.stockPL" class="btc-gp" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">G/P <span class="sort-icon">${getArrow('liveInfo.stockPL')}</span></th>
                         </tr>`;
                 }
 
@@ -4391,6 +4404,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         analisisSortConfig.key = key;
                         analisisSortConfig.direction = 'asc';
                     }
+                    localStorage.setItem('analisisSortConfig', JSON.stringify(analisisSortConfig));
                     renderAnalisis();
                     return; // Sorting handled
                 }
@@ -4596,6 +4610,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ahorroSortConfig.key = key;
                 ahorroSortConfig.direction = 'asc';
             }
+            localStorage.setItem('ahorroSortConfig', JSON.stringify(ahorroSortConfig));
             renderSavings();
         });
 
@@ -4665,6 +4680,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
 
                 sortConfig = { key, direction };
+                localStorage.setItem('bolsaSortConfig', JSON.stringify(sortConfig));
                 render();
             });
         }
@@ -4688,6 +4704,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 nominaSortConfig.key = key;
                 nominaSortConfig.direction = 'asc';
             }
+            localStorage.setItem('nominaSortConfig', JSON.stringify(nominaSortConfig));
             renderNominaList();
         });
 
