@@ -1148,22 +1148,6 @@ select:focus {
     .mobile-action-bar:not(.hidden) {
         display: flex !important;
     }
-
-    /* Optimization for very narrow screens (Fold 5 closed) */
-    @media (max-width: 450px) {
-
-        .bolsa-totals-view th,
-        .bolsa-totals-view td {
-            font-size: 0.72rem !important;
-            padding: 0.4rem 0.2rem !important;
-            letter-spacing: -0.01em;
-        }
-
-        .bolsa-totals-view th .sort-icon {
-            margin-left: 1px;
-            font-size: 0.55rem;
-        }
-    }
 }
 
 /* ── Foldable / Tablet: 601–900px (Fold 5 abierto, etc.) ────────── */

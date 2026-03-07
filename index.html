@@ -13,11 +13,11 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link rel="manifest" href="manifest.json">
-    <title>Premium Stock Portfolio - v2026.03.06.19</title>
+    <title>Premium Stock Portfolio - v2026.03.06.16</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=2026030619">
+    <link rel="stylesheet" href="styles.css?v=2026030616">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -57,7 +57,7 @@
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
                     <p
                         style="margin:0; font-size: 0.6rem; opacity: 0.6; color: var(--primary); letter-spacing: 0.05em;">
-                        v2026.03.06.19</p>
+                        v2026.03.06.16</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -167,21 +167,14 @@
                 <!-- Stock List Section (Hidden on Mobile) -->
                 <section class="stock-list-section glass-panel">
                     <div class="section-header" id="bolsaListHeader"
-                        style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
-                        <h2 style="margin:0">Detalles de Cartera</h2>
-                        <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
-                            <select id="bolsaDisplayMode"
-                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 4px 12px; font-size: 0.85rem; cursor: pointer; outline: none; transition: all 0.2s;">
-                                <option value="detail">📝 Detalle</option>
-                                <option value="totals">📊 Todo</option>
-                            </select>
-                            <div class="view-toggle"
-                                style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
-                                <button id="bolsaTableViewBtn" class="btn-sm"
-                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Lista</button>
-                                <button id="bolsaCardViewBtn" class="btn-sm active"
-                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Cajones</button>
-                            </div>
+                        style="display:flex; justify-content: space-between; align-items: center;">
+                        <h2>Detalles de Cartera</h2>
+                        <div class="view-toggle"
+                            style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button id="bolsaTableViewBtn" class="btn-sm"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Lista</button>
+                            <button id="bolsaCardViewBtn" class="btn-sm active"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Cajones</button>
                         </div>
                     </div>
                     <div id="bolsaGrid" class="drawers-grid" style="margin-top: 1rem;">
@@ -256,11 +249,6 @@
                         <div class="list-navigation"
                             style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color); flex-wrap: wrap;">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <select id="ahorroListDisplayMode"
-                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
-                                    <option value="detail">📝 Detalle</option>
-                                    <option value="totals">📊 Totales</option>
-                                </select>
                                 <select id="ahorroFilterMode"
                                     style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
                                     <option value="month">📅 Mes</option>
@@ -354,23 +342,14 @@
                 <!-- List View Container (Initially Hidden) -->
                 <div id="nominaTableContainer" class="table-container glass-panel hidden" style="margin-bottom: 2rem;">
                     <div class="list-navigation"
-                        style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color); flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <select id="nominaListFilterMode"
-                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
-                                <option value="detail">📝 Detalle</option>
-                                <option value="totals">📊 Totales</option>
-                            </select>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button id="prevNominaMonthBtn" class="btn-icon"
-                                style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
-                            <h3 id="nominaCurrentMonthLabel"
-                                style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
-                                Marzo 2024</h3>
-                            <button id="nextNominaMonthBtn" class="btn-icon"
-                                style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">➡️</button>
-                        </div>
+                        style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color);">
+                        <button id="prevNominaMonthBtn" class="btn-icon"
+                            style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
+                        <h3 id="nominaCurrentMonthLabel"
+                            style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
+                            Marzo 2024</h3>
+                        <button id="nextNominaMonthBtn" class="btn-icon"
+                            style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">➡️</button>
                     </div>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse;">
@@ -885,14 +864,14 @@
         </div>
     </div>
 
-    <script src="mock_data.js?v=2026030619"></script>
-    <script src="storage.js?v=2026030619"></script>
-    <script src="app.js?v=2026030619"></script>
+    <script src="mock_data.js?v=2026030616"></script>
+    <script src="storage.js?v=2026030616"></script>
+    <script src="app.js?v=2026030616"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026030619')
+                navigator.serviceWorker.register('./sw.js?v=2026030616')
                     .then(reg => {
                         // Check for updates periodically
                         setInterval(() => {
