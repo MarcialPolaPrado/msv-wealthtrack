@@ -1606,7 +1606,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortedCats = Object.entries(categoryTotals).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
 
         container.innerHTML = `
-            <div class="card drawer-card glass-panel summary-drawer" style="grid-column: 1 / -1; border: 1px solid var(--primary); padding: 1.5rem; width: 100%;">
+            <div class="card drawer-card glass-panel summary-drawer" style="border: 1px solid var(--primary); padding: 1.5rem;">
                 <div class="drawer-header" id="ahorroSummaryHeader" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div style="display:flex; align-items:center; gap: 10px; flex: 1;">
                         <span class="drawer-icon">📊</span>
@@ -3137,8 +3137,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <tbody>
                             ${rows.map((r, i) => `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${i === rows.length - 1 ? 'border-bottom:none;' : ''}">
-                                <td style="padding:0.7rem 1rem; opacity:0.7; font-size:0.9rem; white-space:nowrap;">${r.label}</td>
-                                <td style="padding:0.7rem 1rem; text-align:right; font-weight:700; color:${r.color}; font-size:0.95rem;">${r.value}</td>
+                                <td style="padding:0.7rem 0.5rem; opacity:0.7; font-size:0.85rem;">${r.label}</td>
+                                <td style="padding:0.7rem 0.5rem; text-align:right; font-weight:700; color:${r.color}; font-size:0.9rem; white-space:nowrap;">${r.value}</td>
                             </tr>`).join('')}
                         </tbody>
                     </table>
