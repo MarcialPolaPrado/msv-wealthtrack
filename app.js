@@ -4583,7 +4583,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ahorroSortConfig.key = key;
                 ahorroSortConfig.direction = 'asc';
             }
-            renderSavingsList();
+            renderSavings();
         });
 
         // Search logic
