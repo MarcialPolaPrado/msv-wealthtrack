@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
     let isAhorroSummaryExpanded = localStorage.getItem('isAhorroSummaryExpanded') !== 'false';
     let isSavingsPieExpanded = localStorage.getItem('isSavingsPieExpanded') !== 'false';
+    let isBolsaPieExpanded = localStorage.getItem('isBolsaPieExpanded') !== 'false';
     let isExpenseSummaryExpanded = localStorage.getItem('isExpenseSummaryExpanded') !== 'false';
 
     // Dynamic Settings
@@ -1606,7 +1607,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortedCats = Object.entries(categoryTotals).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
 
         container.innerHTML = `
-            <div class="card drawer-card glass-panel summary-drawer" style="border: 1px solid var(--primary); padding: 1.5rem;">
+            <div class="card drawer-card glass-panel summary-drawer" style="border: 1px solid var(--primary); padding: 1rem; max-width: 400px;">
                 <div class="drawer-header" id="ahorroSummaryHeader" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div style="display:flex; align-items:center; gap: 10px; flex: 1;">
                         <span class="drawer-icon">📊</span>
@@ -2254,6 +2255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             header.onclick = (e) => {
                 e.stopPropagation();
                 isBolsaPieExpanded = !isBolsaPieExpanded;
+                localStorage.setItem('isBolsaPieExpanded', isBolsaPieExpanded);
                 renderPortfolioPieChart();
             };
         } catch (err) {
@@ -3137,8 +3139,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <tbody>
                             ${rows.map((r, i) => `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${i === rows.length - 1 ? 'border-bottom:none;' : ''}">
-                                <td style="padding:0.7rem 0.5rem; opacity:0.7; font-size:0.85rem;">${r.label}</td>
-                                <td style="padding:0.7rem 0.5rem; text-align:right; font-weight:700; color:${r.color}; font-size:0.9rem; white-space:nowrap;">${r.value}</td>
+                                <td style="padding:0.5rem 0.3rem; opacity:0.7; font-size:0.75rem;">${r.label}</td>
+                                <td style="padding:0.5rem 0.3rem; text-align:right; font-weight:700; color:${r.color}; font-size:0.8rem; white-space:nowrap;">${r.value}</td>
                             </tr>`).join('')}
                         </tbody>
                     </table>
