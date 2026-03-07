@@ -167,14 +167,21 @@
                 <!-- Stock List Section (Hidden on Mobile) -->
                 <section class="stock-list-section glass-panel">
                     <div class="section-header" id="bolsaListHeader"
-                        style="display:flex; justify-content: space-between; align-items: center;">
-                        <h2>Detalles de Cartera</h2>
-                        <div class="view-toggle"
-                            style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
-                            <button id="bolsaTableViewBtn" class="btn-sm"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Lista</button>
-                            <button id="bolsaCardViewBtn" class="btn-sm active"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Cajones</button>
+                        style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+                        <h2 style="margin:0">Detalles de Cartera</h2>
+                        <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+                            <select id="bolsaDisplayMode"
+                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 4px 12px; font-size: 0.85rem; cursor: pointer; outline: none; transition: all 0.2s;">
+                                <option value="detail">📝 Detalle</option>
+                                <option value="totals">📊 Todo</option>
+                            </select>
+                            <div class="view-toggle"
+                                style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <button id="bolsaTableViewBtn" class="btn-sm"
+                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Lista</button>
+                                <button id="bolsaCardViewBtn" class="btn-sm active"
+                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Cajones</button>
+                            </div>
                         </div>
                     </div>
                     <div id="bolsaGrid" class="drawers-grid" style="margin-top: 1rem;">

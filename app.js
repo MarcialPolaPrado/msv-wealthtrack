@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
     let nominaListFilterMode = localStorage.getItem('nominaListFilterMode') || 'detail'; // 'detail' or 'totals'
     let ahorroListDisplayMode = localStorage.getItem('ahorroListDisplayMode') || 'detail'; // 'detail' or 'totals'
+    let bolsaDisplayMode = localStorage.getItem('bolsaDisplayMode') || 'detail'; // 'detail' or 'totals'
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -391,7 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
         savingsCategorySelect: document.getElementById('savingsCategorySelect'),
         ahorroFilterMode: document.getElementById('ahorroFilterMode'),
         nominaListFilterMode: document.getElementById('nominaListFilterMode'),
-        ahorroListDisplayMode: document.getElementById('ahorroListDisplayMode')
+        ahorroListDisplayMode: document.getElementById('ahorroListDisplayMode'),
+        bolsaDisplayMode: document.getElementById('bolsaDisplayMode')
     };
 
     const updateNominaMovementType = (type) => {
@@ -676,12 +678,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Toggle Table vs Cards
         if (bolsaViewMode === 'cards') {
             if (elements.stockTable) elements.stockTable.parentElement.classList.add('hidden');
+            if (elements.bolsaDisplayMode) elements.bolsaDisplayMode.classList.add('hidden');
             if (elements.bolsaGrid) {
                 elements.bolsaGrid.classList.remove('hidden');
                 renderBolsaCards(displayStocksData);
             }
         } else {
             if (elements.stockTable) elements.stockTable.parentElement.classList.remove('hidden');
+            if (elements.bolsaDisplayMode) elements.bolsaDisplayMode.classList.remove('hidden');
             if (elements.bolsaGrid) elements.bolsaGrid.classList.add('hidden');
         }
 
@@ -742,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 3. Render Table
+        // 3. Render Table or Cards
         if (stockTableBody) {
             stockTableBody.innerHTML = '';
 
@@ -752,132 +756,153 @@ document.addEventListener('DOMContentLoaded', () => {
                 emptyState?.classList.add('hidden');
             }
 
-            displayGroups.forEach(group => {
-                const info = group.liveInfo;
-                const plGroup = group.totalCurrentVal - group.totalInvested;
-                const plPercentGroup = group.totalInvested > 0 ? (plGroup / group.totalInvested) * 100 : 0;
-                const isExpanded = expandedTickers.has(group.ticker);
+            if (bolsaDisplayMode === 'totals') {
+                // Update headers for Totals view
+                const thead = elements.stockTable.querySelector('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th data-sort="ticker">Siglas <span class="sort-icon"></span></th>
+                        <th data-sort="totalInvested">Importe Compra <span class="sort-icon"></span></th>
+                        <th data-sort="totalCurrentVal">Valor Hoy <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockPL">G/P (€) <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockPLPercent">G/P (%) <span class="sort-icon"></span></th>
+                    </tr>
+                `;
 
-                // Calculate Signals
-                let signalsHtml = '<span style="color:var(--text-muted); font-size: 0.8rem;">-</span>';
-                const mockInfo = window.MOCK_DATA[group.ticker.toUpperCase()];
-                if (mockInfo && mockInfo.historical && mockInfo.historical['D']) {
-                    const fx = mockInfo.currency === 'USD' ? window.FX_RATE : 1;
-                    const analysis = calculateTechnicalAnalysis(group.ticker, mockInfo.historical['D'], fx);
-                    if (analysis.patterns && analysis.patterns.length > 0) {
-                        const signalDescriptions = {
-                            'Martillo (Hammer)': 'Martillo: Indica un posible cambio de tendencia al alza (reversión alcista).',
-                            'Martillo Invertido': 'Martillo Invertido: Sugiere un posible agotamiento de la tendencia bajista.',
-                            'Doji': 'Doji: Indica indecisión en el mercado; el precio de apertura y cierre son casi iguales.',
-                            'Envolvente Alcista': 'Envolvente: Una vela que envolvió a la anterior (cuerpo mayor), indicando un fuerte impulso alcista.'
-                        };
-                        signalsHtml = analysis.patterns.map(p => {
-                            const desc = signalDescriptions[p] || 'Señal técnica detectada.';
-                            if (p === 'Martillo (Hammer)') return `<span class="signal-badge hammer" title="${desc}">🔨 Martillo</span>`;
-                            if (p === 'Martillo Invertido') return `<span class="signal-badge hammer-inv" title="${desc}">⚒️ Inv. Hammer</span>`;
-                            if (p === 'Doji') return `<span class="signal-badge doji" title="${desc}">⚖️ Doji</span>`;
-                            if (p === 'Envolvente Alcista') return `<span class="signal-badge engulfing" title="${desc}">🔥 Envolvente</span>`;
-                            return `<span class="signal-badge" title="${desc}">${p}</span>`;
-                        }).join(' ');
+                displayGroups.forEach(group => {
+                    const plGroup = group.totalCurrentVal - group.totalInvested;
+                    const plPercentGroup = group.totalInvested > 0 ? (plGroup / group.totalInvested) * 100 : 0;
+
+                    const tr = document.createElement('tr');
+                    tr.style.cursor = 'pointer';
+                    tr.onclick = () => showFinancialDetails(group.ticker);
+                    tr.innerHTML = `
+                        <td style="font-weight:700; color:var(--primary)">${group.ticker}</td>
+                        <td>${fmtEUR(group.totalInvested)}</td>
+                        <td style="font-weight:700; background: rgba(59, 130, 246, 0.05);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
+                        <td class="${plGroup === null ? '' : (plGroup >= 0 ? 'profit' : 'loss')}" style="font-weight:600">
+                            ${plGroup === null ? '-' : (plGroup >= 0 ? '+' : '') + fmtEUR(plGroup)}
+                        </td>
+                        <td class="${plGroup === null ? '' : (plGroup >= 0 ? 'profit' : 'loss')}" style="font-weight:600">
+                            ${plPercentGroup === null ? '-' : fmtNum(plPercentGroup) + '%'}
+                        </td>
+                    `;
+                    stockTableBody.appendChild(tr);
+                });
+            } else {
+                // Restore original headers for Detail view
+                const thead = elements.stockTable.querySelector('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th data-sort="name">Asset <span class="sort-icon"></span></th>
+                        <th data-sort="market">Market <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.price">Current Price <span class="sort-icon"></span></th>
+                        <th data-sort="qty">Quantity <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockInvested">Invested <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockCurrentVal">Current Value (EUR) <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockPL">P/L (€) <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockPLPercent">P/L (%) <span class="sort-icon"></span></th>
+                        <th>Signals</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+
+                displayGroups.forEach(group => {
+                    const info = group.liveInfo;
+                    const plGroup = group.totalCurrentVal - group.totalInvested;
+                    const plPercentGroup = group.totalInvested > 0 ? (plGroup / group.totalInvested) * 100 : 0;
+                    const isExpanded = expandedTickers.has(group.ticker);
+
+                    // Calculate Signals
+                    let signalsHtml = '<span style="color:var(--text-muted); font-size: 0.8rem;">-</span>';
+                    const mockInfo = window.MOCK_DATA[group.ticker.toUpperCase()];
+                    if (mockInfo && mockInfo.historical && mockInfo.historical['D']) {
+                        const fx = mockInfo.currency === 'USD' ? window.FX_RATE : 1;
+                        const analysis = calculateTechnicalAnalysis(group.ticker, mockInfo.historical['D'], fx);
+                        if (analysis.patterns && analysis.patterns.length > 0) {
+                            const signalDescriptions = {
+                                'Martillo (Hammer)': 'Martillo: Indica un posible cambio de tendencia al alza (reversión alcista).',
+                                'Martillo Invertido': 'Martillo Invertido: Sugiere un posible agotamiento de la tendencia bajista.',
+                                'Doji': 'Doji: Indica indecisión en el mercado; el precio de apertura y cierre son casi iguales.',
+                                'Envolvente Alcista': 'Envolvente: Una vela que envolvió a la anterior (cuerpo mayor), indicando un fuerte impulso alcista.'
+                            };
+                            signalsHtml = analysis.patterns.map(p => {
+                                const desc = signalDescriptions[p] || 'Señal técnica detectada.';
+                                if (p === 'Martillo (Hammer)') return `<span class="signal-badge hammer" title="${desc}">🔨 Martillo</span>`;
+                                if (p === 'Martillo Invertido') return `<span class="signal-badge hammer-inv" title="${desc}">⚒️ Inv. Hammer</span>`;
+                                if (p === 'Doji') return `<span class="signal-badge doji" title="${desc}">⚖️ Doji</span>`;
+                                if (p === 'Envolvente Alcista') return `<span class="signal-badge engulfing" title="${desc}">🔥 Envolvente</span>`;
+                                return `<span class="signal-badge" title="${desc}">${p}</span>`;
+                            }).join(' ');
+                        }
                     }
-                }
 
-                const statusIcon = info.isLive
-                    ? '<span class="source-dot live" title="Conexión en Vivo"></span>'
-                    : '<span class="source-dot simulated" title="Datos Históricos"></span>';
+                    const statusIcon = info.isLive
+                        ? '<span class="source-dot live" title="Conexión en Vivo"></span>'
+                        : '<span class="source-dot simulated" title="Datos Históricos"></span>';
 
-                const statusBadge = info.isLive
-                    ? `<div style="display:flex; flex-direction:column; align-items:flex-end;"><span class="badge-live">Live</span>${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}</div>`
-                    : (info.isSimulated ? `
+                    const statusBadge = info.isLive
+                        ? `<div style="display:flex; flex-direction:column; align-items:flex-end;"><span class="badge-live">Live</span>${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}</div>`
+                        : (info.isSimulated ? `
                         <div style="display:flex; flex-direction:column; align-items:flex-end;">
                             <span class="badge-simulated">Cierre</span>
                             ${info.date ? `<span style="font-size:0.7em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
                         </div>` : '');
 
-                let priceDisplay = '<span style="color:var(--text-muted);">-</span>';
-                if (info.price !== null) {
-                    priceDisplay = info.currency === 'EUR'
-                        ? `<div style="display:flex; align-items:center; gap:0.5rem; font-weight:600">${statusIcon} ${fmtEUR(info.price)} ${statusBadge}</div>`
-                        : `<div style="display:flex; align-items:center; gap:0.5rem; font-weight:600">${statusIcon} ${fmtNum(info.price)} ${info.currency} ${statusBadge}</div>
-                           <div style="font-size:0.8em; color:var(--text-muted); margin-left: 1.3rem;">≈ ${fmtEUR(info.currentPriceEUR)}</div>`;
-                }
+                    let priceDisplay = '<span style="color:var(--text-muted);">-</span>';
+                    if (info.price !== null) {
+                        priceDisplay = info.currency === 'EUR'
+                            ? `<div style="display:flex; align-items:center; gap:0.5rem; font-weight:600">${statusIcon} ${fmtEUR(info.price)} ${statusBadge}</div>`
+                            : `<div style="display:flex; align-items:center; gap:0.5rem; font-weight:600">${statusIcon} ${fmtNum(info.price)} ${info.currency} ${statusBadge}</div>
+                               <div style="font-size:0.8em; color:var(--text-muted); margin-left: 1.3rem;">≈ ${fmtEUR(info.currentPriceEUR)}</div>`;
+                    }
 
-                const performanceClass = (plPercentGroup === null) ? 'neutral' :
-                    (plPercentGroup < 0 ? 'loss' :
-                        (plPercentGroup > 10 ? 'profit' : 'neutral'));
-
-                const tr = document.createElement('tr');
-                tr.className = 'group-row';
-                tr.innerHTML = `
-                    <td>
-                        <div style="display:flex; align-items:center; gap: 0.8rem;">
-                            <button class="toggle-btn" data-ticker="${group.ticker}" style="background:none; border:none; color:var(--text-main); cursor:pointer; font-size:1.2rem; padding:0;">${isExpanded ? '▼' : '▶'}</button>
-                            <div style="display:flex; align-items:center; gap: 0.6rem; flex-wrap: nowrap;">
-                                <div style="white-space: nowrap;">
-                                    <span style="font-weight:700"><a href="#" class="company-link ${performanceClass}" data-ticker="${group.ticker}">${group.name || group.ticker}</a></span>
-                                    <span style="font-size:0.8em; color:var(--text-muted); margin-left: 0.3rem;">(${group.ticker})</span>
+                    const trDetail = document.createElement('tr');
+                    trDetail.className = 'stock-row' + (isExpanded ? ' expanded' : '');
+                    trDetail.dataset.ticker = group.ticker;
+                    trDetail.innerHTML = `
+                        <td class="ticker-cell">
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <button class="toggle-btn" data-ticker="${group.ticker}" style="background:none; border:none; color:var(--primary); cursor:pointer; padding:0; font-size:1.2rem; display:flex; align-items:center; justify-content:center; width:24px; height:24px; transition: transform 0.2s; ${isExpanded ? 'transform:rotate(90deg)' : ''}">
+                                    <span style="font-size:1.2rem;">▶</span>
+                                </button>
+                                <div style="display:flex; flex-direction:column;">
+                                    <span class="stock-name" style="font-weight:700; color:var(--text-main); line-height:1.2">${group.items[0].name}</span>
+                                    <div style="display:flex; align-items:center; gap:4px;">
+                                        <span class="stock-ticker" style="font-size:0.85rem; color:var(--primary); font-weight:600">${group.ticker}</span>
+                                        <a href="#" class="company-link" data-ticker="${group.ticker}" title="Ver detalles financieros" style="display:flex; align-items:center; opacity:0.6; color:inherit; text-decoration:none; transition:opacity 0.2s">
+                                            <span style="font-size:1rem;">📊</span>
+                                        </a>
+                                    </div>
                                 </div>
-                                ${createSparkline(group.ticker)}
                             </div>
-                        </div>
-                    </td>
-                    <td><span style="font-size:0.85em; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px">${group.market}</span></td>
-                    <td>${priceDisplay}</td>
-                    <td>${fmtNum(group.totalQty, 4)}</td>
-                    <td><div style="font-weight:600">${fmtEUR(group.totalInvested)}</div></td>
-                    <td style="font-weight:700; background: rgba(59, 130, 246, 0.05);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
-                    <td class="${plGroup === null ? '' : (plGroup >= 0 ? 'profit' : 'loss')}" style="font-weight:600">
-                        ${plGroup === null ? '-' : (plGroup >= 0 ? '+' : '') + fmtEUR(plGroup)}
-                    </td>
-                    <td class="${plGroup === null ? '' : (plGroup >= 0 ? 'profit' : 'loss')}" style="font-weight:600">
-                        ${plPercentGroup === null ? '-' : fmtNum(plPercentGroup) + '%'}
-                    </td>
-                    <td><div style="display:flex; gap:0.3rem; flex-wrap:wrap;">${signalsHtml}</div></td>
-                    <td>
-                        <div style="display:flex; gap:0.4rem; align-items:center;">
-                            <button class="btn-primary add-more-btn" data-ticker="${group.ticker}" title="Añadir más" style="padding: 0.4rem 0.6rem; font-size: 1rem; box-shadow: none; background: var(--success); border-color: var(--success);">+</button>
-                            <button class="btn-primary details-btn" data-ticker="${group.ticker}" title="Ver Detalles" style="padding: 0.4rem 0.6rem; font-size: 1rem; box-shadow: none; background: var(--primary); border-color: var(--primary);">🔍</button>
-                        </div>
-                    </td>
-                `;
-                stockTableBody.appendChild(tr);
-
-                // Detail Rows
-                if (isExpanded) {
-                    group.items.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-                        const trDetail = document.createElement('tr');
-                        trDetail.className = 'detail-row';
-                        const itemPL = item.liveInfo.stockPL;
-                        const itemPLPercent = item.liveInfo.stockPLPercent;
-
-                        const isSale = item.qty < 0;
-                        trDetail.innerHTML = `
-                            <td style="padding-left: 2.5rem; opacity: 0.8;">
-                                <div style="font-size: 0.85rem; color: ${isSale ? 'var(--danger)' : 'var(--success)'}; font-weight: 600;">${isSale ? '🔴 Venta' : '🟢 Compra'}: ${new Date(item.date).toLocaleDateString()}</div>
-                                <div style="font-size: 0.75rem; color: var(--text-muted);">ID: ${item.id.slice(-6)}</div>
-                            </td>
-                            <td></td>
-                             <td style="opacity: 0.8; font-size: 0.85rem;">${isSale ? 'Precio venta' : 'Coste'}: ${fmtEUR(item.price)}</td>
-                            <td style="opacity: 0.8; font-size: 0.85rem; color: ${isSale ? 'var(--danger)' : 'inherit'}">${fmtNum(item.qty, 4)}</td>
-                            <td style="opacity: 0.8; font-size: 0.85rem; color: ${isSale ? 'var(--danger)' : 'inherit'}">${isSale ? '−' : ''}${fmtEUR(Math.abs(item.liveInfo.stockInvested))}</td>
-                            <td style="opacity: 0.8; font-size: 0.85rem;">${isSale ? '-' : fmtEUR(item.liveInfo.stockCurrentVal)}</td>
-                            <td class="${itemPL >= 0 ? 'profit' : 'loss'}" style="font-size: 0.85rem; opacity: 0.9;">
-                                ${isSale ? '-' : (itemPL >= 0 ? '+' : '') + fmtEUR(itemPL)}
-                            </td>
-                            <td class="${itemPL >= 0 ? 'profit' : 'loss'}" style="font-size: 0.85rem; opacity: 0.9;">
-                                ${isSale ? '-' : fmtNum(itemPLPercent) + '%'}
-                            </td>
-                            <td>
-                                <div style="display:flex; gap:0.3rem;">
-                                    <button class="btn-primary edit-btn" data-id="${item.id}" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; box-shadow: none;">Edit</button>
-                                    <button class="btn-danger delete-btn" data-id="${item.id}" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Del</button>
-                                </div>
-                            </td>
-                `;
-                        stockTableBody.appendChild(trDetail);
-                    });
-                }
-            });
+                        </td>
+                        <td style="font-size:0.9rem; opacity:0.8;">${group.items[0].market}</td>
+                        <td>${priceDisplay}</td>
+                        <td style="font-weight:600">${fmtNum(group.totalQty)}</td>
+                        <td>${fmtEUR(group.totalInvested)}</td>
+                        <td style="font-weight:700; background: rgba(59, 130, 246, 0.05);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
+                        <td class="${plGroup === null ? '' : (plGroup >= 0 ? 'profit' : 'loss')}" style="font-weight:600">
+                            ${plGroup === null ? '-' : (plGroup >= 0 ? '+' : '') + fmtEUR(plGroup)}
+                        </td>
+                        <td class="${plGroup === null ? '' : (plGroup >= 0 ? 'profit' : 'loss')}" style="font-weight:600">
+                            ${plPercentGroup === null ? '-' : fmtNum(plPercentGroup) + '%'}
+                        </td>
+                        <td>
+                            <div style="display:flex; gap:0.3rem; flex-wrap:wrap;">
+                                ${signalsHtml}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="actions" style="display:flex; gap:0.4rem;">
+                                <button class="btn-icon add-more-btn" data-ticker="${group.ticker}" title="Comprar más" style="font-size:1.1rem; opacity:0.7;">➕</button>
+                                <button class="btn-icon details-btn" data-ticker="${group.ticker}" title="Ver desglose" style="font-size:1.1rem; opacity:0.7;">📋</button>
+                            </div>
+                        </td>
+                    `;
+                    stockTableBody.appendChild(trDetail);
+                });
+            }
 
             // Add Summary Row (Portfolio Totals)
             const trTotal = document.createElement('tr');
@@ -890,23 +915,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalPLPctPortfolio = (totalPLPortfolio !== null && totalInvestedEUR > 0) ? (totalPLPortfolio / totalInvestedEUR) * 100 : 0;
             const plClassPortfolio = totalPLPortfolio === null ? '' : (totalPLPortfolio >= 0 ? 'profit' : 'loss');
 
-            trTotal.innerHTML = `
-                <td colspan="4" style="padding: 1.2rem 1rem; text-align: left; vertical-align: middle;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 1.1rem;">📊</span>
-                        <span style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.85rem; opacity: 0.9;">TOTAL CARTERA</span>
-                    </div>
-                </td>
-                <td style="padding: 1.2rem 1rem; vertical-align: middle;">${fmtEUR(totalInvestedEUR)}</td>
-                <td style="padding: 1.2rem 1rem; vertical-align: middle; background: rgba(59, 130, 246, 0.08);">${totalCurrentValueEUR !== null ? fmtEUR(totalCurrentValueEUR) : '-'}</td>
-                <td class="${plClassPortfolio}" style="padding: 1.2rem 1rem; vertical-align: middle;">
-                    ${totalPLPortfolio === null ? '-' : (totalPLPortfolio >= 0 ? '+' : '') + fmtEUR(totalPLPortfolio)}
-                </td>
-                <td class="${plClassPortfolio}" style="padding: 1.2rem 1rem; vertical-align: middle;">
-                    ${totalPLPortfolio === null ? '-' : fmtNum(totalPLPctPortfolio) + '%'}
-                </td>
-                <td colspan="2"></td>
-            `;
+            if (bolsaDisplayMode === 'totals') {
+                trTotal.innerHTML = `
+                    <td style="padding: 1.2rem 1rem; text-align: left; vertical-align: middle;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.1rem;">📊</span>
+                            <span style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.85rem; opacity: 0.9;">TOTAL</span>
+                        </div>
+                    </td>
+                    <td style="padding: 1.2rem 1rem; vertical-align: middle;">${fmtEUR(totalInvestedEUR)}</td>
+                    <td style="padding: 1.2rem 1rem; vertical-align: middle; background: rgba(59, 130, 246, 0.08);">${totalCurrentValueEUR !== null ? fmtEUR(totalCurrentValueEUR) : '-'}</td>
+                    <td class="${plClassPortfolio}" style="padding: 1.2rem 1rem; vertical-align: middle;">
+                        ${totalPLPortfolio === null ? '-' : (totalPLPortfolio >= 0 ? '+' : '') + fmtEUR(totalPLPortfolio)}
+                    </td>
+                    <td class="${plClassPortfolio}" style="padding: 1.2rem 1rem; vertical-align: middle;">
+                        ${totalPLPortfolio === null ? '-' : fmtNum(totalPLPctPortfolio) + '%'}
+                    </td>
+                `;
+            } else {
+                trTotal.innerHTML = `
+                    <td colspan="4" style="padding: 1.2rem 1rem; text-align: left; vertical-align: middle;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.1rem;">📊</span>
+                            <span style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.85rem; opacity: 0.9;">TOTAL CARTERA</span>
+                        </div>
+                    </td>
+                    <td style="padding: 1.2rem 1rem; vertical-align: middle;">${fmtEUR(totalInvestedEUR)}</td>
+                    <td style="padding: 1.2rem 1rem; vertical-align: middle; background: rgba(59, 130, 246, 0.08);">${totalCurrentValueEUR !== null ? fmtEUR(totalCurrentValueEUR) : '-'}</td>
+                    <td class="${plClassPortfolio}" style="padding: 1.2rem 1rem; vertical-align: middle;">
+                        ${totalPLPortfolio === null ? '-' : (totalPLPortfolio >= 0 ? '+' : '') + fmtEUR(totalPLPortfolio)}
+                    </td>
+                    <td class="${plClassPortfolio}" style="padding: 1.2rem 1rem; vertical-align: middle;">
+                        ${totalPLPortfolio === null ? '-' : fmtNum(totalPLPctPortfolio) + '%'}
+                    </td>
+                    <td colspan="2"></td>
+                `;
+            }
             stockTableBody.appendChild(trTotal);
 
             // Action handlers
@@ -1106,11 +1150,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const savingPct = d.income > 0 ? (d.netSaving / d.income * 100).toFixed(1) : 0;
 
                 return `
-                    <div class="card drawer-card glass-panel ${isCurrentMonth ? 'current-month-card' : ''}" 
-                         style="cursor: pointer; border: 1px solid ${isCurrentMonth ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
-                                background: ${isCurrentMonth ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)'};
-                                padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;"
-                         data-month="${d.month}" role="button" tabindex="0">
+                    <div class="card drawer-card glass-panel ${isCurrentMonth ? 'current-month-card' : ''}"
+                        style="cursor: pointer; border: 1px solid ${isCurrentMonth ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
+                        background: ${isCurrentMonth ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.03)'};
+                        padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;"
+                        data-month="${d.month}" role="button" tabindex="0">
                         <div style="display: flex; justify-content: space-between; align-items: center; pointer-events: none;">
                             <h4 style="margin: 0; font-size: 1.1rem; color: var(--primary);">${monthNamesFull[d.month - 1]}</h4>
                             ${isCurrentMonth ? '<span class="badge-live">Actual</span>' : ''}
@@ -1139,7 +1183,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="margin-top: 0.2rem; font-size: 0.7rem; color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px; pointer-events: none;">
                                 ⚠️ Saldo insuficiente (${fmtEUR(d.income - (d.expenses + d.netSaving))})
                             </div>
-                        ` : ''}
+                        ` : ''
+                    }
                     </div>
                 `;
             }).join('');
@@ -1221,7 +1266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const monthNamesLong = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         if (elements.monthDetailTitle) {
-            elements.monthDetailTitle.textContent = `Detalles de ${monthNamesLong[monthNum - 1]}`;
+            elements.monthDetailTitle.textContent = `Detalles de ${monthNamesLong[monthNum - 1]} `;
         }
 
         let mInc = 0;
@@ -1314,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const summaryRows = [
             { label: '💰 Ingresos', value: fmtEUR(mInc), color: 'var(--success)' },
-            { label: '💸 Gastos', value: `${fmtEUR(mPaidExpenses)} de ${fmtEUR(mPlannedExpenses)}`, color: 'var(--danger)' },
+            { label: '💸 Gastos', value: `${fmtEUR(mPaidExpenses)} de ${fmtEUR(mPlannedExpenses)} `, color: 'var(--danger)' },
             { label: '🏦 Ahorro Total', value: fmtEUR(mTotalAhorro), color: mTotalAhorro >= 0 ? 'var(--success)' : 'var(--danger)' },
             { label: '✨ Ahorro Neto', value: fmtEUR(mNetSaving), color: '#f59e0b' }
         ];
@@ -1403,21 +1448,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
         }).join('')}
             </div>
-            <div style="display: flex; gap: 1rem; margin-top: 1rem; justify-content: center; font-size: 0.8rem; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <div style="width: 12px; height: 12px; background: var(--success); border-radius: 2px;"></div>
-                    <span>Ingresos</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <div style="width: 12px; height: 12px; background: var(--danger); border-radius: 2px;"></div>
-                    <span>Gastos</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <div style="width: 12px; height: 12px; background: #f59e0b; border-radius: 2px;"></div>
-                    <span>Ahorro Neto</span>
-                </div>
-            </div>
-        `;
+            <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem; font-size: 0.8rem; opacity: 0.8;">
+                                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                    <div style="width: 12px; height: 12px; background: var(--success); border-radius: 2px;"></div>
+                                    <span>Ingresos</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                    <div style="width: 12px; height: 12px; background: var(--danger); border-radius: 2px;"></div>
+                                    <span>Gastos</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                    <div style="width: 12px; height: 12px; background: #f59e0b; border-radius: 2px;"></div>
+                                    <span>Ahorro Neto</span>
+                                </div>
+                            </div >
+            `;
 
         container.innerHTML = chartHtml;
     }
@@ -1516,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     `}
                 </div>
             </div>
-        `;
+            `;
 
         const header = container.querySelector('#ahorroSummaryHeader');
         header.onclick = (e) => {
@@ -1637,10 +1682,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const headerTr = document.createElement('tr');
             headerTr.className = 'ahorro-list-header';
             headerTr.innerHTML = `
-                <td colspan="2">
-                    <div class="header-content">
-                        <span>${drawer.icon} ${drawer.name}</span>
-                        ${(!drawer.isAuto && ahorroListDisplayMode === 'detail') ? `
+            <td colspan="2">
+                <div class="header-content">
+                    <span>${drawer.icon} ${drawer.name}</span>
+                    ${(!drawer.isAuto && ahorroListDisplayMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-mvmt-list-btn btn-primary">+ Mov</button>
                                 <button class="transfer-list-btn btn-secondary">⇆ Tx</button>
@@ -1648,10 +1693,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button class="delete-drawer-list-btn btn-danger">🗑️</button>
                             </div>
                         ` : ''}
-                    </div>
-                </td>
-                <td class="balance">${fmtEUR(drawer.balance)}</td>
-            `;
+                </div>
+            </td>
+            <td class="balance">${fmtEUR(drawer.balance)}</td>
+        `;
 
             // Add event listeners to list buttons (only in detail mode)
             if (!drawer.isAuto && ahorroListDisplayMode === 'detail') {
@@ -1677,10 +1722,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const category = m.category || '-';
 
                 tr.innerHTML = `
-                    <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
+            <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
                     <td class="concept">${category}</td>
                     <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
-                `;
+        `;
                 elements.ahorroTableBody.appendChild(tr);
             });
         });
@@ -1745,7 +1790,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.setProperty('border', '2px solid #10b981', 'important');
 
             card.innerHTML = `
-                <span class="drawer-icon">${drawer.icon}</span>
+            <span class="drawer-icon">${drawer.icon}</span>
                 <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <span class="drawer-amount" style="color: #10b981 !important; font-weight: 800; font-size: 1.2rem;">${fmtEUR(drawer.balance)}</span>
@@ -1755,10 +1800,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
                         <button class="add-mvmt-btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.8rem;">+ Movimiento</button>
                         <button class="transfer-btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;">⇆ Transferir</button>
-                        <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.4rem 0.6rem; font-size:0.8rem;">✏️</button>
+                        <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.4rem 0.8rem; font-size:0.8rem;">✏️</button>
                         <button class="delete-drawer-btn btn-danger" title="Borrar Cajón" style="padding:0.4rem 0.6rem; font-size:0.8rem; border:none; background:rgba(239,68,68,0.15); color:var(--danger);">🗑️</button>
-                    </div>` : ''}
-            `;
+                    </div>` : ''
+                }
+        `;
 
             card.onclick = (e) => {
                 const mvmtBtn = e.target.closest('.add-mvmt-btn');
@@ -1844,7 +1890,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const performanceClass = (plPercentGroup === null) ? 'neutral' : (plPercentGroup < 0 ? 'loss' : 'profit');
 
             card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span class="drawer-icon">📈</span>
                         <div style="display: flex; flex-direction: column;">
@@ -1907,7 +1953,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('')}
                     </div>
                 </div>
-            `;
+        `;
 
             card.addEventListener('click', (e) => {
                 const ticker = group.ticker;
@@ -2049,12 +2095,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const plStr = `${pl >= 0 ? '+' : ''}${fmtEUR(pl)} (${plPct.toFixed(1)}%)`;
 
                 return `<path d="${path}" fill="${s.color}" opacity="0.85"
-                            stroke="#0f172a" stroke-width="2.5"
-                            style="cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
-                            onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
-                            onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
-                            onclick="showFinancialDetails('${s.ticker}')">
-                            <title>${s.name} (${s.ticker})\nValor: ${amtStr} (${pctStr})\nG/P: ${plStr}</title>
+stroke="#0f172a" stroke-width="2.5"
+style="cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
+onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
+onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
+onclick="showFinancialDetails('${s.ticker}')">
+    <title>${s.name} (${s.ticker})\nValor: ${amtStr} (${pctStr})\nG/P: ${plStr}</title>
                         </path>`;
             }).join('');
 
@@ -2064,8 +2110,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const plColor = pl >= 0 ? '#10b981' : '#ef4444';
 
                 return `
-                <div style="display:flex; align-items:center; gap:12px; font-size:0.9rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); cursor:pointer; transition: background 0.2s;" onclick="showFinancialDetails('${s.ticker}')"
-                     onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.03)'">
+    <div style="display:flex; align-items:center; gap:12px; font-size:0.9rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); cursor:pointer; transition: background 0.2s;" onclick="showFinancialDetails('${s.ticker}')"
+onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.03)'">
                     <div style="width:14px; height:14px; border-radius:4px; background:${s.color}; flex-shrink:0; box-shadow: 0 0 8px ${s.color}66;"></div>
                     <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
                         <span style="font-weight:700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.name}</span>
@@ -2078,13 +2124,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                 </div>
-            `;
+    `;
             }).join('');
 
             container.style.cssText = '';  // Reset any previous inline styles
 
             container.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; gap:1rem; padding:1rem; width:100%; box-sizing:border-box;">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:1rem; padding:1rem; width:100%; box-sizing:border-box;">
                     <div class="drawer-header" id="bolsaPieHeader" style="cursor:pointer; width:100%;">
                         <div style="display:flex; align-items:center; gap:10px; flex:1;">
                             <span class="drawer-icon">📊</span>
@@ -2108,7 +2154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${legendHtml}
                         </div>
                     </div>
-                </div>`;
+                </div> `;
 
             const header = container.querySelector('#bolsaPieHeader');
             header.onclick = (e) => {
@@ -2171,22 +2217,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const amtStr = fmtEUR(s.drawer.balance);
             const pctStr = (s.pct * 100).toFixed(1) + '%';
             return `<path d="${path}" fill="${s.color}" opacity="0.85"
-                        stroke="#0f172a" stroke-width="2"
-                        style="cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
-                        onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
-                        onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
-                        onclick="showDrawerDetails('${s.drawer.id}')">
-                        <title>${s.drawer.icon} ${s.drawer.name}\n${amtStr} (${pctStr})</title>
+stroke="#0f172a" stroke-width="2"
+style="cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
+onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
+onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
+onclick="showDrawerDetails('${s.drawer.id}')">
+    <title>${s.drawer.icon} ${s.drawer.name}\n${amtStr} (${pctStr})</title>
                     </path>`;
         }).join('');
 
         const legendHtml = slices.map(s => `
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem; min-width:140px; cursor:pointer;" onclick="showDrawerDetails('${s.drawer.id}')">
+    <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem; min-width:140px; cursor:pointer;" onclick="showDrawerDetails('${s.drawer.id}')">
                 <div style="width:12px; height:12px; border-radius:3px; background:${s.color}; flex-shrink:0;"></div>
                 <span style="opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.drawer.icon} ${s.drawer.name}</span>
                 <span style="font-weight:700; color:${s.color}; margin-left:auto;">${fmtEUR(s.drawer.balance)}</span>
             </div>
-        `).join('');
+    `).join('');
 
         // Container structure updated with toggle header
         const parent = container.parentElement;
@@ -2198,14 +2244,14 @@ document.addEventListener('DOMContentLoaded', () => {
             header.style.cursor = 'pointer';
             header.style.marginBottom = '1rem';
             header.innerHTML = `
-                <div style="display:flex; align-items:center; gap: 10px;">
+    <div style="display:flex; align-items:center; gap: 10px;">
                     <span class="drawer-icon">🍰</span>
                     <div class="drawer-info">
                         <h4 style="margin:0">Distribución de Ahorros <span class="toggle-arrow ${isSavingsPieExpanded ? 'expanded' : ''}">▼</span></h4>
                         <p style="font-size: 0.8rem; opacity: 0.7;">Reparto total por cajones de ahorro</p>
                     </div>
                 </div>
-            `;
+    `;
             header.onclick = () => {
                 isSavingsPieExpanded = !isSavingsPieExpanded;
                 renderSavingsPieChart();
@@ -2227,7 +2273,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.padding = '1rem';
 
         container.innerHTML = `
-            <div class="collapsible-content ${isSavingsPieExpanded ? 'expanded' : ''}" style="width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;">
+    <div class="collapsible-content ${isSavingsPieExpanded ? 'expanded' : ''}" style="width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;">
                 <div style="flex: 1; min-width: 200px; max-width: 400px; position: relative;">
                     <svg viewBox="0 0 300 300" width="100%" height="auto" style="display:block; overflow:visible;">
                         ${slicePaths}
@@ -2239,7 +2285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="flex: 1.5; min-width: 250px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; align-content: center;">
                     ${legendHtml}
                 </div>
-            </div>`;
+            </div> `;
     }
 
     // Helper: build a labeled section with its own responsive sub-grid
@@ -2251,7 +2297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const header = document.createElement('div');
         header.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:1rem; padding-bottom:0.6rem; border-bottom:2px solid ' + color + '22;';
         const totalStr = totalAmount !== undefined ? `<span style="margin-left:0.8rem; font-weight:700; color:${color}; font-size:0.95rem;">${fmtEUR(totalAmount)}</span>` : '';
-        header.innerHTML = `<span style="font-size:1.3rem;">${icon}</span><h3 style="margin:0; font-size:1rem; color:${color}; font-weight:700; letter-spacing:0.02em;">${title} (${cards.length})</h3>${totalStr}`;
+        header.innerHTML = `<span style="font-size:1.3rem;">${icon}</span> <h3 style="margin:0; font-size:1rem; color:${color}; font-weight:700; letter-spacing:0.02em;">${title} (${cards.length})</h3>${totalStr}`;
 
         const subGrid = document.createElement('div');
         subGrid.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1.2rem;';
@@ -2379,9 +2425,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sepTr = document.createElement('tr');
                 sepTr.className = 'list-section-header';
                 sepTr.innerHTML = `
-                    <td colspan="2">${typeLabels[drawer.type]}</td>
-                    <td style="text-align: right; padding-right: 1rem;">${fmtEUR(categoryTotals[drawer.type] || 0)}</td>
-                `;
+    <td colspan="2">${typeLabels[drawer.type]}</td>
+        <td style="text-align: right; padding-right: 1rem;">${fmtEUR(categoryTotals[drawer.type] || 0)}</td>
+`;
                 elements.nominaTableBody.appendChild(sepTr);
                 lastType = drawer.type;
             }
@@ -2399,20 +2445,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             headerTr.innerHTML = `
-                <td colspan="2">
-                    <div class="header-content">
-                        <span>${drawer.icon || getNominaIcon(drawer.name, drawer.type)} ${drawer.name}</span>
-                        ${(!drawer.isAutomatic && nominaListFilterMode === 'detail') ? `
+    <td colspan="2">
+        <div class="header-content">
+            <span>${drawer.icon || getNominaIcon(drawer.name, drawer.type)} ${drawer.name}</span>
+            ${(!drawer.isAutomatic && nominaListFilterMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-nomina-mvmt-list-btn btn-primary">+ Mov</button>
                                 <button class="edit-nomina-drawer-list-btn btn-secondary">✏️</button>
                                 <button class="delete-nomina-drawer-list-btn btn-danger">🗑️</button>
                             </div>
                         ` : ''}
-                    </div>
-                </td>
-                <td class="balance">${fmtEUR(headerAmount)}</td>
-            `;
+        </div>
+    </td>
+    <td class="balance">${fmtEUR(headerAmount)}</td>
+`;
 
             // Add event listeners (only in detail mode)
             if (!drawer.isAutomatic && nominaListFilterMode === 'detail') {
@@ -2450,10 +2496,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const concept = m.description || m.concept || '-';
 
                     tr.innerHTML = `
-                        <td class="date" style="font-size: 0.75rem; opacity: 0.6;">${m.date ? new Date(m.date).toLocaleDateString('es-ES') : '--/--/--'}</td>
+    <td class="date" style="font-size: 0.75rem; opacity: 0.6;">${m.date ? new Date(m.date).toLocaleDateString('es-ES') : '--/--/--'}</td>
                         <td class="concept">${concept}</td>
                         <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
-                    `;
+`;
 
                     // Detail/Edit on click
                     tr.onclick = () => {
@@ -2669,11 +2715,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 0);
 
                 balanceDisplay = `
-                    <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05);">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
-                            <span style="opacity:0.6;">${isSavings ? 'Ahorro Mes' : 'Provisión'}:</span>
-                            <span style="font-weight:600;">${fmtEUR(displayProvision)}</span>
-                        </div>
+    <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+            <span style="opacity:0.6;">${isSavings ? 'Ahorro Mes' : 'Provisión'}:</span>
+            <span style="font-weight:600;">${fmtEUR(displayProvision)}</span>
+        </div>
                         ${isSavings ? `
                         <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
                             <span style="opacity:0.6;">Ahorro Año:</span>
@@ -2699,43 +2745,43 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span style="font-weight:700; color:${monthlyBalance >= 0 ? 'var(--success)' : 'var(--danger)'}; font-size: 1rem;">${fmtEUR(monthlyBalance)}</span>
                         </div>` : ''}
                     </div>
-                `;
+    `;
             } else {
                 const yearlyIncomeSum = (concept.movements || []).reduce((sum, m) => {
                     const monthsCount = (m.activeMonths || []).length;
                     return sum + (m.amount * monthsCount);
                 }, 0);
                 balanceDisplay = `
-                    <div class="drawer-balance" style="color: var(--success); margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
-                        ${fmtEUR(monthlyBalance)} 
-                        <span style="font-size: 0.85rem; opacity: 0.6; font-weight: 400; color: var(--text-color); margin-left: 4px;">
-                            de ${fmtEUR(yearlyIncomeSum)}
-                        </span>
+    <div class="drawer-balance" style="color: var(--success); margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
+        ${fmtEUR(monthlyBalance)}
+<span style="font-size: 0.85rem; opacity: 0.6; font-weight: 400; color: var(--text-color); margin-left: 4px;">
+    de ${fmtEUR(yearlyIncomeSum)}
+</span>
                     </div>
-                `;
+    `;
             }
 
             card.innerHTML = `
-                <div class="drawer-header">
-                    <div style="display:flex; align-items:center; gap: 10px;">
-                        <span class="drawer-icon">${concept.icon || getNominaIcon(concept.name, concept.type)}</span>
-                        <div class="drawer-info">
-                            <h4 style="margin:0">${concept.name}</h4>
-                            <p style="font-size: 0.8rem; opacity: 0.7;">${monthlyMovements.length} mov. este mes</p>
-                        </div>
-                    </div>
+    <div class="drawer-header">
+        <div style="display:flex; align-items:center; gap: 10px;">
+            <span class="drawer-icon">${concept.icon || getNominaIcon(concept.name, concept.type)}</span>
+            <div class="drawer-info">
+                <h4 style="margin:0">${concept.name}</h4>
+                <p style="font-size: 0.8rem; opacity: 0.7;">${monthlyMovements.length} mov. este mes</p>
+            </div>
+        </div>
                     ${concept.isAutomatic ? '' : `
                     <div class="drawer-actions">
                         <button class="btn-icon edit-nomina-drawer" data-id="${concept.id}" title="Editar Cajón">✏️</button>
                         <button class="btn-icon delete-nomina-drawer" data-id="${concept.id}" title="Borrar Cajón">🗑️</button>
                     </div>`}
                 </div>
-                ${balanceDisplay}
-                <div class="drawer-footer" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                   <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1">+ Movimiento</button>
-                   <button class="btn-primary btn-sm view-nomina-details" data-id="${concept.id}" style="flex:1">Historial</button>
-                </div>
-            `;
+    ${balanceDisplay}
+<div class="drawer-footer" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+    <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1">+ Movimiento</button>
+    <button class="btn-primary btn-sm view-nomina-details" data-id="${concept.id}" style="flex:1">Historial</button>
+</div>
+`;
 
             // Route card to the right section
             if (isIncome) incomeCards.push(card);
@@ -2788,21 +2834,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     const large = s.sweep > 180 ? 1 : 0;
                     const amt = fmtEUR(s.value);
                     return `<path d="M${cx} ${cy} L${sx.toFixed(1)} ${sy.toFixed(1)} A${r} ${r} 0 ${large} 1 ${ex.toFixed(1)} ${ey.toFixed(1)}Z"
-                        fill="${s.color}" opacity="0.85" stroke="#0f172a" stroke-width="1.5"
-                        onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.03)'; this.style.transformOrigin='center';" 
-                        onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';" 
-                        style="cursor:pointer;transition:opacity 0.2s, transform 0.2s">
-                        <title>${s.label}: ${amt} (${(s.pct * 100).toFixed(1)}%)</title></path>`;
+fill="${s.color}" opacity="0.85" stroke="#0f172a" stroke-width="1.5"
+onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.03)'; this.style.transformOrigin='center';"
+onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
+style="cursor:pointer;transition:opacity 0.2s, transform 0.2s">
+    <title>${s.label}: ${amt} (${(s.pct * 100).toFixed(1)}%)</title></path>`;
                 }).join('');
 
                 const totalStr = fmtEUR(total);
                 const legendHtml = slices.map(s => `
-                    <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem;">
                         <div style="width:10px; height:10px; border-radius:2px; background:${s.color}; flex-shrink:0;"></div>
                         <span style="opacity:0.8; white-space:nowrap;">${s.label}</span>
                         <span style="font-weight:700; color:${s.color}; margin-left:auto; padding-left:4px;">${fmtEUR(s.value)}</span>
                     </div>
-                `).join('');
+    `).join('');
 
                 pieCard.style.flexDirection = 'row';
                 pieCard.style.flexWrap = 'wrap';
@@ -2811,7 +2857,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pieCard.style.padding = '1.2rem';
 
                 pieCard.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 140px;">
+    <div style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 140px;">
                         <div style="font-size:0.8rem; opacity:0.5; margin-bottom:0.8rem; text-align:center; font-weight:600;">Distribución del ingreso</div>
                         <svg viewBox="0 0 200 200" width="150" height="150" style="display:block; overflow:visible;">
                             ${paths}
@@ -2820,9 +2866,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <text x="${cx}" y="${cy + 8}" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Outfit,sans-serif">${totalStr}</text>
                         </svg>
                     </div>
-                    <div style="flex: 1.2; min-width: 160px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
-                        ${legendHtml}
-                    </div>`;
+    <div style="flex: 1.2; min-width: 160px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
+        ${legendHtml}
+    </div>`;
             }
             incomeSubGrid.appendChild(pieCard);
         }
@@ -2863,7 +2909,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             summaryCard.innerHTML = `
-                <div class="drawer-header summary-header-toggle" id="expenseSummaryHeader">
+        <div class="drawer-header summary-header-toggle" id="expenseSummaryHeader">
                     <div style="display:flex; align-items:center; gap: 10px;">
                         <span class="drawer-icon">📉</span>
                         <div class="drawer-info">
@@ -2877,9 +2923,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
-                <div class="collapsible-content ${isExpenseSummaryExpanded ? 'expanded' : ''}" id="expenseSummaryContent">
-                    <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px;">
-                        ${Object.entries(totalsByDrawer).map(([drawerId, data]) => `
+    <div class="collapsible-content ${isExpenseSummaryExpanded ? 'expanded' : ''}" id="expenseSummaryContent">
+        <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px;">
+            ${Object.entries(totalsByDrawer).map(([drawerId, data]) => `
                             <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                                     <span>${data.icon}</span>
@@ -2891,12 +2937,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                             </div>
                         `).join('')}
-                    </div>
+        </div>
 
-                    <div style="margin-top: 1.5rem; max-height: 250px; overflow-y: auto; padding-right: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-                        <h5 style="margin: 0 0 0.8rem 0; font-size: 0.8rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em;">Desglose Detallado</h5>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem;">
-                            ${(() => {
+        <div style="margin-top: 1.5rem; max-height: 250px; overflow-y: auto; padding-right: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+            <h5 style="margin: 0 0 0.8rem 0; font-size: 0.8rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em;">Desglose Detallado</h5>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem;">
+                ${(() => {
                     const grouped = allMonthlyExpenses.reduce((acc, exp) => {
                         if (!acc[exp.drawerId]) acc[exp.drawerId] = { name: exp.drawerName, icon: exp.icon, items: [] };
                         acc[exp.drawerId].items.push(exp);
@@ -2948,10 +2994,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 `;
                     }).join('');
                 })()}
-                        </div>
-                    </div>
-                </div>
-            `;
+            </div>
+        </div>
+    </div>
+`;
             grid.appendChild(summaryCard);
 
             // Add toggle event listener
@@ -2980,29 +3026,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const dd = 25;
             const mm = String(payday.getMonth() + 1).padStart(2, '0');
             const yyyy = payday.getFullYear();
-            const paydayFormatted = `${dd}/${mm}/${yyyy}`;
+            const paydayFormatted = `${dd} /${mm}/${yyyy} `;
 
             const rows = [
                 { label: '📅 Mes en Curso', value: formatFiscalMonth(fiscalMonthStr) || '---', color: 'inherit' },
-                { label: `⏳ Dias para el ${paydayFormatted}`, value: `${diffDays || 0} dias`, color: dayColor || 'inherit' },
+                { label: `⏳ Dias para el ${paydayFormatted} `, value: `${diffDays || 0} dias`, color: dayColor || 'inherit' },
                 { label: '💰 Ingresos', value: fmtEUR(externalNetIncome || 0), color: 'var(--success)' },
-                { label: '💸 Gastos', value: `${fmtEUR(totalPaidExpensesManual || 0)} de ${fmtEUR(totalPlannedExpensesManual || 0)}`, color: 'var(--danger)' },
+                { label: '💸 Gastos', value: `${fmtEUR(totalPaidExpensesManual || 0)} de ${fmtEUR(totalPlannedExpensesManual || 0)} `, color: 'var(--danger)' },
                 { label: '✨ Ahorro Neto', value: fmtEUR(totalAhorroNetoManual || 0), color: '#f59e0b' },
                 { label: '🟣 No Destinado', value: fmtEUR(undestined || 0), color: (undestined || 0) >= 0 ? 'var(--success)' : 'var(--danger)' }
             ];
 
             summaryTable.innerHTML = `
-                <div class="table-container glass-panel" style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse;">
-                        <tbody>
-                            ${rows.map((r, i) => `
+    <div class="table-container glass-panel" style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <tbody>
+                ${rows.map((r, i) => `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${i === rows.length - 1 ? 'border-bottom:none;' : ''}">
                                 <td style="padding:0.7rem 1rem; opacity:0.7; font-size:0.9rem; white-space:nowrap;">${r.label}</td>
                                 <td style="padding:0.7rem 1rem; text-align:right; font-weight:700; color:${r.color}; font-size:0.95rem;">${r.value}</td>
                             </tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>`;
+            </tbody>
+        </table>
+                </div> `;
         }
 
         // Render the 3 pie charts
@@ -3113,7 +3159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         typeInput.value = 'movement';
         if (targetIdInput) targetIdInput.value = drawerId;
-        if (title) title.textContent = `Movimiento: ${drawer.name}`;
+        if (title) title.textContent = `Movimiento: ${drawer.name} `;
 
         nameGroup?.classList.add('hidden');
         if (amountInput) amountInput.placeholder = "0.00";
@@ -3159,7 +3205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         typeInput.value = 'transfer';
         if (targetIdInput) targetIdInput.value = drawerId;
-        if (title) title.textContent = `Transferir desde: ${sourceDrawer.name}`;
+        if (title) title.textContent = `Transferir desde: ${sourceDrawer.name} `;
 
         nameGroup?.classList.add('hidden');
         transferTargetGroup?.classList.remove('hidden');
@@ -3274,7 +3320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let movementsHtml = drawer.isAuto
             ? '<p style="opacity:0.7">Este cajón se sincroniza automáticamente con el valor de tu cartera de acciones.</p>'
             : drawer.movements.map((m, idx) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.8rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.8rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
                     <div style="flex-grow:1;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <div style="font-weight:600;">${m.description}</div>
@@ -3289,15 +3335,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="edit-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.5; padding:0.2rem;" title="Editar Movimiento">✏️</button>
                     </div>
                 </div>
-            `).join('') || '<p style="opacity:0.5; padding:1rem; text-align:center;">No hay movimientos aún.</p>';
+    `).join('') || '<p style="opacity:0.5; padding:1rem; text-align:center;">No hay movimientos aún.</p>';
 
         const overlay = document.createElement('div');
         overlay.style.cssText = `
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000;
-            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);
-        `;
+position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 10000;
+display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+`;
         overlay.innerHTML = `
-            <div style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; width: min(500px, 95vw); max-height: 85vh; overflow-y: auto;">
+    <div style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; width: min(500px, 95vw); max-height: 85vh; overflow-y: auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                     <div>
                         <h2 style="margin:0">${drawer.icon} ${drawer.name}</h2>
@@ -3319,7 +3365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>${movementsHtml}</div>
                 </div>
             </div>
-        `;
+    `;
         document.body.appendChild(overlay);
         document.getElementById('closeDetails').onclick = () => overlay.remove();
         const editBtn = document.getElementById('editDrawerFromDetails');
@@ -3483,13 +3529,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const rectHeight = Math.max(Math.abs(yOpen - yClose), 2); // Min 2px for DOJI visibility
 
         elements.portfolioCandleGraphic.innerHTML = `
-            <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-                <!-- Wick -->
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+                <!--Wick -->
                 <line x1="${width / 2}" y1="${yHigh}" x2="${width / 2}" y2="${yLow}" stroke="${color}" stroke-width="2" />
-                <!-- Body -->
-                <rect x="${width / 4}" y="${rectY}" width="${width / 2}" height="${rectHeight}" fill="${color}" stroke="${color}" stroke-width="1" />
+                <!--Body -->
+    <rect x="${width / 4}" y="${rectY}" width="${width / 2}" height="${rectHeight}" fill="${color}" stroke="${color}" stroke-width="1" />
             </svg>
-        `;
+    `;
     }
 
     /**
@@ -3515,26 +3561,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const points = data.map((d, i) => {
             const x = (i / (data.length - 1)) * width;
             const y = height - padding - ((d.close - min) / range) * (height - 2 * padding);
-            return `${x.toFixed(1)},${y.toFixed(1)} `;
+            return `${x.toFixed(1)},${y.toFixed(1)}`;
         }).join(' ');
 
         const isUp = data[data.length - 1].close >= data[0].close;
         const color = isUp ? 'var(--success)' : 'var(--danger)';
 
         return `
-            <div class="sparkline-container" title="Últimos 30 días">
-                <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-                    <polyline
-                        fill="none"
-                        stroke="${color}"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        points="${points}"
-                    />
-                </svg>
+    <div class="sparkline-container" title="Últimos 30 días">
+        <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <polyline
+                fill="none"
+                stroke="${color}"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                points="${points}"
+            />
+        </svg>
             </div>
-        `;
+    `;
     }
 
     /**
@@ -3584,7 +3630,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!mockInfo) {
-            elements.financialModalTitle.textContent = `No hay datos: ${tickerUpper} `;
+            elements.financialModalTitle.textContent = `No hay datos: ${tickerUpper}`;
             elements.financialDetailsModal.classList.remove('hidden');
             if (chart) chart.remove();
             chart = null;
@@ -3689,7 +3735,7 @@ document.addEventListener('DOMContentLoaded', () => {
             close: d.close * fx
         }));
 
-        console.log(`Historical data points: ${historicalData.length}(Converted to EUR: ${fx !== 1})`);
+        console.log(`Historical data points: ${historicalData.length} (Converted to EUR: ${fx !== 1})`);
 
         // Update tabs
         const tabs = document.querySelectorAll('.time-tab');
@@ -3716,7 +3762,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.chartContainer.innerHTML = '';
 
         const containerWidth = elements.chartContainer.clientWidth || elements.financialDetailsModal.querySelector('.modal-content').clientWidth - 80 || 600;
-        console.log(`Container width: ${containerWidth} `);
+        console.log(`Container width: ${containerWidth}`);
 
         try {
             if (chart) {
@@ -3759,7 +3805,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Chart rendered successfully");
         } catch (err) {
             console.error("Error creating chart:", err);
-            elements.chartContainer.innerHTML = `< div style = "color:var(--danger); padding:1rem;" > Error rendering chart: ${err.message}</div > `;
+            elements.chartContainer.innerHTML = `<div style="color:var(--danger); padding:1rem;">Error rendering chart: ${err.message}</div>`;
         }
 
         const resizeHandler = () => {
@@ -3880,11 +3926,11 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.techVolatility.textContent = fmtEUR(a.volatility);
 
         elements.techMA.innerHTML = `
-            <strong>Medias Móviles:</strong> SMA20: ${a.maStatus.sma20}, SMA50: ${a.maStatus.sma50}, SMA200: ${a.maStatus.sma200}
-        `;
+    <strong>Medias Móviles:</strong> SMA20: ${a.maStatus.sma20}, SMA50: ${a.maStatus.sma50}, SMA200: ${a.maStatus.sma200}
+`;
         elements.techPatterns.innerHTML = `
-            <strong>Patrones Recientes:</strong> ${a.patterns.length > 0 ? a.patterns.join(', ') : 'Ninguno detectado'}
-        `;
+    <strong>Patrones Recientes:</strong> ${a.patterns.length > 0 ? a.patterns.join(', ') : 'Ninguno detectado'}
+`;
     }
 
     function clearTechnicalAnalysis() {
@@ -4330,7 +4376,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const currentBalance = otherMovements.reduce((sum, m) => sum + m.amount, 0);
 
                     if (currentBalance + amount < 0) {
-                        alert(`Gasto excesivo. El saldo disponible en "Dinero No Destinado" es ${fmtEUR(currentBalance)}.`);
+                        alert(`Gasto excesivo.El saldo disponible en "Dinero No Destinado" es ${fmtEUR(currentBalance)}.`);
                         return;
                     }
                 }
@@ -4815,6 +4861,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        if (elements.bolsaDisplayMode) {
+            elements.bolsaDisplayMode.addEventListener('change', (e) => {
+                bolsaDisplayMode = e.target.value;
+                localStorage.setItem('bolsaDisplayMode', bolsaDisplayMode);
+                render();
+            });
+            // Initial value sync
+            elements.bolsaDisplayMode.value = bolsaDisplayMode;
+        }
+
         // Mobile: tap "Sus Inversiones" title to toggle list/cards view
         const bolsaMobileTitle = document.getElementById('bolsaMobileTitle');
         if (bolsaMobileTitle) {
@@ -5095,7 +5151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const item = document.createElement('div');
                     item.className = 'movement-item';
                     item.innerHTML = `
-                        <div class="mov-info">
+    <div class="mov-info">
                             <div class="mov-concept">${mov.concept || mov.description || 'Sin concepto'}</div>
                             <div style="display:flex; gap:0.5rem; font-size:0.75rem; opacity:0.6; flex-wrap: wrap;">
                                 <span>${mov.date}</span>
@@ -5103,16 +5159,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span style="color:var(--primary); font-weight:600;">${mov.activeMonths?.length === 12 ? 'Todos los meses' : mov.activeMonths?.length + ' meses'}</span>
                             </div>
                         </div>
-                        <div style="display:flex; align-items:center; gap: 1rem;">
-                            <div class="mov-amount" style="color: var(--${mov.amount >= 0 ? 'success' : 'danger'})">
-                                ${mov.amount > 0 ? '+' : ''}${fmtEUR(mov.amount)}
-                            </div>
-                            <div class="mov-actions" style="display:flex; gap:0.5rem;">
-                                <button class="btn-icon edit-mov" data-drawer-id="${drawer.id}" data-index="${originalIndex}" title="Editar" style="font-size:0.9rem; opacity:0.6;">✏️</button>
-                                <button class="btn-icon delete-mov" data-drawer-id="${drawer.id}" data-index="${originalIndex}" title="Borrar" style="font-size:0.9rem; opacity:0.6;">🗑️</button>
-                            </div>
-                        </div>
-                    `;
+    <div style="display:flex; align-items:center; gap: 1rem;">
+        <div class="mov-amount" style="color: var(--${mov.amount >= 0 ? 'success' : 'danger'})">
+            ${mov.amount > 0 ? '+' : ''}${fmtEUR(mov.amount)}
+        </div>
+        <div class="mov-actions" style="display:flex; gap:0.5rem;">
+            <button class="btn-icon edit-mov" data-drawer-id="${drawer.id}" data-index="${originalIndex}" title="Editar" style="font-size:0.9rem; opacity:0.6;">✏️</button>
+            <button class="btn-icon delete-mov" data-drawer-id="${drawer.id}" data-index="${originalIndex}" title="Borrar" style="font-size:0.9rem; opacity:0.6;">🗑️</button>
+        </div>
+    </div>
+`;
                     elements.nominaMovementsList.appendChild(item);
                 });
                 elements.nominaMovementsList.onclick = (e) => {
@@ -5237,7 +5293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.stocks || !data.savings || !data.nomina) {
                     throw new Error("El archivo no tiene el formato de respaldo global esperado.");
                 }
-                if (confirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`)) {
+                if (confirm(`Se restaurarán: \n - ${data.stocks.length} activos en Bolsa\n - ${data.savings.length} cajones de Ahorro\n - ${data.nomina.length} cajones de Nómina\n\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`)) {
                     stocks = data.stocks;
                     savingsDrawers = data.savings;
                     nominaData = migrateNominaData(data.nomina);
@@ -5294,7 +5350,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const writable = await handle.createWritable();
                 await writable.write(blob);
                 await writable.close();
-                showToast(`Guardado correctamente como ${fileName}`);
+                showToast(`Guardado correctamente como ${fileName} `);
                 return;
             }
         } catch (err) {
@@ -5309,8 +5365,8 @@ document.addEventListener('DOMContentLoaded', () => {
         linkElement.setAttribute('download', fileName);
         linkElement.click();
 
-        showToast(`Descarga iniciada: ${fileName}`);
-        console.log(`File ${fileName} exported successfully (fallback)`);
+        showToast(`Descarga iniciada: ${fileName} `);
+        console.log(`File ${fileName} exported successfully(fallback)`);
     }
 
     // Start
@@ -5327,7 +5383,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const validViews = ['bolsa', 'ahorro', 'nomina', 'analisis'];
             if (viewParam && validViews.includes(viewParam)) {
-                console.log(`[DeepLink] Navegando a: ${viewParam}`);
+                console.log(`[DeepLink] Navegando a: ${viewParam} `);
                 switchView(viewParam);
             }
         };
