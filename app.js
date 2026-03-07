@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPrivacyActive = (window.loadPrivacy) ? window.loadPrivacy() : true;
     let isExpenseSummaryExpanded = false; // Collapsed by default
     let bolsaViewMode = 'cards'; // 'list' or 'cards'
+    let bolsaTotalsMode = false; // When true, shows compact totals-only table in list view
     let isAhorroSummaryExpanded = false;
     let isSavingsPieExpanded = false;
     let isBolsaPieExpanded = false;
@@ -679,6 +680,26 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             if (elements.stockTable) elements.stockTable.parentElement.classList.remove('hidden');
             if (elements.bolsaGrid) elements.bolsaGrid.classList.add('hidden');
+
+            // Inject Totales toggle button into the table wrapper (only once)
+            const tableWrapper = elements.stockTable?.parentElement;
+            if (tableWrapper && !tableWrapper.querySelector('#bolsaTotalesToggle')) {
+                const toggleBtn = document.createElement('div');
+                toggleBtn.style.cssText = 'display:flex; justify-content:flex-end; padding: 0.5rem 0 0.3rem 0;';
+                toggleBtn.innerHTML = `<button id="bolsaTotalesToggle" style="padding:0.3rem 0.8rem; font-size:0.8rem; border-radius:6px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); color:var(--text-muted); cursor:pointer; transition:all 0.2s;">📊 Totales</button>`;
+                tableWrapper.insertBefore(toggleBtn, elements.stockTable);
+                toggleBtn.querySelector('#bolsaTotalesToggle').addEventListener('click', () => {
+                    bolsaTotalsMode = !bolsaTotalsMode;
+                    render();
+                });
+            }
+            // Update button state
+            const totalesBtn = tableWrapper?.querySelector('#bolsaTotalesToggle');
+            if (totalesBtn) {
+                totalesBtn.style.background = bolsaTotalsMode ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
+                totalesBtn.style.color = bolsaTotalsMode ? 'white' : 'var(--text-muted)';
+                totalesBtn.style.borderColor = bolsaTotalsMode ? 'var(--primary)' : 'rgba(255,255,255,0.15)';
+            }
         }
 
         // 2.6 Group Data by Ticker
@@ -747,6 +768,82 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 emptyState?.classList.add('hidden');
             }
+
+            // --- Compact Totals Mode ---
+            if (bolsaTotalsMode && bolsaViewMode !== 'cards') {
+                // Update thead for compact view
+                const thead = elements.stockTable?.querySelector('thead');
+                if (thead) {
+                    thead.innerHTML = `
+                        <tr>
+                            <th style="text-align:left; padding:0.6rem 0.8rem; font-size:0.8rem;">Siglas</th>
+                            <th style="text-align:right; padding:0.6rem 0.8rem; font-size:0.8rem;">Invertido</th>
+                            <th style="text-align:right; padding:0.6rem 0.8rem; font-size:0.8rem;">Valor Act.</th>
+                            <th style="text-align:right; padding:0.6rem 0.8rem; font-size:0.8rem;">G/P</th>
+                        </tr>`;
+                }
+
+                displayGroups.forEach(group => {
+                    const pl = group.totalCurrentVal !== null ? group.totalCurrentVal - group.totalInvested : null;
+                    const plClass = pl === null ? '' : (pl >= 0 ? 'profit' : 'loss');
+                    const tr = document.createElement('tr');
+                    tr.className = 'group-row';
+                    tr.style.cursor = 'pointer';
+                    tr.innerHTML = `
+                        <td style="padding:0.5rem 0.8rem; font-weight:700; font-size:0.9rem; color:var(--primary);">${group.ticker}</td>
+                        <td style="padding:0.5rem 0.8rem; text-align:right; font-size:0.85rem;">${fmtEUR(group.totalInvested)}</td>
+                        <td style="padding:0.5rem 0.8rem; text-align:right; font-weight:700; font-size:0.85rem; background:rgba(59,130,246,0.05);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
+                        <td class="${plClass}" style="padding:0.5rem 0.8rem; text-align:right; font-weight:600; font-size:0.85rem;">${pl === null ? '-' : (pl >= 0 ? '+' : '') + fmtEUR(pl)}</td>
+                    `;
+                    stockTableBody.appendChild(tr);
+                });
+
+                // Compact totals row
+                const totalPL = totalCurrentValueEUR !== null ? totalCurrentValueEUR - totalInvestedEUR : null;
+                const plClass = totalPL === null ? '' : (totalPL >= 0 ? 'profit' : 'loss');
+                const trTotal = document.createElement('tr');
+                trTotal.className = 'totals-row';
+                trTotal.style.cssText = 'background:rgba(59,130,246,0.12); border-top:2px solid rgba(59,130,246,0.3); font-weight:800;';
+                trTotal.innerHTML = `
+                    <td style="padding:0.8rem; font-size:0.85rem; text-align:left; letter-spacing:0.05em; opacity:0.9;">📊 TOTAL</td>
+                    <td style="padding:0.8rem; text-align:right; font-size:0.85rem;">${fmtEUR(totalInvestedEUR)}</td>
+                    <td style="padding:0.8rem; text-align:right; font-size:0.85rem; background:rgba(59,130,246,0.08);">${totalCurrentValueEUR !== null ? fmtEUR(totalCurrentValueEUR) : '-'}</td>
+                    <td class="${plClass}" style="padding:0.8rem; text-align:right; font-size:0.85rem;">${totalPL === null ? '-' : (totalPL >= 0 ? '+' : '') + fmtEUR(totalPL)}</td>
+                `;
+                stockTableBody.appendChild(trTotal);
+
+                // In compact mode we skip full table rendering
+                updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR);
+                if (currentView === 'bolsa') {
+                    if (elements.bolsaSection) elements.bolsaSection.classList.remove('hidden');
+                    if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
+                    if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
+                    if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                    if (elements.mobileActionBar) elements.mobileActionBar.classList.remove('hidden');
+                    renderPortfolioPieChart();
+                }
+                return; // Skip full table rendering
+            }
+
+            // --- Full Detail Table ---
+            // Restore full thead
+            const thead = elements.stockTable?.querySelector('thead');
+            if (thead && !thead.querySelector('th[data-sort="name"]')) {
+                thead.innerHTML = `
+                    <tr>
+                        <th data-sort="name">Asset <span class="sort-icon"></span></th>
+                        <th data-sort="market">Mercado <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.price">Precio <span class="sort-icon"></span></th>
+                        <th data-sort="totalQty">Cantidad <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockInvested">Invertido <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockCurrentVal">Valor Act. (€) <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockPL">G/P (€) <span class="sort-icon"></span></th>
+                        <th data-sort="liveInfo.stockPLPercent">G/P (%) <span class="sort-icon"></span></th>
+                        <th>Señales</th>
+                        <th>Acción</th>
+                    </tr>`;
+            }
+
 
             displayGroups.forEach(group => {
                 const info = group.liveInfo;
@@ -869,7 +966,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <button class="btn-danger delete-btn" data-id="${item.id}" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Del</button>
                                 </div>
                             </td>
-                `;
+                        `;
                         stockTableBody.appendChild(trDetail);
                     });
                 }
@@ -934,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR);
 
-        // Section Toggling logic - Robust Multi-view support
+        // Section Toggling logic
         if (currentView === 'bolsa') {
             if (elements.bolsaSection) elements.bolsaSection.classList.remove('hidden');
             if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
