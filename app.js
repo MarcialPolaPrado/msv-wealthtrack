@@ -773,15 +773,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- Compact Totals Mode ---
             if (bolsaTotalsMode && bolsaViewMode !== 'cards') {
+                // Mark table as compact mode for CSS targeting
+                elements.stockTable.className = 'bolsa-totals-compact';
+
                 // Update thead for compact view
                 const thead = elements.stockTable?.querySelector('thead');
                 if (thead) {
                     thead.innerHTML = `
                         <tr>
-                            <th style="text-align:left; padding:0.6rem 0.8rem; font-size:0.8rem;">Siglas</th>
-                            <th style="text-align:right; padding:0.6rem 0.8rem; font-size:0.8rem;">Invertido</th>
-                            <th style="text-align:right; padding:0.6rem 0.8rem; font-size:0.8rem;">Valor Act.</th>
-                            <th style="text-align:right; padding:0.6rem 0.8rem; font-size:0.8rem;">G/P</th>
+                            <th class="btc-siglas" style="text-align:left; padding:0.4rem 0.5rem; font-size:0.75rem;">Siglas</th>
+                            <th class="btc-inv" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem;">Invertido</th>
+                            <th class="btc-val" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem;">Valor Act.</th>
+                            <th class="btc-gp" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem;">G/P</th>
                         </tr>`;
                 }
 
@@ -792,10 +795,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     tr.className = 'group-row';
                     tr.style.cursor = 'pointer';
                     tr.innerHTML = `
-                        <td style="padding:0.5rem 0.8rem; font-weight:700; font-size:0.9rem; color:var(--primary);">${group.ticker}</td>
-                        <td style="padding:0.5rem 0.8rem; text-align:right; font-size:0.85rem;">${fmtEUR(group.totalInvested)}</td>
-                        <td style="padding:0.5rem 0.8rem; text-align:right; font-weight:700; font-size:0.85rem; background:rgba(59,130,246,0.05);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
-                        <td class="${plClass}" style="padding:0.5rem 0.8rem; text-align:right; font-weight:600; font-size:0.85rem;">${pl === null ? '-' : (pl >= 0 ? '+' : '') + fmtEUR(pl)}</td>
+                        <td class="btc-siglas" style="padding:0.35rem 0.5rem; font-weight:700; font-size:0.85rem; color:var(--primary);">${group.ticker}</td>
+                        <td class="btc-inv" style="padding:0.35rem 0.5rem; text-align:right; font-size:0.8rem;">${fmtEUR(group.totalInvested)}</td>
+                        <td class="btc-val" style="padding:0.35rem 0.5rem; text-align:right; font-weight:700; font-size:0.8rem; background:rgba(59,130,246,0.05);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
+                        <td class="btc-gp ${plClass}" style="padding:0.35rem 0.5rem; text-align:right; font-weight:600; font-size:0.8rem;">${pl === null ? '-' : (pl >= 0 ? '+' : '') + fmtEUR(pl)}</td>
                     `;
                     stockTableBody.appendChild(tr);
                 });
@@ -807,10 +810,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 trTotal.className = 'totals-row';
                 trTotal.style.cssText = 'background:rgba(59,130,246,0.12); border-top:2px solid rgba(59,130,246,0.3); font-weight:800;';
                 trTotal.innerHTML = `
-                    <td style="padding:0.8rem; font-size:0.85rem; text-align:left; letter-spacing:0.05em; opacity:0.9;">📊 TOTAL</td>
-                    <td style="padding:0.8rem; text-align:right; font-size:0.85rem;">${fmtEUR(totalInvestedEUR)}</td>
-                    <td style="padding:0.8rem; text-align:right; font-size:0.85rem; background:rgba(59,130,246,0.08);">${totalCurrentValueEUR !== null ? fmtEUR(totalCurrentValueEUR) : '-'}</td>
-                    <td class="${plClass}" style="padding:0.8rem; text-align:right; font-size:0.85rem;">${totalPL === null ? '-' : (totalPL >= 0 ? '+' : '') + fmtEUR(totalPL)}</td>
+                    <td class="btc-siglas" style="padding:0.5rem; font-size:0.8rem; text-align:left; letter-spacing:0.05em; opacity:0.9;">📊 TOTAL</td>
+                    <td class="btc-inv" style="padding:0.5rem; text-align:right; font-size:0.8rem;">${fmtEUR(totalInvestedEUR)}</td>
+                    <td class="btc-val" style="padding:0.5rem; text-align:right; font-size:0.8rem; background:rgba(59,130,246,0.08);">${totalCurrentValueEUR !== null ? fmtEUR(totalCurrentValueEUR) : '-'}</td>
+                    <td class="btc-gp ${plClass}" style="padding:0.5rem; text-align:right; font-size:0.8rem;">${totalPL === null ? '-' : (totalPL >= 0 ? '+' : '') + fmtEUR(totalPL)}</td>
                 `;
                 stockTableBody.appendChild(trTotal);
 
@@ -4560,7 +4563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.nominaListFilterMode?.addEventListener('change', (e) => {
             nominaListFilterMode = e.target.value;
             localStorage.setItem('nominaListFilterMode', nominaListFilterMode);
-            renderNominaList();
+            renderNomina();
         });
 
         // Ahorro Table Sorting Listener (Event Delegation)

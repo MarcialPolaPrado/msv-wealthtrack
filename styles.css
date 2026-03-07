@@ -1877,3 +1877,74 @@ select:focus {
         min-width: 100px !important;
     }
 }
+
+/* ── Bolsa Lista: compact table for narrow screens ────────────── */
+@media (max-width: 600px) {
+
+    #stockTable th,
+    #stockTable td {
+        padding: 0.4rem 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    #stockTable .sparkline-canvas {
+        display: none;
+    }
+}
+
+@media (max-width: 380px) {
+    #stockTable {
+        font-size: 0.65rem;
+    }
+
+    #stockTable th,
+    #stockTable td {
+        padding: 0.25rem 0.3rem;
+        white-space: nowrap;
+    }
+
+    #stockTable th:nth-child(2),
+    #stockTable td:nth-child(2),
+    #stockTable th:nth-child(4),
+    #stockTable td:nth-child(4),
+    #stockTable th:nth-child(9),
+    #stockTable td:nth-child(9) {
+        display: none;
+    }
+
+    #stockTable .add-more-btn,
+    #stockTable .details-btn {
+        padding: 0.2rem 0.3rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    #stockTable .company-link {
+        font-size: 0.65rem;
+    }
+
+    #stockTable .toggle-btn {
+        font-size: 0.9rem !important;
+    }
+
+    #bolsaTotalesToggle {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.5rem !important;
+    }
+}
+
+/* ── Bolsa TOTALES compact table: narrow screens ─────────────── */
+/* On very narrow screens hide G/P column — 3 cols fit much better */
+@media (max-width: 380px) {
+
+    table.bolsa-totals-compact th.btc-gp,
+    table.bolsa-totals-compact td.btc-gp {
+        display: none;
+    }
+
+    table.bolsa-totals-compact th,
+    table.bolsa-totals-compact td {
+        font-size: 0.7rem !important;
+        padding: 0.3rem 0.4rem !important;
+        white-space: nowrap;
+    }
+}
