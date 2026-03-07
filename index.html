@@ -342,14 +342,21 @@
                 <!-- List View Container (Initially Hidden) -->
                 <div id="nominaTableContainer" class="table-container glass-panel hidden" style="margin-bottom: 2rem;">
                     <div class="list-navigation"
-                        style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color);">
-                        <button id="prevNominaMonthBtn" class="btn-icon"
-                            style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
-                        <h3 id="nominaCurrentMonthLabel"
-                            style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
-                            Marzo 2024</h3>
-                        <button id="nextNominaMonthBtn" class="btn-icon"
-                            style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">➡️</button>
+                        style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color); flex-wrap:wrap;">
+                        <select id="nominaListFilterMode"
+                            style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                            <option value="detail">📝 Detalle</option>
+                            <option value="totals">📊 Totales</option>
+                        </select>
+                        <div style="display:flex; align-items:center; gap:1rem;">
+                            <button id="prevNominaMonthBtn" class="btn-icon"
+                                style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
+                            <h3 id="nominaCurrentMonthLabel"
+                                style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
+                                Marzo 2024</h3>
+                            <button id="nextNominaMonthBtn" class="btn-icon"
+                                style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">➡️</button>
+                        </div>
                     </div>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse;">
