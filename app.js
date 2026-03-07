@@ -1024,6 +1024,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         showFinancialDetails(link.dataset.ticker);
                     });
                 });
+
+                // Re-apply sorting UI after innerHTML changes
+                if (elements.stockTable) {
+                    elements.stockTable.querySelectorAll('th[data-sort]').forEach(th => {
+                        th.classList.remove('active-sort');
+                        const icon = th.querySelector('.sort-icon');
+                        if (icon) icon.textContent = '';
+                        if (th.dataset.sort === sortConfig.key) {
+                            th.classList.add('active-sort');
+                            if (icon) icon.textContent = sortConfig.direction === 'asc' ? '▲' : '▼';
+                        }
+                    });
+                }
             }
         }
 
@@ -4641,28 +4654,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        // Table sorting listeners
-        document.querySelectorAll('th[data-sort]').forEach(th => {
-            th.addEventListener('click', () => {
+        // Table sorting listeners (Event Delegation)
+        const stockThead = elements.stockTable?.querySelector('thead');
+        if (stockThead) {
+            stockThead.addEventListener('click', (e) => {
+                const th = e.target.closest('th[data-sort]');
+                if (!th) return;
+
                 const key = th.dataset.sort;
                 const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
 
                 sortConfig = { key, direction };
-
-                // Update UI: classes and icons
-                document.querySelectorAll('th').forEach(header => {
-                    header.classList.remove('active-sort');
-                    const icon = header.querySelector('.sort-icon');
-                    if (icon) icon.textContent = '';
-                });
-
-                th.classList.add('active-sort');
-                const icon = th.querySelector('.sort-icon');
-                if (icon) icon.textContent = direction === 'asc' ? '▲' : '▼';
-
                 render();
             });
-        });
+        }
 
         // --- Data Portability (Export/Import) ---
 
