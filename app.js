@@ -2369,7 +2369,14 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.alignItems = 'center';
         container.style.justifyContent = 'center';
         container.style.gap = '2rem';
-        container.style.padding = '1rem';
+        container.style.padding = isSavingsPieExpanded ? '1rem' : '0';
+
+        // Limit parent width when collapsed
+        const parentContainer = container.parentElement;
+        if (parentContainer) {
+            parentContainer.style.maxWidth = isSavingsPieExpanded ? '100%' : '400px';
+            parentContainer.style.transition = 'max-width 0.3s ease';
+        }
 
         container.innerHTML = `
             <div class="collapsible-content ${isSavingsPieExpanded ? 'expanded' : ''}" style="width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;">
