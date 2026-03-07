@@ -2382,8 +2382,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        container.innerHTML = `
-            <div class="collapsible-content ${isSavingsPieExpanded ? 'expanded' : ''}" style="width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;">
+        container.innerHTML = isSavingsPieExpanded ? `
+            <div style="width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;">
                 <div style="flex: 1; min-width: 200px; max-width: 400px; position: relative;">
                     <svg viewBox="0 0 300 300" width="100%" height="100%" style="display:block; overflow:visible;">
                         ${slicePaths}
@@ -2395,7 +2395,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="flex: 1.5; min-width: 250px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; align-content: center;">
                     ${legendHtml}
                 </div>
-            </div>`;
+            </div>` : '';
     }
 
     // Helper: build a labeled section with its own responsive sub-grid
