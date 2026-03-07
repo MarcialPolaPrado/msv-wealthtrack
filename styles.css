@@ -1682,20 +1682,21 @@ select:focus {
     border-left: 3px solid var(--primary);
 }
 
-/* Specific to very narrow screens for Analisis */
+/* Specific to ultra-narrow screens for Analisis (Fold 5) */
 @media (max-width: 400px) {
-    #analisisTable {
-        font-size: 0.65rem;
+    #analisisTableContainer table {
+        font-size: 0.65rem !important;
     }
 
-    #analisisTable th,
-    #analisisTable td {
-        padding: 0.3rem 0.25rem !important;
-        white-space: nowrap;
+    #analisisTableContainer th,
+    #analisisTableContainer td {
+        padding: 0.25rem 0.2rem !important;
+        white-space: nowrap !important;
+        letter-spacing: -0.02em;
     }
 
-    #analisisTable .sort-icon {
-        font-size: 0.6rem;
+    #analisisTableContainer .sort-icon {
+        font-size: 0.55rem !important;
     }
 }
 
