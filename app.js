@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = 'bolsa';
     let isPrivacyActive = (window.loadPrivacy) ? window.loadPrivacy() : true;
     let isExpenseSummaryExpanded = false; // Collapsed by default
-    let bolsaViewMode = 'cards'; // 'list' or 'cards'
-    let bolsaTotalsMode = false; // When true, shows compact totals-only table in list view
+    let bolsaViewMode = localStorage.getItem('bolsaViewMode') || 'list'; // Default 'list' per user request, or 'cards'
+    let bolsaTotalsMode = localStorage.getItem('bolsaTotalsMode') === 'true'; // When true, shows compact totals-only table in list view
     let isAhorroSummaryExpanded = false;
     let isSavingsPieExpanded = false;
     let isBolsaPieExpanded = false;
@@ -703,6 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tableWrapper.insertBefore(toggleBtn, elements.stockTable);
                 toggleBtn.querySelector('#bolsaTotalesToggle').addEventListener('click', () => {
                     bolsaTotalsMode = !bolsaTotalsMode;
+                    localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
                     render();
                 });
             }
@@ -4903,6 +4904,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.bolsaTableViewBtn) {
             elements.bolsaTableViewBtn.addEventListener('click', () => {
                 bolsaViewMode = 'list';
+                localStorage.setItem('bolsaViewMode', 'list');
                 elements.bolsaTableViewBtn.classList.add('active');
                 elements.bolsaTableViewBtn.style.background = 'var(--primary)';
                 elements.bolsaTableViewBtn.style.color = 'white';
@@ -4915,6 +4917,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.bolsaCardViewBtn) {
             elements.bolsaCardViewBtn.addEventListener('click', () => {
                 bolsaViewMode = 'cards';
+                localStorage.setItem('bolsaViewMode', 'cards');
                 elements.bolsaCardViewBtn.classList.add('active');
                 elements.bolsaCardViewBtn.style.background = 'var(--primary)';
                 elements.bolsaCardViewBtn.style.color = 'white';
@@ -4937,6 +4940,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateMobileTitle();
             bolsaMobileTitle.addEventListener('click', () => {
                 bolsaViewMode = bolsaViewMode === 'cards' ? 'list' : 'cards';
+                localStorage.setItem('bolsaViewMode', bolsaViewMode);
                 if (elements.bolsaCardViewBtn && elements.bolsaTableViewBtn) {
                     if (bolsaViewMode === 'cards') {
                         elements.bolsaCardViewBtn.classList.add('active');
