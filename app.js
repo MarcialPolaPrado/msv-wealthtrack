@@ -1571,6 +1571,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const sortedMonths = Array.from(allMonths).sort().reverse();
 
+        if (!selectedAhorroFiscalMonth && sortedMonths.length > 0) {
+            selectedAhorroFiscalMonth = sortedMonths[0];
+        }
+
         // Calculate Category Totals
         const categoryTotals = {};
         savingsDrawers.forEach(drawer => {
@@ -1581,7 +1585,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const mFiscal = getFiscalMonth(mDate);
                 let match = false;
-                if (ahorroSummaryFilterMode === 'month') {
+                if (!selectedAhorroFiscalMonth && ahorroSummaryFilterMode !== 'all') {
+                    match = false;
+                } else if (ahorroSummaryFilterMode === 'month') {
                     match = (mFiscal === selectedAhorroFiscalMonth);
                 } else if (ahorroSummaryFilterMode === 'year') {
                     match = (mFiscal.startsWith(selectedAhorroFiscalMonth.split('-')[0]));
