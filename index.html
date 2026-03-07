@@ -248,12 +248,17 @@
                         style="margin-bottom: 2rem;">
                         <div class="list-navigation"
                             style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color); flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                 <select id="ahorroFilterMode"
                                     style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
                                     <option value="month">📅 Mes</option>
                                     <option value="year">🗓️ Año</option>
                                     <option value="all">♾️ Todo</option>
+                                </select>
+                                <select id="ahorroListFilterMode"
+                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                                    <option value="detail">📝 Detalle</option>
+                                    <option value="totals">📊 Totales</option>
                                 </select>
                             </div>
                             <div style="display: flex; align-items: center; gap: 1rem;">

@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let nominaSortConfig = { key: 'type', direction: 'asc' };
     let nominaListFilterMode = localStorage.getItem('nominaListFilterMode') || 'detail'; // 'detail' or 'totals'
     let ahorroFilterMode = localStorage.getItem('ahorroFilterMode') || 'month'; // 'month', 'year', 'all'
+    let ahorroListFilterMode = localStorage.getItem('ahorroListFilterMode') || 'detail'; // 'detail', 'totals'
+
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
 
     // Global Formatters
@@ -390,6 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
         savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
         savingsCategorySelect: document.getElementById('savingsCategorySelect'),
         ahorroFilterMode: document.getElementById('ahorroFilterMode'),
+        ahorroListFilterMode: document.getElementById('ahorroListFilterMode'),
+
         nominaListFilterMode: document.getElementById('nominaListFilterMode')
     };
 
@@ -817,24 +821,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 stockTableBody.appendChild(trTotal);
 
-                // In compact mode we skip full table rendering
-                updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR);
-                if (currentView === 'bolsa') {
-                    if (elements.bolsaSection) elements.bolsaSection.classList.remove('hidden');
-                    if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-                    if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-                    if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-                    if (elements.mobileActionBar) elements.mobileActionBar.classList.remove('hidden');
-                    renderPortfolioPieChart();
-                }
-                return; // Skip full table rendering
-            }
-
-            // --- Full Detail Table ---
-            // Restore full thead
-            const thead = elements.stockTable?.querySelector('thead');
-            if (thead && !thead.querySelector('th[data-sort="name"]')) {
-                thead.innerHTML = `
+            } else {
+                // --- Full Detail Table ---
+                // Restore full thead
+                const thead = elements.stockTable?.querySelector('thead');
+                if (thead && !thead.querySelector('th[data-sort="name"]')) {
+                    thead.innerHTML = `
                     <tr>
                         <th data-sort="name">Asset <span class="sort-icon"></span></th>
                         <th data-sort="market">Mercado <span class="sort-icon"></span></th>
@@ -847,66 +839,66 @@ document.addEventListener('DOMContentLoaded', () => {
                         <th>Señales</th>
                         <th>Acción</th>
                     </tr>`;
-            }
-
-
-            displayGroups.forEach(group => {
-                const info = group.liveInfo;
-                const plGroup = group.totalCurrentVal - group.totalInvested;
-                const plPercentGroup = group.totalInvested > 0 ? (plGroup / group.totalInvested) * 100 : 0;
-                const isExpanded = expandedTickers.has(group.ticker);
-
-                // Calculate Signals
-                let signalsHtml = '<span style="color:var(--text-muted); font-size: 0.8rem;">-</span>';
-                const mockInfo = window.MOCK_DATA[group.ticker.toUpperCase()];
-                if (mockInfo && mockInfo.historical && mockInfo.historical['D']) {
-                    const fx = mockInfo.currency === 'USD' ? window.FX_RATE : 1;
-                    const analysis = calculateTechnicalAnalysis(group.ticker, mockInfo.historical['D'], fx);
-                    if (analysis.patterns && analysis.patterns.length > 0) {
-                        const signalDescriptions = {
-                            'Martillo (Hammer)': 'Martillo: Indica un posible cambio de tendencia al alza (reversión alcista).',
-                            'Martillo Invertido': 'Martillo Invertido: Sugiere un posible agotamiento de la tendencia bajista.',
-                            'Doji': 'Doji: Indica indecisión en el mercado; el precio de apertura y cierre son casi iguales.',
-                            'Envolvente Alcista': 'Envolvente: Una vela que envolvió a la anterior (cuerpo mayor), indicando un fuerte impulso alcista.'
-                        };
-                        signalsHtml = analysis.patterns.map(p => {
-                            const desc = signalDescriptions[p] || 'Señal técnica detectada.';
-                            if (p === 'Martillo (Hammer)') return `<span class="signal-badge hammer" title="${desc}">🔨 Martillo</span>`;
-                            if (p === 'Martillo Invertido') return `<span class="signal-badge hammer-inv" title="${desc}">⚒️ Inv. Hammer</span>`;
-                            if (p === 'Doji') return `<span class="signal-badge doji" title="${desc}">⚖️ Doji</span>`;
-                            if (p === 'Envolvente Alcista') return `<span class="signal-badge engulfing" title="${desc}">🔥 Envolvente</span>`;
-                            return `<span class="signal-badge" title="${desc}">${p}</span>`;
-                        }).join(' ');
-                    }
                 }
 
-                const statusIcon = info.isLive
-                    ? '<span class="source-dot live" title="Conexión en Vivo"></span>'
-                    : '<span class="source-dot simulated" title="Datos Históricos"></span>';
 
-                const statusBadge = info.isLive
-                    ? `<div style="display:flex; flex-direction:column; align-items:flex-end;"><span class="badge-live">Live</span>${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}</div>`
-                    : (info.isSimulated ? `
+                displayGroups.forEach(group => {
+                    const info = group.liveInfo;
+                    const plGroup = group.totalCurrentVal - group.totalInvested;
+                    const plPercentGroup = group.totalInvested > 0 ? (plGroup / group.totalInvested) * 100 : 0;
+                    const isExpanded = expandedTickers.has(group.ticker);
+
+                    // Calculate Signals
+                    let signalsHtml = '<span style="color:var(--text-muted); font-size: 0.8rem;">-</span>';
+                    const mockInfo = window.MOCK_DATA[group.ticker.toUpperCase()];
+                    if (mockInfo && mockInfo.historical && mockInfo.historical['D']) {
+                        const fx = mockInfo.currency === 'USD' ? window.FX_RATE : 1;
+                        const analysis = calculateTechnicalAnalysis(group.ticker, mockInfo.historical['D'], fx);
+                        if (analysis.patterns && analysis.patterns.length > 0) {
+                            const signalDescriptions = {
+                                'Martillo (Hammer)': 'Martillo: Indica un posible cambio de tendencia al alza (reversión alcista).',
+                                'Martillo Invertido': 'Martillo Invertido: Sugiere un posible agotamiento de la tendencia bajista.',
+                                'Doji': 'Doji: Indica indecisión en el mercado; el precio de apertura y cierre son casi iguales.',
+                                'Envolvente Alcista': 'Envolvente: Una vela que envolvió a la anterior (cuerpo mayor), indicando un fuerte impulso alcista.'
+                            };
+                            signalsHtml = analysis.patterns.map(p => {
+                                const desc = signalDescriptions[p] || 'Señal técnica detectada.';
+                                if (p === 'Martillo (Hammer)') return `<span class="signal-badge hammer" title="${desc}">🔨 Martillo</span>`;
+                                if (p === 'Martillo Invertido') return `<span class="signal-badge hammer-inv" title="${desc}">⚒️ Inv. Hammer</span>`;
+                                if (p === 'Doji') return `<span class="signal-badge doji" title="${desc}">⚖️ Doji</span>`;
+                                if (p === 'Envolvente Alcista') return `<span class="signal-badge engulfing" title="${desc}">🔥 Envolvente</span>`;
+                                return `<span class="signal-badge" title="${desc}">${p}</span>`;
+                            }).join(' ');
+                        }
+                    }
+
+                    const statusIcon = info.isLive
+                        ? '<span class="source-dot live" title="Conexión en Vivo"></span>'
+                        : '<span class="source-dot simulated" title="Datos Históricos"></span>';
+
+                    const statusBadge = info.isLive
+                        ? `<div style="display:flex; flex-direction:column; align-items:flex-end;"><span class="badge-live">Live</span>${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}</div>`
+                        : (info.isSimulated ? `
                         <div style="display:flex; flex-direction:column; align-items:flex-end;">
                             <span class="badge-simulated">Cierre</span>
                             ${info.date ? `<span style="font-size:0.7em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
                         </div>` : '');
 
-                let priceDisplay = '<span style="color:var(--text-muted);">-</span>';
-                if (info.price !== null) {
-                    priceDisplay = info.currency === 'EUR'
-                        ? `<div style="display:flex; align-items:center; gap:0.5rem; font-weight:600">${statusIcon} ${fmtEUR(info.price)} ${statusBadge}</div>`
-                        : `<div style="display:flex; align-items:center; gap:0.5rem; font-weight:600">${statusIcon} ${fmtNum(info.price)} ${info.currency} ${statusBadge}</div>
+                    let priceDisplay = '<span style="color:var(--text-muted);">-</span>';
+                    if (info.price !== null) {
+                        priceDisplay = info.currency === 'EUR'
+                            ? `<div style="display:flex; align-items:center; gap:0.5rem; font-weight:600">${statusIcon} ${fmtEUR(info.price)} ${statusBadge}</div>`
+                            : `<div style="display:flex; align-items:center; gap:0.5rem; font-weight:600">${statusIcon} ${fmtNum(info.price)} ${info.currency} ${statusBadge}</div>
                            <div style="font-size:0.8em; color:var(--text-muted); margin-left: 1.3rem;">≈ ${fmtEUR(info.currentPriceEUR)}</div>`;
-                }
+                    }
 
-                const performanceClass = (plPercentGroup === null) ? 'neutral' :
-                    (plPercentGroup < 0 ? 'loss' :
-                        (plPercentGroup > 10 ? 'profit' : 'neutral'));
+                    const performanceClass = (plPercentGroup === null) ? 'neutral' :
+                        (plPercentGroup < 0 ? 'loss' :
+                            (plPercentGroup > 10 ? 'profit' : 'neutral'));
 
-                const tr = document.createElement('tr');
-                tr.className = 'group-row';
-                tr.innerHTML = `
+                    const tr = document.createElement('tr');
+                    tr.className = 'group-row';
+                    tr.innerHTML = `
                     <td>
                         <div style="display:flex; align-items:center; gap: 0.8rem;">
                             <button class="toggle-btn" data-ticker="${group.ticker}" style="background:none; border:none; color:var(--text-main); cursor:pointer; font-size:1.2rem; padding:0;">${isExpanded ? '▼' : '▶'}</button>
@@ -938,18 +930,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </td>
                 `;
-                stockTableBody.appendChild(tr);
+                    stockTableBody.appendChild(tr);
 
-                // Detail Rows
-                if (isExpanded) {
-                    group.items.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-                        const trDetail = document.createElement('tr');
-                        trDetail.className = 'detail-row';
-                        const itemPL = item.liveInfo.stockPL;
-                        const itemPLPercent = item.liveInfo.stockPLPercent;
+                    // Detail Rows
+                    if (isExpanded) {
+                        group.items.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+                            const trDetail = document.createElement('tr');
+                            trDetail.className = 'detail-row';
+                            const itemPL = item.liveInfo.stockPL;
+                            const itemPLPercent = item.liveInfo.stockPLPercent;
 
-                        const isSale = item.qty < 0;
-                        trDetail.innerHTML = `
+                            const isSale = item.qty < 0;
+                            trDetail.innerHTML = `
                             <td style="padding-left: 2.5rem; opacity: 0.8;">
                                 <div style="font-size: 0.85rem; color: ${isSale ? 'var(--danger)' : 'var(--success)'}; font-weight: 600;">${isSale ? '🔴 Venta' : '🟢 Compra'}: ${new Date(item.date).toLocaleDateString()}</div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted);">ID: ${item.id.slice(-6)}</div>
@@ -972,23 +964,23 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                             </td>
                         `;
-                        stockTableBody.appendChild(trDetail);
-                    });
-                }
-            });
+                            stockTableBody.appendChild(trDetail);
+                        });
+                    }
+                });
 
-            // Add Summary Row (Portfolio Totals)
-            const trTotal = document.createElement('tr');
-            trTotal.className = 'totals-row';
-            trTotal.style.background = 'rgba(59, 130, 246, 0.12)';
-            trTotal.style.borderTop = '2px solid rgba(59, 130, 246, 0.3)';
-            trTotal.style.fontWeight = '800';
+                // Add Summary Row (Portfolio Totals)
+                const trTotal = document.createElement('tr');
+                trTotal.className = 'totals-row';
+                trTotal.style.background = 'rgba(59, 130, 246, 0.12)';
+                trTotal.style.borderTop = '2px solid rgba(59, 130, 246, 0.3)';
+                trTotal.style.fontWeight = '800';
 
-            const totalPLPortfolio = totalCurrentValueEUR !== null ? totalCurrentValueEUR - totalInvestedEUR : null;
-            const totalPLPctPortfolio = (totalPLPortfolio !== null && totalInvestedEUR > 0) ? (totalPLPortfolio / totalInvestedEUR) * 100 : 0;
-            const plClassPortfolio = totalPLPortfolio === null ? '' : (totalPLPortfolio >= 0 ? 'profit' : 'loss');
+                const totalPLPortfolio = totalCurrentValueEUR !== null ? totalCurrentValueEUR - totalInvestedEUR : null;
+                const totalPLPctPortfolio = (totalPLPortfolio !== null && totalInvestedEUR > 0) ? (totalPLPortfolio / totalInvestedEUR) * 100 : 0;
+                const plClassPortfolio = totalPLPortfolio === null ? '' : (totalPLPortfolio >= 0 ? 'profit' : 'loss');
 
-            trTotal.innerHTML = `
+                trTotal.innerHTML = `
                 <td colspan="4" style="padding: 1.2rem 1rem; text-align: left; vertical-align: middle;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.1rem;">📊</span>
@@ -1005,35 +997,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td colspan="2"></td>
             `;
-            stockTableBody.appendChild(trTotal);
+                stockTableBody.appendChild(trTotal);
 
-            // Action handlers
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => removeStock(e.target.dataset.id));
-            });
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => editStock(e.target.dataset.id));
-            });
-            document.querySelectorAll('.add-more-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const group = displayGroups.find(g => g.ticker === e.target.dataset.ticker);
-                    if (group) addMoreFromStock(group.items[0].id);
+                // Action handlers
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => removeStock(e.target.dataset.id));
                 });
-            });
-            document.querySelectorAll('.details-btn, .toggle-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const ticker = e.target.dataset.ticker || e.target.closest('button').dataset.ticker;
-                    toggleDetails(ticker);
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => editStock(e.target.dataset.id));
                 });
-            });
-            document.querySelectorAll('.company-link').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    showFinancialDetails(link.dataset.ticker);
+                document.querySelectorAll('.add-more-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const group = displayGroups.find(g => g.ticker === e.target.dataset.ticker);
+                        if (group) addMoreFromStock(group.items[0].id);
+                    });
                 });
-            });
-
+                document.querySelectorAll('.details-btn, .toggle-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const ticker = e.target.dataset.ticker || e.target.closest('button').dataset.ticker;
+                        toggleDetails(ticker);
+                    });
+                });
+                document.querySelectorAll('.company-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showFinancialDetails(link.dataset.ticker);
+                    });
+                });
+            }
         }
+
         updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR);
 
         // Section Toggling logic
@@ -1656,9 +1649,12 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.prevAhorroMonthBtn.style.visibility = 'hidden';
             elements.nextAhorroMonthBtn.style.visibility = 'hidden';
         }
-
+        // Sync filter dropdowns
         if (elements.ahorroFilterMode) {
             elements.ahorroFilterMode.value = ahorroFilterMode;
+        }
+        if (elements.ahorroListFilterMode) {
+            elements.ahorroListFilterMode.value = ahorroListFilterMode;
         }
 
         elements.ahorroTableBody.innerHTML = '';
@@ -1734,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td colspan="2">
                     <div class="header-content">
                         <span>${drawer.icon} ${drawer.name}</span>
-                        ${!drawer.isAuto ? `
+                        ${(!drawer.isAuto && ahorroListFilterMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-mvmt-list-btn btn-primary">+ Mov</button>
                                 <button class="transfer-list-btn btn-secondary">⇆ Tx</button>
@@ -1748,7 +1744,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             // Add event listeners to list buttons
-            if (!drawer.isAuto) {
+            if (!drawer.isAuto && ahorroListFilterMode === 'detail') {
                 headerTr.querySelector('.add-mvmt-list-btn').onclick = (e) => { e.stopPropagation(); showAddMovementModal(drawer.id); };
                 headerTr.querySelector('.transfer-list-btn').onclick = (e) => { e.stopPropagation(); showTransferModal(drawer.id); };
                 headerTr.querySelector('.edit-drawer-list-btn').onclick = (e) => { e.stopPropagation(); showEditDrawerModal(drawer.id); };
@@ -1760,21 +1756,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // Sort by date descending
             drawerMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            drawerMovements.forEach(m => {
-                const tr = document.createElement('tr');
-                tr.className = 'ahorro-list-row';
+            if (ahorroListFilterMode !== 'totals') {
+                drawerMovements.forEach(m => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'ahorro-list-row';
 
-                const isIncome = m.amount > 0;
-                const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
-                const category = m.category || '-';
+                    const isIncome = m.amount > 0;
+                    const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
+                    const category = m.category || '-';
 
-                tr.innerHTML = `
-                    <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
-                    <td class="concept">${category}</td>
-                    <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
-                `;
-                elements.ahorroTableBody.appendChild(tr);
-            });
+                    tr.innerHTML = `
+                        <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
+                        <td class="concept">${category}</td>
+                        <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
+                    `;
+                    elements.ahorroTableBody.appendChild(tr);
+                });
+            }
         });
 
         if (elements.ahorroTableBody.innerHTML === '') {
@@ -4557,7 +4555,13 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.ahorroFilterMode?.addEventListener('change', (e) => {
             ahorroFilterMode = e.target.value;
             localStorage.setItem('ahorroFilterMode', ahorroFilterMode);
-            renderSavingsList();
+            renderSavings();
+        });
+
+        elements.ahorroListFilterMode?.addEventListener('change', (e) => {
+            ahorroListFilterMode = e.target.value;
+            localStorage.setItem('ahorroListFilterMode', ahorroListFilterMode);
+            renderSavings();
         });
 
         elements.nominaListFilterMode?.addEventListener('change', (e) => {

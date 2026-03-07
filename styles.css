@@ -1936,10 +1936,8 @@ select:focus {
 /* On very narrow screens hide G/P column — 3 cols fit much better */
 @media (max-width: 380px) {
 
-    table.bolsa-totals-compact th.btc-gp,
-    table.bolsa-totals-compact td.btc-gp {
-        display: none;
-    }
+    /* Eliminamos el ocultar btc-gp porque el usuario quiere verlo.
+       Para que quepan, reducimos la fuente un poco más. */
 
     table.bolsa-totals-compact th,
     table.bolsa-totals-compact td {
