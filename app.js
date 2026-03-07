@@ -757,6 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (bolsaDisplayMode === 'totals') {
+                elements.stockTable.classList.add('bolsa-totals-view');
                 // Update headers for Totals view
                 const thead = elements.stockTable.querySelector('thead');
                 thead.innerHTML = `
@@ -790,6 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     stockTableBody.appendChild(tr);
                 });
             } else {
+                elements.stockTable.classList.remove('bolsa-totals-view');
                 // Restore original headers for Detail view
                 const thead = elements.stockTable.querySelector('thead');
                 thead.innerHTML = `
