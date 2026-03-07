@@ -785,10 +785,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (thead) {
                     thead.innerHTML = `
                         <tr>
-                            <th class="btc-siglas" style="text-align:left; padding:0.4rem 0.5rem; font-size:0.75rem;">Siglas</th>
-                            <th class="btc-inv" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem;">Invertido</th>
-                            <th class="btc-val" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem;">Valor Act.</th>
-                            <th class="btc-gp" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem;">G/P</th>
+                            <th data-sort="name" class="btc-siglas" style="text-align:left; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Siglas <span class="sort-icon"></span></th>
+                            <th data-sort="liveInfo.stockInvested" class="btc-inv" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Invertido <span class="sort-icon"></span></th>
+                            <th data-sort="liveInfo.stockCurrentVal" class="btc-val" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">Valor Act. <span class="sort-icon"></span></th>
+                            <th data-sort="liveInfo.stockPL" class="btc-gp" style="text-align:right; padding:0.4rem 0.5rem; font-size:0.75rem; cursor:pointer;">G/P <span class="sort-icon"></span></th>
                         </tr>`;
                 }
 
