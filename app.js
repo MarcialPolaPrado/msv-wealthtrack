@@ -2225,7 +2225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container.style.cssText = '';  // Reset any previous inline styles
 
             container.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; gap:1rem; padding:1rem; width:100%; box-sizing:border-box;">
+                <div style="display:flex; flex-direction:column; gap:1rem; padding:1rem; width:100%; box-sizing:border-box; max-width: ${isBolsaPieExpanded ? '100%' : '400px'};">
                     <div class="drawer-header" id="bolsaPieHeader" style="cursor:pointer; width:100%;">
                         <div style="display:flex; align-items:center; gap:10px; flex:1;">
                             <span class="drawer-icon">📊</span>
@@ -2236,17 +2236,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:2.5rem; width:100%;">
-                        <div style="width:100%; max-width:380px; position:relative; aspect-ratio:1/1;">
-                            <svg viewBox="0 0 400 400" width="100%" height="100%" style="display:block; overflow:visible;">
-                                ${slicePaths}
-                                <circle cx="${cx}" cy="${cy}" r="65" fill="#0f172a" />
-                                <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Mi Cartera</text>
-                                <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="white" font-size="20" font-weight="800" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
-                            </svg>
-                        </div>
-                        <div class="collapsible-content ${isBolsaPieExpanded ? 'expanded' : ''}" style="width:100%; display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:0.8rem;">
-                            ${legendHtml}
+                    <div class="collapsible-content ${isBolsaPieExpanded ? 'expanded' : ''}" style="width:100%;">
+                        <div style="display:flex; flex-direction:column; align-items:center; gap:2.5rem; width:100%;">
+                            <div style="width:100%; max-width:380px; position:relative; aspect-ratio:1/1;">
+                                <svg viewBox="0 0 400 400" width="100%" height="100%" style="display:block; overflow:visible;">
+                                    ${slicePaths}
+                                    <circle cx="${cx}" cy="${cy}" r="65" fill="#0f172a" />
+                                    <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Mi Cartera</text>
+                                    <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="white" font-size="20" font-weight="800" font-family="Outfit, sans-serif">${fmtEUR(total)}</text>
+                                </svg>
+                            </div>
+                            <div style="width:100%; display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:0.8rem;">
+                                ${legendHtml}
+                            </div>
                         </div>
                     </div>
                 </div>`;
