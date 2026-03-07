@@ -57,7 +57,7 @@
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
                     <p
                         style="margin:0; font-size: 0.6rem; opacity: 0.6; color: var(--primary); letter-spacing: 0.05em;">
-                        v2026.03.06.16</p>
+                        v2026.03.07.10</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -881,25 +881,39 @@
     <script src="app.js?v=2026030710"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
+        const APP_VERSION = '2026030710';
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026030616')
-                    .then(reg => {
-                        // Check for updates periodically
-                        setInterval(() => {
-                            reg.update();
-                        }, 1000 * 60 * 60); // Check every hour
+                navigator.serviceWorker.register('sw.js?v=' + APP_VERSION).then(registration => {
+                    console.log('SW registered with scope:', registration.scope);
 
-                        reg.onupdatefound = () => {
-                            const worker = reg.installing;
-                            worker.onstatechange = () => {
-                                if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    showUpdateNotification();
-                                }
-                            };
+                    registration.onupdatefound = () => {
+                        const installingWorker = registration.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('New version available. Forcing refresh.');
+                                installingWorker.postMessage({ type: 'SKIP_WAITING' });
+                                setTimeout(() => window.location.reload(true), 1000);
+                            }
                         };
-                    })
-                    .catch(e => console.error('PWA SW: Error', e));
+                    };
+                }).catch(error => {
+                    console.error('SW registration failed:', error);
+                });
+
+                // Aggressive cache clearing if versions mismatch
+                const storedVersion = localStorage.getItem('app_version');
+                if (storedVersion !== APP_VERSION) {
+                    console.log('Version changed, clearing caches...');
+                    if ('caches' in window) {
+                        caches.keys().then(names => {
+                            for (let name of names) caches.delete(name);
+                        });
+                    }
+                    localStorage.setItem('app_version', APP_VERSION);
+                    window.location.reload(true);
+                }
             });
         }
 
