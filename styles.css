@@ -1950,6 +1950,29 @@ select:focus {
     }
 }
 
+/* ── Unified Totales Toggle Button ─────────────── */
+.totales-toggle-btn {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.totales-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.totales-toggle-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
 /* ── Bolsa TOTALES compact table: narrow screens ─────────────── */
 /* On very narrow screens hide G/P column — 3 cols fit much better */
 @media (max-width: 380px) {

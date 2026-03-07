@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=2026030712">
+    <link rel="stylesheet" href="styles.css?v=2026030722">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -83,6 +83,8 @@
                 style="padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-color); cursor: pointer;">
                 📥 Instalar App
             </button>
+            <button id="settingsBtn" class="btn-icon" title="Ajustes"
+                style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0.5rem; line-height: 1; transition: transform 0.3s ease; color: var(--text-color);">⚙️</button>
             <button id="privacyToggleBtn" class="btn-privacy" title="Ocultar/Mostrar Datos Privados">
                 👁️
             </button>
@@ -255,11 +257,9 @@
                                     <option value="year">🗓️ Año</option>
                                     <option value="all">♾️ Todo</option>
                                 </select>
-                                <select id="ahorroListFilterMode"
-                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
-                                    <option value="detail">📝 Detalle</option>
-                                    <option value="totals">📊 Totales</option>
-                                </select>
+                                <button id="ahorroListFilterMode" class="totales-toggle-btn">
+                                    📊 Totales
+                                </button>
                             </div>
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <button id="prevAhorroMonthBtn" class="btn-icon"
@@ -348,11 +348,9 @@
                 <div id="nominaTableContainer" class="table-container glass-panel hidden" style="margin-bottom: 2rem;">
                     <div class="list-navigation"
                         style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color); flex-wrap:wrap;">
-                        <select id="nominaListFilterMode"
-                            style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
-                            <option value="detail">📝 Detalle</option>
-                            <option value="totals">📊 Totales</option>
-                        </select>
+                        <button id="nominaListFilterMode" class="totales-toggle-btn">
+                            📊 Totales
+                        </button>
                         <div style="display:flex; align-items:center; gap:1rem;">
                             <button id="prevNominaMonthBtn" class="btn-icon"
                                 style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
@@ -451,8 +449,41 @@
         <!-- Mobile Action Bar (only visible on mobile, since header is hidden) -->
         <div id="mobileActionBar" class="mobile-action-bar">
             <button id="mobileResetBtn" title="🔄 Reset App" style="color: var(--danger);">🔄</button>
+            <button id="mobileSettingsBtn" title="⚙️ Ajustes"
+                style="background:none; border:none; color: var(--text-color); font-size: 1.2rem; cursor:pointer;">⚙️</button>
             <button id="mobilePrivacyToggleBtn" title="Ocultar/Mostrar Datos Privados">👁️</button>
             <button id="mobileAddStockBtn" title="Añadir Inversión">➕</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
+                <span id="closeSettingsModal" class="close-modal">&times;</span>
+            </div>
+            <form id="settingsForm" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="fiscalDayInput">Día de inicio del Mes Fiscal</label>
+                    <input type="number" id="fiscalDayInput" min="1" max="31" placeholder="Ej: 25" required>
+                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Los meses fiscales contarán a partir
+                        de este día.</small>
+                </div>
+                <div class="form-group">
+                    <label for="incomeCategoriesInput">Categorías de Ingreso (separadas por coma)</label>
+                    <textarea id="incomeCategoriesInput" rows="2" placeholder="Ej: Salario, Alquileres, Dividendos"
+                        style="resize:vertical"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="expenseCategoriesInput">Categorías de Gasto (separadas por coma)</label>
+                    <textarea id="expenseCategoriesInput" rows="2" placeholder="Ej: Comida, Transporte, Vivienda"
+                        style="resize:vertical"></textarea>
+                </div>
+                <div class="modal-actions" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn-primary" style="width:100%">Guardar Ajustes</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -878,10 +909,10 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=2026030712"></script>
+    <script src="app.js?v=2026030722"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '2026030712';
+        const APP_VERSION = '2026030722';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

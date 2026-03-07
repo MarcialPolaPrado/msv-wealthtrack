@@ -12,29 +12,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let sortConfig = getSortConfig('bolsaSortConfig', { key: null, direction: 'asc' });
     let expandedTickers = new Set(); // Track which positions are expanded to show details
-    let lastSyncTime = new Date().toLocaleTimeString();
-    let currentView = 'bolsa';
-    let isPrivacyActive = (window.loadPrivacy) ? window.loadPrivacy() : true;
-    let isExpenseSummaryExpanded = false; // Collapsed by default
-    let bolsaViewMode = localStorage.getItem('bolsaViewMode') || 'list'; // Default 'list' per user request, or 'cards'
-    let bolsaTotalsMode = localStorage.getItem('bolsaTotalsMode') === 'true'; // When true, shows compact totals-only table in list view
-    let isAhorroSummaryExpanded = false;
-    let isSavingsPieExpanded = false;
-    let isBolsaPieExpanded = false;
-    let selectedAhorroFiscalMonth = getFiscalMonth();
+    let selectedAhorroFiscalMonth = null;
     let ahorroViewMode = localStorage.getItem('ahorroViewMode') || 'cards'; // 'cards' or 'list'
-    let ahorroListMonth = getFiscalMonth();
+
+    const _initialDate = new Date();
+    const _initialMonthStr = `${_initialDate.getFullYear()}-${String(_initialDate.getMonth() + 1).padStart(2, '0')}`;
+
+    let ahorroListMonth = _initialMonthStr;
     let ahorroSortConfig = getSortConfig('ahorroSortConfig', { key: 'name', direction: 'asc' });
     let analisisViewMode = 'list'; // 'list' or 'cards'
     let analisisSortConfig = getSortConfig('analisisSortConfig', { key: 'month', direction: 'asc' });
     let nominaViewMode = localStorage.getItem('nominaViewMode') || 'cards'; // 'cards' or 'list'
-    let nominaListMonth = getFiscalMonth();
+    let nominaListMonth = _initialMonthStr;
     let nominaSortConfig = getSortConfig('nominaSortConfig', { key: 'type', direction: 'asc' });
     let nominaListFilterMode = localStorage.getItem('nominaListFilterMode') || 'detail'; // 'detail' or 'totals'
     let ahorroFilterMode = localStorage.getItem('ahorroFilterMode') || 'month'; // 'month', 'year', 'all'
     let ahorroListFilterMode = localStorage.getItem('ahorroListFilterMode') || 'detail'; // 'detail', 'totals'
+    let bolsaViewMode = localStorage.getItem('bolsaViewMode') || 'list';
+    let bolsaTotalsMode = localStorage.getItem('bolsaTotalsMode') === 'true' || false;
 
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
+    let isAhorroSummaryExpanded = localStorage.getItem('isAhorroSummaryExpanded') !== 'false';
+    let isSavingsPieExpanded = localStorage.getItem('isSavingsPieExpanded') !== 'false';
+    let isExpenseSummaryExpanded = localStorage.getItem('isExpenseSummaryExpanded') !== 'false';
+
+    // Dynamic Settings
+    let fiscalDay = parseInt(localStorage.getItem('fiscalDay')) || 25;
+    let incomeCategories = JSON.parse(localStorage.getItem('incomeCategories')) || ['Ahorro', 'Intereses', 'Dividendos', 'Especulación'];
+    let expenseCategories = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto'];
+    let isPrivacyActive = localStorage.getItem('isPrivacyActive') === 'true' || false;
+    let currentView = 'bolsa';
+    let lastSyncTime = '-';
 
     // Global Formatters
     const fmtEUR = (num) => {
@@ -100,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getFiscalMonth(dateInput = new Date()) {
         const d = new Date(dateInput);
-        if (d.getDate() >= 25) {
+        if (d.getDate() >= fiscalDay) {
             d.setMonth(d.getMonth() + 1);
         }
         const year = d.getFullYear();
@@ -401,7 +409,17 @@ document.addEventListener('DOMContentLoaded', () => {
         ahorroFilterMode: document.getElementById('ahorroFilterMode'),
         ahorroListFilterMode: document.getElementById('ahorroListFilterMode'),
 
-        nominaListFilterMode: document.getElementById('nominaListFilterMode')
+        nominaListFilterMode: document.getElementById('nominaListFilterMode'),
+
+        // Settings Modal Elements
+        settingsBtn: document.getElementById('settingsBtn'),
+        mobileSettingsBtn: document.getElementById('mobileSettingsBtn'),
+        settingsModal: document.getElementById('settingsModal'),
+        closeSettingsModal: document.getElementById('closeSettingsModal'),
+        settingsForm: document.getElementById('settingsForm'),
+        fiscalDayInput: document.getElementById('fiscalDayInput'),
+        incomeCategoriesInput: document.getElementById('incomeCategoriesInput'),
+        expenseCategoriesInput: document.getElementById('expenseCategoriesInput')
     };
 
     const updateNominaMovementType = (type) => {
@@ -443,9 +461,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Categories
         if (elements.savingsCategorySelect) {
-            const incomeCats = ['Ahorro', 'Intereses', 'Dividendos', 'Especulación'];
-            const expenseCats = ['Inversión', 'Gasto'];
-            const cats = isIncome ? incomeCats : expenseCats;
+            // Use dynamic categories defined in settings
+            const cats = isIncome ? incomeCategories : expenseCategories;
 
             elements.savingsCategorySelect.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
         }
@@ -465,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function togglePrivacy() {
         isPrivacyActive = !isPrivacyActive;
+        localStorage.setItem('isPrivacyActive', isPrivacyActive);
         if (window.savePrivacy) window.savePrivacy(isPrivacyActive);
         updatePrivacyUI();
         render();
@@ -699,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tableWrapper && !tableWrapper.querySelector('#bolsaTotalesToggle')) {
                 const toggleBtn = document.createElement('div');
                 toggleBtn.style.cssText = 'display:flex; justify-content:flex-end; padding: 0.5rem 0 0.3rem 0;';
-                toggleBtn.innerHTML = `<button id="bolsaTotalesToggle" style="padding:0.3rem 0.8rem; font-size:0.8rem; border-radius:6px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); color:var(--text-muted); cursor:pointer; transition:all 0.2s;">📊 Totales</button>`;
+                toggleBtn.innerHTML = `<button id="bolsaTotalesToggle" class="totales-toggle-btn">📊 Totales</button>`;
                 tableWrapper.insertBefore(toggleBtn, elements.stockTable);
                 toggleBtn.querySelector('#bolsaTotalesToggle').addEventListener('click', () => {
                     bolsaTotalsMode = !bolsaTotalsMode;
@@ -710,9 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update button state
             const totalesBtn = tableWrapper?.querySelector('#bolsaTotalesToggle');
             if (totalesBtn) {
-                totalesBtn.style.background = bolsaTotalsMode ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
-                totalesBtn.style.color = bolsaTotalsMode ? 'white' : 'var(--text-muted)';
-                totalesBtn.style.borderColor = bolsaTotalsMode ? 'var(--primary)' : 'rgba(255,255,255,0.15)';
+                totalesBtn.classList.toggle('active', bolsaTotalsMode);
             }
         }
 
@@ -1640,6 +1656,7 @@ document.addEventListener('DOMContentLoaded', () => {
         header.onclick = (e) => {
             if (e.target.closest('select')) return;
             isAhorroSummaryExpanded = !isAhorroSummaryExpanded;
+            localStorage.setItem('isAhorroSummaryExpanded', isAhorroSummaryExpanded);
             renderAhorroSummaryDrawer();
         };
 
@@ -1681,7 +1698,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroFilterMode.value = ahorroFilterMode;
         }
         if (elements.ahorroListFilterMode) {
-            elements.ahorroListFilterMode.value = ahorroListFilterMode;
+            elements.ahorroListFilterMode.classList.toggle('active', ahorroListFilterMode === 'totals');
         }
 
         elements.ahorroTableBody.innerHTML = '';
@@ -2325,6 +2342,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             header.onclick = () => {
                 isSavingsPieExpanded = !isSavingsPieExpanded;
+                localStorage.setItem('isSavingsPieExpanded', isSavingsPieExpanded);
                 renderSavingsPieChart();
             };
             parent.insertBefore(header, container);
@@ -2346,7 +2364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = `
             <div class="collapsible-content ${isSavingsPieExpanded ? 'expanded' : ''}" style="width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;">
                 <div style="flex: 1; min-width: 200px; max-width: 400px; position: relative;">
-                    <svg viewBox="0 0 300 300" width="100%" height="auto" style="display:block; overflow:visible;">
+                    <svg viewBox="0 0 300 300" width="100%" height="100%" style="display:block; overflow:visible;">
                         ${slicePaths}
                         <circle cx="${cx}" cy="${cy}" r="60" fill="#0f172a" />
                         <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="12" font-family="Outfit, sans-serif">Total</text>
@@ -2388,7 +2406,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Sync select state
         if (elements.nominaListFilterMode) {
-            elements.nominaListFilterMode.value = nominaListFilterMode;
+            elements.nominaListFilterMode.classList.toggle('active', nominaListFilterMode === 'totals');
         }
         elements.nominaTableBody.innerHTML = '';
 
@@ -3074,6 +3092,7 @@ document.addEventListener('DOMContentLoaded', () => {
             summaryHeader.addEventListener('click', (e) => {
                 // Prevent toggle if clicking internal buttons if any (though currently none in header)
                 isExpenseSummaryExpanded = !isExpenseSummaryExpanded;
+                localStorage.setItem('isExpenseSummaryExpanded', isExpenseSummaryExpanded);
                 renderNomina(); // Re-render to update classes and state
             });
         }
@@ -4022,6 +4041,61 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     }
 
+    // --- Settings Logic ---
+    function toggleSettingsModal(show) {
+        if (!elements.settingsModal) return;
+        if (show) {
+            elements.settingsModal.classList.remove('hidden');
+        } else {
+            elements.settingsModal.classList.add('hidden');
+        }
+    }
+
+    function openSettingsModal() {
+        if (elements.fiscalDayInput) elements.fiscalDayInput.value = parseInt(localStorage.getItem('fiscalDay')) || 25;
+        if (elements.incomeCategoriesInput) {
+            const incCats = JSON.parse(localStorage.getItem('incomeCategories')) || ['Ahorro', 'Intereses', 'Dividendos', 'Especulación'];
+            elements.incomeCategoriesInput.value = incCats.join(', ');
+        }
+        if (elements.expenseCategoriesInput) {
+            const expCats = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto'];
+            elements.expenseCategoriesInput.value = expCats.join(', ');
+        }
+        toggleSettingsModal(true);
+    }
+
+    function saveSettings(e) {
+        e.preventDefault();
+
+        // Fiscal Day
+        let newFiscalDay = parseInt(elements.fiscalDayInput?.value);
+        if (isNaN(newFiscalDay) || newFiscalDay < 1 || newFiscalDay > 31) newFiscalDay = 25;
+        localStorage.setItem('fiscalDay', newFiscalDay);
+
+        // Income Categories
+        const newIncCats = elements.incomeCategoriesInput?.value.split(',').map(s => s.trim()).filter(s => s);
+        if (newIncCats && newIncCats.length > 0) {
+            localStorage.setItem('incomeCategories', JSON.stringify(newIncCats));
+        } else {
+            localStorage.setItem('incomeCategories', JSON.stringify(['Ahorro', 'Intereses', 'Dividendos', 'Especulación']));
+        }
+
+        // Expense Categories
+        const newExpCats = elements.expenseCategoriesInput?.value.split(',').map(s => s.trim()).filter(s => s);
+        if (newExpCats && newExpCats.length > 0) {
+            localStorage.setItem('expenseCategories', JSON.stringify(newExpCats));
+        } else {
+            localStorage.setItem('expenseCategories', JSON.stringify(['Inversión', 'Gasto']));
+        }
+
+        // Apply visual updates and notify user
+        toggleSettingsModal(false);
+        showToast('Ajustes guardados correctamente.');
+
+        // Reload page so variables such as fiscalDay load properly across the code
+        setTimeout(() => location.reload(), 1000);
+    }
+
     // --- Event Listeners ---
 
     function setupEventListeners() {
@@ -4049,6 +4123,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             toggleModal(true);
         });
+
+        elements.settingsBtn?.addEventListener('click', openSettingsModal);
+        elements.mobileSettingsBtn?.addEventListener('click', openSettingsModal);
+        elements.closeSettingsModal?.addEventListener('click', () => toggleSettingsModal(false));
+        elements.settingsForm?.addEventListener('submit', saveSettings);
 
         if (elements.privacyToggleBtn) {
             elements.privacyToggleBtn.addEventListener('click', togglePrivacy);
@@ -4586,14 +4665,14 @@ document.addEventListener('DOMContentLoaded', () => {
             renderSavings();
         });
 
-        elements.ahorroListFilterMode?.addEventListener('change', (e) => {
-            ahorroListFilterMode = e.target.value;
+        elements.ahorroListFilterMode?.addEventListener('click', (e) => {
+            ahorroListFilterMode = ahorroListFilterMode === 'detail' ? 'totals' : 'detail';
             localStorage.setItem('ahorroListFilterMode', ahorroListFilterMode);
             renderSavings();
         });
 
-        elements.nominaListFilterMode?.addEventListener('change', (e) => {
-            nominaListFilterMode = e.target.value;
+        elements.nominaListFilterMode?.addEventListener('click', (e) => {
+            nominaListFilterMode = nominaListFilterMode === 'detail' ? 'totals' : 'detail';
             localStorage.setItem('nominaListFilterMode', nominaListFilterMode);
             renderNomina();
         });
