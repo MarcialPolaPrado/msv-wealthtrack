@@ -57,7 +57,7 @@
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
                     <p
                         style="margin:0; font-size: 0.6rem; opacity: 0.6; color: var(--primary); letter-spacing: 0.05em;">
-                        v2026030831</p>
+                        v2026030832</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -467,7 +467,7 @@
             <div class="modal-header">
                 <div style="display: flex; flex-direction: column;">
                     <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
-                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 2026030831</span>
+                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 2026030832</span>
                 </div>
                 <span id="closeSettingsModal" class="close-modal">&times;</span>
             </div>
@@ -507,7 +507,7 @@
     <!-- Modal for Adding Stock -->
     <div id="addStockModal" class="modal hidden">
         <div class="modal-content glass-panel">
-            <span class="close-modal">&times;</span>
+            <span class="close-modal" id="closeAddStockModal">&times;</span>
             <h2 id="modalTitle">Add New Investment</h2>
             <form id="addStockForm">
                 <input type="hidden" id="editId">
@@ -926,10 +926,10 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=2026030831"></script>
+    <script src="app.js?v=2026030832"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '2026030831';
+        const APP_VERSION = '2026030832';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalTrend: document.getElementById('totalTrend'),
         addStockBtn: document.getElementById('addStockBtn'),
         addStockModal: document.getElementById('addStockModal'),
-        closeModal: document.querySelector('.close-modal'),
+        closeModal: document.getElementById('closeAddStockModal'),
         addStockForm: document.getElementById('addStockForm'),
         tickerInput: document.getElementById('tickerInput'),
         marketSelect: document.getElementById('marketSelect'),
@@ -4275,7 +4275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 2026030831");
+            console.log("MSV WealthTrack Booting... Version: 2026030832");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
