@@ -1723,8 +1723,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 valA = a.name.toLowerCase();
                 valB = b.name.toLowerCase();
             } else if (ahorroSortConfig.key === 'balance') {
-                valA = a.balance;
-                valB = b.balance;
+                const getFilteredBalance = (d) => {
+                    let mvmts;
+                    if (ahorroFilterMode === 'month') {
+                        mvmts = (d.movements || []).filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+                    } else if (ahorroFilterMode === 'year') {
+                        const year = ahorroListMonth.split('-')[0];
+                        mvmts = (d.movements || []).filter(m => m.date && m.date.startsWith(year));
+                    } else {
+                        mvmts = d.movements || [];
+                    }
+                    return mvmts.reduce((s, m) => s + m.amount, 0);
+                };
+                valA = getFilteredBalance(a);
+                valB = getFilteredBalance(b);
             } else if (ahorroSortConfig.key === 'concept') {
                 // Determine "leading" category for this month
                 const getLeadCategory = (drawer) => {
@@ -1775,6 +1787,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (drawerMovements.length === 0) return; // Don't show drawer if no movements in this view
 
+            // Calculate balance from filtered movements only
+            const filteredBalance = drawerMovements.reduce((sum, m) => sum + m.amount, 0);
+
             // Drawer Header Row
             const headerTr = document.createElement('tr');
             headerTr.className = 'ahorro-list-header';
@@ -1792,7 +1807,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ` : ''}
                     </div>
                 </td>
-                <td class="balance">${fmtEUR(drawer.balance)}</td>
+                <td class="balance">${fmtEUR(filteredBalance)}</td>
             `;
 
             // Add event listeners to list buttons
