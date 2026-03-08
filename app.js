@@ -2439,12 +2439,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentMonthNum = parseInt(nominaListMonth.split('-')[1]);
 
         // Group drawers by type or apply sorting
+        const effectiveSortKey = nominaListFilterMode === 'totals' ? 'type' : nominaSortConfig.key;
         const sortedDrawers = [...nominaData].sort((a, b) => {
             let valA, valB;
-            if (nominaSortConfig.key === 'name') {
+            if (effectiveSortKey === 'name') {
                 valA = a.name.toLowerCase();
                 valB = b.name.toLowerCase();
-            } else if (nominaSortConfig.key === 'balance') {
+            } else if (effectiveSortKey === 'balance') {
                 const getBal = (d) => (d.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum)).reduce((s, m) => s + m.amount, 0);
                 valA = getBal(a);
                 valB = getBal(b);
@@ -2543,8 +2544,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // In totals mode, skip automatic drawers (Dinero no destinado)
             if (nominaListFilterMode === 'totals' && drawer.isAutomatic) return;
 
-            // Type Header separator (only if sorting by type)
-            if (nominaSortConfig.key === 'type' && drawer.type !== lastType) {
+            // Type Header separator (show in totals mode always, or when sorting by type)
+            if (effectiveSortKey === 'type' && drawer.type !== lastType) {
                 const sepTr = document.createElement('tr');
                 sepTr.className = 'list-section-header';
                 sepTr.innerHTML = `
