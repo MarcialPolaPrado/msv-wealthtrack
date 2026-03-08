@@ -1591,7 +1591,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate Category Totals using same filter as the list view
         const categoryTotals = {};
         savingsDrawers.forEach(drawer => {
-            if (drawer.isAuto) return;
             (drawer.movements || []).forEach(m => {
                 const mDate = new Date(m.date);
                 if (isNaN(mDate.getTime())) return;
