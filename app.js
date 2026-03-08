@@ -430,7 +430,8 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsForm: document.getElementById('settingsForm'),
         fiscalDayInput: document.getElementById('fiscalDayInput'),
         incomeCategoriesInput: document.getElementById('incomeCategoriesInput'),
-        expenseCategoriesInput: document.getElementById('expenseCategoriesInput')
+        expenseCategoriesInput: document.getElementById('expenseCategoriesInput'),
+        forceUpdateBtn: document.getElementById('forceUpdateBtn')
     };
 
     const updateNominaMovementType = (type) => {
@@ -4146,6 +4147,44 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => location.reload(), 1000);
     }
 
+    async function forceAppUpdate() {
+        if (!confirm('Esto borrará toda la caché del navegador para esta aplicación y forzará una recarga total. ¿Continuar?')) return;
+
+        try {
+            showToast('Limpiando caché...', 'info');
+
+            // 1. Unregister all service workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+            }
+
+            // 2. Delete all caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                for (let name of cacheNames) {
+                    await caches.delete(name);
+                }
+            }
+
+            // 3. Clear localStorage versions if needed (optional, keeping data is safer)
+            localStorage.removeItem('app_version');
+
+            showToast('Caché restablecida. Recargando...', 'success');
+
+            // 4. Force reload from server
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 1000);
+
+        } catch (err) {
+            console.error('Error in forceUpdate:', err);
+            alert('Error al restablecer caché: ' + err.message);
+        }
+    }
+
     // --- Event Listeners ---
 
     function setupEventListeners() {
@@ -4176,6 +4215,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.settingsBtn?.addEventListener('click', openSettingsModal);
         elements.mobileSettingsBtn?.addEventListener('click', openSettingsModal);
+        elements.forceUpdateBtn?.addEventListener('click', forceAppUpdate);
         elements.closeSettingsModal?.addEventListener('click', () => toggleSettingsModal(false));
         elements.settingsForm?.addEventListener('submit', saveSettings);
 

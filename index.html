@@ -480,7 +480,16 @@
                     <textarea id="expenseCategoriesInput" rows="2" placeholder="Ej: Comida, Transporte, Vivienda"
                         style="resize:vertical"></textarea>
                 </div>
-                <div class="modal-actions" style="margin-top: 1.5rem;">
+                <div class="form-group"
+                    style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <label style="color: var(--warning); font-size: 0.85rem;">Zona de Soporte</label>
+                    <button type="button" id="forceUpdateBtn" class="btn-secondary"
+                        style="width:100%; border-color: var(--warning); color: var(--warning); margin-bottom: 0.5rem;">♻️
+                        Restablecer Caché (Forzar Actualización)</button>
+                    <small style="opacity:0.6; display:block; font-size: 0.75rem;">Usa esto si no ves los últimos
+                        cambios en el móvil.</small>
+                </div>
+                <div class="modal-actions" style="margin-top: 1rem;">
                     <button type="submit" class="btn-primary" style="width:100%">Guardar Ajustes</button>
                 </div>
             </form>
@@ -909,10 +918,10 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=2026030822"></script>
+    <script src="app.js?v=2026030823"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '2026030822';
+        const APP_VERSION = '2026030823';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
