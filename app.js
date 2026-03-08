@@ -1617,7 +1617,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortedCats = Object.entries(categoryTotals).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
 
         container.innerHTML = `
-            <div class="card drawer-card glass-panel summary-drawer" style="border: 1px solid var(--primary); padding: 1rem; ${!isAhorroSummaryExpanded ? 'max-width: fit-content;' : ''}">
+            <div class="card drawer-card glass-panel summary-drawer" style="border: 1px solid var(--primary); padding: 1rem; width: 100%;">
                 <div class="drawer-header" id="ahorroSummaryHeader" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div style="display:flex; align-items:center; gap: 10px; flex: 1;">
                         <span class="drawer-icon">📊</span>
@@ -2365,14 +2365,14 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.gap = '2rem';
         container.style.padding = isSavingsPieExpanded ? '1rem' : '0';
 
-        // Limit parent and grandparent width when collapsed
+        // Container takes full width
         const parentContainer = container.parentElement;
         if (parentContainer) {
-            parentContainer.style.maxWidth = isSavingsPieExpanded ? '' : 'fit-content';
+            parentContainer.style.maxWidth = '100%';
             parentContainer.style.padding = isSavingsPieExpanded ? '1.5rem' : '0.8rem';
             const grandparent = parentContainer.parentElement;
             if (grandparent) {
-                grandparent.style.maxWidth = isSavingsPieExpanded ? '' : 'fit-content';
+                grandparent.style.maxWidth = '100%';
             }
         }
 
