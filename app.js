@@ -1645,7 +1645,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Inversiones (Bolsa)</div>
                             <div style="font-size: 1.2rem; font-weight: 700; color: var(--primary);">${fmtEUR((savingsDrawers.find(d => d.id === 'bolsa')?.balance || 0))}</div>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 4px; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
                             <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Patrimonio Total</div>
                             <div style="font-size: 1.3rem; font-weight: 800; color: var(--success);">${fmtEUR(savingsDrawers.reduce((s, d) => s + d.balance, 0))}</div>
                         </div>
