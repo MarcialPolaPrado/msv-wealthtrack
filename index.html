@@ -252,14 +252,15 @@
                             style="display:flex; flex-direction: column; gap:0.8rem; padding:1rem; border-bottom:1px solid var(--border-color);">
                             <!-- Row 1: Filter Mode (Left) and Totals Toggle (Right) -->
                             <div
-                                style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 1rem;">
                                 <select id="ahorroFilterMode"
-                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none; max-width: 100px; flex-shrink: 0;">
                                     <option value="month">📅 Mes</option>
                                     <option value="year">🗓️ Año</option>
                                     <option value="all">♾️ Todo</option>
                                 </select>
-                                <button id="ahorroListFilterMode" class="totales-toggle-btn">
+                                <button id="ahorroListFilterMode" class="totales-toggle-btn"
+                                    style="white-space: nowrap; flex-shrink: 0;">
                                     📊 Totales
                                 </button>
                             </div>
@@ -922,10 +923,10 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=2026030826"></script>
+    <script src="app.js?v=2026030827"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '2026030826';
+        const APP_VERSION = '2026030827';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
