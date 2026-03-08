@@ -4709,6 +4709,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
             renderSavingsList();
+            renderAhorroSummaryDrawer();
         });
 
         elements.nextAhorroMonthBtn?.addEventListener('click', () => {
@@ -4724,6 +4725,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
             renderSavingsList();
+            renderAhorroSummaryDrawer();
         });
 
         elements.ahorroFilterMode?.addEventListener('change', (e) => {
