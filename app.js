@@ -826,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayGroups.forEach((group, idx) => {
                     const pl = group.totalCurrentVal !== null ? group.totalCurrentVal - group.totalInvested : null;
                     const plClass = pl === null ? '' : (pl >= 0 ? 'profit' : 'loss');
-                    const rowBg = idx % 2 === 0 ? 'background: rgba(255,255,255,0.02);' : 'background: rgba(59,130,246,0.06);';
+                    const rowBg = idx % 2 === 0 ? 'background: rgba(255,255,255,0.04);' : 'background: rgba(139,92,246,0.08);';
                     const tr = document.createElement('tr');
                     tr.className = 'group-row';
                     tr.style.cssText = `cursor: pointer; ${rowBg}`;
