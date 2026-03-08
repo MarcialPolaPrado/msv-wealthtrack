@@ -2463,7 +2463,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return 0;
         });
 
-        // Update Sort Icons in Headers
+        // Update Sort Icons and Header names in Headers
         const headerIcons = document.querySelectorAll('.sort-icon-nomina');
         const headers = ['name', 'balance'];
         headerIcons.forEach((icon, idx) => {
@@ -2474,6 +2474,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 icon.textContent = '↕️';
                 icon.style.opacity = '0.3';
+            }
+        });
+
+        // Update column header text based on mode
+        const nominaTableHeaders = document.querySelectorAll('#nominaTableContainer th[data-sort]');
+        nominaTableHeaders.forEach(th => {
+            if (th.dataset.sort === 'balance') {
+                const icon = th.querySelector('.sort-icon-nomina');
+                const iconHtml = icon ? icon.outerHTML : '';
+                th.innerHTML = (nominaListFilterMode === 'totals' ? 'Provisión ' : 'Importe ') + iconHtml;
             }
         });
 
@@ -2551,6 +2561,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 monthlyBalance = calculatedUndestined;
             }
 
+            // In totals mode, show provision (saldo inicial) instead of net balance
+            let displayAmount = monthlyBalance;
+            if (nominaListFilterMode === 'totals' && !drawer.isAutomatic) {
+                const provisionMvmt = drawerMovements.find(m => isProvision(m));
+                displayAmount = provisionMvmt ? provisionMvmt.amount : 0;
+            }
+
             headerTr.innerHTML = `
                 <td colspan="2">
                     <div class="header-content">
@@ -2564,7 +2581,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ` : ''}
                     </div>
                 </td>
-                <td class="balance">${fmtEUR(monthlyBalance)}</td>
+                <td class="balance">${fmtEUR(displayAmount)}</td>
             `;
 
             // Add event listeners (only in detail mode)
