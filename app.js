@@ -3487,6 +3487,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function deleteSavingsMovement(drawerId, index) {
+        const drawer = savingsDrawers.find(d => d.id === drawerId);
+        if (!drawer || !drawer.movements[index]) return;
+
+        if (confirm(`¿Estás seguro de que deseas borrar este movimiento? Esta acción no se puede deshacer.`)) {
+            const amount = drawer.movements[index].amount;
+            drawer.movements.splice(index, 1);
+            drawer.balance -= amount;
+            if (window.saveSavings) window.saveSavings(savingsDrawers);
+            render();
+            showDrawerDetails(drawerId);
+        }
+    }
+
     function toggleSavingsModal(show) {
         const modal = document.getElementById('savingsInputModal');
         if (modal) {
@@ -3514,7 +3528,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="font-weight:700; color:${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">
                             ${m.amount >= 0 ? '+' : ''}${fmtEUR(m.amount)}
                         </div>
-                        <button class="edit-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.5; padding:0.2rem;" title="Editar Movimiento">✏️</button>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="edit-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.5; padding:0.2rem;" title="Editar Movimiento">✏️</button>
+                            <button class="delete-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1rem; opacity:0.7; padding:0.2rem;" title="Borrar Movimiento">🗑️</button>
+                        </div>
                     </div>
                 </div>
             `).join('') || '<p style="opacity:0.5; padding:1rem; text-align:center;">No hay movimientos aún.</p>';
@@ -3577,6 +3594,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const index = parseInt(btn.dataset.index);
                 overlay.remove();
                 showEditMovementModal(drawer.id, index);
+            };
+        });
+        overlay.querySelectorAll('.delete-mvmt-entry-btn').forEach(btn => {
+            btn.onclick = () => {
+                const index = parseInt(btn.dataset.index);
+                overlay.remove();
+                deleteSavingsMovement(drawer.id, index);
             };
         });
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
