@@ -1577,7 +1577,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedAhorroFiscalMonth = sortedMonths[0];
         }
 
-        // Calculate Category Totals
+        // Calculate Category Totals using same filter as the list view
         const categoryTotals = {};
         savingsDrawers.forEach(drawer => {
             if (drawer.isAuto) return;
@@ -1585,14 +1585,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const mDate = new Date(m.date);
                 if (isNaN(mDate.getTime())) return;
 
-                const mFiscal = getFiscalMonth(mDate);
                 let match = false;
-                if (!selectedAhorroFiscalMonth && ahorroSummaryFilterMode !== 'all') {
-                    match = false;
-                } else if (ahorroSummaryFilterMode === 'month') {
-                    match = (mFiscal === selectedAhorroFiscalMonth);
-                } else if (ahorroSummaryFilterMode === 'year') {
-                    match = (mFiscal.startsWith(selectedAhorroFiscalMonth.split('-')[0]));
+                if (ahorroFilterMode === 'month') {
+                    match = (m.date && getFiscalMonth(mDate) === ahorroListMonth);
+                } else if (ahorroFilterMode === 'year') {
+                    const year = ahorroListMonth.split('-')[0];
+                    match = (m.date && m.date.startsWith(year));
                 } else {
                     match = true; // All
                 }
