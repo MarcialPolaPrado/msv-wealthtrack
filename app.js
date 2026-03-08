@@ -2516,6 +2516,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const calculatedUndestined = totalPrimaryIncome - totalBudgetedProvisions;
 
         const categoryTotals = nominaData.reduce((acc, drawer) => {
+            if (drawer.isAutomatic) return acc; // Skip automatic drawers
             const monthlyMovements = (drawer.movements || [])
                 .filter(m => (m.activeMonths || []).map(Number).includes(currentMonthNum));
 
@@ -2527,10 +2528,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const provision = provisionMvmt ? provisionMvmt.amount : 0;
                 acc[drawer.type] = (acc[drawer.type] || 0) + provision;
             } else if (drawer.type === 'expense') {
-                const plannedExpenses = monthlyMovements
-                    .filter(m => m.amount < 0)
-                    .reduce((s, m) => s + Math.abs(m.amount), 0);
-                acc[drawer.type] = (acc[drawer.type] || 0) + plannedExpenses;
+                const provisionMvmt = monthlyMovements.find(m => isProvision(m));
+                const provision = provisionMvmt ? provisionMvmt.amount : 0;
+                acc[drawer.type] = (acc[drawer.type] || 0) + provision;
             }
             return acc;
         }, {});
@@ -2539,6 +2539,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check if drawer is active for this month
             const drawerMovements = (drawer.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum));
             if (drawerMovements.length === 0 && !drawer.isAutomatic) return;
+
+            // In totals mode, skip automatic drawers (Dinero no destinado)
+            if (nominaListFilterMode === 'totals' && drawer.isAutomatic) return;
 
             // Type Header separator (only if sorting by type)
             if (nominaSortConfig.key === 'type' && drawer.type !== lastType) {
