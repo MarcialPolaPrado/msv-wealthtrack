@@ -57,7 +57,7 @@
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
                     <p
                         style="margin:0; font-size: 0.6rem; opacity: 0.6; color: var(--primary); letter-spacing: 0.05em;">
-                        v2026030833</p>
+                        v2026030835</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -282,12 +282,14 @@
                             <table style="width: 100%; border-collapse: collapse;">
                                 <thead>
                                     <tr style="border-bottom: 2px solid var(--primary);">
-                                        <th data-sort="name" colspan="2" onclick=""
+                                        <th data-sort="name" onclick=""
                                             style="padding: 1rem; text-align: left; cursor:pointer; user-select:none;">
                                             Cajón <span class="sort-icon-ahorro">↕️</span></th>
+                                        <th style="padding: 1rem; text-align: left;">Concepto</th>
                                         <th data-sort="balance" onclick=""
                                             style="padding: 1rem; text-align: right; cursor:pointer; user-select:none;">
                                             Importe <span class="sort-icon-ahorro">↕️</span></th>
+                                        <th style="padding: 1rem; text-align: center;">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="ahorroTableBody">
@@ -469,7 +471,7 @@
             <div class="modal-header">
                 <div style="display: flex; flex-direction: column;">
                     <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
-                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 2026030833</span>
+                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 2026030835</span>
                 </div>
                 <span id="closeSettingsModal" class="close-modal">&times;</span>
             </div>
@@ -928,10 +930,10 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=2026030833"></script>
+    <script src="app.js?v=2026030835"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '2026030833';
+        const APP_VERSION = '2026030835';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

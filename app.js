@@ -1815,7 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const headerTr = document.createElement('tr');
             headerTr.className = 'ahorro-list-header';
             headerTr.innerHTML = `
-                <td colspan="2">
+                <td colspan="2" class="ahorro-list-header">
                     <div class="header-content">
                         <span>${drawer.icon} ${drawer.name}</span>
                         ${(!drawer.isAuto && ahorroListFilterMode === 'detail') ? `
@@ -1828,15 +1828,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         ` : ''}
                     </div>
                 </td>
-                <td class="balance">${fmtEUR(filteredBalance)}</td>
+                <td class="balance" style="text-align: right; font-weight: 800; color: var(--primary);">${fmtEUR(filteredBalance)}</td>
+                <td></td>
             `;
 
-            // Add event listeners to list buttons
+            // Add event listeners to list buttons after innerHTML is set
             if (!drawer.isAuto && ahorroListFilterMode === 'detail') {
-                headerTr.querySelector('.add-mvmt-list-btn').onclick = (e) => { e.stopPropagation(); showAddMovementModal(drawer.id); };
-                headerTr.querySelector('.transfer-list-btn').onclick = (e) => { e.stopPropagation(); showTransferModal(drawer.id); };
-                headerTr.querySelector('.edit-drawer-list-btn').onclick = (e) => { e.stopPropagation(); showEditDrawerModal(drawer.id); };
-                headerTr.querySelector('.delete-drawer-list-btn').onclick = (e) => { e.stopPropagation(); deleteSavingsDrawer(drawer.id); };
+                const addBtn = headerTr.querySelector('.add-mvmt-list-btn');
+                const transBtn = headerTr.querySelector('.transfer-list-btn');
+                const editBtn = headerTr.querySelector('.edit-drawer-list-btn');
+                const delBtn = headerTr.querySelector('.delete-drawer-list-btn');
+
+                if (addBtn) addBtn.onclick = (e) => { e.stopPropagation(); showAddMovementModal(drawer.id); };
+                if (transBtn) transBtn.onclick = (e) => { e.stopPropagation(); showTransferModal(drawer.id); };
+                if (editBtn) editBtn.onclick = (e) => { e.stopPropagation(); showEditDrawerModal(drawer.id); };
+                if (delBtn) delBtn.onclick = (e) => { e.stopPropagation(); deleteSavingsDrawer(drawer.id); };
             }
 
             elements.ahorroTableBody.appendChild(headerTr);
@@ -1853,18 +1859,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
                     const category = m.category || '-';
 
+                    const originalIndex = drawer.movements.indexOf(m);
+
                     tr.innerHTML = `
-                        <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
+                < td class="date" > ${new Date(m.date).toLocaleDateString('es-ES')}</td >
                         <td class="concept">${category}</td>
                         <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
-                    `;
+                        <td style="text-align: center;">
+                            <button class="delete-mvmt-btn" style="background:none; border:none; cursor:pointer;" title="Eliminar Movimiento">🗑️</button>
+                        </td>
+            `;
+                    tr.querySelector('.delete-mvmt-btn').onclick = (e) => {
+                        e.stopPropagation();
+                        deleteSavingsMovement(drawer.id, originalIndex);
+                    };
                     elements.ahorroTableBody.appendChild(tr);
                 });
             }
         });
 
         if (elements.ahorroTableBody.innerHTML === '') {
-            elements.ahorroTableBody.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; opacity:0.5;">No hay movimientos en este periodo</td></tr>';
+            elements.ahorroTableBody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5;">No hay movimientos en este periodo</td></tr>';
         }
     }
 
@@ -1875,7 +1890,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate Global Total
         const total = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
         if (elements.misCajonesTitle) {
-            elements.misCajonesTitle.textContent = `Mis Cajones: ${fmtEUR(total)}`;
+            elements.misCajonesTitle.textContent = `Mis Cajones: ${fmtEUR(total)} `;
         }
 
         // Toggle visibility based on view mode
@@ -1912,7 +1927,7 @@ document.addEventListener('DOMContentLoaded', () => {
         savingsDrawers.forEach(drawer => {
             const card = document.createElement('div');
             // We force income-drawer but also apply very explicit inline styles to ensure green color
-            card.className = `card drawer-card glass-panel income-drawer ${drawer.isAuto ? 'bolsa-drawer' : ''}`;
+            card.className = `card drawer - card glass - panel income - drawer ${drawer.isAuto ? 'bolsa-drawer' : ''} `;
 
             const pct = total > 0 ? (drawer.balance / total * 100).toFixed(1) : 0;
 
@@ -1923,7 +1938,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.setProperty('border', '2px solid #10b981', 'important');
 
             card.innerHTML = `
-                <span class="drawer-icon">${drawer.icon}</span>
+                < span class="drawer-icon" > ${drawer.icon}</span >
                 <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <span class="drawer-amount" style="color: #10b981 !important; font-weight: 800; font-size: 1.2rem;">${fmtEUR(drawer.balance)}</span>
@@ -1935,7 +1950,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="transfer-btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;">⇆ Transferir</button>
                         <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.4rem 0.6rem; font-size:0.8rem;">✏️</button>
                         <button class="delete-drawer-btn btn-danger" title="Borrar Cajón" style="padding:0.4rem 0.6rem; font-size:0.8rem; border:none; background:rgba(239,68,68,0.15); color:var(--danger);">🗑️</button>
-                    </div>` : ''}
+                    </div>` : ''
+                }
             `;
 
             card.onclick = (e) => {
@@ -2011,7 +2027,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isExpanded = expandedTickers.has(group.ticker);
 
             const card = document.createElement('div');
-            card.className = `card drawer-card glass-panel bolsa-drawer`;
+            card.className = `card drawer - card glass - panel bolsa - drawer`;
 
             // Color theme: similar to Nomina but for Bolsa (maybe blue/indigo)
             card.style.background = 'rgba(99, 102, 241, 0.15)';
@@ -2022,7 +2038,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const performanceClass = (plPercentGroup === null) ? 'neutral' : (plPercentGroup < 0 ? 'loss' : 'profit');
 
             card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                < div style = "display: flex; justify-content: space-between; align-items: flex-start; width: 100%;" >
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span class="drawer-icon">📈</span>
                         <div style="display: flex; flex-direction: column;">
@@ -2034,7 +2050,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="drawer-amount ${performanceClass}" style="font-weight: 800; font-size: 1.2rem; display: block;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
                         <span class="${performanceClass}" style="font-size: 0.85rem; font-weight: 600;">${plGroup !== null ? (plGroup >= 0 ? '+' : '') + fmtEUR(plGroup) : '-'} (${fmtPct(plPercentGroup)})</span>
                     </div>
-                </div>
+                </div >
 
                 <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05); display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
                     <div>
@@ -2092,7 +2108,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target.closest('.add-mvmt-btn')) {
                     addMoreFromStockByTicker(ticker);
                 } else if (e.target.closest('.history-btn')) {
-                    const historyDiv = card.querySelector(`#history-${ticker.replace(/[^a-zA-Z0-9]/g, '_')}`);
+                    const historyDiv = card.querySelector(`#history - ${ticker.replace(/[^a-zA-Z0-9]/g, '_')} `);
                     historyDiv.classList.toggle('hidden');
                 } else if (e.target.closest('.details-btn')) {
                     showFinancialDetails(ticker);
@@ -2119,7 +2135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.editId.value = '';
             elements.tickerInput.value = ticker;
             elements.dateInput.valueAsDate = new Date();
-            elements.modalTitle.textContent = `Añadir Inversión - ${ticker}`;
+            elements.modalTitle.textContent = `Añadir Inversión - ${ticker} `;
             toggleModal(true);
         }
     }
@@ -2226,14 +2242,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const plPct = s.invested > 0 ? (pl / s.invested) * 100 : 0;
                 const plStr = `${pl >= 0 ? '+' : ''}${fmtEUR(pl)} (${plPct.toFixed(1)}%)`;
 
-                return `<path d="${path}" fill="${s.color}" opacity="0.85"
-                            stroke="#0f172a" stroke-width="2.5"
-                            style="cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
-                            onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
-                            onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
-                            onclick="showFinancialDetails('${s.ticker}')">
-                            <title>${s.name} (${s.ticker})\nValor: ${amtStr} (${pctStr})\nG/P: ${plStr}</title>
-                        </path>`;
+                return `< path d = "${path}" fill = "${s.color}" opacity = "0.85"
+        stroke = "#0f172a" stroke - width="2.5"
+        style = "cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
+        onmouseenter = "this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
+        onmouseleave = "this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
+        onclick = "showFinancialDetails('${s.ticker}')" >
+            <title>${s.name} (${s.ticker})\nValor: ${amtStr} (${pctStr})\nG/P: ${plStr}</title>
+                        </path > `;
             }).join('');
 
             const legendHtml = slices.map(s => {
@@ -2242,8 +2258,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const plColor = pl >= 0 ? '#10b981' : '#ef4444';
 
                 return `
-                <div style="display:flex; align-items:center; gap:12px; font-size:0.9rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); cursor:pointer; transition: background 0.2s;" onclick="showFinancialDetails('${s.ticker}')"
-                     onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.03)'">
+            < div style = "display:flex; align-items:center; gap:12px; font-size:0.9rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); cursor:pointer; transition: background 0.2s;" onclick = "showFinancialDetails('${s.ticker}')"
+        onmouseenter = "this.style.background='rgba(255,255,255,0.08)'" onmouseleave = "this.style.background='rgba(255,255,255,0.03)'" >
                     <div style="width:14px; height:14px; border-radius:4px; background:${s.color}; flex-shrink:0; box-shadow: 0 0 8px ${s.color}66;"></div>
                     <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
                         <span style="font-weight:700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.name}</span>
@@ -2255,14 +2271,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${pl >= 0 ? '+' : ''}${fmtEUR(pl)} (${plPct.toFixed(1)}%)
                         </div>
                     </div>
-                </div>
+                </div >
             `;
             }).join('');
 
             container.style.cssText = '';  // Reset any previous inline styles
 
             container.innerHTML = `
-                <div style="display:flex; flex-direction:column; gap:1rem; padding:1rem; width:100%; box-sizing:border-box; max-width: ${isBolsaPieExpanded ? '100%' : '400px'};">
+            < div style = "display:flex; flex-direction:column; gap:1rem; padding:1rem; width:100%; box-sizing:border-box; max-width: ${isBolsaPieExpanded ? '100%' : '400px'};" >
                     <div class="drawer-header" id="bolsaPieHeader" style="cursor:pointer; width:100%;">
                         <div style="display:flex; align-items:center; gap:10px; flex:1;">
                             <span class="drawer-icon">📊</span>
@@ -2288,7 +2304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                     </div>
-                </div>`;
+                </div > `;
 
             const header = container.querySelector('#bolsaPieHeader');
             header.onclick = (e) => {
@@ -2298,7 +2314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderPortfolioPieChart();
             };
         } catch (err) {
-            container.innerHTML = `<p style="color:var(--danger); font-size:0.8rem;">Error al renderizar gráfico: ${err.message}</p>`;
+            container.innerHTML = `< p style = "color:var(--danger); font-size:0.8rem;" > Error al renderizar gráfico: ${err.message}</p > `;
         }
     }
 
@@ -2351,41 +2367,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const path = arcPath(cx, cy, r, s.sa, s.sa + s.sweep);
             const amtStr = fmtEUR(s.drawer.balance);
             const pctStr = (s.pct * 100).toFixed(1) + '%';
-            return `<path d="${path}" fill="${s.color}" opacity="0.85"
-                        stroke="#0f172a" stroke-width="2"
-                        style="cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
-                        onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
-                        onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
-                        onclick="showDrawerDetails('${s.drawer.id}')">
-                        <title>${s.drawer.icon} ${s.drawer.name}\n${amtStr} (${pctStr})</title>
-                    </path>`;
+            return `< path d = "${path}" fill = "${s.color}" opacity = "0.85"
+        stroke = "#0f172a" stroke - width="2"
+        style = "cursor:pointer; transition: opacity 0.2s, transform 0.2s;"
+        onmouseenter = "this.setAttribute('opacity','1'); this.style.transform='scale(1.02)'; this.style.transformOrigin='center';"
+        onmouseleave = "this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
+        onclick = "showDrawerDetails('${s.drawer.id}')" >
+            <title>${s.drawer.icon} ${s.drawer.name}\n${amtStr} (${pctStr})</title>
+                    </path > `;
         }).join('');
 
         const legendHtml = slices.map(s => `
-            <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem; min-width:140px; cursor:pointer;" onclick="showDrawerDetails('${s.drawer.id}')">
+            < div style = "display:flex; align-items:center; gap:8px; font-size:0.85rem; min-width:140px; cursor:pointer;" onclick = "showDrawerDetails('${s.drawer.id}')" >
                 <div style="width:12px; height:12px; border-radius:3px; background:${s.color}; flex-shrink:0;"></div>
                 <span style="opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.drawer.icon} ${s.drawer.name}</span>
                 <span style="font-weight:700; color:${s.color}; margin-left:auto;">${fmtEUR(s.drawer.balance)}</span>
-            </div>
-        `).join('');
+            </div >
+            `).join('');
 
         // Container structure updated with toggle header
         const parent = container.parentElement;
         const headerId = 'savingsPieHeader';
-        if (!parent.querySelector(`#${headerId}`)) {
+        if (!parent.querySelector(`#${headerId} `)) {
             const header = document.createElement('div');
             header.id = headerId;
             header.className = 'drawer-header';
             header.style.cursor = 'pointer';
             header.style.marginBottom = '1rem';
             header.innerHTML = `
-                <div style="display:flex; align-items:center; gap: 10px;">
+            < div style = "display:flex; align-items:center; gap: 10px;" >
                     <span class="drawer-icon">🍰</span>
                     <div class="drawer-info">
                         <h4 style="margin:0">Distribución de Ahorros <span class="toggle-arrow ${isSavingsPieExpanded ? 'expanded' : ''}">▼</span></h4>
                         <p style="font-size: 0.8rem; opacity: 0.7;">Reparto total por cajones de ahorro</p>
                     </div>
-                </div>
+                </div >
             `;
             header.onclick = () => {
                 isSavingsPieExpanded = !isSavingsPieExpanded;
@@ -2394,9 +2410,9 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             parent.insertBefore(header, container);
         } else {
-            const arrow = parent.querySelector(`#${headerId} .toggle-arrow`);
+            const arrow = parent.querySelector(`#${headerId} .toggle - arrow`);
             if (arrow) {
-                arrow.className = `toggle-arrow ${isSavingsPieExpanded ? 'expanded' : ''}`;
+                arrow.className = `toggle - arrow ${isSavingsPieExpanded ? 'expanded' : ''} `;
             }
         }
 
@@ -2420,7 +2436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         container.innerHTML = isSavingsPieExpanded ? `
-            <div style="width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;">
+            < div style = "width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem; padding: 1rem;" >
                 <div style="flex: 1; min-width: 200px; max-width: 400px; position: relative;">
                     <svg viewBox="0 0 300 300" width="100%" height="100%" style="display:block; overflow:visible;">
                         ${slicePaths}
@@ -2432,7 +2448,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="flex: 1.5; min-width: 250px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; align-content: center;">
                     ${legendHtml}
                 </div>
-            </div>` : '';
+            </div > ` : '';
     }
 
     // Helper: build a labeled section with its own responsive sub-grid
@@ -2443,8 +2459,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const header = document.createElement('div');
         header.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:1rem; padding-bottom:0.6rem; border-bottom:2px solid ' + color + '22;';
-        const totalStr = totalAmount !== undefined ? `<span style="margin-left:0.8rem; font-weight:700; color:${color}; font-size:0.95rem;">${fmtEUR(totalAmount)}</span>` : '';
-        header.innerHTML = `<span style="font-size:1.3rem;">${icon}</span><h3 style="margin:0; font-size:1rem; color:${color}; font-weight:700; letter-spacing:0.02em;">${title} (${cards.length})</h3>${totalStr}`;
+        const totalStr = totalAmount !== undefined ? `< span style = "margin-left:0.8rem; font-weight:700; color:${color}; font-size:0.95rem;" > ${fmtEUR(totalAmount)}</span > ` : '';
+        header.innerHTML = `< span style = "font-size:1.3rem;" > ${icon}</span > <h3 style="margin:0; font-size:1rem; color:${color}; font-weight:700; letter-spacing:0.02em;">${title} (${cards.length})</h3>${totalStr} `;
 
         const subGrid = document.createElement('div');
         subGrid.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1.2rem;';
@@ -2586,9 +2602,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sepTr = document.createElement('tr');
                 sepTr.className = 'list-section-header';
                 sepTr.innerHTML = `
-                    <td colspan="2">${typeLabels[drawer.type]}</td>
-                    <td style="text-align: right; padding-right: 1rem;">${fmtEUR(categoryTotals[drawer.type] || 0)}</td>
-                `;
+            < td colspan = "2" > ${typeLabels[drawer.type]}</td >
+                <td style="text-align: right; padding-right: 1rem;">${fmtEUR(categoryTotals[drawer.type] || 0)}</td>
+        `;
                 elements.nominaTableBody.appendChild(sepTr);
                 lastType = drawer.type;
             }
@@ -2621,20 +2637,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             headerTr.innerHTML = `
-                <td colspan="2">
-                    <div class="header-content">
-                        <span>${drawer.icon || getNominaIcon(drawer.name, drawer.type)} ${drawer.name}</span>
-                        ${(!drawer.isAutomatic && nominaListFilterMode === 'detail') ? `
+            < td colspan = "2" >
+                <div class="header-content">
+                    <span>${drawer.icon || getNominaIcon(drawer.name, drawer.type)} ${drawer.name}</span>
+                    ${(!drawer.isAutomatic && nominaListFilterMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-nomina-mvmt-list-btn btn-primary">+ Mov</button>
                                 <button class="edit-nomina-drawer-list-btn btn-secondary">✏️</button>
                                 <button class="delete-nomina-drawer-list-btn btn-danger">🗑️</button>
                             </div>
                         ` : ''}
-                    </div>
-                </td>
-                <td class="balance" style="${displayAmountColor}">${fmtEUR(displayAmount)}</td>
-            `;
+                </div>
+                </td >
+            <td class="balance" style="${displayAmountColor}">${fmtEUR(displayAmount)}</td>
+        `;
 
             // Add event listeners (only in detail mode)
             if (!drawer.isAutomatic && nominaListFilterMode === 'detail') {
@@ -2660,7 +2676,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (drawerMovements.length === 0) {
                 const emptyTr = document.createElement('tr');
                 emptyTr.className = 'ahorro-list-empty-row';
-                emptyTr.innerHTML = `<td colspan="3">Sin movimientos este mes</td>`;
+                emptyTr.innerHTML = `< td colspan = "3" > Sin movimientos este mes</td > `;
                 elements.nominaTableBody.appendChild(emptyTr);
             } else {
                 // Movements list
@@ -2673,10 +2689,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const concept = m.description || m.concept || '-';
 
                     tr.innerHTML = `
-                        <td class="date" style="font-size: 0.75rem; opacity: 0.6;">${m.date ? new Date(m.date).toLocaleDateString('es-ES') : '--/--/--'}</td>
+            < td class="date" style = "font-size: 0.75rem; opacity: 0.6;" > ${m.date ? new Date(m.date).toLocaleDateString('es-ES') : '--/--/--'}</td >
                         <td class="concept">${concept}</td>
                         <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
-                    `;
+        `;
 
                     // Detail/Edit on click
                     tr.onclick = () => {
@@ -2843,7 +2859,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isSavings = concept.type === 'saving';
 
             const card = document.createElement('div');
-            card.className = `card drawer-card glass-panel ${isIncome ? 'income-drawer' : ''} ${isSavings ? 'savings-drawer' : ''} ${concept.isAutomatic ? 'undestined-drawer' : ''}`;
+            card.className = `card drawer - card glass - panel ${isIncome ? 'income-drawer' : ''} ${isSavings ? 'savings-drawer' : ''} ${concept.isAutomatic ? 'undestined-drawer' : ''} `;
             if (isIncome) {
                 card.style.background = 'rgba(16, 185, 129, 0.25)';
                 card.style.backgroundColor = '#064e3b';
@@ -2892,21 +2908,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 0);
 
                 balanceDisplay = `
-                    <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05);">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
-                            <span style="opacity:0.6;">${isSavings ? 'Ahorro Mes' : 'Provisión'}:</span>
-                            <span style="font-weight:600;">${fmtEUR(displayProvision)}</span>
-                        </div>
+            < div style = "margin-top: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05);" >
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+                    <span style="opacity:0.6;">${isSavings ? 'Ahorro Mes' : 'Provisión'}:</span>
+                    <span style="font-weight:600;">${fmtEUR(displayProvision)}</span>
+                </div>
                         ${isSavings ? `
                         <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
                             <span style="opacity:0.6;">Ahorro Año:</span>
                             <span style="font-weight:600; color:var(--success);">${fmtEUR(yearlySavingSum)}</span>
-                        </div>` : ''}
+                        </div>` : ''
+                    }
                         ${(!isSavings && monthlyOtherIncomesSum > 0) ? `
                         <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
                             <span style="opacity:0.6;">Otros Ingresos:</span>
                             <span style="font-weight:600; color:var(--success);">+${fmtEUR(monthlyOtherIncomesSum)}</span>
-                        </div>` : ''}
+                        </div>` : ''
+                    }
                         ${!isSavings ? `
                         <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
                             <span style="opacity:0.6;">Gastos Mes:</span>
@@ -2915,50 +2933,52 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
                             <span style="opacity:0.6;">Gastos Año:</span>
                             <span style="font-weight:600; color:var(--danger);">${fmtEUR(yearlyExpenseSum)}</span>
-                        </div>` : ''}
+                        </div>` : ''
+                    }
                         ${!isSavings ? `
                         <div style="display:flex; justify-content:space-between; border-top: 1px solid rgba(255,255,255,0.08); padding-top:0.4rem; margin-top:0.2rem;">
                             <span style="opacity:0.6;">Sobrante:</span>
                             <span style="font-weight:700; color:${monthlyBalance >= 0 ? 'var(--success)' : 'var(--danger)'}; font-size: 1rem;">${fmtEUR(monthlyBalance)}</span>
-                        </div>` : ''}
-                    </div>
-                `;
+                        </div>` : ''
+                    }
+                    </div >
+            `;
             } else {
                 const yearlyIncomeSum = (concept.movements || []).reduce((sum, m) => {
                     const monthsCount = (m.activeMonths || []).length;
                     return sum + (m.amount * monthsCount);
                 }, 0);
                 balanceDisplay = `
-                    <div class="drawer-balance" style="color: var(--success); margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
-                        ${fmtEUR(monthlyBalance)} 
-                        <span style="font-size: 0.85rem; opacity: 0.6; font-weight: 400; color: var(--text-color); margin-left: 4px;">
-                            de ${fmtEUR(yearlyIncomeSum)}
-                        </span>
-                    </div>
-                `;
+            < div class="drawer-balance" style = "color: var(--success); margin-top: 1rem; font-size: 1.25rem; font-weight: 700;" >
+                ${fmtEUR(monthlyBalance)}
+        <span style="font-size: 0.85rem; opacity: 0.6; font-weight: 400; color: var(--text-color); margin-left: 4px;">
+            de ${fmtEUR(yearlyIncomeSum)}
+        </span>
+                    </div >
+            `;
             }
 
             card.innerHTML = `
-                <div class="drawer-header">
-                    <div style="display:flex; align-items:center; gap: 10px;">
-                        <span class="drawer-icon">${concept.icon || getNominaIcon(concept.name, concept.type)}</span>
-                        <div class="drawer-info">
-                            <h4 style="margin:0">${concept.name}</h4>
-                            <p style="font-size: 0.8rem; opacity: 0.7;">${monthlyMovements.length} mov. este mes</p>
-                        </div>
+            < div class="drawer-header" >
+                <div style="display:flex; align-items:center; gap: 10px;">
+                    <span class="drawer-icon">${concept.icon || getNominaIcon(concept.name, concept.type)}</span>
+                    <div class="drawer-info">
+                        <h4 style="margin:0">${concept.name}</h4>
+                        <p style="font-size: 0.8rem; opacity: 0.7;">${monthlyMovements.length} mov. este mes</p>
                     </div>
+                </div>
                     ${concept.isAutomatic ? '' : `
                     <div class="drawer-actions">
                         <button class="btn-icon edit-nomina-drawer" data-id="${concept.id}" title="Editar Cajón">✏️</button>
                         <button class="btn-icon delete-nomina-drawer" data-id="${concept.id}" title="Borrar Cajón">🗑️</button>
                     </div>`}
-                </div>
-                ${balanceDisplay}
-                <div class="drawer-footer" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                   <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1">+ Movimiento</button>
-                   <button class="btn-primary btn-sm view-nomina-details" data-id="${concept.id}" style="flex:1">Historial</button>
-                </div>
-            `;
+                </div >
+            ${balanceDisplay}
+        <div class="drawer-footer" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1">+ Movimiento</button>
+            <button class="btn-primary btn-sm view-nomina-details" data-id="${concept.id}" style="flex:1">Historial</button>
+        </div>
+        `;
 
             // Route card to the right section
             if (isIncome) incomeCards.push(card);
@@ -3010,22 +3030,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     const ex = cx + r * Math.cos(toR(s.sa + s.sweep)), ey = cy + r * Math.sin(toR(s.sa + s.sweep));
                     const large = s.sweep > 180 ? 1 : 0;
                     const amt = fmtEUR(s.value);
-                    return `<path d="M${cx} ${cy} L${sx.toFixed(1)} ${sy.toFixed(1)} A${r} ${r} 0 ${large} 1 ${ex.toFixed(1)} ${ey.toFixed(1)}Z"
-                        fill="${s.color}" opacity="0.85" stroke="#0f172a" stroke-width="1.5"
-                        onmouseenter="this.setAttribute('opacity','1'); this.style.transform='scale(1.03)'; this.style.transformOrigin='center';" 
-                        onmouseleave="this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';" 
-                        style="cursor:pointer;transition:opacity 0.2s, transform 0.2s">
-                        <title>${s.label}: ${amt} (${(s.pct * 100).toFixed(1)}%)</title></path>`;
+                    return `< path d = "M${cx} ${cy} L${sx.toFixed(1)} ${sy.toFixed(1)} A${r} ${r} 0 ${large} 1 ${ex.toFixed(1)} ${ey.toFixed(1)}Z"
+        fill = "${s.color}" opacity = "0.85" stroke = "#0f172a" stroke - width="1.5"
+        onmouseenter = "this.setAttribute('opacity','1'); this.style.transform='scale(1.03)'; this.style.transformOrigin='center';"
+        onmouseleave = "this.setAttribute('opacity','0.85'); this.style.transform='scale(1)';"
+        style = "cursor:pointer;transition:opacity 0.2s, transform 0.2s" >
+            <title>${s.label}: ${amt} (${(s.pct * 100).toFixed(1)}%)</title></path > `;
                 }).join('');
 
                 const totalStr = fmtEUR(total);
                 const legendHtml = slices.map(s => `
-                    <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem;">
+                < div style = "display:flex; align-items:center; gap:6px; font-size:0.75rem;" >
                         <div style="width:10px; height:10px; border-radius:2px; background:${s.color}; flex-shrink:0;"></div>
                         <span style="opacity:0.8; white-space:nowrap;">${s.label}</span>
                         <span style="font-weight:700; color:${s.color}; margin-left:auto; padding-left:4px;">${fmtEUR(s.value)}</span>
-                    </div>
-                `).join('');
+                    </div >
+            `).join('');
 
                 pieCard.style.flexDirection = 'row';
                 pieCard.style.flexWrap = 'wrap';
@@ -3034,7 +3054,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pieCard.style.padding = '1.2rem';
 
                 pieCard.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 140px;">
+            < div style = "display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 140px;" >
                         <div style="font-size:0.8rem; opacity:0.5; margin-bottom:0.8rem; text-align:center; font-weight:600;">Distribución del ingreso</div>
                         <svg viewBox="0 0 200 200" width="150" height="150" style="display:block; overflow:visible;">
                             ${paths}
@@ -3042,10 +3062,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="Outfit,sans-serif">Total</text>
                             <text x="${cx}" y="${cy + 8}" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Outfit,sans-serif">${totalStr}</text>
                         </svg>
-                    </div>
-                    <div style="flex: 1.2; min-width: 160px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
-                        ${legendHtml}
-                    </div>`;
+                    </div >
+            <div style="flex: 1.2; min-width: 160px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
+                ${legendHtml}
+            </div>`;
             }
             incomeSubGrid.appendChild(pieCard);
         }
@@ -3086,7 +3106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             summaryCard.innerHTML = `
-                <div class="drawer-header summary-header-toggle" id="expenseSummaryHeader">
+                < div class="drawer-header summary-header-toggle" id = "expenseSummaryHeader" >
                     <div style="display:flex; align-items:center; gap: 10px;">
                         <span class="drawer-icon">📉</span>
                         <div class="drawer-info">
@@ -3098,11 +3118,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="font-size: 0.8rem; opacity: 0.6;">Total Pagado</div>
                         <div style="font-size: 1.1rem; font-weight: 700; color: var(--danger);">${fmtEUR(totalPaidExpensesManual)} <span style="font-size: 0.8rem; opacity: 0.6; font-weight: 400; color: var(--text-color);">de planeado: ${fmtEUR(totalPlannedExpensesManual)}</span></div>
                     </div>
-                </div>
+                </div >
 
-                <div class="collapsible-content ${isExpenseSummaryExpanded ? 'expanded' : ''}" id="expenseSummaryContent">
-                    <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px;">
-                        ${Object.entries(totalsByDrawer).map(([drawerId, data]) => `
+            <div class="collapsible-content ${isExpenseSummaryExpanded ? 'expanded' : ''}" id="expenseSummaryContent">
+                <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px;">
+                    ${Object.entries(totalsByDrawer).map(([drawerId, data]) => `
                             <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                                     <span>${data.icon}</span>
@@ -3114,12 +3134,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                             </div>
                         `).join('')}
-                    </div>
+                </div>
 
-                    <div style="margin-top: 1.5rem; max-height: 250px; overflow-y: auto; padding-right: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-                        <h5 style="margin: 0 0 0.8rem 0; font-size: 0.8rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em;">Desglose Detallado</h5>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem;">
-                            ${(() => {
+                <div style="margin-top: 1.5rem; max-height: 250px; overflow-y: auto; padding-right: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                    <h5 style="margin: 0 0 0.8rem 0; font-size: 0.8rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em;">Desglose Detallado</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem;">
+                        ${(() => {
                     const grouped = allMonthlyExpenses.reduce((acc, exp) => {
                         if (!acc[exp.drawerId]) acc[exp.drawerId] = { name: exp.drawerName, icon: exp.icon, items: [] };
                         acc[exp.drawerId].items.push(exp);
@@ -3171,10 +3191,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 `;
                     }).join('');
                 })()}
-                        </div>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
             grid.appendChild(summaryCard);
 
             // Add toggle event listener
@@ -3204,29 +3224,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const dd = 25;
             const mm = String(payday.getMonth() + 1).padStart(2, '0');
             const yyyy = payday.getFullYear();
-            const paydayFormatted = `${dd}/${mm}/${yyyy}`;
+            const paydayFormatted = `${dd} /${mm}/${yyyy} `;
 
             const rows = [
                 { label: '📅 Mes en Curso', value: formatFiscalMonth(fiscalMonthStr) || '---', color: 'inherit' },
-                { label: `⏳ Dias para el ${paydayFormatted}`, value: `${diffDays || 0} dias`, color: dayColor || 'inherit' },
+                { label: `⏳ Dias para el ${paydayFormatted} `, value: `${diffDays || 0} dias`, color: dayColor || 'inherit' },
                 { label: '💰 Ingresos', value: fmtEUR(externalNetIncome || 0), color: 'var(--success)' },
-                { label: '💸 Gastos', value: `${fmtEUR(totalPaidExpensesManual || 0)} de ${fmtEUR(totalPlannedExpensesManual || 0)}`, color: 'var(--danger)' },
+                { label: '💸 Gastos', value: `${fmtEUR(totalPaidExpensesManual || 0)} de ${fmtEUR(totalPlannedExpensesManual || 0)} `, color: 'var(--danger)' },
                 { label: '✨ Ahorro Neto', value: fmtEUR(totalAhorroNetoManual || 0), color: '#f59e0b' },
                 { label: '🟣 No Destinado', value: fmtEUR(undestined || 0), color: (undestined || 0) >= 0 ? 'var(--success)' : 'var(--danger)' }
             ];
 
             summaryTable.innerHTML = `
-                <div class="table-container glass-panel" style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse;">
-                        <tbody>
-                            ${rows.map((r, i) => `
+            < div class="table-container glass-panel" style = "overflow-x:auto;" >
+                <table style="width:100%; border-collapse:collapse;">
+                    <tbody>
+                        ${rows.map((r, i) => `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.05); ${i === rows.length - 1 ? 'border-bottom:none;' : ''}">
                                 <td style="padding:0.5rem 0.3rem; opacity:0.7; font-size:0.75rem;">${r.label}</td>
                                 <td style="padding:0.5rem 0.3rem; text-align:right; font-weight:700; color:${r.color}; font-size:0.8rem; white-space:nowrap;">${r.value}</td>
                             </tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>`;
+                    </tbody>
+                </table>
+                </div > `;
         }
 
         // Render the 3 pie charts
@@ -3337,7 +3357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         typeInput.value = 'movement';
         if (targetIdInput) targetIdInput.value = drawerId;
-        if (title) title.textContent = `Movimiento: ${drawer.name}`;
+        if (title) title.textContent = `Movimiento: ${drawer.name} `;
 
         nameGroup?.classList.add('hidden');
         if (amountInput) amountInput.placeholder = "0.00";
@@ -3383,7 +3403,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         typeInput.value = 'transfer';
         if (targetIdInput) targetIdInput.value = drawerId;
-        if (title) title.textContent = `Transferir desde: ${sourceDrawer.name}`;
+        if (title) title.textContent = `Transferir desde: ${sourceDrawer.name} `;
 
         // Set default concept
         const conceptInput = document.getElementById('movementConceptInput');
@@ -3398,7 +3418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Populate target dropdown (exclude source and Bolsa)
         transferTargetSelect.innerHTML = savingsDrawers
             .filter(d => !d.isAuto && d.id !== drawerId)
-            .map(d => `<option value="${d.id}">${d.name} (${fmtEUR(d.balance)})</option>`)
+            .map(d => `< option value = "${d.id}" > ${d.name} (${fmtEUR(d.balance)})</option > `)
             .join('');
 
         if (transferTargetSelect.options.length === 0) {
@@ -3430,7 +3450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         typeInput.value = 'edit-drawer';
         if (targetIdInput) targetIdInput.value = drawerId;
-        if (title) title.textContent = `Editar Cajón: ${drawer.name}`;
+        if (title) title.textContent = `Editar Cajón: ${drawer.name} `;
 
         if (drawerNameInput) drawerNameInput.value = drawer.name;
         nameGroup?.classList.remove('hidden');
@@ -3455,7 +3475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer || drawer.isAuto) return;
 
-        if (confirm(`¿Consolidar historial de "${drawer.name}"? Se eliminarán todos los movimientos y el saldo inicial se ajustará al saldo actual (${fmtEUR(drawer.balance)}).`)) {
+        if (confirm(`¿Consolidar historial de "${drawer.name}" ? Se eliminarán todos los movimientos y el saldo inicial se ajustará al saldo actual(${fmtEUR(drawer.balance)}).`)) {
 
             // Keep/Update initial movement
             let initialMvmt = drawer.movements.find(m => isProvision(m));
@@ -3476,11 +3496,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function deleteSavingsMovement(drawerId, index) {
+        const drawer = savingsDrawers.find(d => d.id === drawerId);
+        if (!drawer || !drawer.movements[index]) return;
+
+        if (confirm('¿Estás seguro de que quieres eliminar este movimiento?')) {
+            // Deduct from balance
+            drawer.balance -= drawer.movements[index].amount;
+            // Remove movement
+            drawer.movements.splice(index, 1);
+
+            if (window.saveSavings) window.saveSavings(savingsDrawers);
+            render();
+            renderSavingsList();
+        }
+    }
+
     function deleteSavingsDrawer(drawerId) {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer || drawer.isAuto) return;
 
-        if (confirm(`¿Estás seguro de que deseas borrar el cajón "${drawer.name}"? Esta acción no se puede deshacer.`)) {
+        if (confirm(`¿Estás seguro de que deseas borrar el cajón "${drawer.name}" ? Esta acción no se puede deshacer.`)) {
             savingsDrawers = savingsDrawers.filter(d => d.id !== drawerId);
             if (window.saveSavings) window.saveSavings(savingsDrawers);
             render();
@@ -3502,7 +3538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let movementsHtml = drawer.isAuto
             ? '<p style="opacity:0.7">Este cajón se sincroniza automáticamente con el valor de tu cartera de acciones.</p>'
             : drawer.movements.map((m, idx) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.8rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+    < div style = "display:flex; justify-content:space-between; align-items:center; padding:0.8rem 0; border-bottom:1px solid rgba(255,255,255,0.05);" >
                     <div style="flex-grow:1;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <div style="font-weight:600;">${m.description}</div>
@@ -3514,18 +3550,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="font-weight:700; color:${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">
                             ${m.amount >= 0 ? '+' : ''}${fmtEUR(m.amount)}
                         </div>
-                        <button class="edit-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.5; padding:0.2rem;" title="Editar Movimiento">✏️</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="edit-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.5; padding:0.2rem;" title="Editar Movimiento">✏️</button>
+                            <button class="delete-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.5; padding:0.2rem;" title="Eliminar Movimiento">🗑️</button>
+                        </div>
                     </div>
-                </div>
-            `).join('') || '<p style="opacity:0.5; padding:1rem; text-align:center;">No hay movimientos aún.</p>';
+                </div >
+    `).join('') || '<p style="opacity:0.5; padding:1rem; text-align:center;">No hay movimientos aún.</p>';
 
         const overlay = document.createElement('div');
         overlay.style.cssText = `
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000;
-            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);
-        `;
+position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z - index: 10000;
+display: flex; align - items: center; justify - content: center; backdrop - filter: blur(8px);
+`;
         overlay.innerHTML = `
-            <div style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; width: min(500px, 95vw); max-height: 85vh; overflow-y: auto;">
+    < div style = "background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; width: min(500px, 95vw); max-height: 85vh; overflow-y: auto;" >
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                     <div>
                         <h2 style="margin:0">${drawer.icon} ${drawer.name}</h2>
@@ -3546,8 +3585,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div>${movementsHtml}</div>
                 </div>
-            </div>
-        `;
+            </div >
+    `;
         document.body.appendChild(overlay);
         document.getElementById('closeDetails').onclick = () => overlay.remove();
         const editBtn = document.getElementById('editDrawerFromDetails');
@@ -3579,6 +3618,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 showEditMovementModal(drawer.id, index);
             };
         });
+        overlay.querySelectorAll('.delete-mvmt-entry-btn').forEach(btn => {
+            btn.onclick = () => {
+                const index = parseInt(btn.dataset.index);
+                deleteSavingsMovement(drawer.id, index);
+                overlay.remove();
+                showDrawerDetails(drawer.id); // Refresh overlay
+            };
+        });
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
     }
 
@@ -3605,7 +3652,7 @@ document.addEventListener('DOMContentLoaded', () => {
         typeInput.value = 'edit-movement';
         if (targetIdInput) targetIdInput.value = drawerId;
         if (indexInput) indexInput.value = mvmtIndex;
-        if (title) title.textContent = `Editar: ${movement.description}`;
+        if (title) title.textContent = `Editar: ${movement.description} `;
 
         nameGroup?.classList.add('hidden');
         conceptGroup?.classList.remove('hidden');
@@ -3711,13 +3758,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const rectHeight = Math.max(Math.abs(yOpen - yClose), 2); // Min 2px for DOJI visibility
 
         elements.portfolioCandleGraphic.innerHTML = `
-            <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-                <!-- Wick -->
+    < svg width = "${width}" height = "${height}" viewBox = "0 0 ${width} ${height}" >
+                < !--Wick -->
                 <line x1="${width / 2}" y1="${yHigh}" x2="${width / 2}" y2="${yLow}" stroke="${color}" stroke-width="2" />
-                <!-- Body -->
-                <rect x="${width / 4}" y="${rectY}" width="${width / 2}" height="${rectHeight}" fill="${color}" stroke="${color}" stroke-width="1" />
-            </svg>
-        `;
+                <!--Body -->
+    <rect x="${width / 4}" y="${rectY}" width="${width / 2}" height="${rectHeight}" fill="${color}" stroke="${color}" stroke-width="1" />
+            </svg >
+    `;
     }
 
     /**
@@ -3750,19 +3797,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const color = isUp ? 'var(--success)' : 'var(--danger)';
 
         return `
-            <div class="sparkline-container" title="Últimos 30 días">
-                <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-                    <polyline
-                        fill="none"
-                        stroke="${color}"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        points="${points}"
-                    />
-                </svg>
-            </div>
-        `;
+    < div class="sparkline-container" title = "Últimos 30 días" >
+        <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <polyline
+                fill="none"
+                stroke="${color}"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                points="${points}"
+            />
+        </svg>
+            </div >
+    `;
     }
 
     /**
@@ -3772,7 +3819,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dateStr || dateStr === '-') return '-';
         const parts = dateStr.split('-');
         if (parts.length !== 3) return dateStr;
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return `${parts[2]} /${parts[1]}/${parts[0]} `;
     }
     let chart = null;
     let candlestickSeries = null;
@@ -3917,7 +3964,7 @@ document.addEventListener('DOMContentLoaded', () => {
             close: d.close * fx
         }));
 
-        console.log(`Historical data points: ${historicalData.length}(Converted to EUR: ${fx !== 1})`);
+        console.log(`Historical data points: ${historicalData.length} (Converted to EUR: ${fx !== 1})`);
 
         // Update tabs
         const tabs = document.querySelectorAll('.time-tab');
@@ -4100,7 +4147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderTechnicalAnalysis(a) {
-        elements.techTrend.innerHTML = `<span class="badge-trend ${a.trendClass}">${a.trend}</span>`;
+        elements.techTrend.innerHTML = `< span class="badge-trend ${a.trendClass}" > ${a.trend}</span > `;
         elements.techSupport.textContent = fmtEUR(a.support);
         elements.techResistance.textContent = fmtEUR(a.resistance);
         elements.techBuyRange.textContent = a.buyRange;
@@ -4108,11 +4155,11 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.techVolatility.textContent = fmtEUR(a.volatility);
 
         elements.techMA.innerHTML = `
-            <strong>Medias Móviles:</strong> SMA20: ${a.maStatus.sma20}, SMA50: ${a.maStatus.sma50}, SMA200: ${a.maStatus.sma200}
-        `;
+    < strong > Medias Móviles:</strong > SMA20: ${a.maStatus.sma20}, SMA50: ${a.maStatus.sma50}, SMA200: ${a.maStatus.sma200}
+`;
         elements.techPatterns.innerHTML = `
-            <strong>Patrones Recientes:</strong> ${a.patterns.length > 0 ? a.patterns.join(', ') : 'Ninguno detectado'}
-        `;
+    < strong > Patrones Recientes:</strong > ${a.patterns.length > 0 ? a.patterns.join(', ') : 'Ninguno detectado'}
+`;
     }
 
     function clearTechnicalAnalysis() {
@@ -4267,7 +4314,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 2026030833");
+            console.log("MSV WealthTrack Booting... Version: 2026030835");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
@@ -4364,8 +4411,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const toDrawer = savingsDrawers.find(d => d.id === toId);
 
                 if (fromDrawer && toDrawer && amount > 0) {
-                    const concept = elements.movementConceptInput.value.trim() || `Transferencia a ${toDrawer.name}`;
-                    const targetConcept = `Transferencia desde ${fromDrawer.name}`;
+                    const concept = elements.movementConceptInput.value.trim() || `Transferencia a ${toDrawer.name} `;
+                    const targetConcept = `Transferencia desde ${fromDrawer.name} `;
                     const today = new Date().toISOString().split('T')[0];
 
                     // Subtract from source
@@ -4462,7 +4509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.prevNominaMonthBtn.onclick = () => {
                 const [y, m] = nominaListMonth.split('-').map(Number);
                 const d = new Date(y, m - 2);
-                nominaListMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                nominaListMonth = `${d.getFullYear()} -${String(d.getMonth() + 1).padStart(2, '0')} `;
                 renderNominaList();
             };
         }
@@ -4470,7 +4517,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nextNominaMonthBtn.onclick = () => {
                 const [y, m] = nominaListMonth.split('-').map(Number);
                 const d = new Date(y, m);
-                nominaListMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                nominaListMonth = `${d.getFullYear()} -${String(d.getMonth() + 1).padStart(2, '0')} `;
                 renderNominaList();
             };
         }
@@ -4652,7 +4699,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const currentBalance = otherMovements.reduce((sum, m) => sum + m.amount, 0);
 
                     if (currentBalance + amount < 0) {
-                        alert(`Gasto excesivo. El saldo disponible en "Dinero No Destinado" es ${fmtEUR(currentBalance)}.`);
+                        alert(`Gasto excesivo.El saldo disponible en "Dinero No Destinado" es ${fmtEUR(currentBalance)}.`);
                         return;
                     }
                 }
@@ -4767,7 +4814,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     y--;
                 }
             }
-            ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
+            ahorroListMonth = `${y} -${String(m).padStart(2, '0')} `;
             renderSavingsList();
             renderAhorroSummaryDrawer();
         });
@@ -4783,7 +4830,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     y++;
                 }
             }
-            ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
+            ahorroListMonth = `${y} -${String(m).padStart(2, '0')} `;
             renderSavingsList();
             renderAhorroSummaryDrawer();
         });
@@ -4838,13 +4885,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (matches.length > 0) {
                 elements.searchResults.innerHTML = matches.map(m =>
-                    `<div class="search-item" data-ticker="${m.ticker}" data-name="${m.name}">
+                    `< div class="search-item" data - ticker="${m.ticker}" data - name="${m.name}" >
                         <span class="ticker">${m.ticker}</span>
                         <span class="name">${m.name}</span>
-                    </div>`
+                    </div > `
                 ).join('');
             } else {
-                elements.searchResults.innerHTML = `<div class="search-item no-results" style="cursor: default; opacity: 0.7;">No se encontraron resultados.</div>`;
+                elements.searchResults.innerHTML = `< div class="search-item no-results" style = "cursor: default; opacity: 0.7;" > No se encontraron resultados.</div > `;
             }
             elements.searchResults.classList.remove('hidden');
         });
@@ -5009,7 +5056,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 return;
                             }
 
-                            if (confirm(`Se encontraron ${parsed.length} operaciones en el CSV.\n\n¿Estás seguro de que quieres importar estos datos? Reemplazarán tu cartera actual.`)) {
+                            if (confirm(`Se encontraron ${parsed.length} operaciones en el CSV.\n\n¿Estás seguro de que quieres importar estos datos ? Reemplazarán tu cartera actual.`)) {
                                 stocks = parsed;
                                 if (window.saveStocks) window.saveStocks(stocks);
                                 render();
@@ -5101,7 +5148,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (currentTimerElement) {
                         currentTimerElement.style.color = 'var(--primary)';
-                        currentTimerElement.textContent = `Actualizado: ${lastSyncTime}`;
+                        currentTimerElement.textContent = `Actualizado: ${lastSyncTime} `;
                         setTimeout(() => currentTimerElement.classList.add('hidden'), 3000);
                     }
 
@@ -5415,7 +5462,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showNominaDrawerDetails(id) {
         const drawer = nominaData.find(d => d.id == id);
         if (!drawer) return;
-        if (elements.nominaHistoryTitle) elements.nominaHistoryTitle.textContent = `Historial: ${drawer.name}`;
+        if (elements.nominaHistoryTitle) elements.nominaHistoryTitle.textContent = `Historial: ${drawer.name} `;
         if (elements.nominaMovementsList) {
             elements.nominaMovementsList.innerHTML = '';
             if (!drawer.movements || drawer.movements.length === 0) {
@@ -5426,24 +5473,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     const item = document.createElement('div');
                     item.className = 'movement-item';
                     item.innerHTML = `
-                        <div class="mov-info">
+    < div class="mov-info" >
                             <div class="mov-concept">${mov.concept || mov.description || 'Sin concepto'}</div>
                             <div style="display:flex; gap:0.5rem; font-size:0.75rem; opacity:0.6; flex-wrap: wrap;">
                                 <span>${mov.date}</span>
                                 <span>•</span>
                                 <span style="color:var(--primary); font-weight:600;">${mov.activeMonths?.length === 12 ? 'Todos los meses' : mov.activeMonths?.length + ' meses'}</span>
                             </div>
-                        </div>
-                        <div style="display:flex; align-items:center; gap: 1rem;">
-                            <div class="mov-amount" style="color: var(--${mov.amount >= 0 ? 'success' : 'danger'})">
-                                ${mov.amount > 0 ? '+' : ''}${fmtEUR(mov.amount)}
-                            </div>
-                            <div class="mov-actions" style="display:flex; gap:0.5rem;">
-                                <button class="btn-icon edit-mov" data-drawer-id="${drawer.id}" data-index="${originalIndex}" title="Editar" style="font-size:0.9rem; opacity:0.6;">✏️</button>
-                                <button class="btn-icon delete-mov" data-drawer-id="${drawer.id}" data-index="${originalIndex}" title="Borrar" style="font-size:0.9rem; opacity:0.6;">🗑️</button>
-                            </div>
-                        </div>
-                    `;
+                        </div >
+    <div style="display:flex; align-items:center; gap: 1rem;">
+        <div class="mov-amount" style="color: var(--${mov.amount >= 0 ? 'success' : 'danger'})">
+            ${mov.amount > 0 ? '+' : ''}${fmtEUR(mov.amount)}
+        </div>
+        <div class="mov-actions" style="display:flex; gap:0.5rem;">
+            <button class="btn-icon edit-mov" data-drawer-id="${drawer.id}" data-index="${originalIndex}" title="Editar" style="font-size:0.9rem; opacity:0.6;">✏️</button>
+            <button class="btn-icon delete-mov" data-drawer-id="${drawer.id}" data-index="${originalIndex}" title="Borrar" style="font-size:0.9rem; opacity:0.6;">🗑️</button>
+        </div>
+    </div>
+`;
                     elements.nominaMovementsList.appendChild(item);
                 });
                 elements.nominaMovementsList.onclick = (e) => {
@@ -5573,7 +5620,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.stocks || !data.savings || !data.nomina) {
                     throw new Error("El archivo no tiene el formato de respaldo global esperado.");
                 }
-                if (confirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`)) {
+                if (confirm(`Se restaurarán: \n - ${data.stocks.length} activos en Bolsa\n - ${data.savings.length} cajones de Ahorro\n - ${data.nomina.length} cajones de Nómina\n${data.settings ? '- Ajustes personalizados\n' : ''} \n¿Estás SEGURO ? Esto reemplazará tus datos actuales.`)) {
                     stocks = data.stocks;
                     savingsDrawers = data.savings;
                     nominaData = migrateNominaData(data.nomina);
@@ -5618,9 +5665,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        toast.className = `toast ${type} `;
         const icon = type === 'success' ? '✅' : '❌';
-        toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+        toast.innerHTML = `< span > ${icon}</span > <span>${message}</span>`;
 
         container.appendChild(toast);
 
@@ -5647,7 +5694,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const writable = await handle.createWritable();
                 await writable.write(blob);
                 await writable.close();
-                showToast(`Guardado correctamente como ${fileName}`);
+                showToast(`Guardado correctamente como ${fileName} `);
                 return;
             }
         } catch (err) {
@@ -5662,8 +5709,8 @@ document.addEventListener('DOMContentLoaded', () => {
         linkElement.setAttribute('download', fileName);
         linkElement.click();
 
-        showToast(`Descarga iniciada: ${fileName}`);
-        console.log(`File ${fileName} exported successfully (fallback)`);
+        showToast(`Descarga iniciada: ${fileName} `);
+        console.log(`File ${fileName} exported successfully(fallback)`);
     }
 
     // Start
@@ -5680,7 +5727,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const validViews = ['bolsa', 'ahorro', 'nomina', 'analisis'];
             if (viewParam && validViews.includes(viewParam)) {
-                console.log(`[DeepLink] Navegando a: ${viewParam}`);
+                console.log(`[DeepLink] Navegando a: ${viewParam} `);
                 switchView(viewParam);
             }
         };
