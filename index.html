@@ -249,8 +249,10 @@
                     <div id="ahorroTableContainer" class="table-container glass-panel hidden"
                         style="margin-bottom: 2rem;">
                         <div class="list-navigation"
-                            style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color); flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            style="display:flex; flex-direction: column; gap:0.8rem; padding:1rem; border-bottom:1px solid var(--border-color);">
+                            <!-- Row 1: Filter Mode (Left) and Totals Toggle (Right) -->
+                            <div
+                                style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                 <select id="ahorroFilterMode"
                                     style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
                                     <option value="month">📅 Mes</option>
@@ -261,14 +263,16 @@
                                     📊 Totales
                                 </button>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
+                            <!-- Row 2: Navigation Controls (Right Aligned) -->
+                            <div
+                                style="display: flex; align-items: center; justify-content: flex-end; gap: 1rem; width: 100%;">
                                 <button id="prevAhorroMonthBtn" class="btn-icon"
-                                    style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
+                                    style="font-size:1.1rem; cursor:pointer; background:none; border:none; color:var(--primary);">⬅️</button>
                                 <h3 id="ahorroCurrentMonthLabel"
-                                    style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
+                                    style="margin:0; min-width:120px; text-align:center; font-family:var(--font-main); font-size: 1rem;">
                                     Marzo 2024</h3>
                                 <button id="nextAhorroMonthBtn" class="btn-icon"
-                                    style="font-size:1.2rem; cursor:pointer; background:none; border:none; color:var(--primary);">➡️</button>
+                                    style="font-size:1.1rem; cursor:pointer; background:none; border:none; color:var(--primary);">➡️</button>
                             </div>
                         </div>
                         <div style="overflow-x: auto;">
@@ -918,10 +922,10 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=2026030825"></script>
+    <script src="app.js?v=2026030826"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '2026030825';
+        const APP_VERSION = '2026030826';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
