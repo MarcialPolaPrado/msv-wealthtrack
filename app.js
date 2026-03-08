@@ -210,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalPL: document.getElementById('totalPL'),
         totalTrend: document.getElementById('totalTrend'),
         addStockBtn: document.getElementById('addStockBtn'),
+        bolsaAddStockBtn: document.getElementById('bolsaAddStockBtn'),
         addStockModal: document.getElementById('addStockModal'),
         closeModal: document.getElementById('closeAddStockModal'),
         addStockForm: document.getElementById('addStockForm'),
@@ -4242,18 +4243,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        elements.addStockBtn?.addEventListener('click', () => {
-            elements.addStockForm.reset();
-            elements.editId.value = '';
-            elements.modalTitle.textContent = "Add New Investment";
-            elements.submitStockBtn.textContent = "Add Investment";
-
-            // Robust Today's Date Default
-            const today = new Date().toISOString().split('T')[0];
-            if (elements.dateInput) elements.dateInput.value = today;
-
-            toggleModal(true);
-        });
+        elements.addStockBtn?.addEventListener('click', openAddStockModal);
+        elements.bolsaAddStockBtn?.addEventListener('click', openAddStockModal);
+        elements.mobileAddStockBtn?.addEventListener('click', openAddStockModal);
 
         elements.settingsBtn?.addEventListener('click', openSettingsModal);
         elements.mobileSettingsBtn?.addEventListener('click', openSettingsModal);
@@ -4275,7 +4267,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 2026030832");
+            console.log("MSV WealthTrack Booting... Version: 2026030833");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
@@ -5051,16 +5043,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 reader.readAsText(file, 'UTF-8');
             };
+
             input.click();
         });
 
-        elements.mobileAddStockBtn?.addEventListener('click', () => {
+        function openAddStockModal() {
+            if (!elements.addStockForm) return;
             elements.addStockForm.reset();
             elements.editId.value = '';
             elements.modalTitle.textContent = "Add New Investment";
             elements.submitStockBtn.textContent = "Add Investment";
+
+            // Robust Today's Date Default
+            const today = new Date().toISOString().split('T')[0];
+            if (elements.dateInput) elements.dateInput.value = today;
+
             toggleModal(true);
-        });
+        }
+
+
 
         // Global JSON Backup Listeners
         if (elements.globalExportBtn) {
