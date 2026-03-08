@@ -823,16 +823,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         </tr>`;
                 }
 
-                displayGroups.forEach(group => {
+                displayGroups.forEach((group, idx) => {
                     const pl = group.totalCurrentVal !== null ? group.totalCurrentVal - group.totalInvested : null;
                     const plClass = pl === null ? '' : (pl >= 0 ? 'profit' : 'loss');
+                    const rowBg = idx % 2 === 0 ? 'background: rgba(255,255,255,0.02);' : 'background: rgba(59,130,246,0.06);';
                     const tr = document.createElement('tr');
                     tr.className = 'group-row';
-                    tr.style.cursor = 'pointer';
+                    tr.style.cssText = `cursor: pointer; ${rowBg}`;
                     tr.innerHTML = `
                         <td class="btc-siglas" style="padding:0.35rem 0.5rem; font-weight:700; font-size:0.85rem; color:var(--primary);">${group.ticker}</td>
                         <td class="btc-inv" style="padding:0.35rem 0.5rem; text-align:right; font-size:0.8rem;">${fmtEUR(group.totalInvested)}</td>
-                        <td class="btc-val" style="padding:0.35rem 0.5rem; text-align:right; font-weight:700; font-size:0.8rem; background:rgba(59,130,246,0.05);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
+                        <td class="btc-val" style="padding:0.35rem 0.5rem; text-align:right; font-weight:700; font-size:0.8rem;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
                         <td class="btc-gp ${plClass}" style="padding:0.35rem 0.5rem; text-align:right; font-weight:600; font-size:0.8rem;">${pl === null ? '-' : (pl >= 0 ? '+' : '') + fmtEUR(pl)}</td>
                     `;
                     stockTableBody.appendChild(tr);
