@@ -4105,11 +4105,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function openSettingsModal() {
         if (elements.fiscalDayInput) elements.fiscalDayInput.value = parseInt(localStorage.getItem('fiscalDay')) || 25;
         if (elements.incomeCategoriesInput) {
-            const incCats = JSON.parse(localStorage.getItem('incomeCategories')) || ['Ahorro', 'Intereses', 'Dividendos', 'Especulación'];
+            const incCats = JSON.parse(localStorage.getItem('incomeCategories')) || ['Ahorro', 'Intereses', 'Dividendos', 'Especulación', 'Traspaso'];
             elements.incomeCategoriesInput.value = incCats.join(', ');
         }
         if (elements.expenseCategoriesInput) {
-            const expCats = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto'];
+            const expCats = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto', 'Traspaso'];
             elements.expenseCategoriesInput.value = expCats.join(', ');
         }
         toggleSettingsModal(true);
