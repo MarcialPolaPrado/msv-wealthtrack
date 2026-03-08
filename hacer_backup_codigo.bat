@@ -11,10 +11,13 @@ powershell -Command ^
     "$timestamp = Get-Date -Format 'yyyyMMdd_HHmm';" ^
     "$backupName = 'MSV_Snapshot_' + $timestamp + '.zip';" ^
     "$dest = Join-Path (Get-Location) $backupName;" ^
-    "Write-Host 'Creando copia en la carpeta actual: ' $backupName;" ^
-    "$items = Get-ChildItem -Path '.' -Exclude '*.zip', '.git', '.gemini', 'server_log.txt';" ^
-    "Compress-Archive -Path $items -DestinationPath $dest -Force;" ^
-    "if ($?) { Write-Host '------------------------------------------'; Write-Host ' EXITO: Copia guardada en esta carpeta.'; Write-Host '------------------------------------------' } else { Write-Host ' ERROR: No se pudo crear el backup.' }"
+    "Write-Host 'Creando copia de seguridad (solo fuentes) en: ' $backupName;" ^
+    "$include = @('.js', '.html', '.css', '.json', '.bat', '.vbs', '.py', '.yml', '.txt', '.gitignore');" ^
+    "$items = Get-ChildItem -Path '.' -File | Where-Object { $ext = [System.IO.Path]::GetExtension($_.Name); ($include -contains $ext) -or ($_.Name -eq '.gitignore') } | Where-Object { $_.Name -ne 'server_log.txt' -and $_.Name -notlike '*.zip' };" ^
+    "if ($items) {" ^
+    "    Compress-Archive -Path $items -DestinationPath $dest -Force;" ^
+    "    if ($?) { Write-Host '------------------------------------------'; Write-Host ' EXITO: Copia de fuentes guardada.'; Write-Host '------------------------------------------' } else { Write-Host ' ERROR: No se pudo crear el backup.' }" ^
+    "} else { Write-Host ' ERROR: No se encontraron archivos de fuente para copiar.' }"
 
 echo.
 pause
