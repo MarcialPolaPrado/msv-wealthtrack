@@ -1449,7 +1449,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const summaryRows = [
             { label: '💰 Ingresos', value: fmtEUR(mInc), color: 'var(--success)' },
-            { label: '💸 Gastos', value: `${fmtEUR(mPaidExpenses)} de ${fmtEUR(mPlannedExpenses)}`, color: 'var(--danger)' },
+            { label: '💸 Gastos', value: fmtEUR(mPlannedExpenses), color: 'var(--danger)' },
             { label: '🏦 Ahorro Total', value: fmtEUR(mTotalAhorro), color: mTotalAhorro >= 0 ? 'var(--success)' : 'var(--danger)' },
             { label: '✨ Ahorro Neto', value: fmtEUR(mNetSaving), color: '#f59e0b' }
         ];
