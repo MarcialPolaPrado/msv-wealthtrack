@@ -1639,13 +1639,40 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p style="opacity: 0.5; margin: 0;">No hay movimientos en el periodo seleccionado.</p>
                         </div>
                     ` : `
-                        <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                            ${sortedCats.map(([cat, total]) => `
-                                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
-                                    <div style="font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">${cat}</div>
-                                    <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};"> ${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
-                                </div>
-                            `).join('')}
+                        <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            ${sortedCats.map(([cat, total]) => {
+                // Get drawers that contribute to this category
+                const contributors = {};
+                savingsDrawers.forEach(d => {
+                    (d.movements || []).forEach(m => {
+                        let match = false;
+                        const mDate = new Date(m.date);
+                        if (ahorroFilterMode === 'month') match = (getFiscalMonth(mDate) === ahorroListMonth);
+                        else if (ahorroFilterMode === 'year') match = (m.date && m.date.startsWith(ahorroListMonth.split('-')[0]));
+                        else match = true;
+
+                        if (match && (m.category || (m.amount >= 0 ? 'Ahorro' : 'Gasto')) === cat) {
+                            contributors[d.name] = (contributors[d.name] || 0) + m.amount;
+                        }
+                    });
+                });
+
+                return `
+                                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <div style="font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">${cat}</div>
+                                        <div style="font-size: 1.1rem; font-weight: 700; color: ${total >= 0 ? 'var(--success)' : 'var(--danger)'};"> ${total > 0 ? '+' : ''}${fmtEUR(total)}</div>
+                                    </div>
+                                    <div style="margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
+                                        ${Object.entries(contributors).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).map(([dName, dAmt]) => `
+                                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.7; margin-bottom: 2px;">
+                                                <span>${dName}</span>
+                                                <span style="font-weight: 500;">${fmtEUR(dAmt)}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>`;
+            }).join('')}
                         </div>
                     `}
                 </div>
@@ -4232,6 +4259,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
+            console.log("MSV WealthTrack Booting... Version: 2026030830");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
