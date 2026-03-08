@@ -39,8 +39,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Dynamic Settings
     let fiscalDay = parseInt(localStorage.getItem('fiscalDay')) || 25;
-    let incomeCategories = JSON.parse(localStorage.getItem('incomeCategories')) || ['Ahorro', 'Intereses', 'Dividendos', 'Especulación'];
-    let expenseCategories = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto'];
+    let incomeCategories = JSON.parse(localStorage.getItem('incomeCategories')) || ['Ahorro', 'Intereses', 'Dividendos', 'Especulación', 'Traspaso'];
+    let expenseCategories = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto', 'Traspaso'];
+
+    // Migration: Ensure 'Traspaso' exists in categories if not present
+    if (!incomeCategories.includes('Traspaso')) {
+        incomeCategories.push('Traspaso');
+        localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
+    }
+    if (!expenseCategories.includes('Traspaso')) {
+        expenseCategories.push('Traspaso');
+        localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
+    }
     let isPrivacyActive = localStorage.getItem('isPrivacyActive') === 'true' || false;
     let currentView = 'bolsa';
     let lastSyncTime = '-';
@@ -4117,7 +4127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (newIncCats && newIncCats.length > 0) {
             localStorage.setItem('incomeCategories', JSON.stringify(newIncCats));
         } else {
-            localStorage.setItem('incomeCategories', JSON.stringify(['Ahorro', 'Intereses', 'Dividendos', 'Especulación']));
+            localStorage.setItem('incomeCategories', JSON.stringify(['Ahorro', 'Intereses', 'Dividendos', 'Especulación', 'Traspaso']));
         }
 
         // Expense Categories
@@ -4125,7 +4135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (newExpCats && newExpCats.length > 0) {
             localStorage.setItem('expenseCategories', JSON.stringify(newExpCats));
         } else {
-            localStorage.setItem('expenseCategories', JSON.stringify(['Inversión', 'Gasto']));
+            localStorage.setItem('expenseCategories', JSON.stringify(['Inversión', 'Gasto', 'Traspaso']));
         }
 
         // Apply visual updates and notify user
