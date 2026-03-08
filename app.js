@@ -1634,9 +1634,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="collapsible-content ${isAhorroSummaryExpanded ? 'expanded' : ''}" id="ahorroSummaryContent">
+                    <!-- Global Wealth Summary -->
+                    <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; border: 1px dashed var(--primary-light); padding: 1.2rem; border-radius: 16px; background: rgba(var(--primary-rgb), 0.05);">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Efectivo (Cajones)</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: white;">${fmtEUR(savingsDrawers.filter(d => d.id !== 'bolsa').reduce((s, d) => s + d.balance, 0))}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Inversiones (Bolsa)</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: var(--primary);">${fmtEUR((savingsDrawers.find(d => d.id === 'bolsa')?.balance || 0))}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem;">
+                            <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Patrimonio Total</div>
+                            <div style="font-size: 1.3rem; font-weight: 800; color: var(--success);">${fmtEUR(savingsDrawers.reduce((s, d) => s + d.balance, 0))}</div>
+                        </div>
+                    </div>
+
                     ${!hasData ? `
-                        <div style="margin-top: 1.5rem; text-align: center; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-                            <p style="opacity: 0.5; margin: 0;">No hay movimientos en el periodo seleccionado.</p>
+                        <div style="margin-top: 1rem; text-align: center; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+                            <p style="opacity: 0.5; margin: 0;">No hay movimientos de flujo en este periodo.</p>
                         </div>
                     ` : `
                         <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
@@ -4259,7 +4275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 2026030830");
+            console.log("MSV WealthTrack Booting... Version: 2026030831");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
