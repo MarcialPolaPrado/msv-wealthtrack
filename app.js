@@ -3331,6 +3331,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetIdInput) targetIdInput.value = drawerId;
         if (title) title.textContent = `Transferir desde: ${sourceDrawer.name}`;
 
+        // Set default concept
+        const conceptInput = document.getElementById('movementConceptInput');
+        if (conceptInput) conceptInput.value = 'Traspaso';
+
         nameGroup?.classList.add('hidden');
         transferTargetGroup?.classList.remove('hidden');
         conceptGroup?.classList.remove('hidden');
@@ -4284,7 +4288,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     fromDrawer.movements.push({
                         date: today,
                         amount: -amount,
-                        description: concept
+                        description: concept,
+                        category: 'Traspaso'
                     });
 
                     // Add to target
@@ -4292,7 +4297,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     toDrawer.movements.push({
                         date: today,
                         amount: amount,
-                        description: targetConcept
+                        description: targetConcept,
+                        category: 'Traspaso'
                     });
                 } else if (amount <= 0) {
                     alert("El importe de la transferencia debe ser mayor que cero.");
@@ -5451,8 +5457,13 @@ document.addEventListener('DOMContentLoaded', () => {
             stocks: stocks,
             savings: savingsDrawers,
             nomina: nominaData,
+            settings: {
+                fiscalDay: fiscalDay,
+                incomeCategories: incomeCategories,
+                expenseCategories: expenseCategories
+            },
             exportDate: new Date().toISOString(),
-            version: "1.0"
+            version: "1.1"
         };
         const blob = new Blob([JSON.stringify(globalData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -5468,10 +5479,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.stocks || !data.savings || !data.nomina) {
                     throw new Error("El archivo no tiene el formato de respaldo global esperado.");
                 }
-                if (confirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`)) {
+                if (confirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`)) {
                     stocks = data.stocks;
                     savingsDrawers = data.savings;
                     nominaData = migrateNominaData(data.nomina);
+
+                    // Restore settings if present
+                    if (data.settings) {
+                        if (data.settings.fiscalDay) {
+                            fiscalDay = parseInt(data.settings.fiscalDay);
+                            localStorage.setItem('fiscalDay', fiscalDay);
+                        }
+                        if (data.settings.incomeCategories) {
+                            incomeCategories = data.settings.incomeCategories;
+                            localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
+                        }
+                        if (data.settings.expenseCategories) {
+                            expenseCategories = data.settings.expenseCategories;
+                            localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
+                        }
+                    }
+
                     if (window.saveStocks) window.saveStocks(stocks);
                     if (window.saveSavings) window.saveSavings(savingsDrawers);
                     if (window.saveNomina) window.saveNomina(nominaData);
