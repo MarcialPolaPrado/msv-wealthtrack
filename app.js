@@ -1616,26 +1616,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <select id="ahorroSummaryFilterMode" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
-                            <option value="month" ${ahorroSummaryFilterMode === 'month' ? 'selected' : ''}>📅 Mes</option>
-                            <option value="year" ${ahorroSummaryFilterMode === 'year' ? 'selected' : ''}>🗓️ Año</option>
-                            <option value="all" ${ahorroSummaryFilterMode === 'all' ? 'selected' : ''}>♾️ Todo</option>
-                        </select>
-                        ${ahorroSummaryFilterMode !== 'all' ? `
-                            <select id="ahorroMonthSelect" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
-                                ${sortedMonths.map(m => {
-            const label = ahorroSummaryFilterMode === 'year' ? m.split('-')[0] : formatFiscalMonth(m);
-            // If year mode, only show unique years
-            return `<option value="${m}" ${m === selectedAhorroFiscalMonth ? 'selected' : ''}>${label}</option>`;
-        }).filter((v, i, a) => {
-            if (ahorroSummaryFilterMode === 'year') {
-                const year = v.match(/>(.*)</)[1];
-                return a.findIndex(x => x.includes(`>${year}<`)) === i;
-            }
-            return true;
-        }).join('')}
-                            </select>
-                        ` : ''}
+                        <span style="font-size: 0.8rem; opacity: 0.6; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px;">${ahorroFilterMode === 'month' ? formatFiscalMonth(ahorroListMonth) :
+                ahorroFilterMode === 'year' ? ahorroListMonth.split('-')[0] :
+                    'Todos'
+            }</span>
                     </div>
                 </div>
 
@@ -1665,21 +1649,6 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('isAhorroSummaryExpanded', isAhorroSummaryExpanded);
             renderAhorroSummaryDrawer();
         };
-
-        const modeSelect = container.querySelector('#ahorroSummaryFilterMode');
-        modeSelect.onchange = (e) => {
-            ahorroSummaryFilterMode = e.target.value;
-            localStorage.setItem('ahorroSummaryFilterMode', ahorroSummaryFilterMode);
-            renderAhorroSummaryDrawer();
-        };
-
-        const monthSelect = container.querySelector('#ahorroMonthSelect');
-        if (monthSelect) {
-            monthSelect.onchange = (e) => {
-                selectedAhorroFiscalMonth = e.target.value;
-                renderAhorroSummaryDrawer();
-            };
-        }
     }
 
     function renderSavingsList() {
