@@ -465,7 +465,10 @@
     <div id="settingsModal" class="modal hidden">
         <div class="modal-content glass-panel" style="max-width: 450px;">
             <div class="modal-header">
-                <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
+                <div style="display: flex; flex-direction: column;">
+                    <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
+                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 2026030829</span>
+                </div>
                 <span id="closeSettingsModal" class="close-modal">&times;</span>
             </div>
             <form id="settingsForm" style="margin-top: 1rem;">
@@ -923,10 +926,10 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=2026030828"></script>
+    <script src="app.js?v=2026030829"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '2026030828';
+        const APP_VERSION = '2026030829';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
