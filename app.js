@@ -2567,9 +2567,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // In totals mode, show provision (saldo inicial) instead of net balance
             let displayAmount = monthlyBalance;
+            let displayAmountColor = '';
             if (nominaListFilterMode === 'totals' && !drawer.isAutomatic) {
                 const provisionMvmt = drawerMovements.find(m => isProvision(m));
-                displayAmount = provisionMvmt ? provisionMvmt.amount : 0;
+                const provision = provisionMvmt ? provisionMvmt.amount : 0;
+                if (provision === 0) {
+                    // No provision: show sum of expenses in red (not counted in section total)
+                    const expensesSum = drawerMovements
+                        .filter(m => m.amount < 0)
+                        .reduce((s, m) => s + m.amount, 0);
+                    displayAmount = expensesSum;
+                    displayAmountColor = 'color: var(--danger);';
+                } else {
+                    displayAmount = provision;
+                }
             }
 
             headerTr.innerHTML = `
@@ -2585,7 +2596,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ` : ''}
                     </div>
                 </td>
-                <td class="balance">${fmtEUR(displayAmount)}</td>
+                <td class="balance" style="${displayAmountColor}">${fmtEUR(displayAmount)}</td>
             `;
 
             // Add event listeners (only in detail mode)
