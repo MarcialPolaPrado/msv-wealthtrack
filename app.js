@@ -433,6 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fiscalDayInput: document.getElementById('fiscalDayInput'),
         incomeCategoriesInput: document.getElementById('incomeCategoriesInput'),
         expenseCategoriesInput: document.getElementById('expenseCategoriesInput'),
+        defaultTransferSourceSelect: document.getElementById('defaultTransferSourceSelect'),
         forceUpdateBtn: document.getElementById('forceUpdateBtn')
     };
 
@@ -583,6 +584,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
                 elements.fundSourceSelect.appendChild(opt);
             });
+            const storedSource = localStorage.getItem('defaultTransferSource');
+            if (storedSource) elements.fundSourceSelect.value = storedSource;
         }
 
         elements.modalTitle.textContent = `Añadir más - ${stock.name || stock.ticker}`;
@@ -4191,6 +4194,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const expCats = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto', 'Traspaso'];
             elements.expenseCategoriesInput.value = expCats.join(', ');
         }
+        if (elements.defaultTransferSourceSelect) {
+            elements.defaultTransferSourceSelect.innerHTML = '<option value="">-- Sin traspaso por omisión --</option>';
+            const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
+            activeDrawers.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = `${d.icon || ''} ${d.name}`.trim();
+                elements.defaultTransferSourceSelect.appendChild(opt);
+            });
+            const storedSource = localStorage.getItem('defaultTransferSource');
+            if (storedSource) elements.defaultTransferSourceSelect.value = storedSource;
+        }
         toggleSettingsModal(true);
     }
 
@@ -4216,6 +4231,11 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('expenseCategories', JSON.stringify(newExpCats));
         } else {
             localStorage.setItem('expenseCategories', JSON.stringify(['Inversión', 'Gasto', 'Traspaso']));
+        }
+
+        // Default Transfer Source
+        if (elements.defaultTransferSourceSelect) {
+            localStorage.setItem('defaultTransferSource', elements.defaultTransferSourceSelect.value);
         }
 
         // Apply visual updates and notify user
@@ -5121,6 +5141,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
                     elements.fundSourceSelect.appendChild(opt);
                 });
+                const storedSource = localStorage.getItem('defaultTransferSource');
+                if (storedSource) elements.fundSourceSelect.value = storedSource;
             }
 
             // Robust Today's Date Default
@@ -5623,7 +5645,8 @@ document.addEventListener('DOMContentLoaded', () => {
             settings: {
                 fiscalDay: fiscalDay,
                 incomeCategories: incomeCategories,
-                expenseCategories: expenseCategories
+                expenseCategories: expenseCategories,
+                defaultTransferSource: localStorage.getItem('defaultTransferSource')
             },
             exportDate: new Date().toISOString(),
             version: "1.1"
@@ -5660,6 +5683,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (data.settings.expenseCategories) {
                             expenseCategories = data.settings.expenseCategories;
                             localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
+                        }
+                        if (data.settings.defaultTransferSource !== undefined) {
+                            localStorage.setItem('defaultTransferSource', data.settings.defaultTransferSource || "");
                         }
                     }
 

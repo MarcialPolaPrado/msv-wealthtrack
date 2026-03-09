@@ -489,6 +489,15 @@
                     <textarea id="expenseCategoriesInput" rows="2" placeholder="Ej: Comida, Transporte, Vivienda"
                         style="resize:vertical"></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="defaultTransferSourceSelect">Cajón de Traspaso por Defecto (Opcional)</label>
+                    <select id="defaultTransferSourceSelect">
+                        <option value="">-- Sin traspaso por omisión --</option>
+                        <!-- Options injected by JS -->
+                    </select>
+                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Se seleccionará automáticamente al
+                        añadir una nueva inversión.</small>
+                </div>
                 <div class="form-group"
                     style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
                     <label style="color: var(--warning); font-size: 0.85rem;">Zona de Soporte</label>
