@@ -4501,9 +4501,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Nomina View Mode Listeners
         if (elements.nominaAnalisisViewBtn) {
-            elements.nominaAnalisisViewBtn.onclick = () => {
+            elements.nominaAnalisisViewBtn.addEventListener('click', () => {
                 switchView('analisis');
-            };
+            });
         }
         if (elements.nominaTableViewBtn) {
             elements.nominaTableViewBtn.onclick = () => {
@@ -4643,9 +4643,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Analisis Listeners
         if (elements.analisisVolverBtn) {
-            elements.analisisVolverBtn.onclick = () => {
+            elements.analisisVolverBtn.addEventListener('click', () => {
                 switchView('nomina');
-            };
+            });
         }
         if (elements.analisisTableViewBtn) {
             elements.analisisTableViewBtn.onclick = () => {
