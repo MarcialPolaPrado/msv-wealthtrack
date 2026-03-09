@@ -141,16 +141,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Migration to movements structure
             if (concept.amount !== undefined && concept.movements === undefined) {
                 concept = {
+                    ...concept,
                     id: concept.id || Date.now() + Math.random(),
-                    name: concept.name,
                     balance: Number(concept.amount),
-                    type: concept.type,
                     movements: [{
+                        id: Date.now() + Math.random(),
                         date: new Date().toISOString().split('T')[0],
                         amount: Number(concept.amount),
-                        description: 'Saldo inicial'
+                        description: 'Saldo inicial',
+                        concept: 'Saldo inicial',
+                        paid: true,
+                        activeMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
                     }]
                 };
+                delete concept.amount;
             }
             // Ensure icon exists
             // Ensure fiscalMonth exists for all movements and convert to activeMonths array
