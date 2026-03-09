@@ -94,7 +94,6 @@
             <button class="nav-item active" data-view="bolsa">📈 Bolsa</button>
             <button class="nav-item" data-view="ahorro">💰 Ahorro</button>
             <button class="nav-item" data-view="nomina">📄 Nomina</button>
-            <button class="nav-item" data-view="analisis">📊 Análisis</button>
             <div class="nav-spacer"></div>
             <button id="globalExportBtn" class="nav-icon-btn" title="Guardar todo en JSON">💾</button>
             <button id="globalImportBtn" class="nav-icon-btn" title="Leer todo desde JSON">📂</button>
@@ -322,6 +321,9 @@
                         <h2 style="margin:0">Conceptos Mensuales</h2>
                         <div class="view-toggle"
                             style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button id="nominaAnalisisViewBtn" class="btn-sm"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">📊
+                                Análisis</button>
                             <button id="nominaTableViewBtn" class="btn-sm"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">Listado</button>
                             <button id="nominaCardViewBtn" class="btn-sm active"
@@ -407,6 +409,9 @@
                         <h2 style="margin:0" id="analisisMobileTitle">Distribución por Meses</h2>
                         <div class="view-toggle"
                             style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button id="analisisVolverBtn" class="btn-sm"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--danger); color: white; opacity: 0.9; margin-right: 8px;">⬅️
+                                Volver</button>
                             <button id="analisisTableViewBtn" class="btn-sm active"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Lista</button>
                             <button id="analisisCardViewBtn" class="btn-sm"

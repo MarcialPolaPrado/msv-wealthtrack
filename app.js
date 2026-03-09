@@ -330,6 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nominaGrid: document.getElementById('nominaGrid'),
         nominaGridContainer: document.getElementById('nominaGridContainer'),
         nominaCardViewBtn: document.getElementById('nominaCardViewBtn'),
+        nominaAnalisisViewBtn: document.getElementById('nominaAnalisisViewBtn'),
         nominaTableViewBtn: document.getElementById('nominaTableViewBtn'),
         nominaTableContainer: document.getElementById('nominaTableContainer'),
         nominaTableBody: document.getElementById('nominaTableBody'),
@@ -378,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         analisisChart: document.getElementById('analisisChart'),
         analisisTableContainer: document.getElementById('analisisTableContainer'),
         analisisGrid: document.getElementById('analisisGrid'),
+        analisisVolverBtn: document.getElementById('analisisVolverBtn'),
         analisisTableViewBtn: document.getElementById('analisisTableViewBtn'),
         analisisCardViewBtn: document.getElementById('analisisCardViewBtn'),
         analisisMobileTitle: document.getElementById('analisisMobileTitle'),
@@ -4327,7 +4329,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
-            const views = ['bolsa', 'ahorro', 'nomina', 'analisis'];
+            const views = ['bolsa', 'ahorro', 'nomina'];
 
             document.addEventListener('touchstart', e => {
                 // Only block swipe if starting on a specific interactive element or modal content that MUST handle its own touches
@@ -4498,6 +4500,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Nomina View Mode Listeners
+        if (elements.nominaAnalisisViewBtn) {
+            elements.nominaAnalisisViewBtn.onclick = () => {
+                switchView('analisis');
+            };
+        }
         if (elements.nominaTableViewBtn) {
             elements.nominaTableViewBtn.onclick = () => {
                 nominaViewMode = 'list';
@@ -4635,6 +4642,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Analisis Listeners
+        if (elements.analisisVolverBtn) {
+            elements.analisisVolverBtn.onclick = () => {
+                switchView('nomina');
+            };
+        }
         if (elements.analisisTableViewBtn) {
             elements.analisisTableViewBtn.onclick = () => {
                 analisisViewMode = 'list';
