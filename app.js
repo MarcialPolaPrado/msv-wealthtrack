@@ -71,10 +71,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Savings State
     let savingsDrawers = (window.loadSavings) ? (window.loadSavings() || [
-        { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true }
+        { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 }
     ]) : [
-        { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true }
+        { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 }
     ];
+
+    function setDrawerTargetAmount(id) {
+        const drawer = savingsDrawers.find(d => d.id === id);
+        if (!drawer) return;
+
+        const currentTarget = drawer.targetAmount || 0;
+        const msg = `Establecer objetivo para "${drawer.name}":\n(Introduce 0 para quitar el objetivo)`;
+        const result = prompt(msg, currentTarget);
+
+        if (result !== null) {
+            const newTarget = parseFloat(result.replace(',', '.'));
+            if (!isNaN(newTarget)) {
+                drawer.targetAmount = Math.max(0, newTarget);
+                if (window.saveSavings) window.saveSavings(savingsDrawers);
+                renderSavings();
+            }
+        }
+    }
 
     function getBankIcon(name) {
         const n = name.toLowerCase();
@@ -1941,11 +1959,24 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.setProperty('background-image', 'linear-gradient(135deg, rgba(16, 185, 129, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%)', 'important');
             card.style.setProperty('border', '2px solid #10b981', 'important');
 
+            const targetAmount = drawer.targetAmount || 0;
+            const diff = targetAmount > 0 ? drawer.balance - targetAmount : 0;
+            const diffColor = diff >= 0 ? 'var(--success)' : 'var(--danger)';
+
             card.innerHTML = `
+                <div class="drawer-target-icon" title="Establecer Objetivo">🎯</div>
                 <span class="drawer-icon">${drawer.icon}</span>
                 <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                    <span class="drawer-amount" style="color: #10b981 !important; font-weight: 800; font-size: 1.2rem;">${fmtEUR(drawer.balance)}</span>
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="drawer-amount" style="color: #10b981 !important; font-weight: 800; font-size: 1.2rem;">${fmtEUR(drawer.balance)}</span>
+                        ${targetAmount > 0 ? `
+                            <div class="target-info" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 4px;">
+                                <span>Obj: ${fmtEUR(targetAmount)}</span>
+                                <span style="color: ${diffColor}; font-weight: 600; margin-left: 5px;">(${diff >= 0 ? '+' : ''}${fmtEUR(diff)})</span>
+                            </div>
+                        ` : ''}
+                    </div>
                     <span style="font-size: 1.2rem; font-weight: 800; color: #10b981; opacity: 0.9;">${pct}%</span>
                 </div>
                 ${!drawer.isAuto ? `
@@ -1960,8 +1991,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const mvmtBtn = e.target.closest('.add-mvmt-btn');
                 const transBtn = e.target.closest('.transfer-btn');
                 const editBtn = e.target.closest('.edit-drawer-btn');
+                const targetBtn = e.target.closest('.drawer-target-icon');
 
-                if (mvmtBtn) {
+                if (targetBtn) {
+                    e.stopPropagation();
+                    setDrawerTargetAmount(drawer.id);
+                } else if (mvmtBtn) {
                     e.stopPropagation();
                     showAddMovementModal(drawer.id);
                 } else if (transBtn) {

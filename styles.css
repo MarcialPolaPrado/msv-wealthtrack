@@ -325,6 +325,28 @@ header a {
     background-image: linear-gradient(135deg, rgba(139, 92, 246, 0.5) 0%, rgba(30, 41, 59, 0.7) 100%) !important;
 }
 
+.drawer-target-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.2rem;
+    opacity: 0.4;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.drawer-target-icon:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.target-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 /* Specific rule for the Expense Summary to disable movement */
 .summary-drawer {
     cursor: default !important;
