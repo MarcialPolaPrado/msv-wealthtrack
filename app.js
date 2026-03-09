@@ -1960,8 +1960,8 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.setProperty('border', '2px solid #10b981', 'important');
 
             const targetAmount = drawer.targetAmount || 0;
-            const diff = targetAmount > 0 ? drawer.balance - targetAmount : 0;
-            const diffColor = diff >= 0 ? 'var(--success)' : 'var(--danger)';
+            const diff = targetAmount > 0 ? targetAmount - drawer.balance : 0;
+            const diffColor = diff <= 0 ? 'var(--success)' : 'var(--danger)';
 
             card.innerHTML = `
                 <div class="drawer-target-icon" title="Establecer Objetivo">🎯</div>
