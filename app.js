@@ -293,8 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
         drawersGrid: document.getElementById('drawersGrid'),
         addDrawerBtn: document.getElementById('addDrawerBtn'),
         exportSavingsBtn: document.getElementById('exportSavingsBtn'),
-        importSavingsBtn: document.getElementById('importSavingsBtn'),
-        savingsCsvInput: document.getElementById('savingsCsvInput'),
 
         // Savings Modal Elements
         savingsInputModal: document.getElementById('savingsInputModal'),
@@ -357,8 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nominaDrawerMonthsCheckboxes: document.getElementById('nominaDrawerMonthsCheckboxes'),
         selectAllDrawerMonths: document.getElementById('selectAllDrawerMonths'),
         exportNominaBtn: document.getElementById('exportNominaBtn'),
-        importNominaBtn: document.getElementById('importNominaBtn'),
-        nominaCsvInput: document.getElementById('nominaCsvInput'),
+        // importNominaBtn and nominaCsvInput removed as per request
 
         // Nomina Modal Elements
         nominaModal: document.getElementById('nominaModal'),
@@ -4556,11 +4553,8 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.exportSavingsBtn.addEventListener('click', () => exportSavingsToCSV());
         }
         if (elements.importSavingsBtn) {
-            elements.importSavingsBtn.addEventListener('click', () => elements.savingsCsvInput.click());
-        }
-        if (elements.savingsCsvInput) {
-            elements.savingsCsvInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) importSavingsFromCSV(e.target.files[0]);
+            elements.importSavingsBtn.addEventListener('click', () => {
+                alert('La importación de CSV ha sido desactivada. Usa el backup JSON global.');
             });
         }
 
@@ -4594,7 +4588,9 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.exportNominaBtn.addEventListener('click', () => exportNominaToCSV());
         }
         if (elements.importNominaBtn) {
-            elements.importNominaBtn.addEventListener('click', () => elements.nominaCsvInput.click());
+            elements.importNominaBtn.addEventListener('click', () => {
+                alert('La importación de CSV ha sido desactivada. Usa el backup JSON global.');
+            });
         }
         if (elements.closeNominaMovementModal) {
             elements.closeNominaMovementModal.addEventListener('click', () => toggleNominaMovementModal(false));
@@ -4602,11 +4598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.closeNominaHistoryModal) {
             elements.closeNominaHistoryModal.addEventListener('click', () => elements.nominaHistoryModal.classList.add('hidden'));
         }
-        if (elements.nominaCsvInput) {
-            elements.nominaCsvInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) importNominaFromCSV(e.target.files[0]);
-            });
-        }
+        // nominaCsvInput listener removed
 
         elements.nominaForm?.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -5032,123 +5024,33 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.importDataBtn?.addEventListener('click', () => {
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = 'application/json,.csv,text/csv';
+            input.accept = 'application/json';
 
-            input.onchange = e => {
-                const file = e.target.files[0];
+            input.onchange = ev => {
+                const file = ev.target.files[0];
                 if (!file) return;
 
-                const isCSV = file.name.toLowerCase().endsWith('.csv');
                 const reader = new FileReader();
-
                 reader.onload = readerEvent => {
-                    if (isCSV) {
-                        // --- CSV Parser ---
-                        try {
-                            const text = readerEvent.target.result;
-                            const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
-                            if (lines.length < 2) {
-                                alert('El CSV está vacío o no tiene datos.');
-                                return;
-                            }
-
-                            // Parse header
-                            const headers = lines[0].split(',').map(h => h.trim());
-                            const idx = {
-                                ticker: headers.indexOf('Ticker'),
-                                qty: headers.indexOf('Quantity'),
-                                price: headers.indexOf('Cost Per Share'),
-                                currency: headers.indexOf('Currency'),
-                                date: headers.indexOf('Date'),
-                            };
-
-                            if (idx.ticker === -1 || idx.qty === -1 || idx.price === -1 || idx.date === -1) {
-                                alert('El CSV no tiene el formato esperado. Columnas requeridas: Ticker, Quantity, Cost Per Share, Date.');
-                                return;
-                            }
-
-                            // Helper: infer market from ticker
-                            const inferMarket = (ticker, currency) => {
-                                if (ticker.endsWith('.ES')) return 'IBEX35';
-                                if (ticker.endsWith('.DE')) return 'XETRA';
-                                if (ticker.endsWith('.MC')) return 'IBEX35';
-                                if (currency === 'USD') return 'SP500';
-                                return 'SP500'; // default fallback
-                            };
-
-                            const parsed = [];
-                            for (let i = 1; i < lines.length; i++) {
-                                const cols = lines[i].split(',');
-                                if (cols.length < 5) continue;
-
-                                const ticker = (cols[idx.ticker] || '').trim().toUpperCase();
-                                const qty = parseFloat(cols[idx.qty] || '0');
-                                const price = parseFloat(cols[idx.price] || '0');
-                                const currency = (cols[idx.currency] || 'EUR').trim().toUpperCase();
-                                const date = (cols[idx.date] || '').trim();
-
-                                if (!ticker || isNaN(qty) || qty === 0 || isNaN(price) || !date) continue;
-
-                                // Convert price to EUR if needed
-                                const fxRate = (window.FX_RATE && window.FX_RATE > 0) ? window.FX_RATE : 0.92;
-                                const priceEUR = currency === 'USD' ? price * fxRate : price;
-
-                                // Look up known name from MOCK_DATA, fall back to ticker
-                                const mockInfo = window.MOCK_DATA ? window.MOCK_DATA[ticker] : null;
-                                const name = mockInfo ? (mockInfo.name || ticker) : ticker;
-                                const market = inferMarket(ticker, currency);
-
-                                parsed.push({
-                                    id: Date.now().toString() + '_' + i,
-                                    ticker,
-                                    name,
-                                    market,
-                                    date,
-                                    qty,
-                                    price: priceEUR, // Cost Per Share in EUR
-                                });
-                            }
-
-                            if (parsed.length === 0) {
-                                alert('No se encontraron filas válidas en el CSV.');
-                                return;
-                            }
-
-                            if (confirm(`Se encontraron ${parsed.length} operaciones en el CSV.\n\n¿Estás seguro de que quieres importar estos datos? Reemplazarán tu cartera actual.`)) {
-                                stocks = parsed;
+                    try {
+                        const content = JSON.parse(readerEvent.target.result);
+                        if (Array.isArray(content)) {
+                            if (confirm('¿Estás seguro de que quieres importar estos datos? Reemplazarán tu cartera actual.')) {
+                                stocks = content;
                                 if (window.saveStocks) window.saveStocks(stocks);
                                 render();
-                                alert(`✅ ${parsed.length} operaciones importadas correctamente desde el CSV.`);
+                                alert('¡Datos importados con éxito desde JSON!');
                             }
-                        } catch (err) {
-                            console.error('CSV import error:', err);
-                            alert('Error al procesar el archivo CSV: ' + err.message);
+                        } else {
+                            alert('El archivo no tiene el formato JSON correcto.');
                         }
-
-                    } else {
-                        // --- JSON Parser (original behavior) ---
-                        try {
-                            const content = JSON.parse(readerEvent.target.result);
-                            if (Array.isArray(content)) {
-                                if (confirm('¿Estás seguro de que quieres importar estos datos? Reemplazarán tu cartera actual.')) {
-                                    stocks = content;
-                                    if (window.saveStocks) window.saveStocks(stocks);
-                                    render();
-                                    alert('¡Datos importados con éxito!');
-                                }
-                            } else {
-                                alert('El archivo no tiene el formato correcto.');
-                            }
-                        } catch (err) {
-                            console.error('Import error:', err);
-                            alert('Error al leer el archivo JSON.');
-                        }
+                    } catch (err) {
+                        console.error('Import error:', err);
+                        alert('Error al leer el archivo JSON.');
                     }
                 };
-
                 reader.readAsText(file, 'UTF-8');
             };
-
             input.click();
         });
 
@@ -5347,56 +5249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         triggerDownload(encodedUri, `ahorros_msv_${new Date().toISOString().split('T')[0]}.csv`);
     }
 
-    function importSavingsFromCSV(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const lines = e.target.result.split('\n');
-            if (lines.length > 0) {
-                const headers = lines[0].split(',').map(h => h.trim());
-                if (headers.includes('Months')) {
-                    alert("Este archivo parece ser de Nómina. Por favor, impórtalo en la sección de Nómina.");
-                    return;
-                }
-            }
-            const newDrawers = [];
-            const drawersMap = {};
-
-            lines.forEach((line, index) => {
-                if (index === 0 || !line.trim()) return;
-                const parts = line.split(',').map(p => p.trim());
-                if (parts.length < 5) return;
-                const [type, id, nameDesc, iconDate, amountVal, category] = parts;
-                const value = parseFloat(amountVal);
-                if (type === 'DRAWER') {
-                    const drawer = { id: id, name: nameDesc, icon: iconDate, balance: value, movements: [], isAuto: (id === 'bolsa') };
-                    newDrawers.push(drawer);
-                    drawersMap[id] = drawer;
-                } else if (type === 'MOVEMENT') {
-                    if (drawersMap[id]) {
-                        drawersMap[id].movements.push({
-                            description: nameDesc,
-                            date: iconDate,
-                            amount: value,
-                            category: category || ''
-                        });
-                    }
-                }
-            });
-
-            if (newDrawers.length > 0) {
-                if (!drawersMap['bolsa']) {
-                    newDrawers.unshift({ id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true });
-                }
-                savingsDrawers = newDrawers;
-                if (window.saveSavings) window.saveSavings(savingsDrawers);
-                render();
-                alert("Ahorros importados correctamente.");
-            } else {
-                alert("No se encontraron datos válidos en el archivo.");
-            }
-        };
-        reader.readAsText(file);
-    }
+    // importSavingsFromCSV removed as per request
 
     // --- Nomina Functions ---
 
@@ -5574,28 +5427,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const fiscalMonthStr = getFiscalMonth();
-        const calcs = calculateNominaCurrentMonth(drawer, fiscalMonthStr);
-        const netSavings = calcs.income - calcs.expense;
+        const initialMvmt = (drawer.movements || []).find(m => isProvision(m));
+        const defaultAmount = initialMvmt ? Math.abs(initialMvmt.amount) : 0;
 
-        if (netSavings <= 0) {
-            alert(`No hay ahorro neto positivo en este cajón para el mes ${fiscalMonthStr}. (Ahorro calculado: ${fmtEUR(netSavings)})`);
+        const userInput = prompt(`¿Qué cantidad deseas transferir al cajón "${targetAhorroDrawer.name}"?\n(Sugerencia basada en provisión: ${fmtEUR(defaultAmount)})`, defaultAmount);
+
+        if (userInput === null) return;
+        const amountToTransfer = parseFloat(userInput.replace(',', '.'));
+
+        if (isNaN(amountToTransfer) || amountToTransfer <= 0) {
+            alert('Por favor, ingresa una cantidad válida y superior a 0.');
             return;
         }
 
-        if (confirm(`¿Transferir ${fmtEUR(netSavings)} correspondientes al ahorro del mes (${fiscalMonthStr}) al cajón de Ahorro "${targetAhorroDrawer.name}"?\n\nNota: Solo se añadirá el ingreso en Ahorro, Nómina no se modificará.`)) {
+        if (confirm(`¿Transferir ${fmtEUR(amountToTransfer)} al cajón de Ahorro "${targetAhorroDrawer.name}"?\n\nNota: Solo se añadirá el ingreso en Ahorro, Nómina no se modificará.`)) {
             // Add positive movement to Savings
             targetAhorroDrawer.movements.push({
-                description: `Ahorro mensual (${fiscalMonthStr}) - ${drawer.name}`,
+                description: `Traspaso desde Nómina (${fiscalMonthStr}) - ${drawer.name}`,
                 date: new Date().toISOString().split('T')[0],
-                amount: netSavings,
+                amount: amountToTransfer,
                 category: 'Traspaso'
             });
 
-            // Update Savings Balance explicitly just in case (though rendering recalculates, good for immediate access)
-            targetAhorroDrawer.balance = (targetAhorroDrawer.balance || 0) + netSavings;
+            // Update Savings Balance
+            targetAhorroDrawer.balance = (targetAhorroDrawer.balance || 0) + amountToTransfer;
 
             if (window.saveSavings) window.saveSavings(savingsDrawers);
-            showToast(`✅ ${fmtEUR(netSavings)} transferidos a ${targetAhorroDrawer.name}`);
+            showToast(`✅ ${fmtEUR(amountToTransfer)} transferidos a ${targetAhorroDrawer.name}`);
 
             // Re-render everything to update UI headers and charts
             render();
@@ -5697,69 +5555,7 @@ document.addEventListener('DOMContentLoaded', () => {
         triggerDownload(encodedUri, `nomina_msv_${new Date().toISOString().split('T')[0]}.csv`);
     }
 
-    function importNominaFromCSV(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const lines = e.target.result.split('\n');
-            const newData = [];
-            const map = {};
-            if (lines.length > 0) {
-                const headers = lines[0].split(',').map(h => h.trim());
-                if (!headers.includes('Months')) {
-                    alert("Este archivo parece ser de Ahorros. Por favor, impórtalo en la sección de Ahorros.");
-                    return;
-                }
-            }
-            lines.forEach((line, index) => {
-                if (index === 0 || !line.trim()) return;
-                const parts = line.split(',').map(p => p.trim());
-                if (parts.length < 5) return;
-                const [type, id, nameDesc, iconDate, amountVal, monthsStr, paidStr, linkedAhorroID] = parts;
-                const value = parseFloat(amountVal);
-                const activeMonths = monthsStr ? monthsStr.split('|').map(m => parseInt(m)) : null;
-                const paid = paidStr === '1';
-                if (type === 'DRAWER') {
-                    let dType = iconDate; // Could be 'income', 'expense', 'saving' or '📈'/'📉'
-                    if (dType === '📈') dType = 'income';
-                    else if (dType === '📉') dType = 'expense';
-                    else if (!['income', 'expense', 'saving'].includes(dType)) dType = 'expense'; // Default fallback
-
-                    const drawer = { id: id, name: nameDesc, type: dType, balance: value, movements: [], linkedSavingsDrawerId: linkedAhorroID || undefined };
-                    newData.push(drawer);
-                    map[id] = drawer;
-                } else if (type === 'MOVEMENT') {
-                    if (map[id]) {
-                        const date = iconDate;
-                        let movActiveMonths = activeMonths;
-                        if (!movActiveMonths) {
-                            const d = new Date(date);
-                            let monthNum = d.getMonth() + 1;
-                            if (d.getDate() >= 25) monthNum = (monthNum % 12) + 1;
-                            movActiveMonths = isProvision({ description: nameDesc }) ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : [monthNum];
-                        }
-                        map[id].movements.push({
-                            id: Date.now() + Math.random(), // Ensure unique ID on import
-                            concept: nameDesc,
-                            description: nameDesc,
-                            date: date,
-                            amount: value,
-                            activeMonths: movActiveMonths,
-                            paid: paid
-                        });
-                    }
-                }
-            });
-            if (newData.length > 0) {
-                nominaData = migrateNominaData(newData);
-                if (window.saveNomina) window.saveNomina(nominaData);
-                renderNomina();
-                alert("Nomina importada correctamente.");
-            } else {
-                alert("No se encontraron datos válidos.");
-            }
-        };
-        reader.readAsText(file);
-    }
+    // importNominaFromCSV removed as per request
 
     // --- Global JSON Backup/Restore ---
 

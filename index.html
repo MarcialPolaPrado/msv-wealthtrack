@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603091427">
+    <link rel="stylesheet" href="styles.css?v=202603091436">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -156,8 +156,6 @@
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <h2 style="margin:0" id="bolsaMobileTitle">Sus Inversiones</h2>
                         <div style="display:flex; gap: 0.8rem;">
-                            <button id="importDataBtn" class="btn-secondary" title="Importar CSV"
-                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">📥</button>
                             <button id="exportDataBtn" class="btn-secondary" title="Exportar CSV"
                                 style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
                             <button id="bolsaAddStockBtn" class="btn-primary" style="padding: 0.5rem 1rem;">+ Añadir
@@ -231,14 +229,11 @@
                             </div>
                         </div>
                         <div style="display:flex; gap: 0.8rem;">
-                            <button id="importSavingsBtn" class="btn-secondary" title="Importar CSV"
-                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">📥</button>
                             <button id="exportSavingsBtn" class="btn-secondary" title="Exportar CSV"
                                 style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
                             <button id="addDrawerBtn" class="btn-primary" style="padding: 0.5rem 1rem;">+ Añadir
                                 Cajón</button>
                         </div>
-                        <input type="file" id="savingsCsvInput" accept=".csv" class="hidden">
                     </div>
 
                     <div id="drawersGrid" class="drawers-grid">
@@ -331,13 +326,10 @@
                         </div>
                     </div>
                     <div style="display:flex; align-items: center; gap: 0.8rem;">
-                        <button id="importNominaBtn" class="btn-secondary" title="Importar CSV"
-                            style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">📥</button>
                         <button id="exportNominaBtn" class="btn-secondary" title="Exportar CSV"
                             style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
                         <button id="addNominaBtn" class="btn-primary" style="padding: 0.5rem 1rem;">+ Añadir
                             Cajón</button>
-                        <input type="file" id="nominaCsvInput" accept=".csv" class="hidden">
                     </div>
                 </div>
 
@@ -961,10 +953,10 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=202603091427"></script>
+    <script src="app.js?v=202603091436"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '202603091427';
+        const APP_VERSION = '202603091436';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
