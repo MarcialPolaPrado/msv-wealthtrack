@@ -1,4 +1,4 @@
-const CACHE_NAME = 'msv-wealthtrack-v2026030937';
+const CACHE_NAME = 'msv-wealthtrack-v202603091410';
 const ASSETS = [
     './',
     './index.html',

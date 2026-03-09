@@ -48,11 +48,12 @@ if %errorlevel% neq 0 (
     )
     git remote add origin !REPO_URL!
 )
-:: Actualizar versionado automáticamente (vYYYY.MM.DD.HHMM)
-for /f "tokens=*" %%i in ('powershell -NoProfile -Command "Get-Date -Format 'vyyyy.MM.dd.HHmm'"') do set NEW_VERSION=%%i
+:: Actualizar versionado automáticamente (vYYYYMMDDHHMM para reventar siempre la cahe)
+for /f "tokens=*" %%i in ('powershell -NoProfile -Command "Get-Date -Format 'yyyyMMddHHmm'"') do set NEW_VERSION=%%i
 
-echo [0/3] Actualizando version a %NEW_VERSION% en index.html...
-powershell -Command "(Get-Content index.html) -replace 'v\d{4}\.\d{2}\.\d{2}\.\d{4}', '%NEW_VERSION%' | Set-Content index.html"
+echo [0/3] Actualizando cache y version a %NEW_VERSION% en index.html y sw.js...
+powershell -Command "$c = Get-Content index.html; $c = $c -replace 'v\d{4}\.\d{2}\.\d{2}\.\d{2,4}', 'v%NEW_VERSION%'; $c = $c -replace 'v\d{10,14}', 'v%NEW_VERSION%'; $c = $c -replace 'styles\.css\?v=\d{10,14}', 'styles.css?v=%NEW_VERSION%'; $c = $c -replace 'Versión: \d{10,14}', 'Versión: %NEW_VERSION%'; Set-Content index.html $c"
+powershell -Command "(Get-Content sw.js) -replace 'msv-wealthtrack-v\d{10,14}', 'msv-wealthtrack-v%NEW_VERSION%' | Set-Content sw.js"
 
 echo.
 echo [1/3] Añadiendo archivos...
