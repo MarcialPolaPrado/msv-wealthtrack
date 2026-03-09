@@ -2645,6 +2645,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${(!drawer.isAutomatic && nominaListFilterMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-nomina-mvmt-list-btn btn-primary">+ Mov</button>
+                                ${drawer.linkedSavingsDrawerId ? `<button class="transfer-nomina-ahorro-list-btn btn-primary" style="background:var(--success); padding: 0.3rem 0.6rem;" title="Transferir Ahorro">➡️</button>` : ''}
                                 <button class="edit-nomina-drawer-list-btn btn-secondary">✏️</button>
                                 <button class="delete-nomina-drawer-list-btn btn-danger">🗑️</button>
                             </div>
@@ -2660,6 +2661,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.stopPropagation();
                     showAddNominaMovement(drawer.id);
                 };
+                if (headerTr.querySelector('.transfer-nomina-ahorro-list-btn')) {
+                    headerTr.querySelector('.transfer-nomina-ahorro-list-btn').onclick = (e) => {
+                        e.stopPropagation();
+                        transferNominaToAhorro(drawer.id);
+                    };
+                }
                 headerTr.querySelector('.edit-nomina-drawer-list-btn').onclick = (e) => {
                     e.stopPropagation();
                     showEditNominaDrawer(drawer.id);
@@ -2973,8 +2980,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 ${balanceDisplay}
                 <div class="drawer-footer" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                   <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1">+ Movimiento</button>
+                   <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1" title="Añadir Movimiento">+ Mov.</button>
                    <button class="btn-primary btn-sm view-nomina-details" data-id="${concept.id}" style="flex:1">Historial</button>
+                   ${concept.linkedSavingsDrawerId ? `<button class="btn-primary btn-sm transfer-nomina-ahorro" data-id="${concept.id}" style="background:var(--success); padding: 0.5rem; flex: 0 0 auto;" title="Transferir Ahorro">➡️</button>` : ''}
                 </div>
             `;
 
@@ -3289,6 +3297,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = btn.dataset.id;
             if (btn.classList.contains('add-nomina-movement')) showAddNominaMovement(id);
             if (btn.classList.contains('view-nomina-details')) showNominaDrawerDetails(id);
+            if (btn.classList.contains('transfer-nomina-ahorro')) transferNominaToAhorro(id);
             if (btn.classList.contains('edit-nomina-drawer')) showEditNominaDrawer(id);
             if (btn.classList.contains('delete-nomina-drawer')) {
                 if (confirm('¿Estás seguro de que quieres eliminar este cajón de Nomina?')) {
