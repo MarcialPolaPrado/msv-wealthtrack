@@ -1948,11 +1948,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span style="font-size: 1.2rem; font-weight: 800; color: #10b981; opacity: 0.9;">${pct}%</span>
                 </div>
                 ${!drawer.isAuto ? `
-                    <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                        <button class="add-mvmt-btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.8rem;">+ Movimiento</button>
-                        <button class="transfer-btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;">⇆ Transferir</button>
-                        <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.4rem 0.6rem; font-size:0.8rem;">✏️</button>
-                        <button class="delete-drawer-btn btn-danger" title="Borrar Cajón" style="padding:0.4rem 0.6rem; font-size:0.8rem; border:none; background:rgba(239,68,68,0.15); color:var(--danger);">🗑️</button>
+                    <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:nowrap;">
+                        <button class="add-mvmt-btn btn-primary" title="Añadir Movimiento" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">➕</button>
+                        <button class="transfer-btn btn-secondary" title="Transferir" style="padding:0.5rem 0; font-size:1.2rem; font-weight:bold; flex:1; display:flex; justify-content:center; align-items:center;">⇆</button>
+                        <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">✏️</button>
                     </div>` : ''}
             `;
 
