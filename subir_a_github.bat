@@ -52,7 +52,7 @@ if %errorlevel% neq 0 (
 for /f "tokens=*" %%i in ('powershell -NoProfile -Command "Get-Date -Format 'yyyyMMddHHmm'"') do set NEW_VERSION=%%i
 
 echo [0/3] Actualizando cache y version a %NEW_VERSION% en index.html y sw.js...
-powershell -Command "$c = Get-Content index.html; $c = $c -replace 'v\d{4}\.\d{2}\.\d{2}\.\d{2,4}', 'v%NEW_VERSION%'; $c = $c -replace 'styles\.css\?v=\d{10,14}', 'styles.css?v=%NEW_VERSION%'; $c = $c -replace 'Versión: \d{10,14}', 'Versión: %NEW_VERSION%'; $c = $c -replace 'app\.js\?v=\d{10,14}', 'app.js?v=%NEW_VERSION%'; $c = $c -replace ""APP_VERSION = '\d{10,14}'"", ""APP_VERSION = '%NEW_VERSION%'""; Set-Content index.html $c"
+powershell -Command "$c = Get-Content index.html; $c = $c -replace 'v\d{4}\.\d{2}\.\d{2}\.\d{2,4}', 'v%NEW_VERSION%'; $c = $c -replace 'styles\.css\?v=\d{10,14}', 'styles.css?v=%NEW_VERSION%'; $c = $c -replace 'Versión: \d{10,14}', 'Versión: %NEW_VERSION%'; $c = $c -replace 'app\.js\?v=\d{10,14}', 'app.js?v=%NEW_VERSION%'; $c = $c -replace 'APP_VERSION = ''\d{10,14}''', 'APP_VERSION = ''%NEW_VERSION%'''; Set-Content index.html $c"
 powershell -Command "$c = Get-Content sw.js; $c = $c -replace 'msv-wealthtrack-v\d{10,14}', 'msv-wealthtrack-v%NEW_VERSION%'; $c = $c -replace 'app\.js\?v=\d{10,14}', 'app.js?v=%NEW_VERSION%'; Set-Content sw.js $c"
 
 echo.
