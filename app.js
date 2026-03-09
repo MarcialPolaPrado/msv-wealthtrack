@@ -4303,7 +4303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 2026030833");
+            console.log("MSV WealthTrack Booting... Version: 2026030934");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
