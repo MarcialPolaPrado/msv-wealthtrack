@@ -359,6 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Nomina Modal Elements
         nominaModal: document.getElementById('nominaModal'),
         nominaForm: document.getElementById('nominaForm'),
+        nominaLinkedAhorroSelect: document.getElementById('nominaLinkedAhorroSelect'),
         nominaModalTitle: document.getElementById('nominaModalTitle'),
         closeNominaModal: document.getElementById('closeNominaModal'),
         nominaEditId: document.getElementById('nominaEditId'),
@@ -4610,6 +4611,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     drawer.name = name;
                     drawer.type = type;
                     drawer.icon = getNominaIcon(name, type);
+                    drawer.linkedSavingsDrawerId = elements.nominaLinkedAhorroSelect ? elements.nominaLinkedAhorroSelect.value : '';
                     // Update initial movement if amount changed
                     let initialMvmt = (drawer.movements || []).find(m => isProvision(m));
                     if (initialMvmt) {
@@ -4623,6 +4625,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     name: name,
                     type: type,
                     icon: getNominaIcon(name, type),
+                    linkedSavingsDrawerId: elements.nominaLinkedAhorroSelect ? elements.nominaLinkedAhorroSelect.value : '',
                     movements: [{
                         id: Date.now() + Math.random(),
                         date: new Date().toISOString().split('T')[0],
@@ -5393,6 +5396,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nominaModal.classList.add('hidden');
             if (elements.nominaForm) elements.nominaForm.reset();
             if (elements.nominaEditId) elements.nominaEditId.value = '';
+            if (elements.nominaLinkedAhorroSelect) elements.nominaLinkedAhorroSelect.value = '';
         }
     }
 
@@ -5408,12 +5412,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function populateNominaAhorroSelect(selectedValue = '') {
+        if (!elements.nominaLinkedAhorroSelect) return;
+        elements.nominaLinkedAhorroSelect.innerHTML = '<option value="">-- Sin vincular --</option>';
+        savingsDrawers.forEach(drawer => {
+            // Optional: skip auto drawers like 'bolsa' if they shouldn't be targets
+            if (drawer.id !== 'bolsa') {
+                const opt = document.createElement('option');
+                opt.value = drawer.id;
+                opt.textContent = `${drawer.icon} ${drawer.name} (${fmtEUR(drawer.balance)})`;
+                elements.nominaLinkedAhorroSelect.appendChild(opt);
+            }
+        });
+        elements.nominaLinkedAhorroSelect.value = selectedValue;
+    }
+
     function showAddNomina() {
         if (elements.nominaModalTitle) elements.nominaModalTitle.textContent = 'Añadir Nuevo Cajón';
         if (elements.nominaEditId) elements.nominaEditId.value = '';
         if (elements.nominaNameInput) elements.nominaNameInput.value = '';
         if (elements.nominaAmountInput) elements.nominaAmountInput.value = '';
         if (elements.nominaTypeSelect) elements.nominaTypeSelect.value = 'income'; // Default or could be empty
+        populateNominaAhorroSelect();
         if (elements.nominaDrawerMonthsCheckboxes) {
             elements.nominaDrawerMonthsCheckboxes.querySelectorAll('input').forEach(cb => cb.checked = true);
         }
@@ -5429,6 +5449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let initialMvmt = (drawer.movements || []).find(m => isProvision(m));
         if (elements.nominaAmountInput) elements.nominaAmountInput.value = initialMvmt ? initialMvmt.amount : (drawer.balance || 0);
         if (elements.nominaTypeSelect) elements.nominaTypeSelect.value = drawer.type;
+        populateNominaAhorroSelect(drawer.linkedSavingsDrawerId || '');
         if (elements.nominaDrawerMonthsCheckboxes && initialMvmt) {
             const active = initialMvmt.activeMonths || [];
             elements.nominaDrawerMonthsCheckboxes.querySelectorAll('input').forEach(cb => {
@@ -5515,12 +5536,93 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function calculateNominaCurrentMonth(drawer, fiscalMonthStr) {
+        const monthNum = parseInt(fiscalMonthStr.split('-')[1]);
+        let income = 0;
+        let expense = 0;
+
+        (drawer.movements || []).forEach(m => {
+            if ((m.activeMonths || []).includes(monthNum)) {
+                if (m.amount > 0) income += m.amount;
+                else expense += Math.abs(m.amount);
+            }
+        });
+
+        return { income, expense };
+    }
+
+    function transferNominaToAhorro(drawerId) {
+        const drawer = nominaData.find(d => d.id == drawerId);
+        if (!drawer || !drawer.linkedSavingsDrawerId) return;
+
+        const targetAhorroDrawer = savingsDrawers.find(d => d.id == drawer.linkedSavingsDrawerId);
+        if (!targetAhorroDrawer) {
+            alert('El cajón de Ahorro vinculado ya no existe.');
+            return;
+        }
+
+        const fiscalMonthStr = getFiscalMonth();
+        const calcs = calculateNominaCurrentMonth(drawer, fiscalMonthStr);
+        const netSavings = calcs.income - calcs.expense;
+
+        if (netSavings <= 0) {
+            alert(`No hay ahorro neto positivo en este cajón para el mes ${fiscalMonthStr}. (Ahorro calculado: ${fmtEUR(netSavings)})`);
+            return;
+        }
+
+        if (confirm(`¿Transferir ${fmtEUR(netSavings)} correspondientes al ahorro del mes (${fiscalMonthStr}) al cajón de Ahorro "${targetAhorroDrawer.name}"?\n\nNota: Solo se añadirá el ingreso en Ahorro, Nómina no se modificará.`)) {
+            // Add positive movement to Savings
+            targetAhorroDrawer.movements.push({
+                description: `Ahorro mensual (${fiscalMonthStr}) - ${drawer.name}`,
+                date: new Date().toISOString().split('T')[0],
+                amount: netSavings,
+                category: 'Traspaso'
+            });
+
+            // Update Savings Balance explicitly just in case (though rendering recalculates, good for immediate access)
+            targetAhorroDrawer.balance = (targetAhorroDrawer.balance || 0) + netSavings;
+
+            if (window.saveSavings) window.saveSavings(savingsDrawers);
+            showToast(`✅ ${fmtEUR(netSavings)} transferidos a ${targetAhorroDrawer.name}`);
+
+            // Re-render everything to update UI headers and charts
+            render();
+            // Optional: Close details modal to show changes visually applied in main view? Or leave open. Let's close modal for visual confirmation
+            elements.nominaHistoryModal.classList.add('hidden');
+        }
+    }
+
     function showNominaDrawerDetails(id) {
         const drawer = nominaData.find(d => d.id == id);
         if (!drawer) return;
         if (elements.nominaHistoryTitle) elements.nominaHistoryTitle.textContent = `Historial: ${drawer.name}`;
+
+        // Remove existing Transfer button area if any
+        const existingTransferBtnContainer = elements.nominaHistoryModal.querySelector('.transfer-btn-container');
+        if (existingTransferBtnContainer) existingTransferBtnContainer.remove();
+
         if (elements.nominaMovementsList) {
             elements.nominaMovementsList.innerHTML = '';
+
+            // Handle Transfer Button injection at the top if linked
+            if (drawer.linkedSavingsDrawerId) {
+                const targetAhorro = savingsDrawers.find(d => d.id === drawer.linkedSavingsDrawerId);
+                if (targetAhorro) {
+                    const btnContainer = document.createElement('div');
+                    btnContainer.className = 'transfer-btn-container';
+                    btnContainer.style = 'margin-top: -10px; margin-bottom: 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;';
+                    btnContainer.innerHTML = `
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Vinculado a: <strong>${targetAhorro.name}</strong></p>
+                        <button class="btn-primary" id="btnTransferToAhorro" style="width: 100%; background: var(--success); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span>➡️</span> Transferir Ahorro del Mes
+                        </button>
+                    `;
+                    elements.nominaMovementsList.parentElement.insertBefore(btnContainer, elements.nominaMovementsList);
+
+                    document.getElementById('btnTransferToAhorro').onclick = () => transferNominaToAhorro(drawer.id);
+                }
+            }
+
             if (!drawer.movements || drawer.movements.length === 0) {
                 elements.nominaMovementsList.innerHTML = '<div style="text-align:center; opacity:0.5; padding:2rem;">No hay movimientos.</div>';
             } else {
@@ -5567,15 +5669,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function exportNominaToCSV() {
-        const headers = ['Type', 'DrawerID', 'Name/Description', 'Icon/Date', 'Balance/Amount', 'Months', 'Paid'];
+        const headers = ['Type', 'DrawerID', 'Name/Description', 'Icon/Date', 'Balance/Amount', 'Months', 'Paid', 'LinkedAhorroID'];
         const csvRows = [headers.join(',')];
         nominaData.forEach(drawer => {
             const initialMvmt = (drawer.movements || []).find(m => isProvision(m));
             const drawerMonths = (initialMvmt?.activeMonths || []).join('|');
-            csvRows.push(['DRAWER', drawer.id, drawer.name, drawer.type || '', drawer.balance, drawerMonths, ''].join(','));
+            csvRows.push(['DRAWER', drawer.id, drawer.name, drawer.type || '', drawer.balance, drawerMonths, '', drawer.linkedSavingsDrawerId || ''].join(','));
             drawer.movements.forEach(m => {
                 const movMonths = (m.activeMonths || []).join('|');
-                csvRows.push(['MOVEMENT', drawer.id, m.concept || m.description, m.date, m.amount, movMonths, m.paid ? '1' : '0'].join(','));
+                csvRows.push(['MOVEMENT', drawer.id, m.concept || m.description, m.date, m.amount, movMonths, m.paid ? '1' : '0', ''].join(','));
             });
         });
         const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
@@ -5600,7 +5702,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (index === 0 || !line.trim()) return;
                 const parts = line.split(',').map(p => p.trim());
                 if (parts.length < 5) return;
-                const [type, id, nameDesc, iconDate, amountVal, monthsStr, paidStr] = parts;
+                const [type, id, nameDesc, iconDate, amountVal, monthsStr, paidStr, linkedAhorroID] = parts;
                 const value = parseFloat(amountVal);
                 const activeMonths = monthsStr ? monthsStr.split('|').map(m => parseInt(m)) : null;
                 const paid = paidStr === '1';
@@ -5610,7 +5712,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (dType === '📉') dType = 'expense';
                     else if (!['income', 'expense', 'saving'].includes(dType)) dType = 'expense'; // Default fallback
 
-                    const drawer = { id: id, name: nameDesc, type: dType, balance: value, movements: [] };
+                    const drawer = { id: id, name: nameDesc, type: dType, balance: value, movements: [], linkedSavingsDrawerId: linkedAhorroID || undefined };
                     newData.push(drawer);
                     map[id] = drawer;
                 } else if (type === 'MOVEMENT') {
