@@ -252,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportDataBtn: document.getElementById('exportDataBtn'),
         importDataBtn: document.getElementById('importDataBtn'),
         mobileAddStockBtn: document.getElementById('mobileAddStockBtn'),
+        navItems: document.querySelectorAll('.nav-item'),
         // Export Logic Simplified to direct CSV
         closeExportModal: document.querySelector('.close-export-modal'), // Keep for safety if still used in CSS or other places
 
@@ -373,6 +374,11 @@ document.addEventListener('DOMContentLoaded', () => {
         nominaDrawerMonthsCheckboxes: document.getElementById('nominaDrawerMonthsCheckboxes'),
         selectAllDrawerMonths: document.getElementById('selectAllDrawerMonths'),
         exportNominaBtn: document.getElementById('exportNominaBtn'),
+        fiscalCountdownBtn: document.getElementById('fiscalCountdownBtn'),
+        fiscalDaysLeft: document.getElementById('fiscalDaysLeft'),
+        fiscalCalendarModal: document.getElementById('fiscalCalendarModal'),
+        fiscalCalendarContent: document.getElementById('fiscalCalendarContent'),
+        closeFiscalCalendarModal: document.getElementById('closeFiscalCalendarModal'),
         // importNominaBtn and nominaCsvInput removed as per request
 
         // Nomina Modal Elements
@@ -2798,6 +2804,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderNominaList();
         }
 
+        updateFiscalCountdown();
+
         const grid = elements.nominaGrid;
         if (!grid) return;
         grid.innerHTML = '';
@@ -4364,7 +4372,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Navigation
-        elements.navItems.forEach(item => {
+        console.log("Setting up nav items listeners. Count:", elements.navItems?.length || 0);
+        elements.navItems?.forEach(item => {
             item.addEventListener('click', () => switchView(item.dataset.view));
         });
 
@@ -4611,6 +4620,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === elements.nominaMovementModal) toggleNominaMovementModal(false);
             if (e.target === elements.nominaHistoryModal) elements.nominaHistoryModal.classList.add('hidden');
             if (e.target === elements.monthDetailModal) elements.monthDetailModal.classList.add('hidden');
+            if (e.target === elements.fiscalCalendarModal) elements.fiscalCalendarModal.classList.add('hidden');
         };
 
         if (elements.addNominaBtn) {
@@ -4632,6 +4642,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (elements.closeNominaHistoryModal) {
             elements.closeNominaHistoryModal.addEventListener('click', () => elements.nominaHistoryModal.classList.add('hidden'));
+        }
+        if (elements.fiscalCountdownBtn) {
+            console.log("Attaching listener to fiscalCountdownBtn");
+            elements.fiscalCountdownBtn.onclick = (e) => {
+                e.preventDefault();
+                console.log("fiscalCountdownBtn clicked");
+                showFiscalCalendarModal();
+            };
+        }
+        if (elements.closeFiscalCalendarModal) {
+            elements.closeFiscalCalendarModal.onclick = () => {
+                elements.fiscalCalendarModal.classList.add('hidden');
+            };
         }
         // nominaCsvInput listener removed
 
@@ -5049,13 +5072,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderNominaList();
         });
 
-        window.onclick = (event) => {
-            if (event.target === elements.addStockModal) toggleModal(false);
-            if (event.target === elements.financialDetailsModal) {
-                elements.financialDetailsModal.classList.add('hidden');
-            }
-        };
-
         elements.importDataBtn?.addEventListener('click', () => {
             const input = document.createElement('input');
             input.type = 'file';
@@ -5088,35 +5104,6 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             input.click();
         });
-
-        function openAddStockModal() {
-            if (!elements.addStockForm) return;
-            elements.addStockForm.reset();
-            elements.editId.value = '';
-            elements.modalTitle.textContent = "Add New Investment";
-            elements.submitStockBtn.textContent = "Add Investment";
-
-            if (elements.fundSourceSelect) {
-                elements.fundSourceSelect.innerHTML = '<option value="">-- Sin traspaso --</option>';
-                const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
-                activeDrawers.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.id;
-                    opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
-                    elements.fundSourceSelect.appendChild(opt);
-                });
-                const storedSource = localStorage.getItem('defaultTransferSource');
-                if (storedSource) elements.fundSourceSelect.value = storedSource;
-            }
-
-            // Robust Today's Date Default
-            const today = new Date().toISOString().split('T')[0];
-            if (elements.dateInput) elements.dateInput.value = today;
-
-            toggleModal(true);
-        }
-
-
 
         // Global JSON Backup Listeners
         if (elements.globalExportBtn) {
@@ -5235,6 +5222,129 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    function updateFiscalCountdown() {
+        console.log("updateFiscalCountdown called");
+        if (!elements.fiscalDaysLeft) {
+            console.warn("elements.fiscalDaysLeft not found");
+            return;
+        }
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth(); // 0-indexed
+        const today = now.getDate();
+
+        // Target: Day X of current or next month
+        let targetMonth = month;
+        let targetYear = year;
+
+        if (today >= fiscalDay) {
+            targetMonth++;
+            if (targetMonth > 11) {
+                targetMonth = 0;
+                targetYear++;
+            }
+        }
+
+        const targetDate = new Date(targetYear, targetMonth, fiscalDay);
+        const diffMs = targetDate - now;
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        console.log(`Calculating days until ${targetYear}-${targetMonth + 1}-${fiscalDay}: ${diffDays} days. fiscalDay: ${fiscalDay}`);
+        elements.fiscalDaysLeft.textContent = (diffDays >= 0 ? diffDays : 0);
+    }
+
+    function showFiscalCalendarModal() {
+        console.log("showFiscalCalendarModal called");
+        if (!elements.fiscalCalendarModal || !elements.fiscalCalendarContent) {
+            console.error("Fiscal modal elements missing", { modal: !!elements.fiscalCalendarModal, content: !!elements.fiscalCalendarContent });
+            return;
+        }
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ];
+
+        // Header
+        const monthTitle = `${monthNames[month]} ${year}`;
+        const modalTitle = document.getElementById('fiscalCalendarTitle');
+        if (modalTitle) modalTitle.textContent = `Calendario Fiscal - ${monthTitle}`;
+
+        // Get first day of month and last day
+        const firstDay = new Date(year, month, 1).getDay(); // 0 (Sun) to 6 (Sat)
+        // Adjust for Monday start: 0->6, 1->0, 2->1 ...
+        const startOffset = (firstDay + 6) % 7;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        let html = `
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; font-size: 0.9rem;">
+            <div style="opacity: 0.5;">L</div><div style="opacity: 0.5;">M</div><div style="opacity: 0.5;">X</div>
+            <div style="opacity: 0.5;">J</div><div style="opacity: 0.5;">V</div><div style="opacity: 0.5;">S</div>
+            <div style="opacity: 0.5;">D</div>
+    `;
+
+        // Empty cells for offset
+        for (let i = 0; i < startOffset; i++) {
+            html += `<div></div>`;
+        }
+
+        // Days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isFiscal = day === fiscalDay;
+            const isToday = day === now.getDate();
+            let style = "padding: 8px; border-radius: 6px; position: relative;";
+
+            if (isFiscal) {
+                style += "background: var(--primary); color: white; font-weight: bold; box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.5);";
+            } else if (isToday) {
+                style += "background: rgba(255,255,255,0.1); border: 1px solid var(--primary);";
+            } else {
+                style += "background: rgba(255,255,255,0.03);";
+            }
+
+            html += `<div style="${style}">${day}${isFiscal ? '<span style="position:absolute; top:-5px; right:5px; font-size:10px;">🚩</span>' : ''}</div>`;
+        }
+
+        html += `</div>`;
+        html += `<p style="margin-top: 1.5rem; font-size: 0.85rem; opacity: 0.7; text-align: center;">
+                El día fiscal está configurado para el día <strong>${fiscalDay}</strong> de cada mes.
+             </p>`;
+
+        elements.fiscalCalendarContent.innerHTML = html;
+        elements.fiscalCalendarModal.classList.remove('hidden');
+    }
+
+    function openAddStockModal() {
+        if (!elements.addStockForm) return;
+        elements.addStockForm.reset();
+        elements.editId.value = '';
+        elements.modalTitle.textContent = "Add New Investment";
+        elements.submitStockBtn.textContent = "Add Investment";
+
+        if (elements.fundSourceSelect) {
+            elements.fundSourceSelect.innerHTML = '<option value="">-- Sin traspaso --</option>';
+            const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
+            activeDrawers.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
+                elements.fundSourceSelect.appendChild(opt);
+            });
+            const storedSource = localStorage.getItem('defaultTransferSource');
+            if (storedSource) elements.fundSourceSelect.value = storedSource;
+        }
+
+        // Robust Today's Date Default
+        const today = new Date().toISOString().split('T')[0];
+        if (elements.dateInput) elements.dateInput.value = today;
+
+        toggleModal(true);
+    }
+
 
     function toggleModal(show) {
         if (!elements.addStockModal) return;
@@ -5752,9 +5862,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.refreshLivePrices(uniqueTickers).then(() => {
                 lastSyncTime = new Date().toLocaleTimeString();
                 isFirstUpdateDone = true;
+                console.log("Prices refreshed, rendering...");
                 render();
+            }).catch(err => {
+                console.error("refreshLivePrices failed:", err);
+                render(); // Render anyway with old prices
             });
         }
+        console.log("initApp completed");
     }
 
     showApp();

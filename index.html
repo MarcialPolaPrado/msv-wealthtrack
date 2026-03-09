@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603091526">
+    <link rel="stylesheet" href="styles.css?v=202603092022">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -326,6 +326,10 @@
                         </div>
                     </div>
                     <div style="display:flex; align-items: center; gap: 0.8rem;">
+                        <button id="fiscalCountdownBtn" class="btn-secondary" title="Días para el próximo mes fiscal"
+                            style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 8px; font-weight: 700; border: 2px solid var(--primary); background: var(--bg-card); color: var(--primary); font-family: var(--font-family); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            📅 <span id="fiscalDaysLeft" style="color: var(--primary);">--</span> días
+                        </button>
                         <button id="exportNominaBtn" class="btn-secondary" title="Exportar CSV"
                             style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
                         <button id="addNominaBtn" class="btn-primary" style="padding: 0.5rem 1rem;">+ Añadir
@@ -951,12 +955,25 @@
         </div>
     </div>
 
+    <!-- Fiscal Calendar Modal -->
+    <div id="fiscalCalendarModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="fiscalCalendarTitle">Calendario Fiscal</h2>
+                <span id="closeFiscalCalendarModal" class="close-modal">&times;</span>
+            </div>
+            <div id="fiscalCalendarContent" style="margin-top: 1.5rem;">
+                <!-- Calendar will be rendered here -->
+            </div>
+        </div>
+    </div>
+
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=202603091526"></script>
+    <script src="app.js?v=202603092022"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <script>
-        const APP_VERSION = '202603091526';
+        const APP_VERSION = '202603092022';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
