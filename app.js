@@ -219,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dateInput: document.getElementById('dateInput'),
         qtyInput: document.getElementById('qtyInput'),
         priceInput: document.getElementById('priceInput'),
+        fundSourceSelect: document.getElementById('fundSourceSelect'),
         filterTabs: document.querySelectorAll('.tab'),
         searchResults: document.getElementById('searchResults'),
         fxIndicator: document.getElementById('fxIndicator'),
@@ -572,6 +573,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.qtyInput.value = '';
         elements.priceInput.value = '';
+
+        if (elements.fundSourceSelect) {
+            elements.fundSourceSelect.innerHTML = '<option value="">-- Sin traspaso --</option>';
+            const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
+            activeDrawers.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
+                elements.fundSourceSelect.appendChild(opt);
+            });
+        }
 
         elements.modalTitle.textContent = `Añadir más - ${stock.name || stock.ticker}`;
         elements.submitStockBtn.textContent = "Add Investment";
@@ -4763,6 +4775,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 stockData.id = editId;
             }
 
+            if (!editId && elements.fundSourceSelect && elements.fundSourceSelect.value) {
+                const drawerId = elements.fundSourceSelect.value;
+                const drawer = savingsDrawers.find(d => d.id === drawerId);
+                if (drawer) {
+                    drawer.balance -= totalInvested;
+                    drawer.movements.push({
+                        id: Date.now() + Math.random(),
+                        date: elements.dateInput.value || new Date().toISOString().split('T')[0],
+                        amount: -totalInvested,
+                        description: `Inversión en ${stockData.name}`,
+                        concept: `Inversión en ${stockData.name}`,
+                        category: 'Traspaso',
+                        activeMonths: [parseInt((elements.dateInput.value || new Date().toISOString().split('T')[0]).split('-')[1])],
+                        paid: false
+                    });
+                    if (window.saveSavings) window.saveSavings(savingsDrawers);
+
+                    // Force re-render of Ahorro view to reflect new balance silently
+                    if (typeof renderSavings === 'function') renderSavings();
+                }
+            }
+
             addStock(stockData);
         });
 
@@ -5077,6 +5111,17 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.editId.value = '';
             elements.modalTitle.textContent = "Add New Investment";
             elements.submitStockBtn.textContent = "Add Investment";
+
+            if (elements.fundSourceSelect) {
+                elements.fundSourceSelect.innerHTML = '<option value="">-- Sin traspaso --</option>';
+                const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
+                activeDrawers.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
+                    elements.fundSourceSelect.appendChild(opt);
+                });
+            }
 
             // Robust Today's Date Default
             const today = new Date().toISOString().split('T')[0];
