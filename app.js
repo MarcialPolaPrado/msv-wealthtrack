@@ -5438,7 +5438,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function getFormattedDateDDMMAAAA() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        return `${dd}${mm}${yyyy}`;
+    }
+
     function exportToCSV(isExcel) {
+
         // Bolsa Export: Ticker, Quantity, Cost Per Share, Currency, Date
         const headers = ['Ticker', 'Quantity', 'Cost Per Share', 'Currency', 'Date'];
         const rows = stocks.map(s => {
@@ -5454,7 +5463,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rows.length === 0) csvContent = headers.join(',');
 
         let blob;
-        let fileName = 'bolsa_export_' + new Date().toISOString().split('T')[0] + '.csv';
+        let fileName = getFormattedDateDDMMAAAA() + '.csv';
+
         if (isExcel) {
             const BOM = '\uFEFF';
             blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -5808,7 +5818,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const blob = new Blob([JSON.stringify(globalData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const fileName = `wealthtrack_backup_${new Date().toISOString().split('T')[0]}.json`;
+        const fileName = getFormattedDateDDMMAAAA() + '.json';
+
         triggerDownload(url, fileName);
     }
 
