@@ -462,7 +462,16 @@ document.addEventListener('DOMContentLoaded', () => {
         incomeCategoriesInput: document.getElementById('incomeCategoriesInput'),
         expenseCategoriesInput: document.getElementById('expenseCategoriesInput'),
         defaultTransferSourceSelect: document.getElementById('defaultTransferSourceSelect'),
-        forceUpdateBtn: document.getElementById('forceUpdateBtn')
+        forceUpdateBtn: document.getElementById('forceUpdateBtn'),
+        transferToAhorroModal: document.getElementById('transferToAhorroModal'),
+        closeTransferModal: document.getElementById('closeTransferModal'),
+        transferToAhorroForm: document.getElementById('transferToAhorroForm'),
+        transferSourceDrawerId: document.getElementById('transferSourceDrawerId'),
+        transferSourceDrawerName: document.getElementById('transferSourceDrawerName'),
+        transferTargetDrawerName: document.getElementById('transferTargetDrawerName'),
+        transferAmountInput: document.getElementById('transferAmountInput'),
+        transferCategorySelect: document.getElementById('transferCategorySelect'),
+        cancelTransferBtn: document.getElementById('cancelTransferBtn')
     };
 
     const updateNominaMovementType = (type) => {
@@ -5575,35 +5584,64 @@ document.addEventListener('DOMContentLoaded', () => {
         const initialMvmt = (drawer.movements || []).find(m => isProvision(m));
         const defaultAmount = initialMvmt ? Math.abs(initialMvmt.amount) : 0;
 
-        const userInput = prompt(`¿Qué cantidad deseas transferir al cajón "${targetAhorroDrawer.name}"?\n(Sugerencia basada en provisión: ${fmtEUR(defaultAmount)})`, defaultAmount);
 
-        if (userInput === null) return;
-        const amountToTransfer = parseFloat(userInput.replace(',', '.'));
+        if (true) {
+            // Setup Modal Categories
+            if (elements.transferCategorySelect) {
+                elements.transferCategorySelect.innerHTML = incomeCategories.map(c => `<option value="${c}" ${c === 'Traspaso' ? 'selected' : ''}>${c}</option>`).join('');
+                elements.transferCategorySelect.value = 'Traspaso';
+            }
 
-        if (isNaN(amountToTransfer) || amountToTransfer <= 0) {
-            alert('Por favor, ingresa una cantidad válida y superior a 0.');
-            return;
-        }
+            // Setup Modal Fields
+            if (elements.transferSourceDrawerId) elements.transferSourceDrawerId.value = drawer.id;
+            if (elements.transferSourceDrawerName) elements.transferSourceDrawerName.textContent = drawer.name;
+            if (elements.transferTargetDrawerName) elements.transferTargetDrawerName.textContent = targetAhorroDrawer.name;
+            if (elements.transferAmountInput) {
+                elements.transferAmountInput.value = defaultAmount.toFixed(2);
+                elements.transferAmountInput.focus();
+            }
 
-        if (confirm(`¿Transferir ${fmtEUR(amountToTransfer)} al cajón de Ahorro "${targetAhorroDrawer.name}"?\n\nNota: Solo se añadirá el ingreso en Ahorro, Nómina no se modificará.`)) {
-            // Add positive movement to Savings
-            targetAhorroDrawer.movements.push({
-                description: `Traspaso desde Nómina (${fiscalMonthStr}) - ${drawer.name}`,
-                date: new Date().toISOString().split('T')[0],
-                amount: amountToTransfer,
-                category: 'Traspaso'
-            });
+            // Show Modal
+            if (elements.transferToAhorroModal) elements.transferToAhorroModal.classList.remove('hidden');
 
-            // Update Savings Balance
-            targetAhorroDrawer.balance = (targetAhorroDrawer.balance || 0) + amountToTransfer;
+            // Handle Form Submit
+            elements.transferToAhorroForm.onsubmit = (e) => {
+                e.preventDefault();
+                const amountToTransfer = parseFloat(elements.transferAmountInput.value);
+                const selectedCategory = elements.transferCategorySelect.value;
 
-            if (window.saveSavings) window.saveSavings(savingsDrawers);
-            showToast(`✅ ${fmtEUR(amountToTransfer)} transferidos a ${targetAhorroDrawer.name}`);
+                if (isNaN(amountToTransfer) || amountToTransfer <= 0) {
+                    alert('Por favor, ingresa una cantidad válida y superior a 0.');
+                    return;
+                }
 
-            // Re-render everything to update UI headers and charts
-            render();
-            // Optional: Close details modal to show changes visually applied in main view? Or leave open. Let's close modal for visual confirmation
-            elements.nominaHistoryModal.classList.add('hidden');
+                // Add positive movement to Savings
+                targetAhorroDrawer.movements.push({
+                    description: `Traspaso desde Nómina (${fiscalMonthStr}) - ${drawer.name}`,
+                    date: new Date().toISOString().split('T')[0],
+                    amount: amountToTransfer,
+                    category: selectedCategory
+                });
+
+                // Update Savings Balance
+                targetAhorroDrawer.balance = (targetAhorroDrawer.balance || 0) + amountToTransfer;
+
+                if (window.saveSavings) window.saveSavings(savingsDrawers);
+                showToast(`✅ ${fmtEUR(amountToTransfer)} transferidos a ${targetAhorroDrawer.name}`);
+
+                // Re-render everything
+                render();
+                elements.transferToAhorroModal.classList.add('hidden');
+                elements.nominaHistoryModal.classList.add('hidden');
+            };
+
+            // Handle Cancel
+            elements.cancelTransferBtn.onclick = () => {
+                elements.transferToAhorroModal.classList.add('hidden');
+            };
+            elements.closeTransferModal.onclick = () => {
+                elements.transferToAhorroModal.classList.add('hidden');
+            };
         }
     }
 
