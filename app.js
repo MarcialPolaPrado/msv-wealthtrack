@@ -6010,7 +6010,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const countdownDateInput = document.getElementById('countdownDateInput');
         const countdownsList = document.getElementById('countdownsList');
 
-        let countdowns_local_shadow_removed = null;
+        
         let clockInterval;
 
         function updateClock() {
