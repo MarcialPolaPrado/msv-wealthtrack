@@ -316,7 +316,6 @@ document.addEventListener('DOMContentLoaded', () => {
         drawersGrid: document.getElementById('drawersGrid'),
         addDrawerBtn: document.getElementById('addDrawerBtn'),
         ahorroAnalisisViewBtn: document.getElementById('ahorroAnalisisViewBtn'),
-        exportSavingsBtn: document.getElementById('exportSavingsBtn'),
 
         // Savings Modal Elements
         savingsInputModal: document.getElementById('savingsInputModal'),
@@ -378,7 +377,6 @@ document.addEventListener('DOMContentLoaded', () => {
         addNominaBtn: document.getElementById('addNominaBtn'),
         nominaDrawerMonthsCheckboxes: document.getElementById('nominaDrawerMonthsCheckboxes'),
         selectAllDrawerMonths: document.getElementById('selectAllDrawerMonths'),
-        exportNominaBtn: document.getElementById('exportNominaBtn'),
         fiscalCountdownBtn: document.getElementById('fiscalCountdownBtn'),
         fiscalDaysLeft: document.getElementById('fiscalDaysLeft'),
         fiscalCalendarModal: document.getElementById('fiscalCalendarModal'),
@@ -4693,9 +4691,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Nomina Listeners
 
-        if (elements.exportSavingsBtn) {
-            elements.exportSavingsBtn.addEventListener('click', () => exportSavingsToCSV());
-        }
         if (elements.importSavingsBtn) {
             elements.importSavingsBtn.addEventListener('click', () => {
                 alert('La importación de CSV ha sido desactivada. Usa el backup JSON global.');
@@ -4728,9 +4723,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (elements.closeNominaModal) {
             elements.closeNominaModal.addEventListener('click', () => toggleNominaModal(false));
-        }
-        if (elements.exportNominaBtn) {
-            elements.exportNominaBtn.addEventListener('click', () => exportNominaToCSV());
         }
         if (elements.importNominaBtn) {
             elements.importNominaBtn.addEventListener('click', () => {
@@ -5472,31 +5464,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return [ticker, s.qty, price.toFixed(4), currency, s.date].join(',');
         });
-        let csvContent = headers.join(',') + '\n' + rows.join('\n');
+        const csvContent = headers.join(',') + '\n' + rows.join('\n');
         let blob;
-        let fileName = 'portfolio_export_' + new Date().toISOString().split('T')[0] + '.csv';
+        const fileName = 'portfolio_export_' + new Date().toISOString().split('T')[0] + '.csv';
         if (isExcel) {
             const BOM = '\uFEFF';
             blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
         } else {
             blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         }
-        const url = URL.createObjectURL(blob);
-        triggerDownload(url, fileName);
-    }
-
-    function exportSavingsToCSV() {
-        const headers = ['Type', 'DrawerID', 'Name/Description', 'Icon/Date', 'Balance/Amount', 'Category'];
-        const csvRows = [headers.join(',')];
-        savingsDrawers.forEach(drawer => {
-            csvRows.push(['DRAWER', drawer.id, drawer.name, drawer.icon, drawer.balance, ''].join(','));
-            drawer.movements.forEach(m => {
-                csvRows.push(['MOVEMENT', drawer.id, m.description, m.date, m.amount, m.category || ''].join(','));
-            });
-        });
-        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-        const encodedUri = encodeURI(csvContent);
-        triggerDownload(encodedUri, `ahorros_msv_${new Date().toISOString().split('T')[0]}.csv`);
+        triggerDownload(blob, fileName);
     }
 
     // importSavingsFromCSV removed as per request
@@ -5817,23 +5794,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.nominaHistoryModal) elements.nominaHistoryModal.classList.remove('hidden');
     }
 
-    function exportNominaToCSV() {
-        const headers = ['Type', 'DrawerID', 'Name/Description', 'Icon/Date', 'Balance/Amount', 'Months', 'Paid', 'LinkedAhorroID'];
-        const csvRows = [headers.join(',')];
-        nominaData.forEach(drawer => {
-            const initialMvmt = (drawer.movements || []).find(m => isProvision(m));
-            const drawerMonths = (initialMvmt?.activeMonths || []).join('|');
-            csvRows.push(['DRAWER', drawer.id, drawer.name, drawer.type || '', drawer.balance, drawerMonths, '', drawer.linkedSavingsDrawerId || ''].join(','));
-            drawer.movements.forEach(m => {
-                const movMonths = (m.activeMonths || []).join('|');
-                csvRows.push(['MOVEMENT', drawer.id, m.concept || m.description, m.date, m.amount, movMonths, m.paid ? '1' : '0', ''].join(','));
-            });
-        });
-        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-        const encodedUri = encodeURI(csvContent);
-        triggerDownload(encodedUri, `nomina_msv_${new Date().toISOString().split('T')[0]}.csv`);
-    }
-
     // importNominaFromCSV removed as per request
 
     // --- Global JSON Backup/Restore ---
@@ -5853,9 +5813,8 @@ document.addEventListener('DOMContentLoaded', () => {
             version: "1.1"
         };
         const blob = new Blob([JSON.stringify(globalData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
         const fileName = `wealthtrack_backup_${new Date().toISOString().split('T')[0]}.json`;
-        triggerDownload(url, fileName);
+        triggerDownload(blob, fileName);
     }
 
     function importGlobalJSON(file) {
@@ -5928,11 +5887,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }, duration);
     }
 
-    async function triggerDownload(contentUri, fileName) {
+    async function triggerDownload(blob, fileName) {
         try {
             // Try to use File System Access API for better experience (handles Overwrite natively)
             if ('showSaveFilePicker' in window) {
-                const blob = await fetch(contentUri).then(r => r.blob());
                 const handle = await window.showSaveFilePicker({
                     suggestedName: fileName,
                     types: [{
@@ -5953,10 +5911,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Fallback for browsers/mobile without FileSystem API
+        const url = URL.createObjectURL(blob);
         const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', contentUri);
+        linkElement.setAttribute('href', url);
         linkElement.setAttribute('download', fileName);
         linkElement.click();
+
+        // Clean up
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
 
         showToast(`Descarga iniciada: ${fileName}`);
         console.log(`File ${fileName} exported successfully (fallback)`);
