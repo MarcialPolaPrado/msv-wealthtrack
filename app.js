@@ -5438,13 +5438,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function getFormattedDateDDMMAAAA() {
+    function getFormattedDateWithTime() {
         const now = new Date();
         const dd = String(now.getDate()).padStart(2, '0');
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const yyyy = now.getFullYear();
-        return `${dd}${mm}${yyyy}`;
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        return `${dd}${mm}${yyyy}_${hh}${min}`;
     }
+
 
     function exportToCSV(isExcel) {
 
@@ -5463,7 +5466,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rows.length === 0) csvContent = headers.join(',');
 
         let blob;
-        let fileName = getFormattedDateDDMMAAAA() + '.csv';
+        let fileName = getFormattedDateWithTime() + '.csv';
+
 
         if (isExcel) {
             const BOM = '\uFEFF';
@@ -5818,7 +5822,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const blob = new Blob([JSON.stringify(globalData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const fileName = getFormattedDateDDMMAAAA() + '.json';
+        const fileName = getFormattedDateWithTime() + '.json';
+
 
         triggerDownload(url, fileName);
     }
