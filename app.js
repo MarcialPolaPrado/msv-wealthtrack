@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     let isPrivacyActive = localStorage.getItem('isPrivacyActive') === 'true' || false;
     let currentView = 'bolsa';
+    let lastViewBeforeAnalisis = 'nomina';
     let lastSyncTime = '-';
 
     // Global Formatters
@@ -314,6 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         misCajonesTitle: document.getElementById('misCajonesTitle'),
         drawersGrid: document.getElementById('drawersGrid'),
         addDrawerBtn: document.getElementById('addDrawerBtn'),
+        ahorroAnalisisViewBtn: document.getElementById('ahorroAnalisisViewBtn'),
         exportSavingsBtn: document.getElementById('exportSavingsBtn'),
 
         // Savings Modal Elements
@@ -1953,6 +1955,10 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroTableViewBtn.style.background = 'var(--primary)';
             elements.ahorroTableViewBtn.style.color = 'white';
 
+            elements.ahorroAnalisisViewBtn?.classList.remove('active');
+            elements.ahorroAnalisisViewBtn.style.background = 'transparent';
+            elements.ahorroAnalisisViewBtn.style.color = 'var(--text-muted)';
+
             renderSavingsList();
         } else {
             elements.drawersGrid?.classList.remove('hidden');
@@ -1965,6 +1971,10 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroTableViewBtn?.classList.remove('active');
             elements.ahorroTableViewBtn.style.background = 'transparent';
             elements.ahorroTableViewBtn.style.color = 'var(--text-muted)';
+
+            elements.ahorroAnalisisViewBtn?.classList.remove('active');
+            elements.ahorroAnalisisViewBtn.style.background = 'transparent';
+            elements.ahorroAnalisisViewBtn.style.color = 'var(--text-muted)';
         }
 
         elements.drawersGrid.innerHTML = '';
@@ -3417,6 +3427,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function switchView(view) {
+        if (view === 'analisis' && currentView !== 'analisis') {
+            lastViewBeforeAnalisis = currentView;
+        }
         currentView = view;
         elements.navItems.forEach(item => {
             item.classList.toggle('active', item.dataset.view === view);
@@ -4796,7 +4809,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Analisis Listeners
         if (elements.analisisVolverBtn) {
             elements.analisisVolverBtn.addEventListener('click', () => {
-                switchView('nomina');
+                switchView(lastViewBeforeAnalisis || 'nomina');
+            });
+        }
+        if (elements.ahorroAnalisisViewBtn) {
+            elements.ahorroAnalisisViewBtn.addEventListener('click', () => {
+                switchView('analisis');
             });
         }
         if (elements.analisisTableViewBtn) {

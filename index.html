@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603100758">
+    <link rel="stylesheet" href="styles.css?v=202603101646">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -222,6 +222,9 @@
                             <h2 id="misCajonesTitle" style="margin:0">Mis Cajones</h2>
                             <div class="view-toggle"
                                 style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <button id="ahorroAnalisisViewBtn" class="btn-sm"
+                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">📊
+                                    Análisis</button>
                                 <button id="ahorroCardViewBtn" class="btn-sm active"
                                     style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">Cajones</button>
                                 <button id="ahorroTableViewBtn" class="btn-sm"
@@ -991,7 +994,7 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=2026030616"></script>
-    <script src="app.js?v=202603100758"></script>
+    <script src="app.js?v=202603101646"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1035,7 +1038,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603100758';
+        const APP_VERSION = '202603101646';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
