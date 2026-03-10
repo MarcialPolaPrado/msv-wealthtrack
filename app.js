@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSavingsPieExpanded = localStorage.getItem('isSavingsPieExpanded') !== 'false';
     let isBolsaPieExpanded = localStorage.getItem('isBolsaPieExpanded') !== 'false';
     let isExpenseSummaryExpanded = localStorage.getItem('isExpenseSummaryExpanded') !== 'false';
+    let isNominaIngresosExpanded = localStorage.getItem('isNominaIngresosExpanded') !== 'false';
+    let isNominaAhorroExpanded = localStorage.getItem('isNominaAhorroExpanded') !== 'false';
+    let isNominaGastosExpanded = localStorage.getItem('isNominaGastosExpanded') !== 'false';
 
     // Dynamic Settings
     let fiscalDay = parseInt(localStorage.getItem('fiscalDay')) || 25;
@@ -2504,19 +2507,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Helper: build a labeled section with its own responsive sub-grid
-    function buildSection(grid, title, icon, color, cards, totalAmount) {
+    function buildSection(grid, title, icon, color, cards, totalAmount, storageKey) {
         if (cards.length === 0) return null;
         const section = document.createElement('div');
         section.style.marginBottom = '2rem';
 
+        const isExpanded = storageKey ? localStorage.getItem(storageKey) !== 'false' : true;
+
         const header = document.createElement('div');
-        header.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:1rem; padding-bottom:0.6rem; border-bottom:2px solid ' + color + '22;';
-        const totalStr = totalAmount !== undefined ? `<span style="margin-left:0.8rem; font-weight:700; color:${color}; font-size:0.95rem;">${fmtEUR(totalAmount)}</span>` : '';
-        header.innerHTML = `<span style="font-size:1.3rem;">${icon}</span><h3 style="margin:0; font-size:1rem; color:${color}; font-weight:700; letter-spacing:0.02em;">${title} (${cards.length})</h3>${totalStr}`;
+        header.className = storageKey ? 'collapsible-section-head' : '';
+        header.setAttribute('role', storageKey ? 'button' : '');
+        header.setAttribute('tabindex', storageKey ? '0' : '');
+        header.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:1rem; padding-bottom:0.6rem; border-bottom:2px solid ' + color + '22; cursor: pointer; user-select: none; transition: background 0.2s; border-radius: 8px; padding: 0.5rem; touch-action: manipulation;';
+
+        const totalStr = totalAmount !== undefined ? `<span style="margin-left:auto; font-weight:700; color:${color}; font-size:0.95rem;">${fmtEUR(totalAmount)}</span>` : '';
+        header.innerHTML = `
+            <span style="font-size:1.3rem;">${icon}</span>
+            <h3 style="margin:0; font-size:1rem; color:${color}; font-weight:700; letter-spacing:0.02em;">
+                ${title} (${cards.length})
+                ${storageKey ? `<span class="toggle-arrow ${isExpanded ? 'expanded' : ''}" style="margin-left: 8px; font-size: 0.8rem; opacity: 0.5;">▼</span>` : ''}
+            </h3>
+            ${totalStr}
+        `;
 
         const subGrid = document.createElement('div');
+        subGrid.className = `drawer-subgrid collapsible-content ${isExpanded ? 'expanded' : ''}`;
         subGrid.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1.2rem;';
         cards.forEach(c => subGrid.appendChild(c));
+
+        if (storageKey) {
+            const toggleHandler = (e) => {
+                if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                const nowExpanded = !subGrid.classList.contains('expanded');
+                subGrid.classList.toggle('expanded', nowExpanded);
+                header.querySelector('.toggle-arrow')?.classList.toggle('expanded', nowExpanded);
+                localStorage.setItem(storageKey, nowExpanded);
+
+                // Update internal state if it matches one of the known keys
+                if (storageKey === 'isNominaIngresosExpanded') isNominaIngresosExpanded = nowExpanded;
+                if (storageKey === 'isNominaAhorroExpanded') isNominaAhorroExpanded = nowExpanded;
+                if (storageKey === 'isNominaGastosExpanded') isNominaGastosExpanded = nowExpanded;
+            };
+
+            header.addEventListener('click', toggleHandler);
+            header.addEventListener('keydown', toggleHandler);
+
+            header.onmouseenter = () => { header.style.background = 'rgba(255,255,255,0.03)'; };
+            header.onmouseleave = () => { header.style.background = 'transparent'; };
+        }
 
         section.appendChild(header);
         section.appendChild(subGrid);
@@ -3059,9 +3098,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render the sections
 
         grid.style.display = 'block'; // sections handle their own grid
-        const incomeSubGrid = buildSection(grid, 'Distribución Ingresos', '📈', '#10b981', incomeCards, totalPrimaryIncome);
-        buildSection(grid, 'Distribución Ahorro', '🏦', '#f59e0b', savingCards, savingsSecTotal);
-        buildSection(grid, 'Distribución Gastos', '📉', '#ef4444', expenseCards, totalPlannedExpensesManual);
+        const incomeSubGrid = buildSection(grid, 'Distribución Ingresos', '📈', '#10b981', incomeCards, totalPrimaryIncome, 'isNominaIngresosExpanded');
+        buildSection(grid, 'Distribución Ahorro', '🏦', '#f59e0b', savingCards, savingsSecTotal, 'isNominaAhorroExpanded');
+        buildSection(grid, 'Distribución Gastos', '📉', '#ef4444', expenseCards, totalPlannedExpensesManual, 'isNominaGastosExpanded');
 
         // Pie chart next to income drawers — same grid item, auto-placed to the right or below
         if (incomeSubGrid) {
