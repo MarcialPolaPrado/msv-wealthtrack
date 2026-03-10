@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let isNominaIngresosExpanded = localStorage.getItem('isNominaIngresosExpanded') !== 'false';
     let isNominaAhorroExpanded = localStorage.getItem('isNominaAhorroExpanded') !== 'false';
     let isNominaGastosExpanded = localStorage.getItem('isNominaGastosExpanded') !== 'false';
+    let expandedSummaryDrawers = new Set();
+
+
 
     // Dynamic Settings
     let fiscalDay = parseInt(localStorage.getItem('fiscalDay')) || 25;
@@ -3229,84 +3232,43 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 0.8rem; opacity: 0.6;">Total Pagado</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--danger);">${fmtEUR(totalPaidExpensesManual)} <span style="font-size: 0.8rem; opacity: 0.6; font-weight: 400; color: var(--text-color);">de planeado: ${fmtEUR(totalPlannedExpensesManual)}</span></div>
+                        <div style="font-size: 0.8rem; opacity: 0.6;">Total Planeado</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--danger);">${fmtEUR(totalPlannedExpensesManual)}</div>
                     </div>
                 </div>
 
                 <div class="collapsible-content ${isExpenseSummaryExpanded ? 'expanded' : ''}" id="expenseSummaryContent">
                     <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px;">
-                        ${Object.entries(totalsByDrawer).map(([drawerId, data]) => `
-                            <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                                    <span>${data.icon}</span>
-                                    <span style="font-size: 0.85rem; opacity: 0.8;">${data.name}</span>
+                        ${Object.entries(totalsByDrawer).map(([drawerId, data]) => {
+                const isExpanded = expandedSummaryDrawers.has(drawerId);
+                const drawerMovements = allMonthlyExpenses.filter(m => m.drawerId == drawerId);
+                return `
+                            <div class="summary-drawer-box" style="background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; display: flex; flex-direction: column; cursor: pointer;" data-drawer-id="${drawerId}">
+                                <div style="padding: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                        <span>${data.icon}</span>
+                                        <span style="font-size: 0.85rem; opacity: 0.8;">${data.name}</span>
+                                    </div>
+                                    <div style="text-align: right; line-height: 1.1;">
+                                        <div style="font-weight: 700; color: var(--danger); font-size: 0.9rem;">${fmtEUR(Math.abs(data.spent))}</div>
+                                        <div style="font-size: 0.7rem; opacity: 0.6; color: var(--text-color);">de ${fmtEUR(data.provision)}</div>
+                                    </div>
                                 </div>
-                                <div style="text-align: right; line-height: 1.1;">
-                                    <div style="font-weight: 700; color: var(--danger); font-size: 0.9rem;">${fmtEUR(Math.abs(data.spent))}</div>
-                                    <div style="font-size: 0.7rem; opacity: 0.6; color: var(--text-color);">de ${fmtEUR(data.provision)}</div>
+                                <div class="collapsible-content ${isExpanded ? 'expanded' : ''}" style="background: rgba(0,0,0,0.1);">
+                                    <div style="padding: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                                        ${drawerMovements.sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => `
+                                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                                <span style="opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px;">${m.concept || m.description}</span>
+                                                <span style="font-weight: 600; color: var(--danger);">${fmtEUR(m.amount)}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
                                 </div>
                             </div>
-                        `).join('')}
+                        `;
+            }).join('')}
                     </div>
 
-                    <div style="margin-top: 1.5rem; max-height: 250px; overflow-y: auto; padding-right: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-                        <h5 style="margin: 0 0 0.8rem 0; font-size: 0.8rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em;">Desglose Detallado</h5>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem;">
-                            ${(() => {
-                    const grouped = allMonthlyExpenses.reduce((acc, exp) => {
-                        if (!acc[exp.drawerId]) acc[exp.drawerId] = { name: exp.drawerName, icon: exp.icon, items: [] };
-                        acc[exp.drawerId].items.push(exp);
-                        return acc;
-                    }, {});
-
-                    return Object.entries(grouped).map(([drawerId, group]) => {
-                        const boxTotal = group.items.reduce((sum, m) => sum + Math.abs(m.amount), 0);
-                        const boxPending = group.items.filter(m => !m.paid).reduce((sum, m) => sum + Math.abs(m.amount), 0);
-                        const allPaid = group.items.every(m => m.paid);
-
-                        return `
-                                    <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; display: flex; flex-direction: column; height: fit-content;">
-                                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.6rem; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
-                                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;">
-                                                <input type="checkbox" class="nomina-checkbox master-paid-checkbox" data-drawer-id="${drawerId}" ${allPaid ? 'checked' : ''} title="Marcar/Desmarcar todos">
-                                                <span style="font-size: 1rem; width: 20px; text-align: center;">${group.icon}</span>
-                                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${group.name}</span>
-                                            </div>
-                                            <div class="box-total-group" style="flex-shrink: 0; margin-left: 8px;">
-                                                <div style="display: flex; gap: 8px; align-items: center;">
-                                                    <span class="box-total-label">tot.</span>
-                                                    <span class="box-total-value">${fmtEUR(boxTotal)}</span>
-                                                </div>
-                                                <div style="display: flex; gap: 8px; align-items: center;">
-                                                    <span class="box-total-label">pend.</span>
-                                                    <span class="box-total-value" style="color: ${boxPending > 0 ? 'var(--danger)' : 'var(--success)'};">${fmtEUR(boxPending)}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style="display: flex; flex-direction: column;">
-                                            ${group.items.sort((a, b) => new Date(b.date) - new Date(a.date)).map((m, idx) => `
-                                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.6rem; ${idx < group.items.length - 1 ? 'border-bottom: 1px solid rgba(255,255,255,0.02);' : ''}">
-                                                    <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1;">
-                                                        <input type="checkbox" class="nomina-checkbox line-paid-checkbox" 
-                                                            data-drawer-id="${m.drawerId}" 
-                                                            data-id="${m.id}" 
-                                                            ${m.paid ? 'checked' : ''} 
-                                                            title="Marcar como pagado">
-                                                        <span class="line-concept ${m.paid ? 'movement-item-paid' : ''}" 
-                                                            style="font-size: 0.7rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" 
-                                                            title="${m.concept || m.description}">${m.concept || m.description}</span>
-                                                    </div>
-                                                    <span style="font-size: 0.75rem; font-weight: 600; color: var(--danger); white-space: nowrap; margin-left: 8px;">${fmtEUR(m.amount)}</span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                `;
-                    }).join('');
-                })()}
-                        </div>
-                    </div>
                 </div>
             `;
             grid.appendChild(summaryCard);
@@ -3369,37 +3331,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Event delegation or direct listeners
         grid.onclick = (e) => {
             const btn = e.target.closest('button');
-            const checkbox = e.target.closest('input[type="checkbox"]');
+            const summaryDrawerBox = e.target.closest('.summary-drawer-box');
 
-            if (checkbox) {
-                if (checkbox.classList.contains('line-paid-checkbox')) {
-                    const drawerId = checkbox.dataset.drawerId;
-                    const movementId = checkbox.dataset.id;
-                    const drawer = nominaData.find(d => d.id == drawerId);
-                    if (drawer) {
-                        const movement = drawer.movements.find(m => m.id == movementId);
-                        if (movement) {
-                            movement.paid = checkbox.checked;
-                            if (window.saveNomina) window.saveNomina(nominaData);
-                            renderNomina();
-                        }
-                    }
-                } else if (checkbox.classList.contains('master-paid-checkbox')) {
-                    const drawerId = checkbox.dataset.drawerId;
-                    const drawer = nominaData.find(d => d.id == drawerId);
-                    if (drawer) {
-                        // Toggle paid for all movements visible in the summary for this drawer
-                        drawer.movements.forEach(m => {
-                            if ((m.activeMonths || []).includes(currentMonthNum) && !isProvision(m)) {
-                                m.paid = checkbox.checked;
-                            }
-                        });
-                        if (window.saveNomina) window.saveNomina(nominaData);
-                        renderNomina();
-                    }
+            if (summaryDrawerBox) {
+                const drawerId = summaryDrawerBox.dataset.drawerId;
+                if (expandedSummaryDrawers.has(drawerId)) {
+                    expandedSummaryDrawers.delete(drawerId);
+                } else {
+                    expandedSummaryDrawers.add(drawerId);
                 }
+                renderNomina();
                 return;
             }
+
 
             if (!btn) return;
             const id = btn.dataset.id;
