@@ -795,7 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tableWrapper && !tableWrapper.querySelector('#bolsaTotalesToggle')) {
                 const toggleBtn = document.createElement('div');
                 toggleBtn.style.cssText = 'display:flex; justify-content:flex-end; padding: 0.5rem 0 0.3rem 0;';
-                toggleBtn.innerHTML = `<button id="bolsaTotalesToggle" class="totales-toggle-btn">📊 Totales</button>`;
+                toggleBtn.innerHTML = `<button id="bolsaTotalesToggle" class="totales-toggle-btn" title="Alternar Vista Totales">📊</button>`;
                 tableWrapper.insertBefore(toggleBtn, elements.stockTable);
                 toggleBtn.querySelector('#bolsaTotalesToggle').addEventListener('click', () => {
                     bolsaTotalsMode = !bolsaTotalsMode;
@@ -1034,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td><div style="display:flex; gap:0.3rem; flex-wrap:wrap;">${signalsHtml}</div></td>
                     <td>
                         <div style="display:flex; gap:0.4rem; align-items:center;">
-                            <button class="btn-primary add-more-btn" data-ticker="${group.ticker}" title="Añadir más" style="padding: 0.4rem 0.6rem; font-size: 1rem; box-shadow: none; background: var(--success); border-color: var(--success);">+</button>
+                            <button class="btn-primary add-more-btn" data-ticker="${group.ticker}" title="Añadir Inversión" style="padding: 0.4rem 0.6rem; font-size: 1rem; box-shadow: none; background: var(--success); border-color: var(--success);">➕</button>
                             <button class="btn-primary details-btn" data-ticker="${group.ticker}" title="Ver Detalles" style="padding: 0.4rem 0.6rem; font-size: 1rem; box-shadow: none; background: var(--primary); border-color: var(--primary);">🔍</button>
                         </div>
                     </td>
@@ -1068,8 +1068,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             </td>
                             <td>
                                 <div style="display:flex; gap:0.3rem;">
-                                    <button class="btn-primary edit-btn" data-id="${item.id}" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; box-shadow: none;">Edit</button>
-                                    <button class="btn-danger delete-btn" data-id="${item.id}" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Del</button>
+                                    <button class="btn-primary edit-btn" data-id="${item.id}" title="Editar" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; box-shadow: none;">✏️</button>
+                                    <button class="btn-danger delete-btn" data-id="${item.id}" title="Borrar" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">🗑️</button>
                                 </div>
                             </td>
                         `;
@@ -1885,10 +1885,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>${drawer.icon} ${drawer.name}</span>
                         ${(!drawer.isAuto && ahorroListFilterMode === 'detail') ? `
                             <div class="list-actions">
-                                <button class="add-mvmt-list-btn btn-primary">+ Mov</button>
-                                <button class="transfer-list-btn btn-secondary">⇆ Tx</button>
-                                <button class="edit-drawer-list-btn btn-secondary">✏️</button>
-                                <button class="delete-drawer-list-btn btn-danger">🗑️</button>
+                                <button class="add-mvmt-list-btn btn-primary" title="Añadir Movimiento">➕</button>
+                                <button class="transfer-list-btn btn-secondary" title="Transferir">⇆</button>
+                                <button class="edit-drawer-list-btn btn-secondary" title="Editar Cajón">✏️</button>
+                                <button class="delete-drawer-list-btn btn-danger" title="Borrar Cajón">🗑️</button>
                             </div>
                         ` : ''}
                     </div>
@@ -2137,9 +2137,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                    <button class="add-mvmt-btn btn-primary" data-ticker="${group.ticker}" style="padding:0.4rem 0.8rem; font-size:0.8rem;">+</button>
-                    <button class="history-btn btn-secondary" data-ticker="${group.ticker}" style="padding:0.4rem 0.8rem; font-size:0.8rem;">Hist.</button>
-                    <button class="details-btn btn-secondary" data-ticker="${group.ticker}" style="padding:0.4rem 0.8rem; font-size:0.8rem;">🔍 Det.</button>
+                    <button class="add-mvmt-btn btn-primary" data-ticker="${group.ticker}" title="Añadir Movimiento" style="padding:0.4rem 0.8rem; font-size:0.8rem;">➕</button>
+                    <button class="history-btn btn-secondary" data-ticker="${group.ticker}" title="Historial" style="padding:0.4rem 0.8rem; font-size:0.8rem;">🕒</button>
+                    <button class="details-btn btn-secondary" data-ticker="${group.ticker}" title="Ver Detalles" style="padding:0.4rem 0.8rem; font-size:0.8rem;">🔍</button>
                 </div>
 
                 <div id="history-${group.ticker.replace(/[^a-zA-Z0-9]/g, '_')}" class="hidden" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
@@ -2158,8 +2158,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <div class="${itemPL >= 0 ? 'profit' : 'loss'}" style="font-size: 0.75rem;">${itemPL !== null ? (itemPL >= 0 ? '+' : '') + fmtEUR(itemPL) : '-'}</div>
                                     </div>
                                     <div style="display: flex; gap: 5px; margin-left: 10px;">
-                                        <button class="edit-btn-small" data-id="${item.id}" style="background:none; border:none; cursor:pointer; opacity:0.6;">✏️</button>
-                                        <button class="delete-btn-small" data-id="${item.id}" style="background:none; border:none; cursor:pointer; opacity:0.6;">🗑️</button>
+                                        <button class="edit-btn-small" data-id="${item.id}" title="Editar" style="background:none; border:none; cursor:pointer; opacity:0.6;">✏️</button>
+                                        <button class="delete-btn-small" data-id="${item.id}" title="Borrar" style="background:none; border:none; cursor:pointer; opacity:0.6;">🗑️</button>
                                     </div>
                                 </div>
                             `;
@@ -2742,10 +2742,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>${drawer.icon || getNominaIcon(drawer.name, drawer.type)} ${drawer.name}</span>
                         ${(!drawer.isAutomatic && nominaListFilterMode === 'detail') ? `
                             <div class="list-actions">
-                                <button class="add-nomina-mvmt-list-btn btn-primary">+ Mov</button>
+                                <button class="add-nomina-mvmt-list-btn btn-primary" title="Añadir Movimiento">➕</button>
                                 ${drawer.linkedSavingsDrawerId ? `<button class="transfer-nomina-ahorro-list-btn btn-primary" style="background:var(--success); padding: 0.3rem 0.6rem;" title="Transferir Ahorro">➡️</button>` : ''}
-                                <button class="edit-nomina-drawer-list-btn btn-secondary">✏️</button>
-                                <button class="delete-nomina-drawer-list-btn btn-danger">🗑️</button>
+                                <button class="edit-nomina-drawer-list-btn btn-secondary" title="Editar Cajón">✏️</button>
+                                <button class="delete-nomina-drawer-list-btn btn-danger" title="Borrar Cajón">🗑️</button>
                             </div>
                         ` : ''}
                     </div>
@@ -3091,8 +3091,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 ${balanceDisplay}
                 <div class="drawer-footer" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                   <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1" title="Añadir Movimiento">+ Mov.</button>
-                   <button class="btn-primary btn-sm view-nomina-details" data-id="${concept.id}" style="flex:1">Historial</button>
+                   <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1" title="Añadir Movimiento">➕</button>
+                   <button class="btn-primary btn-sm view-nomina-details" data-id="${concept.id}" style="flex:1" title="Historial">🕒</button>
                    ${concept.linkedSavingsDrawerId ? `<button class="btn-primary btn-sm transfer-nomina-ahorro" data-id="${concept.id}" style="background:var(--success); padding: 0.5rem; flex: 0 0 auto;" title="Transferir Ahorro">➡️</button>` : ''}
                 </div>
             `;
@@ -3632,13 +3632,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button id="editDrawerFromDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.2rem;" title="Editar Cajón">✏️</button>
                             <button id="deleteDrawerFromDetails" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1.2rem;" title="Borrar Cajón">🗑️</button>
                         ` : ''}
-                        <button id="closeDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.5rem;">✕</button>
+                        <button id="closeDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.5rem;" title="Cerrar">✕</button>
                     </div>
                 </div>
                 <div style="margin-top:1.5rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--primary); padding-bottom: 3px; margin-bottom: 1rem;">
                         <h3 style="margin:0">Historial</h3>
-                        ${!drawer.isAuto && drawer.movements.length > 1 ? `<button id="consolidateBtn" class="btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;">📦 Consolidar</button>` : ''}
+                        ${!drawer.isAuto && drawer.movements.length > 1 ? `<button id="consolidateBtn" class="btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" title="Consolidar">📦</button>` : ''}
                     </div>
                     <div>${movementsHtml}</div>
                 </div>
@@ -5689,8 +5689,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     btnContainer.style = 'margin-top: -10px; margin-bottom: 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;';
                     btnContainer.innerHTML = `
                         <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Vinculado a: <strong>${targetAhorro.name}</strong></p>
-                        <button class="btn-primary" id="btnTransferToAhorro" style="width: 100%; background: var(--success); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span>➡️</span> Transferir Ahorro del Mes
+                        <button class="btn-primary" id="btnTransferToAhorro" title="Transferir a Ahorro" style="width: 100%; background: var(--success); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            ➡️
                         </button>
                     `;
                     elements.nominaMovementsList.parentElement.insertBefore(btnContainer, elements.nominaMovementsList);
