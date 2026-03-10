@@ -2522,10 +2522,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const totalStr = totalAmount !== undefined ? `<span style="margin-left:auto; font-weight:700; color:${color}; font-size:0.95rem;">${fmtEUR(totalAmount)}</span>` : '';
         header.innerHTML = `
-            <span style="font-size:1.3rem;">${icon}</span>
+            <span class="section-toggle-icon ${isExpanded ? 'expanded' : ''}" style="font-size:1.3rem; transition: transform 0.3s ease; display: inline-block;">${icon}</span>
             <h3 style="margin:0; font-size:1rem; color:${color}; font-weight:700; letter-spacing:0.02em;">
                 ${title} (${cards.length})
-                ${storageKey ? `<span class="toggle-arrow ${isExpanded ? 'expanded' : ''}" style="margin-left: 8px; font-size: 0.8rem; opacity: 0.5;">▼</span>` : ''}
             </h3>
             ${totalStr}
         `;
@@ -2541,7 +2540,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const nowExpanded = !subGrid.classList.contains('expanded');
                 subGrid.classList.toggle('expanded', nowExpanded);
-                header.querySelector('.toggle-arrow')?.classList.toggle('expanded', nowExpanded);
+                header.querySelector('.section-toggle-icon')?.classList.toggle('expanded', nowExpanded);
                 localStorage.setItem(storageKey, nowExpanded);
 
                 // Update internal state if it matches one of the known keys
