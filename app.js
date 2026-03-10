@@ -79,21 +79,21 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 }
     ];
 
+    let currentGoalDrawerId = null;
+
     function setDrawerTargetAmount(id) {
         const drawer = savingsDrawers.find(d => d.id === id);
         if (!drawer) return;
 
-        const currentTarget = drawer.targetAmount || 0;
-        const msg = `Establecer objetivo para "${drawer.name}":\n(Introduce 0 para quitar el objetivo)`;
-        const result = prompt(msg, currentTarget);
-
-        if (result !== null) {
-            const newTarget = parseFloat(result.replace(',', '.'));
-            if (!isNaN(newTarget)) {
-                drawer.targetAmount = Math.max(0, newTarget);
-                if (window.saveSavings) window.saveSavings(savingsDrawers);
-                renderSavings();
-            }
+        currentGoalDrawerId = id;
+        if (elements.goalModalDescription) {
+            elements.goalModalDescription.textContent = `Establece el importe objetivo para "${drawer.name}". Introduce 0 para quitarlo.`;
+        }
+        if (elements.goalAmountInput) {
+            elements.goalAmountInput.value = drawer.targetAmount || 0;
+        }
+        if (elements.goalModal) {
+            elements.goalModal.classList.remove('hidden');
         }
     }
 
@@ -474,7 +474,14 @@ document.addEventListener('DOMContentLoaded', () => {
         transferTargetDrawerName: document.getElementById('transferTargetDrawerName'),
         transferAmountInput: document.getElementById('transferAmountInput'),
         transferCategorySelect: document.getElementById('transferCategorySelect'),
-        cancelTransferBtn: document.getElementById('cancelTransferBtn')
+        cancelTransferBtn: document.getElementById('cancelTransferBtn'),
+
+        // Goal Modal
+        goalModal: document.getElementById('goalModal'),
+        closeGoalModal: document.getElementById('closeGoalModal'),
+        goalForm: document.getElementById('goalForm'),
+        goalAmountInput: document.getElementById('goalAmountInput'),
+        goalModalDescription: document.getElementById('goalModalDescription')
     };
 
     const updateNominaMovementType = (type) => {
@@ -4434,6 +4441,28 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.navItems?.forEach(item => {
             item.addEventListener('click', () => switchView(item.dataset.view));
         });
+
+        // Goal Modal Listeners
+        if (elements.closeGoalModal) {
+            elements.closeGoalModal.addEventListener('click', () => {
+                elements.goalModal.classList.add('hidden');
+            });
+        }
+
+        if (elements.goalForm) {
+            elements.goalForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newTarget = parseFloat(elements.goalAmountInput.value.replace(',', '.'));
+                const drawer = savingsDrawers.find(d => d.id === currentGoalDrawerId);
+
+                if (drawer && !isNaN(newTarget)) {
+                    drawer.targetAmount = Math.max(0, newTarget);
+                    if (window.saveSavings) window.saveSavings(savingsDrawers);
+                    renderSavings();
+                    elements.goalModal.classList.add('hidden');
+                }
+            });
+        }
 
         // Swipe Navigation for Mobile
         (function () {
