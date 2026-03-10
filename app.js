@@ -4680,9 +4680,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Nomina Listeners
 
-        if (elements.exportSavingsBtn) {
-            elements.exportSavingsBtn.addEventListener('click', () => exportSavingsToCSV());
-        }
+
         if (elements.importSavingsBtn) {
             elements.importSavingsBtn.addEventListener('click', () => {
                 alert('La importación de CSV ha sido desactivada. Usa el backup JSON global.');
@@ -4716,9 +4714,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.closeNominaModal) {
             elements.closeNominaModal.addEventListener('click', () => toggleNominaModal(false));
         }
-        if (elements.exportNominaBtn) {
-            elements.exportNominaBtn.addEventListener('click', () => exportNominaToCSV());
-        }
+
         if (elements.importNominaBtn) {
             elements.importNominaBtn.addEventListener('click', () => {
                 alert('La importación de CSV ha sido desactivada. Usa el backup JSON global.');
@@ -5443,7 +5439,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function exportToCSV(isExcel) {
-        // Required format: Ticker, Quantity, Cost Per Share, Currency, Date
+        // Bolsa Export: Ticker, Quantity, Cost Per Share, Currency, Date
         const headers = ['Ticker', 'Quantity', 'Cost Per Share', 'Currency', 'Date'];
         const rows = stocks.map(s => {
             const currency = 'EUR';
@@ -5454,9 +5450,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return [ticker, s.qty, price.toFixed(4), currency, s.date].join(',');
         });
-        let csvContent = headers.join(',') + '\n' + rows.join('\n');
+        let csvContent = headers.join('\n') === headers.join(',') ? '' : (headers.join(',') + '\n' + rows.join('\n'));
+        if (rows.length === 0) csvContent = headers.join(',');
+
         let blob;
-        let fileName = 'portfolio_export_' + new Date().toISOString().split('T')[0] + '.csv';
+        let fileName = 'bolsa_export_' + new Date().toISOString().split('T')[0] + '.csv';
         if (isExcel) {
             const BOM = '\uFEFF';
             blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -5467,19 +5465,8 @@ document.addEventListener('DOMContentLoaded', () => {
         triggerDownload(url, fileName);
     }
 
-    function exportSavingsToCSV() {
-        const headers = ['Type', 'DrawerID', 'Name/Description', 'Icon/Date', 'Balance/Amount', 'Category'];
-        const csvRows = [headers.join(',')];
-        savingsDrawers.forEach(drawer => {
-            csvRows.push(['DRAWER', drawer.id, drawer.name, drawer.icon, drawer.balance, ''].join(','));
-            drawer.movements.forEach(m => {
-                csvRows.push(['MOVEMENT', drawer.id, m.description, m.date, m.amount, m.category || ''].join(','));
-            });
-        });
-        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-        const encodedUri = encodeURI(csvContent);
-        triggerDownload(encodedUri, `ahorros_msv_${new Date().toISOString().split('T')[0]}.csv`);
-    }
+
+
 
     // importSavingsFromCSV removed as per request
 
@@ -5799,22 +5786,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.nominaHistoryModal) elements.nominaHistoryModal.classList.remove('hidden');
     }
 
-    function exportNominaToCSV() {
-        const headers = ['Type', 'DrawerID', 'Name/Description', 'Icon/Date', 'Balance/Amount', 'Months', 'Paid', 'LinkedAhorroID'];
-        const csvRows = [headers.join(',')];
-        nominaData.forEach(drawer => {
-            const initialMvmt = (drawer.movements || []).find(m => isProvision(m));
-            const drawerMonths = (initialMvmt?.activeMonths || []).join('|');
-            csvRows.push(['DRAWER', drawer.id, drawer.name, drawer.type || '', drawer.balance, drawerMonths, '', drawer.linkedSavingsDrawerId || ''].join(','));
-            drawer.movements.forEach(m => {
-                const movMonths = (m.activeMonths || []).join('|');
-                csvRows.push(['MOVEMENT', drawer.id, m.concept || m.description, m.date, m.amount, movMonths, m.paid ? '1' : '0', ''].join(','));
-            });
-        });
-        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-        const encodedUri = encodeURI(csvContent);
-        triggerDownload(encodedUri, `nomina_msv_${new Date().toISOString().split('T')[0]}.csv`);
-    }
+
 
     // importNominaFromCSV removed as per request
 
