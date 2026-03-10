@@ -3020,7 +3020,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display:flex; align-items:center; gap: 10px;">
                         <span class="drawer-icon">${concept.icon || getNominaIcon(concept.name, concept.type)}</span>
                         <div class="drawer-info">
-                            <h4 style="margin:0">${concept.name}</h4>
+                            <h4 style="margin:0">
+                                ${concept.name}
+                                ${(() => {
+                    if (concept.linkedSavingsDrawerId) {
+                        const targetSavings = savingsDrawers.find(sd => sd.id == concept.linkedSavingsDrawerId);
+                        if (targetSavings) {
+                            return ` <span style="font-size: 0.8em; opacity: 0.7; font-weight: normal;">(${fmtEUR(targetSavings.balance)})</span>`;
+                        }
+                    }
+                    return '';
+                })()}
+                            </h4>
                             <p style="font-size: 0.8rem; opacity: 0.7;">${monthlyMovements.length} mov. este mes</p>
                         </div>
                     </div>
