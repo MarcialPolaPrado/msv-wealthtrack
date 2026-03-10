@@ -82,6 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 }
     ];
 
+    let countdowns = (window.loadCountdowns) ? window.loadCountdowns() : [];
+
     let currentGoalDrawerId = null;
 
     function setDrawerTargetAmount(id) {
@@ -5829,6 +5831,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stocks: stocks,
             savings: savingsDrawers,
             nomina: nominaData,
+            countdowns: countdowns,
             settings: {
                 fiscalDay: fiscalDay,
                 incomeCategories: incomeCategories,
@@ -5854,10 +5857,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.stocks || !data.savings || !data.nomina) {
                     throw new Error("El archivo no tiene el formato de respaldo global esperado.");
                 }
-                if (confirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`)) {
+                if (confirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`)) {
                     stocks = data.stocks;
                     savingsDrawers = data.savings;
                     nominaData = migrateNominaData(data.nomina);
+                    if (data.countdowns) {
+                        countdowns = data.countdowns;
+                    }
 
                     // Restore settings if present
                     if (data.settings) {
@@ -5881,6 +5887,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.saveStocks) window.saveStocks(stocks);
                     if (window.saveSavings) window.saveSavings(savingsDrawers);
                     if (window.saveNomina) window.saveNomina(nominaData);
+                    if (window.saveCountdowns) window.saveCountdowns(countdowns);
                     render();
                     if (currentView === 'nomina') renderNomina();
                     alert("✅ Respaldo global restaurado con éxito.");
@@ -5993,6 +6000,125 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         console.log("initApp completed");
     }
+    function setupClockCountdown() {
+        const clockMenuBtn = document.getElementById('clockMenuBtn');
+        const clockModal = document.getElementById('clockCountdownModal');
+        const closeClockModal = document.getElementById('closeClockModal');
+        const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+        const addCountdownForm = document.getElementById('addCountdownForm');
+        const countdownConceptInput = document.getElementById('countdownConceptInput');
+        const countdownDateInput = document.getElementById('countdownDateInput');
+        const countdownsList = document.getElementById('countdownsList');
 
+        let countdowns_local_shadow_removed = null;
+        let clockInterval;
+
+        function updateClock() {
+            const now = new Date();
+            if (currentTimeDisplay) {
+                currentTimeDisplay.textContent = now.toLocaleTimeString('es-ES', { hour12: false });
+            }
+        }
+
+        function renderCountdowns() {
+            if (!countdownsList) return;
+            countdownsList.innerHTML = '';
+            
+            // Sort by closest date
+            countdowns.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const now = new Date();
+            now.setHours(0,0,0,0);
+
+            if (countdowns.length === 0) {
+                countdownsList.innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size: 0.9rem;">No hay cuentas atrás configuradas.</p>';
+                return;
+            }
+
+            countdowns.forEach(item => {
+                const targetDate = new Date(item.date);
+                targetDate.setHours(0,0,0,0);
+                
+                const diffTime = targetDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                let daysText = diffDays > 0 ? `Faltan ${diffDays} días` : (diffDays === 0 ? '¡Es hoy!' : `Hace ${Math.abs(diffDays)} días`);
+                let colorClass = diffDays > 0 ? 'var(--primary)' : (diffDays === 0 ? 'var(--success)' : 'var(--danger)');
+
+                const div = document.createElement('div');
+                div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);';
+                
+                div.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:4px; max-width: 65%;">
+                        <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${item.concept}">${item.concept}</strong>
+                        <span style="font-size: 0.8rem; opacity: 0.7;">${targetDate.toLocaleDateString('es-ES')}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 10px; justify-content: flex-end;">
+                        <span style="font-weight:bold; color:${colorClass}; white-space:nowrap; font-size: 0.9rem;">${daysText}</span>
+                        <button class="btn-sm btn-delete-countdown" data-id="${item.id}" style="background:transparent; border:none; color:var(--danger); cursor:pointer; font-size:1.5rem; padding:0 5px; line-height:1;" title="Eliminar">×</button>
+                    </div>
+                `;
+                countdownsList.appendChild(div);
+            });
+
+            document.querySelectorAll('.btn-delete-countdown').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    countdowns = countdowns.filter(c => c.id !== id);
+                    if (window.saveCountdowns) window.saveCountdowns(countdowns);
+                    renderCountdowns();
+                });
+            });
+        }
+
+        if (clockMenuBtn && clockModal && closeClockModal) {
+            clockMenuBtn.addEventListener('click', () => {
+                clockModal.classList.remove('hidden');
+                updateClock();
+                if (clockInterval) clearInterval(clockInterval);
+                clockInterval = setInterval(updateClock, 1000);
+                renderCountdowns();
+            });
+
+            closeClockModal.addEventListener('click', () => {
+                clockModal.classList.add('hidden');
+                if (clockInterval) clearInterval(clockInterval);
+            });
+            
+            // Close on outside click
+            clockModal.addEventListener('click', (e) => {
+                if (e.target === clockModal) {
+                    clockModal.classList.add('hidden');
+                    if (clockInterval) clearInterval(clockInterval);
+                }
+            });
+        }
+
+        if (addCountdownForm) {
+            addCountdownForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const concept = countdownConceptInput.value.trim();
+                const date = countdownDateInput.value;
+
+                if (!concept || !date) return;
+
+                const newCountdown = {
+                    id: Date.now().toString(),
+                    concept,
+                    date
+                };
+
+                countdowns.push(newCountdown);
+                if (window.saveCountdowns) window.saveCountdowns(countdowns);
+                
+                countdownConceptInput.value = '';
+                countdownDateInput.value = '';
+                
+                renderCountdowns();
+            });
+        }
+    }
+
+    setupClockCountdown();
     showApp();
 });

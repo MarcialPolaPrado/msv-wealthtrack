@@ -39,3 +39,13 @@ window.loadNomina = () => {
     const data = localStorage.getItem(NOMINA_KEY);
     return data ? JSON.parse(data) : null;
 };
+
+const COUNTDOWNS_KEY = 'msv_countdowns_v1';
+window.saveCountdowns = (data) => {
+    localStorage.setItem(COUNTDOWNS_KEY, JSON.stringify(data));
+};
+
+window.loadCountdowns = () => {
+    const data = localStorage.getItem(COUNTDOWNS_KEY);
+    return data ? JSON.parse(data) : [];
+};
