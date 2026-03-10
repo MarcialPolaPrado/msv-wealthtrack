@@ -3107,9 +3107,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render the sections
 
         grid.style.display = 'block'; // sections handle their own grid
-        const incomeSubGrid = buildSection(grid, 'Distribución Ingresos', '📈', '#10b981', incomeCards, totalPrimaryIncome, 'isNominaIngresosExpanded');
-        buildSection(grid, 'Distribución Ahorro', '🏦', '#f59e0b', savingCards, savingsSecTotal, 'isNominaAhorroExpanded');
-        buildSection(grid, 'Distribución Gastos', '📉', '#ef4444', expenseCards, totalPlannedExpensesManual, 'isNominaGastosExpanded');
+        const incomeSubGrid = buildSection(grid, 'Distrib. Ingresos', '📈', '#10b981', incomeCards, totalPrimaryIncome, 'isNominaIngresosExpanded');
+        buildSection(grid, 'Distrib. Ahorro', '🏦', '#f59e0b', savingCards, savingsSecTotal, 'isNominaAhorroExpanded');
+        buildSection(grid, 'Distrib. Gastos', '📉', '#ef4444', expenseCards, totalPlannedExpensesManual, 'isNominaGastosExpanded');
 
         // Pie chart next to income drawers — same grid item, auto-placed to the right or below
         if (incomeSubGrid) {
