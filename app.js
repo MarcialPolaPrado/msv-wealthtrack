@@ -5248,6 +5248,80 @@ document.addEventListener('DOMContentLoaded', () => {
                 render();
             });
         }
+
+        // ── Mobile Tooltip System (Long Press) ──
+        (function () {
+            let tooltipTimeout;
+            let currentTooltipItem = null;
+            let longPressTriggered = false;
+
+            const showTooltip = (el, x, y) => {
+                const text = el.getAttribute('title');
+                if (!text) return;
+
+                if (currentTooltipItem) currentTooltipItem.remove();
+
+                const tip = document.createElement('div');
+                tip.className = 'mobile-tooltip';
+                tip.textContent = text;
+                document.body.appendChild(tip);
+
+                // Center above the point
+                tip.style.left = `${x}px`;
+                tip.style.top = `${y}px`;
+
+                // Force layout for animation
+                requestAnimationFrame(() => tip.classList.add('visible'));
+                currentTooltipItem = tip;
+            };
+
+            const hideTooltip = () => {
+                if (currentTooltipItem) {
+                    currentTooltipItem.classList.remove('visible');
+                    const tipToRemove = currentTooltipItem;
+                    setTimeout(() => tipToRemove.remove(), 250);
+                    currentTooltipItem = null;
+                }
+            };
+
+            document.addEventListener('touchstart', (e) => {
+                const target = e.target.closest('[title]');
+                if (!target) return;
+
+                longPressTriggered = false;
+                const touch = e.touches[0];
+                const x = touch.clientX;
+                const y = touch.clientY;
+
+                tooltipTimeout = setTimeout(() => {
+                    showTooltip(target, x, y);
+                    longPressTriggered = true;
+                    // Vibrate if supported
+                    if ('vibrate' in navigator) navigator.vibrate(50);
+                }, 400);
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                clearTimeout(tooltipTimeout);
+                hideTooltip();
+
+                if (longPressTriggered) {
+                    // Prevent the click action after a long press
+                    if (e.cancelable) e.preventDefault();
+                    longPressTriggered = false;
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchmove', () => {
+                clearTimeout(tooltipTimeout);
+                hideTooltip();
+            }, { passive: true });
+
+            document.addEventListener('touchcancel', () => {
+                clearTimeout(tooltipTimeout);
+                hideTooltip();
+            }, { passive: true });
+        })();
     }
 
     function updateFiscalCountdown() {
