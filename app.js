@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const bankIcon = getBankIcon(n);
         if (bankIcon) return bankIcon;
 
-        if (n.includes('salario') || n.includes('nomina') || n.includes('nómina') || n.includes('sueldo')) return '💼';
+        if (n.includes('salario') || n.includes('nomina') || n.includes('nómina') || n.includes('sueldo')) return '💶';
         if (n.includes('alquiler') || n.includes('hipoteca') || n.includes('casa') || n.includes('vivienda')) return '🏠';
         if (n.includes('luz') || n.includes('electricidad') || n.includes('energia')) return '⚡';
         if (n.includes('agua')) return '💧';
