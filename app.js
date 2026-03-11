@@ -2183,9 +2183,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (e.target.closest('.edit-btn-small')) {
                     editStock(e.target.closest('.edit-btn-small').dataset.id);
                 } else if (e.target.closest('.delete-btn-small')) {
-                    if (confirm('¿Borrar esta operación?')) {
+                    showCustomConfirm('¿Borrar esta operación?', () => {
                         removeStock(e.target.closest('.delete-btn-small').dataset.id);
-                    }
+                    });
                 }
             });
 
@@ -3537,8 +3537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer || drawer.isAuto) return;
 
-        if (confirm(`¿Consolidar historial de "${drawer.name}"? Se eliminarán todos los movimientos y el saldo inicial se ajustará al saldo actual (${fmtEUR(drawer.balance)}).`)) {
-
+        showCustomConfirm(`¿Consolidar historial de "${drawer.name}"? Se eliminarán todos los movimientos y el saldo inicial se ajustará al saldo actual (${fmtEUR(drawer.balance)}).`, () => {
             // Keep/Update initial movement
             let initialMvmt = drawer.movements.find(m => isProvision(m));
             if (initialMvmt) {
@@ -3555,32 +3554,33 @@ document.addEventListener('DOMContentLoaded', () => {
             drawer.movements = [initialMvmt];
             if (window.saveSavings) window.saveSavings(savingsDrawers);
             render();
-        }
+            showDrawerDetails(drawerId); // Refresh to see consolidated state
+        });
     }
 
     function deleteSavingsDrawer(drawerId) {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer || drawer.isAuto) return;
 
-        if (confirm(`¿Estás seguro de que deseas borrar el cajón "${drawer.name}"? Esta acción no se puede deshacer.`)) {
+        showCustomConfirm(`¿Estás seguro de que deseas borrar el cajón "${drawer.name}"? Esta acción no se puede deshacer.`, () => {
             savingsDrawers = savingsDrawers.filter(d => d.id !== drawerId);
             if (window.saveSavings) window.saveSavings(savingsDrawers);
             render();
-        }
+        });
     }
 
     function deleteSavingsMovement(drawerId, index) {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer || !drawer.movements[index]) return;
 
-        if (confirm(`¿Estás seguro de que deseas borrar este movimiento? Esta acción no se puede deshacer.`)) {
+        showCustomConfirm(`¿Estás seguro de que deseas borrar este movimiento? Esta acción no se puede deshacer.`, () => {
             const amount = drawer.movements[index].amount;
             drawer.movements.splice(index, 1);
             drawer.balance -= amount;
             if (window.saveSavings) window.saveSavings(savingsDrawers);
             render();
             showDrawerDetails(drawerId);
-        }
+        });
     }
 
     function toggleSavingsModal(show) {
@@ -3718,6 +3718,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
     }
+
+    function showCustomConfirm(message, onConfirm, onCancel = null) {
+        const overlay = document.createElement('div');
+        overlay.id = 'customConfirmOverlay';
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000;
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            padding: 1rem;
+        `;
+        overlay.innerHTML = `
+            <div class="glass-panel" style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 24px; padding: 2.5rem 2rem; width: min(400px, 90vw); text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+                <div style="font-size: 3.5rem; margin-bottom: 1.5rem; filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.4));">⚠️</div>
+                <h3 style="margin-bottom: 2rem; line-height: 1.5; font-weight: 700; color: white; white-space: normal;">${message.replace(/\n/g, '<br>')}</h3>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button id="confirmCancel" class="btn-secondary" style="flex: 1; padding: 0.9rem; border-radius: 14px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">Cancelar</button>
+                    <button id="confirmYes" class="btn-primary" style="flex: 1; padding: 0.9rem; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; background: var(--danger); border: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">Confirmar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => {
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.2s';
+            setTimeout(() => overlay.remove(), 200);
+        };
+
+        const yesBtn = document.getElementById('confirmYes');
+        const cancelBtn = document.getElementById('confirmCancel');
+
+        yesBtn.onclick = () => {
+            close();
+            if (onConfirm) onConfirm();
+        };
+
+        cancelBtn.onclick = () => {
+            close();
+            if (onCancel) onCancel();
+        };
+
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                close();
+                if (onCancel) onCancel();
+            }
+        };
+
+        // Add hover effects for buttons
+        yesBtn.onmouseenter = () => { yesBtn.style.transform = 'translateY(-2px) scale(1.02)'; yesBtn.style.filter = 'brightness(1.1)'; };
+        yesBtn.onmouseleave = () => { yesBtn.style.transform = 'translateY(0) scale(1)'; yesBtn.style.filter = 'brightness(1)'; };
+        cancelBtn.onmouseenter = () => { cancelBtn.style.transform = 'translateY(-2px) scale(1.02)'; cancelBtn.style.background = 'rgba(255,255,255,0.08)'; };
+        cancelBtn.onmouseleave = () => { cancelBtn.style.transform = 'translateY(0) scale(1)'; cancelBtn.style.background = 'transparent'; };
+    }
+    window.showCustomConfirm = showCustomConfirm;
 
     function showEditMovementModal(drawerId, mvmtIndex) {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
@@ -4345,41 +4399,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function forceAppUpdate() {
-        if (!confirm('Esto borrará toda la caché del navegador para esta aplicación y forzará una recarga total. ¿Continuar?')) return;
+        showCustomConfirm('Esto borrará toda la caché del navegador para esta aplicación y forzará una recarga total. ¿Continuar?', async () => {
+            try {
+                showToast('Limpiando caché...', 'info');
 
-        try {
-            showToast('Limpiando caché...', 'info');
-
-            // 1. Unregister all service workers
-            if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
+                // 1. Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
                 }
-            }
 
-            // 2. Delete all caches
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                for (let name of cacheNames) {
-                    await caches.delete(name);
+                // 2. Delete all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (let name of cacheNames) {
+                        await caches.delete(name);
+                    }
                 }
+
+                // 3. Clear localStorage versions if needed (optional, keeping data is safer)
+                localStorage.removeItem('app_version');
+
+                showToast('Caché restablecida. Recargando...', 'success');
+
+                // 4. Force reload from server
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 1000);
+
+            } catch (err) {
+                console.error('Error in forceUpdate:', err);
+                alert('Error al restablecer caché: ' + err.message);
             }
-
-            // 3. Clear localStorage versions if needed (optional, keeping data is safer)
-            localStorage.removeItem('app_version');
-
-            showToast('Caché restablecida. Recargando...', 'success');
-
-            // 4. Force reload from server
-            setTimeout(() => {
-                window.location.reload(true);
-            }, 1000);
-
-        } catch (err) {
-            console.error('Error in forceUpdate:', err);
-            alert('Error al restablecer caché: ' + err.message);
-        }
+        });
     }
 
     // --- Event Listeners ---
@@ -5147,12 +5201,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const content = JSON.parse(readerEvent.target.result);
                         if (Array.isArray(content)) {
-                            if (confirm('¿Estás seguro de que quieres importar estos datos? Reemplazarán tu cartera actual.')) {
+                            showCustomConfirm('¿Estás seguro de que quieres importar estos datos? Reemplazarán tu cartera actual.', () => {
                                 stocks = content;
                                 if (window.saveStocks) window.saveStocks(stocks);
                                 render();
-                                alert('¡Datos importados con éxito desde JSON!');
-                            }
+                                showToast('¡Datos importados con éxito!', 'success');
+                            });
                         } else {
                             alert('El archivo no tiene el formato JSON correcto.');
                         }
@@ -5610,11 +5664,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function deleteNominaDrawer(id) {
-        if (confirm('¿Estás seguro de que quieres eliminar este cajón y todos sus movimientos?')) {
+        showCustomConfirm('¿Estás seguro de que quieres eliminar este cajón y todos sus movimientos?', () => {
             nominaData = nominaData.filter(d => d.id != id);
             if (window.saveNomina) window.saveNomina(nominaData);
             renderNomina();
-        }
+        });
     }
 
     function showAddNominaMovement(drawerId) {
@@ -5678,12 +5732,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function deleteNominaMovement(drawerId, index) {
         const drawer = nominaData.find(d => d.id == drawerId);
         if (!drawer || !drawer.movements[index]) return;
-        if (confirm('¿Estás seguro de que quieres eliminar este movimiento?')) {
+        showCustomConfirm('¿Estás seguro de que quieres eliminar este movimiento?', () => {
             drawer.movements.splice(index, 1);
             if (window.saveNomina) window.saveNomina(nominaData);
             renderNomina();
             showNominaDrawerDetails(drawerId);
-        }
+        });
     }
 
     function calculateNominaCurrentMonth(drawer, fiscalMonthStr) {
@@ -5890,7 +5944,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.stocks || !data.savings || !data.nomina) {
                     throw new Error("El archivo no tiene el formato de respaldo global esperado.");
                 }
-                if (confirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`)) {
+                showCustomConfirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`, () => {
                     stocks = data.stocks;
                     savingsDrawers = data.savings;
                     nominaData = migrateNominaData(data.nomina);
@@ -5923,8 +5977,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.saveCountdowns) window.saveCountdowns(countdowns);
                     render();
                     if (currentView === 'nomina') renderNomina();
-                    alert("✅ Respaldo global restaurado con éxito.");
-                }
+                    showToast("✅ Respaldo global restaurado con éxito.", "success");
+                });
             } catch (err) {
                 console.error("Global import error:", err);
                 alert("Error al importar el archivo JSON: " + err.message);
