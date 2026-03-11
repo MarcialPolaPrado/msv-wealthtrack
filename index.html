@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603111555">
+    <link rel="stylesheet" href="styles.css?v=202603111617">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -805,51 +805,6 @@
                     <p style="font-size: 0.75rem; opacity: 0.7; margin-top: 4px;">Permite transferir automáticamente el
                         ahorro de este cajón al cajón de ahorro seleccionado.</p>
                 </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn-primary" style="width:100%" title="Guardar">💾</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Ahorro Breakdown Modal -->
-    <div id="ahorroBreakdownModal" class="modal hidden">
-        <div class="modal-content glass-panel" style="max-width: 450px;">
-            <div class="modal-header">
-                <h2 id="breakdownModalTitle">Resumen de Ingresos</h2>
-                <span id="closeBreakdownModal" class="close-modal">&times;</span>
-            </div>
-            <div style="margin: 1.5rem 0;">
-                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                    <select id="breakdownFilterType" style="flex: 1; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
-                        <option value="month">Mensual</option>
-                        <option value="year">Anual</option>
-                    </select>
-                    <input type="month" id="breakdownMonthInput" style="flex: 2; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
-                    <input type="number" id="breakdownYearInput" class="hidden" min="2000" max="2100" oninput="this.value = Math.abs(this.value)" style="flex: 2; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
-                </div>
-                
-                <div class="breakdown-results glass-panel" style="padding: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
-                        <span style="opacity: 0.8;">Intereses:</span>
-                        <span id="breakdownIntereses" style="font-weight: 600; color: var(--primary); font-size: 1.1rem;">€ 0,00</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
-                        <span style="opacity: 0.8;">Dividendos:</span>
-                        <span id="breakdownDividendos" style="font-weight: 600; color: var(--success); font-size: 1.1rem;">€ 0,00</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; align-items: center;">
-                        <span style="opacity: 0.8;">Especulación:</span>
-                        <span id="breakdownEspeculacion" style="font-weight: 600; color: #f59e0b; font-size: 1.1rem;">€ 0,00</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding-top: 1.2rem; border-top: 1px solid var(--border-color); font-size: 1.4rem; font-weight: 700;">
-                        <span>Total:</span>
-                        <span id="breakdownTotal" class="highlight">€ 0,00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
                 <div class="form-group">
                     <label>Meses que afecta la provisión</label>
                     <div
@@ -903,6 +858,45 @@
                     <button type="submit" class="btn-primary" style="width:100%" title="Guardar">💾</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Ahorro Breakdown Modal -->
+    <div id="ahorroBreakdownModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="breakdownModalTitle">Resumen de Ingresos</h2>
+                <span id="closeBreakdownModal" class="close-modal">&times;</span>
+            </div>
+            <div style="margin: 1.5rem 0;">
+                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+                    <select id="breakdownFilterType" style="flex: 1; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                        <option value="month">Mensual</option>
+                        <option value="year">Anual</option>
+                    </select>
+                    <input type="month" id="breakdownMonthInput" style="flex: 2; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                    <input type="number" id="breakdownYearInput" class="hidden" min="2000" max="2100" oninput="this.value = Math.abs(this.value)" style="flex: 2; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                </div>
+                
+                <div class="breakdown-results glass-panel" style="padding: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
+                        <span style="opacity: 0.8;">Intereses:</span>
+                        <span id="breakdownIntereses" style="font-weight: 600; color: var(--primary); font-size: 1.1rem;">€ 0,00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
+                        <span style="opacity: 0.8;">Dividendos:</span>
+                        <span id="breakdownDividendos" style="font-weight: 600; color: var(--success); font-size: 1.1rem;">€ 0,00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; align-items: center;">
+                        <span style="opacity: 0.8;">Especulación:</span>
+                        <span id="breakdownEspeculacion" style="font-weight: 600; color: #f59e0b; font-size: 1.1rem;">€ 0,00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 1.2rem; border-top: 1px solid var(--border-color); font-size: 1.4rem; font-weight: 700;">
+                        <span>Total:</span>
+                        <span id="breakdownTotal" class="highlight">€ 0,00</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1065,7 +1059,7 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=202603102143"></script>
-    <script src="app.js?v=202603111555"></script>
+    <script src="app.js?v=202603111617"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1109,7 +1103,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603111555';
+        const APP_VERSION = '202603111617';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
