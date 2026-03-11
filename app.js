@@ -6440,25 +6440,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalContent = btn ? btn.textContent : '';
             if (btn) btn.style.color = '#f59e0b';
 
-            window.refreshLivePrices(uniqueTickers, (current) => {
-                if (btn) btn.textContent = current;
-            }).then(() => {
-                lastSyncTime = new Date().toLocaleTimeString();
-                isFirstUpdateDone = true;
-                console.log("Prices refreshed, rendering...");
-                if (btn) {
-                    btn.textContent = originalContent;
-                    btn.style.color = '';
+            // Start with FX rate update
+            const runInitialSync = async () => {
+                const currentTimerElement = document.getElementById('updateTimer');
+                if (currentTimerElement) {
+                    currentTimerElement.classList.remove('hidden');
+                    currentTimerElement.textContent = `Actualizando Divisa USD/EUR...`;
+                    currentTimerElement.style.color = '#f59e0b';
                 }
-                render();
-            }).catch(err => {
-                console.error("refreshLivePrices failed:", err);
-                if (btn) {
-                    btn.textContent = originalContent;
-                    btn.style.color = '';
+
+                try {
+                    if (window.refreshFXRate) await window.refreshFXRate();
+                    
+                    await window.refreshLivePrices(uniqueTickers, (current, total) => {
+                        if (btn) btn.textContent = current;
+                        if (currentTimerElement) {
+                            currentTimerElement.textContent = `Sincronizando: ${current} de ${total}`;
+                        }
+                    });
+
+                    lastSyncTime = new Date().toLocaleTimeString();
+                    isFirstUpdateDone = true;
+                    render();
+
+                    if (currentTimerElement) {
+                        currentTimerElement.style.color = '#10b981';
+                        currentTimerElement.textContent = `¡Sincronización completada!`;
+                        setTimeout(() => currentTimerElement.classList.add('hidden'), 2000);
+                    }
+                } catch (err) {
+                    console.error("Initial refresh failed:", err);
+                    render();
+                } finally {
+                    if (btn) {
+                        btn.textContent = originalContent;
+                        btn.style.color = '';
+                    }
                 }
-                render(); // Render anyway with old prices
-            });
+            };
+
+            runInitialSync();
         }
         console.log("initApp completed");
     }
