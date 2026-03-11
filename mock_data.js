@@ -543,32 +543,57 @@ window.refreshLivePrices = async function (tickers, onProgress) {
 }
 
 window.refreshFXRate = async function () {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // A bit more time for FX
+    const symbols = ['USDEUR=X', 'EURUSD=X']; // Try direct and inverse
+    const proxies = [
+        (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+        (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+    ];
 
-    try {
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/USDEUR=X?interval=1m&range=1d`)}`;
-        const resp = await fetch(proxyUrl, { signal: controller.signal });
-        const json = await resp.json();
-        const rawData = json.contents ? JSON.parse(json.contents) : json;
+    console.log("[FX] Starting robust refresh...");
+
+    for (const symbol of symbols) {
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`;
         
-        clearTimeout(timeoutId);
+        for (const getProxyUrl of proxies) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-        if (rawData?.chart?.result?.[0]?.meta?.regularMarketPrice) {
-            const newRate = rawData.chart.result[0].meta.regularMarketPrice;
-            if (newRate > 0) {
-                window.FX_RATE = newRate;
-                const now = new Date();
-                const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                window.FX_DATE = dateStr;
-                if (window.saveFXRate) window.saveFXRate(newRate);
-                if (window.saveFXDate) window.saveFXDate(dateStr);
-                return true;
+            try {
+                const proxyUrl = getProxyUrl(yahooUrl);
+                const resp = await fetch(proxyUrl, { signal: controller.signal });
+                const json = await resp.json();
+                
+                // AllOrigins wraps in .contents, others might not
+                const rawData = json.contents ? JSON.parse(json.contents) : json;
+                clearTimeout(timeoutId);
+
+                const result = rawData?.chart?.result?.[0];
+                const meta = result?.meta;
+                let price = meta?.regularMarketPrice || meta?.chartPreviousClose;
+
+                if (price && price > 0) {
+                    // If we used the inverse symbol, flip the price
+                    if (symbol === 'EURUSD=X') {
+                        price = 1 / price;
+                    }
+
+                    window.FX_RATE = price;
+                    const now = new Date();
+                    const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    window.FX_DATE = dateStr;
+                    
+                    if (window.saveFXRate) window.saveFXRate(price);
+                    if (window.saveFXDate) window.saveFXDate(dateStr);
+                    
+                    console.log(`[FX] Success with ${symbol} via proxy: ${price.toFixed(4)}`);
+                    return true;
+                }
+            } catch (err) {
+                clearTimeout(timeoutId);
+                console.warn(`[FX] Failed ${symbol} via proxy:`, err.message);
             }
         }
-    } catch (err) {
-        clearTimeout(timeoutId);
-        console.warn("[FX] Error fetching rate:", err.name === 'AbortError' ? 'Timeout' : err.message);
     }
+    console.error("[FX] All attempts to fetch FX rate failed.");
     return false;
 };
