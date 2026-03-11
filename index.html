@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603102146">
+    <link rel="stylesheet" href="styles.css?v=202603110657">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -997,13 +997,15 @@
             </div>
             <div style="margin-top: 1rem;">
                 <form id="addCountdownForm" style="display:flex; gap:10px; margin-bottom: 1.5rem; align-items: stretch;">
+                    <input type="hidden" id="countdownEditId">
                     <div style="flex: 1; display:flex; flex-direction:column; gap:5px;">
                         <input type="text" id="countdownConceptInput" placeholder="Concepto..." autocomplete="off" required style="width: 100%; box-sizing:border-box;">
                     </div>
                     <div style="flex: 1; display:flex; flex-direction:column; gap:5px;">
                         <input type="date" id="countdownDateInput" required style="width: 100%; box-sizing:border-box;">
                     </div>
-                    <button type="submit" class="btn-primary" style="padding: 0 1rem; display:flex; align-items:center; justify-content:center;">➕</button>
+                    <button type="submit" id="submitCountdownBtn" class="btn-primary" style="padding: 0 1rem; display:flex; align-items:center; justify-content:center;" title="Guardar">➕</button>
+                    <button type="button" id="cancelEditCountdownBtn" class="btn-secondary hidden" style="padding: 0 0.8rem; display:flex; align-items:center; justify-content:center; opacity: 0.8;" title="Cancelar">✕</button>
                 </form>
                 
                 <h3 style="font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Cuentas Atrás</h3>
@@ -1016,7 +1018,7 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=202603102143"></script>
-    <script src="app.js?v=202603102146"></script>
+    <script src="app.js?v=202603110657"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1060,7 +1062,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603102146';
+        const APP_VERSION = '202603110657';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

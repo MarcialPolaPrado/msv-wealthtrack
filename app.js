@@ -6009,6 +6009,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const countdownConceptInput = document.getElementById('countdownConceptInput');
         const countdownDateInput = document.getElementById('countdownDateInput');
         const countdownsList = document.getElementById('countdownsList');
+        const countdownEditId = document.getElementById('countdownEditId');
+        const submitCountdownBtn = document.getElementById('submitCountdownBtn');
+        const cancelEditCountdownBtn = document.getElementById('cancelEditCountdownBtn');
 
         
         let clockInterval;
@@ -6055,20 +6058,54 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div style="display:flex; align-items:center; gap: 10px; justify-content: flex-end;">
                         <span style="font-weight:bold; color:${colorClass}; white-space:nowrap; font-size: 0.9rem;">${daysText}</span>
+                        <button class="btn-sm btn-edit-countdown" data-id="${item.id}" style="background:transparent; border:none; color:var(--primary); cursor:pointer; font-size:1.1rem; padding:0 5px; line-height:1;" title="Editar">✏️</button>
                         <button class="btn-sm btn-delete-countdown" data-id="${item.id}" style="background:transparent; border:none; color:var(--danger); cursor:pointer; font-size:1.5rem; padding:0 5px; line-height:1;" title="Eliminar">×</button>
                     </div>
                 `;
                 countdownsList.appendChild(div);
             });
 
+            document.querySelectorAll('.btn-edit-countdown').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.closest('.btn-edit-countdown').getAttribute('data-id');
+                    const targetCountdown = countdowns.find(c => c.id === id);
+                    if (targetCountdown) {
+                        countdownEditId.value = targetCountdown.id;
+                        countdownConceptInput.value = targetCountdown.concept;
+                        countdownDateInput.value = targetCountdown.date;
+                        
+                        submitCountdownBtn.textContent = '💾';
+                        submitCountdownBtn.title = 'Guardar Cambios';
+                        cancelEditCountdownBtn.classList.remove('hidden');
+                        countdownConceptInput.focus();
+                    }
+                });
+            });
+
             document.querySelectorAll('.btn-delete-countdown').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const id = e.target.getAttribute('data-id');
+                    const id = e.target.closest('.btn-delete-countdown').getAttribute('data-id');
                     countdowns = countdowns.filter(c => c.id !== id);
                     if (window.saveCountdowns) window.saveCountdowns(countdowns);
+                    
+                    if (countdownEditId && countdownEditId.value === id) {
+                        resetCountdownForm();
+                    }
+                    
                     renderCountdowns();
                 });
             });
+        }
+
+        function resetCountdownForm() {
+            if (countdownEditId) countdownEditId.value = '';
+            countdownConceptInput.value = '';
+            countdownDateInput.value = '';
+            if (submitCountdownBtn) {
+                submitCountdownBtn.textContent = '➕';
+                submitCountdownBtn.title = 'Añadir';
+            }
+            if (cancelEditCountdownBtn) cancelEditCountdownBtn.classList.add('hidden');
         }
 
         if (clockMenuBtn && clockModal && closeClockModal) {
@@ -6092,6 +6129,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (clockInterval) clearInterval(clockInterval);
                 }
             });
+            
+            if (cancelEditCountdownBtn) {
+                cancelEditCountdownBtn.addEventListener('click', resetCountdownForm);
+            }
         }
 
         if (addCountdownForm) {
@@ -6099,21 +6140,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const concept = countdownConceptInput.value.trim();
                 const date = countdownDateInput.value;
+                const editId = countdownEditId ? countdownEditId.value : '';
 
                 if (!concept || !date) return;
+                
+                if (editId) {
+                    const index = countdowns.findIndex(c => c.id === editId);
+                    if (index !== -1) {
+                        countdowns[index] = { ...countdowns[index], concept, date };
+                    }
+                } else {
+                    const newCountdown = {
+                        id: Date.now().toString(),
+                        concept,
+                        date
+                    };
+                    countdowns.push(newCountdown);
+                }
 
-                const newCountdown = {
-                    id: Date.now().toString(),
-                    concept,
-                    date
-                };
-
-                countdowns.push(newCountdown);
                 if (window.saveCountdowns) window.saveCountdowns(countdowns);
-                
-                countdownConceptInput.value = '';
-                countdownDateInput.value = '';
-                
+                resetCountdownForm();
                 renderCountdowns();
             });
         }
