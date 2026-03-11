@@ -335,8 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Savings Modal Elements
         savingsInputModal: document.getElementById('savingsInputModal'),
         addDrawerBtn: document.getElementById('addDrawerBtn'),
-        ahorroCardViewBtn: document.getElementById('ahorroCardViewBtn'),
-        ahorroTableViewBtn: document.getElementById('ahorroTableViewBtn'),
+        ahorroViewToggleBtn: document.getElementById('ahorroViewToggleBtn'),
         ahorroTableContainer: document.getElementById('ahorroTableContainer'),
         ahorroTableBody: document.getElementById('ahorroTableBody'),
         ahorroCurrentMonthLabel: document.getElementById('ahorroCurrentMonthLabel'),
@@ -369,9 +368,8 @@ document.addEventListener('DOMContentLoaded', () => {
         nominaSection: document.getElementById('nominaSection'),
         nominaGrid: document.getElementById('nominaGrid'),
         nominaGridContainer: document.getElementById('nominaGridContainer'),
-        nominaCardViewBtn: document.getElementById('nominaCardViewBtn'),
         nominaAnalisisViewBtn: document.getElementById('nominaAnalisisViewBtn'),
-        nominaTableViewBtn: document.getElementById('nominaTableViewBtn'),
+        nominaViewToggleBtn: document.getElementById('nominaViewToggleBtn'),
         nominaTableContainer: document.getElementById('nominaTableContainer'),
         nominaTableBody: document.getElementById('nominaTableBody'),
         nominaCurrentMonthLabel: document.getElementById('nominaCurrentMonthLabel'),
@@ -1973,26 +1971,20 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.drawersGrid?.classList.add('hidden');
             elements.ahorroTableContainer?.classList.remove('hidden');
 
-            elements.ahorroCardViewBtn?.classList.remove('active');
-            elements.ahorroCardViewBtn.style.background = 'transparent';
-            elements.ahorroCardViewBtn.style.color = 'var(--text-muted)';
-
-            elements.ahorroTableViewBtn?.classList.add('active');
-            elements.ahorroTableViewBtn.style.background = 'var(--primary)';
-            elements.ahorroTableViewBtn.style.color = 'white';
+            if (elements.ahorroViewToggleBtn) {
+                elements.ahorroViewToggleBtn.innerHTML = '🗂️';
+                elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Cajones';
+            }
 
             renderSavingsList();
         } else {
             elements.drawersGrid?.classList.remove('hidden');
             elements.ahorroTableContainer?.classList.add('hidden');
 
-            elements.ahorroCardViewBtn?.classList.add('active');
-            elements.ahorroCardViewBtn.style.background = 'var(--primary)';
-            elements.ahorroCardViewBtn.style.color = 'white';
-
-            elements.ahorroTableViewBtn?.classList.remove('active');
-            elements.ahorroTableViewBtn.style.background = 'transparent';
-            elements.ahorroTableViewBtn.style.color = 'var(--text-muted)';
+            if (elements.ahorroViewToggleBtn) {
+                elements.ahorroViewToggleBtn.innerHTML = '📄';
+                elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Listado';
+            }
         }
 
         elements.drawersGrid.innerHTML = '';
@@ -2856,24 +2848,18 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nominaGridContainer?.classList.add('hidden');
             elements.nominaTableContainer?.classList.remove('hidden');
 
-            elements.nominaCardViewBtn?.classList.remove('active');
-            elements.nominaCardViewBtn.style.background = 'transparent';
-            elements.nominaCardViewBtn.style.color = 'var(--text-muted)';
-
-            elements.nominaTableViewBtn?.classList.add('active');
-            elements.nominaTableViewBtn.style.background = 'var(--primary)';
-            elements.nominaTableViewBtn.style.color = 'white';
+            if (elements.nominaViewToggleBtn) {
+                elements.nominaViewToggleBtn.innerHTML = '🗂️';
+                elements.nominaViewToggleBtn.title = 'Cambiar a Vista Cajones';
+            }
         } else {
             elements.nominaGridContainer?.classList.remove('hidden');
             elements.nominaTableContainer?.classList.add('hidden');
 
-            elements.nominaCardViewBtn?.classList.add('active');
-            elements.nominaCardViewBtn.style.background = 'var(--primary)';
-            elements.nominaCardViewBtn.style.color = 'white';
-
-            elements.nominaTableViewBtn?.classList.remove('active');
-            elements.nominaTableViewBtn.style.background = 'transparent';
-            elements.nominaTableViewBtn.style.color = 'var(--text-muted)';
+            if (elements.nominaViewToggleBtn) {
+                elements.nominaViewToggleBtn.innerHTML = '📄';
+                elements.nominaViewToggleBtn.title = 'Cambiar a Vista Listado';
+            }
         }
 
         // Helper to ensure the automatic drawer exists - DO THIS BEFORE RENDERING LIST
@@ -4729,17 +4715,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 switchView('analisis');
             });
         }
-        if (elements.nominaTableViewBtn) {
-            elements.nominaTableViewBtn.onclick = () => {
-                nominaViewMode = 'list';
-                localStorage.setItem('nominaViewMode', 'list');
-                renderNomina();
-            };
-        }
-        if (elements.nominaCardViewBtn) {
-            elements.nominaCardViewBtn.onclick = () => {
-                nominaViewMode = 'cards';
-                localStorage.setItem('nominaViewMode', 'cards');
+        if (elements.nominaViewToggleBtn) {
+            elements.nominaViewToggleBtn.onclick = () => {
+                nominaViewMode = nominaViewMode === 'cards' ? 'list' : 'cards';
+                localStorage.setItem('nominaViewMode', nominaViewMode);
                 renderNomina();
             };
         }
@@ -5064,15 +5043,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Ahorro View Toggles
-        elements.ahorroCardViewBtn?.addEventListener('click', () => {
-            ahorroViewMode = 'cards';
-            localStorage.setItem('ahorroViewMode', 'cards');
-            renderSavings();
-        });
-
-        elements.ahorroTableViewBtn?.addEventListener('click', () => {
-            ahorroViewMode = 'list';
-            localStorage.setItem('ahorroViewMode', 'list');
+        elements.ahorroViewToggleBtn?.addEventListener('click', () => {
+            ahorroViewMode = ahorroViewMode === 'cards' ? 'list' : 'cards';
+            localStorage.setItem('ahorroViewMode', ahorroViewMode);
             renderSavings();
         });
 

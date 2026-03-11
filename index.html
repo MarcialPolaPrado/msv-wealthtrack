@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603111617">
+    <link rel="stylesheet" href="styles.css?v=202603111624">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -220,13 +220,8 @@
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <div style="display:flex; align-items:center; gap:1rem;">
                             <h2 id="misCajonesTitle" style="margin:0">Mis Cajones</h2>
-                            <div class="view-toggle"
-                                style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
-                                <button id="ahorroCardViewBtn" class="btn-sm active" title="Vista Cajones"
-                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">🗂️</button>
-                                <button id="ahorroTableViewBtn" class="btn-sm" title="Vista Listado"
-                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">📄</button>
-                            </div>
+                                <button id="ahorroViewToggleBtn" class="btn-sm" title="Cambiar Vista"
+                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
                         </div>
                         <div style="display:flex; gap: 0.8rem;">
                             <button id="ahorroBreakdownBtn" class="btn-secondary" style="padding: 0.5rem 1rem;" title="Desglose de Ingresos">📊</button>
@@ -313,14 +308,11 @@
                     style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <h2 style="margin:0">Conceptos Mensuales</h2>
-                        <div class="view-toggle"
-                            style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
-                            <button id="nominaAnalisisViewBtn" class="btn-sm" title="Análisis"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">📊</button>
-                            <button id="nominaTableViewBtn" class="btn-sm" title="Vista Listado"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">📄</button>
-                            <button id="nominaCardViewBtn" class="btn-sm active" title="Vista Cajones"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">🗂️</button>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <button id="nominaAnalisisViewBtn" class="btn-secondary" title="Análisis"
+                                style="padding: 4.5px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(59, 130, 246, 0.1); color: var(--primary);">📊</button>
+                            <button id="nominaViewToggleBtn" class="btn-sm" title="Cambiar Vista"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
                         </div>
                     </div>
                     <div style="display:flex; align-items: center; gap: 0.8rem;">
@@ -1059,7 +1051,7 @@
 
     <script src="mock_data.js?v=2026030616"></script>
     <script src="storage.js?v=202603102143"></script>
-    <script src="app.js?v=202603111617"></script>
+    <script src="app.js?v=202603111624"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1103,7 +1095,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603111617';
+        const APP_VERSION = '202603111624';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
