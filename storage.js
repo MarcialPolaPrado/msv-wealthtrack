@@ -79,3 +79,13 @@ window.loadFXRate = () => {
     const rate = localStorage.getItem(FX_RATE_KEY);
     return rate ? parseFloat(rate) : null;
 };
+
+const FX_DATE_KEY = 'msv_fx_date_v1';
+window.saveFXDate = (date) => {
+    localStorage.setItem(FX_DATE_KEY, date);
+};
+
+window.loadFXDate = () => {
+    const date = localStorage.getItem(FX_DATE_KEY);
+    return date || '';
+};

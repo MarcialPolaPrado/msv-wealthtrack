@@ -323,6 +323,7 @@ window.SEARCH_DATA = Object.keys(window.MOCK_DATA).map(ticker => ({
 }));
 
 window.FX_RATE = (window.loadFXRate && window.loadFXRate()) || 0.90; // 1 USD = 0.90 EUR (Cargado de storage o valor por defecto)
+window.FX_DATE = (window.loadFXDate && window.loadFXDate()) || '';
 
 // --- Real-time API Configuration ---
 // Get your free key at https://finnhub.io/
@@ -550,7 +551,12 @@ window.refreshFXRate = async function () {
             const newRate = rawData.chart.result[0].meta.regularMarketPrice;
             if (newRate > 0) {
                 window.FX_RATE = newRate;
-                console.log(`[FX] Updated USD/EUR rate: ${newRate}`);
+                const now = new Date();
+                const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                window.FX_DATE = dateStr;
+                if (window.saveFXRate) window.saveFXRate(newRate);
+                if (window.saveFXDate) window.saveFXDate(dateStr);
+                console.log(`[FX] Updated USD/EUR rate: ${newRate} (${dateStr})`);
                 return true;
             }
         }

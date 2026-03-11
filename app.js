@@ -782,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (elements.fxIndicator) {
-            elements.fxIndicator.innerHTML = `FX Rate: 1 USD = ${fmtNum(window.FX_RATE, 3)} EUR <span style="margin-left: 10px; font-size: 0.8em; opacity: 0.7;">(Sincronizado: ${lastSyncTime})</span>`;
+            elements.fxIndicator.innerHTML = `FX Rate: 1 USD = ${fmtNum(window.FX_RATE, 3)} EUR <span style="margin-left: 10px; font-size: 0.8em; opacity: 0.7;">(Lectura: ${window.FX_DATE || lastSyncTime})</span>`;
         }
 
         if (elements.liveStatus) {
@@ -5722,6 +5722,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="flex:1;">
                 <div style="font-weight:700; color:var(--primary);">Divisa USD ➔ EUR</div>
                 <div style="font-size:0.75rem; opacity:0.7;">Cambio actual empleado en la cartera</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Última lectura: ${window.FX_DATE || '---'}</div>
             </div>
             <div style="width:120px;">
                 <input type="number" step="0.0001" id="manualFxRateInput" value="${window.FX_RATE}" 
@@ -5756,11 +5757,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const yahooUrl = `https://finance.yahoo.com/quote/${yahooTicker}`;
 
                 const currentManualVal = window.MANUAL_PRICES[item.ticker]?.price || '';
+                const currentManualDate = window.MANUAL_PRICES[item.ticker]?.date || '';
 
                 div.innerHTML = `
                     <div style="flex:1;">
                         <div style="font-weight:700; color:var(--primary);">${item.ticker}</div>
                         <a href="${yahooUrl}" target="_blank" style="font-size:0.75rem; color:#3b82f6; text-decoration:none;">🔗 Yahoo Finance</a>
+                        ${currentManualDate ? `<div style="font-size:0.6rem; color:var(--text-muted); margin-top:2px;">Ajustado: ${currentManualDate}</div>` : ''}
                     </div>
                     <div style="width:120px;">
                         <input type="number" step="0.0001" class="manual-price-input" data-ticker="${item.ticker}" value="${currentManualVal}" 
@@ -5781,7 +5784,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fxInput) {
             const newFx = parseFloat(fxInput.value);
             if (!isNaN(newFx) && newFx > 0) {
+                const isDifferent = newFx !== window.FX_RATE;
                 window.FX_RATE = newFx;
+                if (isDifferent) {
+                    const now = new Date();
+                    const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    window.FX_DATE = dateStr;
+                    if (window.saveFXDate) window.saveFXDate(dateStr);
+                }
                 if (window.saveFXRate) window.saveFXRate(newFx);
             }
         }
@@ -5793,9 +5803,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const ticker = input.dataset.ticker;
             const val = parseFloat(input.value);
             if (!isNaN(val) && val > 0) {
+                const now = new Date();
+                const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                 window.MANUAL_PRICES[ticker] = {
                     price: val,
-                    date: new Date().toLocaleDateString()
+                    date: dateStr
                 };
                 count++;
             } else {
