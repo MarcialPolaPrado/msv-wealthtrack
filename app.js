@@ -6165,6 +6165,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function setupNumericSignToggles() {
+        const numericInputs = document.querySelectorAll('input[type="number"]');
+        numericInputs.forEach(input => {
+            // Exclude specific inputs
+            if (input.id === 'fiscalDayInput') return; 
+
+            let pendingNegative = false;
+
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'stretch';
+            wrapper.style.gap = '6px';
+            wrapper.style.width = '100%';
+
+            input.parentNode.insertBefore(wrapper, input);
+
+            const signBtn = document.createElement('button');
+            signBtn.type = 'button';
+            signBtn.className = 'btn-secondary sign-toggle-btn';
+            signBtn.style.padding = '0 0.8rem';
+            signBtn.style.fontSize = '1.3rem';
+            signBtn.style.fontWeight = 'bold';
+            signBtn.style.lineHeight = '1';
+            signBtn.style.border = '1px solid rgba(255,255,255,0.1)';
+            signBtn.style.backgroundColor = 'rgba(255,255,255,0.05)';
+            signBtn.style.flex = '0 0 auto';
+            signBtn.style.borderRadius = 'var(--radius)';
+            signBtn.style.cursor = 'pointer';
+            
+            const updateBtnState = () => {
+                const val = parseFloat(input.value);
+                const isNeg = (!isNaN(val) && val < 0) || (isNaN(val) && pendingNegative);
+                if (isNeg) {
+                    signBtn.textContent = '-';
+                    signBtn.style.color = 'var(--danger)';
+                    signBtn.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                    signBtn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                } else {
+                    signBtn.textContent = '+';
+                    signBtn.style.color = 'var(--success)';
+                    signBtn.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                    signBtn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                }
+            };
+
+            updateBtnState();
+
+            wrapper.appendChild(signBtn);
+            wrapper.appendChild(input);
+            input.style.flex = '1';
+            input.style.minWidth = '0';
+
+            signBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                let val = parseFloat(input.value);
+                if (!isNaN(val) && val !== 0) {
+                    input.value = (val * -1).toString();
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    pendingNegative = !pendingNegative;
+                }
+                updateBtnState();
+                input.focus();
+            });
+
+            input.addEventListener('input', () => {
+                if (pendingNegative && input.value && input.value !== '-') {
+                    let val = parseFloat(input.value);
+                    if (val > 0) {
+                        input.value = (val * -1).toString();
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    pendingNegative = false;
+                }
+                updateBtnState();
+            });
+            
+            input.addEventListener('change', updateBtnState);
+        });
+    }
+
+    setupNumericSignToggles();
     setupClockCountdown();
     showApp();
 });
