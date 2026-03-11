@@ -5687,7 +5687,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (true) {
             // Setup Modal Categories
             if (elements.transferCategorySelect) {
-                elements.transferCategorySelect.innerHTML = incomeCategories.map(c => `<option value="${c}" ${c === 'Traspaso' ? 'selected' : ''}>${c}</option>`).join('');
+                const allCats = [...new Set([...incomeCategories, ...expenseCategories])];
+                elements.transferCategorySelect.innerHTML = allCats.map(c => `<option value="${c}" ${c === 'Traspaso' ? 'selected' : ''}>${c}</option>`).join('');
                 elements.transferCategorySelect.value = 'Traspaso';
             }
 
@@ -5709,12 +5710,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const amountToTransfer = parseFloat(elements.transferAmountInput.value);
                 const selectedCategory = elements.transferCategorySelect.value;
 
-                if (isNaN(amountToTransfer) || amountToTransfer <= 0) {
-                    alert('Por favor, ingresa una cantidad válida y superior a 0.');
+                if (isNaN(amountToTransfer) || amountToTransfer === 0) {
+                    alert('Por favor, ingresa una cantidad válida diferente de 0.');
                     return;
                 }
 
-                // Add positive movement to Savings
+                // Add movement to Savings
                 targetAhorroDrawer.movements.push({
                     description: `Traspaso desde Nómina (${fiscalMonthStr}) - ${drawer.name}`,
                     date: new Date().toISOString().split('T')[0],
@@ -6169,8 +6170,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const numericInputs = document.querySelectorAll('input[type="number"]');
         numericInputs.forEach(input => {
             // Exclude specific inputs
-            if (input.id === 'fiscalDayInput') return; 
-
+            if (input.id === 'fiscalDayInput') return;
+            if (input.classList.contains('no-toggle')) return;
             let pendingNegative = false;
 
             const wrapper = document.createElement('div');
