@@ -59,3 +59,13 @@ window.loadManualPrices = () => {
     const data = localStorage.getItem(MANUAL_PRICES_KEY);
     return data ? JSON.parse(data) : {};
 };
+
+const DATA_SOURCE_MODE_KEY = 'msv_data_source_mode_v1';
+window.saveDataSourceMode = (mode) => {
+    localStorage.setItem(DATA_SOURCE_MODE_KEY, mode);
+};
+
+window.loadDataSourceMode = () => {
+    const mode = localStorage.getItem(DATA_SOURCE_MODE_KEY);
+    return mode || 'hybrid'; // Default: finnhub + yahoo fallback
+};

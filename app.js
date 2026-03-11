@@ -269,6 +269,9 @@ document.addEventListener('DOMContentLoaded', () => {
         totalTrend: document.getElementById('totalTrend'),
         addStockBtn: document.getElementById('addStockBtn'),
         bolsaAddStockBtn: document.getElementById('bolsaAddStockBtn'),
+        bolsaDataSourceToggleBtn: document.getElementById('bolsaDataSourceToggleBtn'),
+        dataSourceIcon: document.getElementById('dataSourceIcon'),
+        dataSourceLabel: document.getElementById('dataSourceLabel'),
         bolsaManualPriceBtn: document.getElementById('bolsaManualPriceBtn'),
         manualPriceBadge: document.getElementById('manualPriceBadge'),
         manualPriceModal: document.getElementById('manualPriceModal'),
@@ -6284,8 +6287,47 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`File ${fileName} exported successfully (fallback)`);
     }
 
+    function updateDataSourceUI() {
+        if (!elements.dataSourceIcon || !elements.dataSourceLabel) return;
+        const mode = window.DATA_SOURCE_MODE;
+        if (mode === 'yahoo') {
+            elements.dataSourceIcon.textContent = '📊';
+            elements.dataSourceLabel.textContent = 'Yahoo';
+            if (elements.bolsaDataSourceToggleBtn) {
+                elements.bolsaDataSourceToggleBtn.style.borderColor = 'rgba(59, 130, 246, 0.8)';
+                elements.bolsaDataSourceToggleBtn.title = 'Modo: Solo Yahoo Finance (Pulsa para Híbrido)';
+            }
+        } else {
+            elements.dataSourceIcon.textContent = '⚡';
+            elements.dataSourceLabel.textContent = 'Híbrido';
+            if (elements.bolsaDataSourceToggleBtn) {
+                elements.bolsaDataSourceToggleBtn.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+                elements.bolsaDataSourceToggleBtn.title = 'Modo: Finnhub + Yahoo Fallback (Pulsa para Solo Yahoo)';
+            }
+        }
+    }
+
     // Start
     const initApp = function () {
+        if (elements.bolsaDataSourceToggleBtn) {
+            elements.bolsaDataSourceToggleBtn.addEventListener('click', () => {
+                const newMode = (window.DATA_SOURCE_MODE === 'hybrid') ? 'yahoo' : 'hybrid';
+                window.DATA_SOURCE_MODE = newMode;
+                if (window.saveDataSourceMode) window.saveDataSourceMode(newMode);
+                updateDataSourceUI();
+                
+                // Trigger a refresh of prices with the new mode
+                const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
+                if (window.refreshLivePrices) {
+                    showToast("🔄 Cambiando fuente de datos...", "info");
+                    window.refreshLivePrices(uniqueTickers).then(() => {
+                        render();
+                        showToast(`✅ Modo ${newMode === 'yahoo' ? 'Yahoo Finance' : 'Híbrido'} activado`, "success");
+                    });
+                }
+            });
+        }
+        updateDataSourceUI();
         // Init Manual Prices
         if (window.loadManualPrices) {
             window.MANUAL_PRICES = window.loadManualPrices();

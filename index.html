@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603111813">
+    <link rel="stylesheet" href="styles.css?v=202603111829">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -156,6 +156,11 @@
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <h2 style="margin:0" id="bolsaMobileTitle">Sus Inversiones</h2>
                         <div style="display:flex; gap: 0.8rem;">
+                            <button id="bolsaDataSourceToggleBtn" class="btn-secondary" title="Modo de Lectura de Datos"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem; border-color: rgba(59, 130, 246, 0.4); display: flex; align-items: center; gap: 5px;">
+                                <span id="dataSourceIcon">⚡</span>
+                                <span id="dataSourceLabel" style="font-size: 0.75rem; font-weight: 700;">Híbrido</span>
+                            </button>
                             <button id="bolsaManualPriceBtn" class="btn-secondary" title="Ajuste Manual de Precios"
                                 style="padding: 0.5rem 0.75rem; font-size: 1.1rem; position: relative; border-color: rgba(245, 158, 11, 0.4);">
                                 ⚙️<span id="manualPriceBadge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: #f59e0b; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid #0f172a;">!</span>
@@ -461,7 +466,7 @@
             <div class="modal-header">
                 <div style="display: flex; flex-direction: column;">
                     <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
-                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 202603111815</span>
+                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 202603111825</span>
                 </div>
                 <span id="closeSettingsModal" class="close-modal">&times;</span>
             </div>
@@ -1075,9 +1080,9 @@
         </div>
     </div>
 
-    <script src="mock_data.js?v=202603111815"></script>
-    <script src="storage.js?v=202603111815"></script>
-    <script src="app.js?v=202603111813"></script>
+    <script src="mock_data.js?v=202603111825"></script>
+    <script src="storage.js?v=202603111825"></script>
+    <script src="app.js?v=202603111829"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1121,7 +1126,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603111813';
+        const APP_VERSION = '202603111829';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

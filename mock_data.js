@@ -331,7 +331,8 @@ window.FINNHUB_API_KEY = 'd6b00s1r01qnr27j4hqgd6b00s1r01qnr27j4hr0';
 window.LIVE_PRICES = {}; // Cache for live data
 window.LIVE_DATES = {}; // Cache for update times
 window.LIVE_SOURCES = {}; // Cache for data source (finnhub, yahoo, manual)
-window.MANUAL_PRICES = {}; // User-entered manual prices
+window.MANUAL_PRICES = window.loadManualPrices ? window.loadManualPrices() : {};
+window.DATA_SOURCE_MODE = window.loadDataSourceMode ? window.loadDataSourceMode() : 'hybrid';
 
 // Helper to format date as dd/mm/aaaa
 function formatDate(dateObj) {
@@ -426,7 +427,10 @@ window.refreshLivePrices = async function (tickers) {
         }
 
         let success = false;
-        for (const symbol of symbolsToTry) {
+        const skipFinnhub = window.DATA_SOURCE_MODE === 'yahoo';
+
+        if (!skipFinnhub) {
+            for (const symbol of symbolsToTry) {
             // Implement 3-second timeout to prevent app hanging on network issues
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -468,14 +472,20 @@ window.refreshLivePrices = async function (tickers) {
                     }
                 } else {
                     // console.error(`Fetch error for ${symbol}:`, e);
-                    window.NETWORK_OFFLINE = navigator.onLine === false;
                 }
             }
         }
+    }
 
-        if (!success && (key.endsWith('.MC') || key.endsWith('.ES'))) {
+    const isSpanish = (key.endsWith('.MC') || key.endsWith('.ES'));
+    const tryYahoo = !success && (isSpanish || window.DATA_SOURCE_MODE === 'yahoo');
+
+    if (tryYahoo) {
             // Enhanced Fallback: Yahoo Finance via multiple proxies
-            const tickers = [key.endsWith('.ES') ? key.replace('.ES', '.MC') : key];
+            let yahooTicker = key;
+            if (key.endsWith('.ES')) yahooTicker = key.replace('.ES', '.MC');
+            
+            const tickers = [yahooTicker];
             for (const yahooTicker of tickers) {
                 try {
                     // Try different proxies if one fails
