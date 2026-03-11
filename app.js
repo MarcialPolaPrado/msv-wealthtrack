@@ -1040,19 +1040,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         : '<span class="source-dot simulated" title="Datos Históricos"></span>';
 
                     const sourceLabel = info.source === 'yahoo' ? 'YF' : (info.source === 'manual' ? 'Manual' : 'Live');
-                    const badgeClass = info.source === 'yahoo' ? 'badge-live' : (info.source === 'manual' ? 'badge-simulated' : 'badge-live');
-                    const badgeStyle = info.source === 'yahoo' ? 'background:rgba(59, 130, 246, 0.1); color:#3b82f6; border:1px solid rgba(59, 130, 246, 0.2);' : '';
+                    const badgeClass = info.isLive ? 'badge-live' : 'badge-simulated';
+                    
+                    // Distinct Blue style for Yahoo Finance
+                    const yahooStyle = info.source === 'yahoo' ? 'background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(96, 165, 250, 0.3);' : '';
+                    const sourceTitle = info.source === 'yahoo' ? 'Fuente: Yahoo Finance' : (info.source === 'finnhub' ? 'Fuente: Finnhub API' : 'Ajuste Manual');
 
                     const statusBadge = info.isLive
-                        ? `<div style="display:flex; flex-direction:column; align-items:flex-end;"><span class="${badgeClass}" style="${badgeStyle}">${sourceLabel}</span>${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}</div>`
+                        ? `<div style="display:flex; flex-direction:column; align-items:flex-end;">
+                            <span class="${badgeClass}" style="${yahooStyle}" title="${sourceTitle}">${sourceLabel}</span>
+                            ${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
+                          </div>`
                         : (info.isManual ? `
                         <div style="display:flex; flex-direction:column; align-items:flex-end;">
                             <span class="badge-simulated" style="background: rgba(139, 92, 246, 0.1); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2);">Manual</span>
-                            ${info.date ? `<span style="font-size:0.7em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
+                            ${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
                         </div>` : (info.isSimulated ? `
                         <div style="display:flex; flex-direction:column; align-items:flex-end;">
                             <span class="badge-simulated" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">Cierre</span>
-                            ${info.date ? `<span style="font-size:0.7em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
+                            ${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
                         </div>` : (info.price === null ? '<span class="badge-simulated" style="background:rgba(239, 68, 68, 0.1); color:var(--danger);">S.D.</span>' : '')));
 
                     let priceDisplay = '<span style="color:var(--text-muted);">-</span>';

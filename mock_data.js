@@ -474,29 +474,46 @@ window.refreshLivePrices = async function (tickers) {
         }
 
         if (!success && (key.endsWith('.MC') || key.endsWith('.ES'))) {
-            // New Robust Fallback: Yahoo Finance via AllOrigins Proxy
-            try {
-                const yahooTicker = key.endsWith('.ES') ? key.replace('.ES', '.MC') : key;
-                // Using AllOrigins proxy to bypass CORS
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${yahooTicker}`)}`;
-                
-                const resp = await fetch(proxyUrl);
-                const json = await resp.json();
-                const data = JSON.parse(json.contents);
+            // Enhanced Fallback: Yahoo Finance via multiple proxies
+            const tickers = [key.endsWith('.ES') ? key.replace('.ES', '.MC') : key];
+            for (const yahooTicker of tickers) {
+                try {
+                    // Try different proxies if one fails
+                    const proxies = [
+                        `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooTicker}?interval=1m&range=1d`)}`,
+                        `https://corsproxy.io/?${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooTicker}?interval=1m&range=1d`)}`
+                    ];
 
-                if (data.quoteResponse && data.quoteResponse.result && data.quoteResponse.result[0]) {
-                    const quote = data.quoteResponse.result[0];
-                    const finalPrice = quote.regularMarketPrice;
-                    if (finalPrice && finalPrice !== 0) {
-                        window.LIVE_PRICES[key] = Math.round(finalPrice * 100) / 100;
-                        window.LIVE_DATES[key] = formatDate(new Date());
-                        window.LIVE_SOURCES[key] = 'yahoo'; // Track source
-                        success = true;
-                        // console.log(`Live price for ${key} found using Yahoo Finance (Proxy): ${finalPrice}`);
+                    for (const proxyUrl of proxies) {
+                        try {
+                            const resp = await fetch(proxyUrl, { timeout: 5000 });
+                            const json = await resp.json();
+                            // AllOrigins wraps content in a 'contents' property, corsproxy.io doesn't
+                            let rawData = json.contents ? JSON.parse(json.contents) : json;
+                            
+                            if (rawData && rawData.chart && rawData.chart.result && rawData.chart.result[0]) {
+                                const result = rawData.chart.result[0];
+                                const meta = result.meta;
+                                const finalPrice = meta.regularMarketPrice || meta.chartPreviousClose;
+                                
+                                if (finalPrice && finalPrice !== 0) {
+                                    window.LIVE_PRICES[key] = Math.round(finalPrice * 100) / 100;
+                                    window.LIVE_DATES[key] = formatDate(new Date());
+                                    window.LIVE_SOURCES[key] = 'yahoo';
+                                    success = true;
+                                    // console.log(`Yahoo Success for ${key}: ${finalPrice}`);
+                                    break;
+                                }
+                            }
+                        } catch (proxyErr) {
+                            // console.warn(`Proxy failed:`, proxyUrl);
+                        }
+                        if (success) break;
                     }
+                } catch (e) {
+                    // console.warn(`Yahoo fallback error:`, e);
                 }
-            } catch (e) {
-                // console.warn(`Yahoo Finance fallback failed for ${key}:`, e);
+                if (success) break;
             }
         }
 
