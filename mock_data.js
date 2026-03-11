@@ -322,7 +322,7 @@ window.SEARCH_DATA = Object.keys(window.MOCK_DATA).map(ticker => ({
     name: window.MOCK_DATA[ticker].name
 }));
 
-window.FX_RATE = 0.8645; // 1 USD = 0.8645 EUR (Updated to current March 11 2026 data)
+window.FX_RATE = (window.loadFXRate && window.loadFXRate()) || 0.90; // 1 USD = 0.90 EUR (Cargado de storage o valor por defecto)
 
 // --- Real-time API Configuration ---
 // Get your free key at https://finnhub.io/

@@ -5714,6 +5714,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!elements.manualPriceList) return;
         elements.manualPriceList.innerHTML = '';
 
+        // --- DIVISA (Always visible) ---
+        const fxDiv = document.createElement('div');
+        fxDiv.className = 'manual-price-row fx-rate-row';
+        fxDiv.style.cssText = 'display:flex; align-items:center; gap:1rem; background:rgba(59, 130, 246, 0.1); padding:0.8rem; border-radius:10px; border:1px solid rgba(59, 130, 246, 0.2); margin-bottom: 1.5rem;';
+        fxDiv.innerHTML = `
+            <div style="flex:1;">
+                <div style="font-weight:700; color:var(--primary);">Divisa USD ➔ EUR</div>
+                <div style="font-size:0.75rem; opacity:0.7;">Cambio actual empleado en la cartera</div>
+            </div>
+            <div style="width:120px;">
+                <input type="number" step="0.0001" id="manualFxRateInput" value="${window.FX_RATE}" 
+                    style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--primary); color:white; padding:0.4rem; border-radius:6px; font-size:0.9rem; font-weight:700; text-align:center;">
+            </div>
+        `;
+        elements.manualPriceList.appendChild(fxDiv);
+
         // Find tickers that are not live
         const allTickers = [...new Set(stocks.map(s => s.ticker.toUpperCase()))];
         const rows = allTickers.map(ticker => {
@@ -5725,9 +5741,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Filter to show only non-live or already manual ones
         const listToDisplay = rows.filter(r => r.isTarget || r.info.isManual);
 
-        if (listToDisplay.length === 0) {
-            elements.manualPriceList.innerHTML = '<p style="text-align:center; opacity:0.6; padding: 2rem;">Todo en orden. Todos los activos tienen precios en vivo de la API. ✨</p>';
-        } else {
+        if (listToDisplay.length > 0) {
+            const title = document.createElement('h4');
+            title.textContent = 'Ajuste de Activos';
+            title.style.cssText = 'margin: 1rem 0 0.5rem 0; font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.1em;';
+            elements.manualPriceList.appendChild(title);
+
             listToDisplay.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'manual-price-row';
@@ -5757,6 +5776,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveManualPrices() {
+        // --- 1. Save FX Rate ---
+        const fxInput = document.getElementById('manualFxRateInput');
+        if (fxInput) {
+            const newFx = parseFloat(fxInput.value);
+            if (!isNaN(newFx) && newFx > 0) {
+                window.FX_RATE = newFx;
+                if (window.saveFXRate) window.saveFXRate(newFx);
+            }
+        }
+
+        // --- 2. Save Stock Prices ---
         const inputs = elements.manualPriceList.querySelectorAll('.manual-price-input');
         let count = 0;
         inputs.forEach(input => {
@@ -5775,7 +5805,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.saveManualPrices) window.saveManualPrices(window.MANUAL_PRICES);
         elements.manualPriceModal.classList.add('hidden');
         render();
-        showToast(count > 0 ? 'Precios manuales guardados' : 'Ajustes actualizados');
+        showToast('Ajustes guardados correctamente');
     }
 
     function clearAllManualPrices() {

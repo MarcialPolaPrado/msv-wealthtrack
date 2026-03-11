@@ -69,3 +69,13 @@ window.loadDataSourceMode = () => {
     const mode = localStorage.getItem(DATA_SOURCE_MODE_KEY);
     return mode || 'hybrid'; // Default: finnhub + yahoo fallback
 };
+
+const FX_RATE_KEY = 'msv_fx_rate_v1';
+window.saveFXRate = (rate) => {
+    localStorage.setItem(FX_RATE_KEY, rate);
+};
+
+window.loadFXRate = () => {
+    const rate = localStorage.getItem(FX_RATE_KEY);
+    return rate ? parseFloat(rate) : null;
+};
