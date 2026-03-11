@@ -250,7 +250,7 @@ window.MOCK_DATA = {
         }
     },
     'CABK.MC': { price: 4.35, currency: 'EUR', name: 'CaixaBank' },
-    'NTGY.MC': { price: 25.80, currency: 'EUR', name: 'Naturgy Energy Group' },
+    'NTGY.MC': { price: 25.04, currency: 'EUR', name: 'Naturgy Energy Group' },
     'ENG.MC': { price: 15.20, currency: 'EUR', name: 'Enagás' },
     'FER.MC': { price: 35.10, currency: 'EUR', name: 'Ferrovial' },
     'AMS.MC': { price: 65.50, currency: 'EUR', name: 'Amadeus' },
@@ -263,7 +263,7 @@ window.MOCK_DATA = {
     'IDR.MC': { price: 14.50, currency: 'EUR', name: 'Indra' },
 
     // Aliases .ES (same data as .MC, used by some brokers)
-    'NTGY.ES': { price: 25.80, currency: 'EUR', name: 'Naturgy Energy Group' },
+    'NTGY.ES': { price: 25.04, currency: 'EUR', name: 'Naturgy Energy Group' },
     'RED.ES': { price: 16.03, currency: 'EUR', name: 'Redeia (REE)' },
     'SAB.ES': { price: 3.28, currency: 'EUR', name: 'Banco Sabadell' },
     'TUB.ES': { price: 3.39, currency: 'EUR', name: 'Tubacex' },
@@ -335,45 +335,15 @@ window.getStockInfo = function (ticker) {
         };
     }
 
-    // 2. Fallback: If not live, try to get the closing price from MOCK_DATA
+    // 2. Fallback: NO FALLBACK to mock data as per user preference.
+    // Return null to show "-" in the UI if price is not "real" (live).
     let data = window.MOCK_DATA[key];
-    if (data) {
-        let syncPrice = data.price;
-        let priceDate = '';
-        if (data.historical && data.historical['D'] && data.historical['D'].length > 0) {
-            const lastEntry = data.historical['D'][data.historical['D'].length - 1];
-            syncPrice = lastEntry.close;
-            priceDate = formatDate(new Date(lastEntry.time));
-        }
-        return {
-            price: syncPrice,
-            currency: data.currency,
-            isLive: false,
-            isSimulated: true,
-            date: priceDate
-        };
-    }
-
-    // 3. Fallback for Unknown Tickers: Return null if we have an API key
-    if (window.FINNHUB_API_KEY) {
-        return {
-            price: null,
-            currency: (key.endsWith('.MC') ? 'EUR' : 'USD'),
-            isLive: false,
-            isSimulated: false,
-            date: ''
-        };
-    }
-
-    // 4. Default for Unknown (Simulated Mode): Generate random price
-    const seed = key.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const basePrice = (seed % 200) + 50;
     return {
-        price: basePrice,
-        currency: key.endsWith('.MC') ? 'EUR' : 'USD',
+        price: null,
+        currency: data ? data.currency : (key.endsWith('.MC') ? 'EUR' : 'USD'),
         isLive: false,
-        isSimulated: true,
-        date: '' // Don't show a date if we don't know it
+        isSimulated: false,
+        date: ''
     };
 }
 
@@ -448,6 +418,26 @@ window.refreshLivePrices = async function (tickers) {
                     // console.error(`Fetch error for ${symbol}:`, e);
                     window.NETWORK_OFFLINE = navigator.onLine === false;
                 }
+            }
+        }
+
+        if (!success && (key.endsWith('.MC') || key.endsWith('.ES'))) {
+            // Fallback attempt with Yahoo Finance (No API key needed, but CORS might be an issue)
+            try {
+                const ticker = key.endsWith('.ES') ? key.replace('.ES', '.MC') : key;
+                const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${ticker}`;
+                // Note: This often fails in browsers due to CORS, but we try as a last resort
+                const resp = await fetch(url);
+                const data = await resp.json();
+                if (data.quoteResponse && data.quoteResponse.result && data.quoteResponse.result[0]) {
+                    const quote = data.quoteResponse.result[0];
+                    window.LIVE_PRICES[key] = quote.regularMarketPrice;
+                    window.LIVE_DATES[key] = formatDate(new Date());
+                    success = true;
+                    // console.log(`Live price for ${key} found using Yahoo Finance: ${quote.regularMarketPrice}`);
+                }
+            } catch (e) {
+                // Silent fail for fallback
             }
         }
 

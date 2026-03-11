@@ -89,15 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Global Formatters
     const fmtEUR = (num) => {
         if (isPrivacyActive) return '€ ****';
-        return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', useGrouping: true }).format(Number(num || 0));
+        if (num === null || num === undefined) return '-';
+        return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', useGrouping: true }).format(Number(num));
     };
     const fmtNum = (num, decimals = 2) => {
         if (isPrivacyActive) return '****';
-        return new Intl.NumberFormat('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: true }).format(Number(num || 0));
+        if (num === null || num === undefined) return '-';
+        return new Intl.NumberFormat('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: true }).format(Number(num));
     };
     const fmtPct = (num) => {
         if (isPrivacyActive) return '****%';
-        return (num !== null && num !== undefined) ? new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + '%' : '-';
+        if (num === null || num === undefined) return '-';
+        return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + '%';
     };
 
     // Savings State
@@ -969,9 +972,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else {
                 // --- Full Detail Table ---
-                // Restore full thead
+                // Restore full thead if we are not in compact mode or if headers are the wrong ones
                 const thead = elements.stockTable?.querySelector('thead');
-                if (thead && !thead.querySelector('th[data-sort="name"]')) {
+                if (thead && !thead.querySelector('th[data-sort="market"]')) {
                     thead.innerHTML = `
                     <tr>
                         <th data-sort="name">Asset <span class="sort-icon"></span></th>
