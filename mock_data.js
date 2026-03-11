@@ -256,16 +256,35 @@ window.MOCK_DATA = {
     'AMS.MC': { price: 65.50, currency: 'EUR', name: 'Amadeus' },
     'RED.MC': { price: 16.03, currency: 'EUR', name: 'Redeia (REE)' },
     'SAB.MC': { price: 3.28, currency: 'EUR', name: 'Banco Sabadell' },
-    'TUB.MC': { price: 3.39, currency: 'EUR', name: 'Tubacex' },
     'IAG.MC': { price: 1.85, currency: 'EUR', name: 'IAG' },
-    'GRLS.MC': { price: 12.40, currency: 'EUR', name: 'Grifols' },
+    'GRF.MC': { price: 12.40, currency: 'EUR', name: 'Grifols' },
     'BKT.MC': { price: 6.20, currency: 'EUR', name: 'Bankinter' },
     'IDR.MC': { price: 14.50, currency: 'EUR', name: 'Indra' },
+    'ANA.MC': { price: 150.20, currency: 'EUR', name: 'Acciona' },
+    'ACX.MC': { price: 10.15, currency: 'EUR', name: 'Acerinox' },
+    'ACS.MC': { price: 38.40, currency: 'EUR', name: 'ACS' },
+    'AENA.MC': { price: 175.00, currency: 'EUR', name: 'Aena' },
+    'ALM.MC': { price: 8.90, currency: 'EUR', name: 'Almirall' },
+    'CLNX.MC': { price: 33.20, currency: 'EUR', name: 'Cellnex' },
+    'COL.MC': { price: 5.40, currency: 'EUR', name: 'Inm. Colonial' },
+    'ELE.MC': { price: 18.20, currency: 'EUR', name: 'Endesa' },
+    'LOG.MC': { price: 24.50, currency: 'EUR', name: 'Logista' },
+    'MAP.MC': { price: 2.15, currency: 'EUR', name: 'Mapfre' },
+    'MEL.MC': { price: 6.80, currency: 'EUR', name: 'Meliá Hotels' },
+    'MRL.MC': { price: 11.20, currency: 'EUR', name: 'Merlin Prop.' },
+    'MTS.MC': { price: 25.10, currency: 'EUR', name: 'ArcelorMittal' },
+    'PHM.MC': { price: 42.50, currency: 'EUR', name: 'PharmaMar' },
+    'ROVI.MC': { price: 78.40, currency: 'EUR', name: 'Rovi' },
+    'SIE.MC': { price: 17.20, currency: 'EUR', name: 'Siemens Gamesa' },
+    'VIS.MC': { price: 55.40, currency: 'EUR', name: 'Viscofan' },
+    'TUB.MC': { price: 3.39, currency: 'EUR', name: 'Tubacex' },
+    'GRLS.MC': { price: 12.40, currency: 'EUR', name: 'Grifols' },
 
-    // Aliases .ES (same data as .MC, used by some brokers)
+    // Aliases .ES
     'NTGY.ES': { price: 25.04, currency: 'EUR', name: 'Naturgy Energy Group' },
     'RED.ES': { price: 16.03, currency: 'EUR', name: 'Redeia (REE)' },
     'SAB.ES': { price: 3.28, currency: 'EUR', name: 'Banco Sabadell' },
+    'ANA.ES': { price: 150.20, currency: 'EUR', name: 'Acciona' },
     'TUB.ES': { price: 3.39, currency: 'EUR', name: 'Tubacex' },
 
     // XETRA / Frankfurt (EUR)
@@ -311,6 +330,7 @@ window.FINNHUB_API_KEY = 'd6b00s1r01qnr27j4hqgd6b00s1r01qnr27j4hr0';
 
 window.LIVE_PRICES = {}; // Cache for live data
 window.LIVE_DATES = {}; // Cache for update times
+window.LIVE_SOURCES = {}; // Cache for data source (finnhub, yahoo, manual)
 window.MANUAL_PRICES = {}; // User-entered manual prices
 
 // Helper to format date as dd/mm/aaaa
@@ -333,6 +353,7 @@ window.getStockInfo = function (ticker) {
             currency: window.MOCK_DATA[key]?.currency || (key.endsWith('.MC') ? 'EUR' : 'USD'),
             isLive: true,
             isManual: false,
+            source: window.LIVE_SOURCES[key] || 'finnhub',
             date: window.LIVE_DATES[key] || ''
         };
     }
@@ -453,22 +474,29 @@ window.refreshLivePrices = async function (tickers) {
         }
 
         if (!success && (key.endsWith('.MC') || key.endsWith('.ES'))) {
-            // Fallback attempt with Yahoo Finance (No API key needed, but CORS might be an issue)
+            // New Robust Fallback: Yahoo Finance via AllOrigins Proxy
             try {
-                const ticker = key.endsWith('.ES') ? key.replace('.ES', '.MC') : key;
-                const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${ticker}`;
-                // Note: This often fails in browsers due to CORS, but we try as a last resort
-                const resp = await fetch(url);
-                const data = await resp.json();
+                const yahooTicker = key.endsWith('.ES') ? key.replace('.ES', '.MC') : key;
+                // Using AllOrigins proxy to bypass CORS
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${yahooTicker}`)}`;
+                
+                const resp = await fetch(proxyUrl);
+                const json = await resp.json();
+                const data = JSON.parse(json.contents);
+
                 if (data.quoteResponse && data.quoteResponse.result && data.quoteResponse.result[0]) {
                     const quote = data.quoteResponse.result[0];
-                    window.LIVE_PRICES[key] = quote.regularMarketPrice;
-                    window.LIVE_DATES[key] = formatDate(new Date());
-                    success = true;
-                    // console.log(`Live price for ${key} found using Yahoo Finance: ${quote.regularMarketPrice}`);
+                    const finalPrice = quote.regularMarketPrice;
+                    if (finalPrice && finalPrice !== 0) {
+                        window.LIVE_PRICES[key] = Math.round(finalPrice * 100) / 100;
+                        window.LIVE_DATES[key] = formatDate(new Date());
+                        window.LIVE_SOURCES[key] = 'yahoo'; // Track source
+                        success = true;
+                        // console.log(`Live price for ${key} found using Yahoo Finance (Proxy): ${finalPrice}`);
+                    }
                 }
             } catch (e) {
-                // Silent fail for fallback
+                // console.warn(`Yahoo Finance fallback failed for ${key}:`, e);
             }
         }
 
