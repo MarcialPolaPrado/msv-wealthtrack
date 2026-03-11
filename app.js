@@ -42,6 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let expandedSummaryDrawers = new Set();
     let drawerDetailFilterMode = localStorage.getItem('drawerDetailFilterMode') || 'all';
 
+    const DRAWER_COLORS = [
+        { name: 'green', border: '#10b981', bg: '#064e3b', grad: 'rgba(16, 185, 129, 0.4)' },
+        { name: 'blue', border: '#3b82f6', bg: '#1e3a8a', grad: 'rgba(59, 130, 246, 0.4)' },
+        { name: 'indigo', border: '#6366f1', bg: '#312e81', grad: 'rgba(99, 102, 241, 0.4)' },
+        { name: 'purple', border: '#8b5cf6', bg: '#4c1d95', grad: 'rgba(139, 92, 246, 0.4)' },
+        { name: 'red', border: '#ef4444', bg: '#7f1d1d', grad: 'rgba(239, 68, 68, 0.4)' },
+        { name: 'orange', border: '#f59e0b', bg: '#78350f', grad: 'rgba(245, 158, 11, 0.4)' },
+        { name: 'yellow', border: '#eab308', bg: '#713f12', grad: 'rgba(234, 179, 8, 0.4)' }
+    ];
+
 
 
     // Dynamic Settings
@@ -1984,23 +1994,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const pct = total > 0 ? (drawer.balance / total * 100).toFixed(1) : 0;
 
-            // Force green theme inline with high priority
-            card.style.setProperty('background', 'rgba(16, 185, 129, 0.25)', 'important');
-            card.style.setProperty('background-color', '#064e3b', 'important');
-            card.style.setProperty('background-image', 'linear-gradient(135deg, rgba(16, 185, 129, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%)', 'important');
-            card.style.setProperty('border', '2px solid #10b981', 'important');
+            const colorIdx = drawer.colorIndex || 0;
+            const theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
+
+            // Apply theme styles
+            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1,3), 16)}, ${parseInt(theme.border.slice(3,5), 16)}, ${parseInt(theme.border.slice(5,7), 16)}, 0.25)`, 'important');
+            card.style.setProperty('background-color', theme.bg, 'important');
+            card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
+            card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
 
             const targetAmount = drawer.targetAmount || 0;
             const diff = targetAmount > 0 ? targetAmount - drawer.balance : 0;
             const diffColor = diff <= 0 ? 'var(--success)' : 'var(--danger)';
 
             card.innerHTML = `
+                <div class="drawer-color-btn" title="Cambiar Color" style="position: absolute; top: 0.4rem; right: 2rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: grayscale(1); opacity: 0.4; transition: all 0.2s;">🎨</div>
                 <div class="drawer-target-icon" title="Establecer Objetivo">🎯</div>
                 <span class="drawer-icon">${drawer.icon}</span>
                 <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <div style="display: flex; flex-direction: column;">
-                        <span class="drawer-amount" style="color: #10b981 !important; font-weight: 800; font-size: 1.2rem;">${fmtEUR(drawer.balance)}</span>
+                        <span class="drawer-amount" style="color: ${theme.border} !important; font-weight: 800; font-size: 1.2rem;">${fmtEUR(drawer.balance)}</span>
                         ${targetAmount > 0 ? `
                             <div class="target-info" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 4px;">
                                 <span>Obj: ${fmtEUR(targetAmount)}</span>
@@ -2008,7 +2022,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         ` : ''}
                     </div>
-                    <span style="font-size: 1.2rem; font-weight: 800; color: #10b981; opacity: 0.9;">${pct}%</span>
+                    <span style="font-size: 1.2rem; font-weight: 800; color: ${theme.border}; opacity: 0.9;">${pct}%</span>
                 </div>
                 ${!drawer.isAuto ? `
                     <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:nowrap;">
@@ -2023,10 +2037,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const transBtn = e.target.closest('.transfer-btn');
                 const editBtn = e.target.closest('.edit-drawer-btn');
                 const targetBtn = e.target.closest('.drawer-target-icon');
+                const colorBtn = e.target.closest('.drawer-color-btn');
 
                 if (targetBtn) {
                     e.stopPropagation();
                     setDrawerTargetAmount(drawer.id);
+                } else if (colorBtn) {
+                    e.stopPropagation();
+                    cycleDrawerColor(drawer.id);
                 } else if (mvmtBtn) {
                     e.stopPropagation();
                     showAddMovementModal(drawer.id);
@@ -2972,23 +2990,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const card = document.createElement('div');
             card.className = `card drawer-card glass-panel ${isIncome ? 'income-drawer' : ''} ${isSavings ? 'savings-drawer' : ''} ${concept.isAutomatic ? 'undestined-drawer' : ''}`;
-            if (isIncome) {
-                card.style.background = 'rgba(16, 185, 129, 0.25)';
-                card.style.backgroundColor = '#064e3b';
-                card.style.backgroundImage = 'linear-gradient(135deg, rgba(16, 185, 129, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%)';
-                card.style.border = '2px solid #10b981';
-            } else if (isSavings) {
-                card.style.background = 'rgba(245, 158, 11, 0.15)';
-                card.style.backgroundColor = '#451a03';
-                card.style.backgroundImage = 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%)';
-                card.style.border = '2px solid #f59e0b';
-                savingsSecTotal += provision;
-            } else if (concept.isAutomatic) {
-                card.style.background = 'rgba(139, 92, 246, 0.15)';
-                card.style.backgroundColor = '#2e1065';
-                card.style.backgroundImage = 'linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(15, 23, 42, 0.8) 100%)';
-                card.style.border = '2px solid #8b5cf6';
-            }
+            
+            // Apply themes
+            const colorIdx = concept.colorIndex !== undefined ? concept.colorIndex : (isIncome ? 0 : (isSavings ? 5 : 2));
+            const theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
+            
+            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1,3), 16)}, ${parseInt(theme.border.slice(3,5), 16)}, ${parseInt(theme.border.slice(5,7), 16)}, 0.25)`, 'important');
+            card.style.setProperty('background-color', theme.bg, 'important');
+            card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
+            card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
+
+            if (isSavings) savingsSecTotal += provision;
 
             let balanceDisplay = '';
             if (!isIncome) {
@@ -3057,7 +3069,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return sum + (m.amount * monthsCount);
                 }, 0);
                 balanceDisplay = `
-                    <div class="drawer-balance" style="color: var(--success); margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
+                    <div class="drawer-balance" style="color: ${theme.border}; margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
                         ${fmtEUR(monthlyBalance)} 
                         <span style="font-size: 0.85rem; opacity: 0.6; font-weight: 400; color: var(--text-color); margin-left: 4px;">
                             de ${fmtEUR(yearlyIncomeSum)}
@@ -3067,6 +3079,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             card.innerHTML = `
+                <div class="drawer-color-btn" title="Cambiar Color" data-id="${concept.id}" style="position: absolute; top: 0.4rem; right: 0.4rem; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: grayscale(1); opacity: 0.3; transition: all 0.2s; font-size: 0.8rem; z-index: 10;">🎨</div>
                 <div class="drawer-header">
                     <div style="display:flex; align-items:center; gap: 10px;">
                         <span class="drawer-icon">${concept.icon || getNominaIcon(concept.name, concept.type)}</span>
@@ -3099,6 +3112,14 @@ document.addEventListener('DOMContentLoaded', () => {
                    ${concept.linkedSavingsDrawerId ? `<button class="btn-primary btn-sm transfer-nomina-ahorro" data-id="${concept.id}" style="background:var(--success); padding: 0.5rem; flex: 0 0 auto;" title="Transferir Ahorro">➡️</button>` : ''}
                 </div>
             `;
+
+            card.onclick = (e) => {
+                const colorBtn = e.target.closest('.drawer-color-btn');
+                if (colorBtn) {
+                    e.stopPropagation();
+                    cycleNominaDrawerColor(concept.id);
+                }
+            };
 
             // Route card to the right section
             if (isIncome) incomeCards.push(card);
@@ -3772,6 +3793,24 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelBtn.onmouseleave = () => { cancelBtn.style.transform = 'translateY(0) scale(1)'; cancelBtn.style.background = 'transparent'; };
     }
     window.showCustomConfirm = showCustomConfirm;
+
+    function cycleDrawerColor(drawerId) {
+        const drawer = savingsDrawers.find(d => d.id === drawerId);
+        if (!drawer) return;
+        
+        drawer.colorIndex = ((drawer.colorIndex || 0) + 1) % DRAWER_COLORS.length;
+        if (window.saveSavings) window.saveSavings(savingsDrawers);
+        renderSavings();
+    }
+
+    function cycleNominaDrawerColor(drawerId) {
+        const drawer = nominaData.find(d => d.id == drawerId);
+        if (!drawer) return;
+        
+        drawer.colorIndex = ((drawer.colorIndex || 0) + 1) % DRAWER_COLORS.length;
+        if (window.saveNomina) window.saveNomina(nominaData);
+        renderNomina();
+    }
 
     function showEditMovementModal(drawerId, mvmtIndex) {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
