@@ -2009,7 +2009,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.innerHTML = `
                 <div class="drawer-color-btn" title="Cambiar Color" style="position: absolute; top: 0.5rem; right: 0.5rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: grayscale(1); opacity: 0.4; transition: all 0.2s;">🎨</div>
-                <div class="drawer-target-icon" title="Establecer Objetivo" style="right: 2.5rem !important; top: 0.5rem !important;">🎯</div>
+                <div class="drawer-target-icon" title="Establecer Objetivo" style="right: 3.2rem !important; top: 0.5rem !important;">🎯</div>
                 <span class="drawer-icon">${drawer.icon}</span>
                 <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
