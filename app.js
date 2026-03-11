@@ -497,7 +497,19 @@ document.addEventListener('DOMContentLoaded', () => {
         closeGoalModal: document.getElementById('closeGoalModal'),
         goalForm: document.getElementById('goalForm'),
         goalAmountInput: document.getElementById('goalAmountInput'),
-        goalModalDescription: document.getElementById('goalModalDescription')
+        goalModalDescription: document.getElementById('goalModalDescription'),
+
+        // Breakdown Modal
+        ahorroBreakdownBtn: document.getElementById('ahorroBreakdownBtn'),
+        ahorroBreakdownModal: document.getElementById('ahorroBreakdownModal'),
+        closeBreakdownModal: document.getElementById('closeBreakdownModal'),
+        breakdownFilterType: document.getElementById('breakdownFilterType'),
+        breakdownMonthInput: document.getElementById('breakdownMonthInput'),
+        breakdownYearInput: document.getElementById('breakdownYearInput'),
+        breakdownIntereses: document.getElementById('breakdownIntereses'),
+        breakdownDividendos: document.getElementById('breakdownDividendos'),
+        breakdownEspeculacion: document.getElementById('breakdownEspeculacion'),
+        breakdownTotal: document.getElementById('breakdownTotal')
     };
 
     const updateNominaMovementType = (type) => {
@@ -5449,6 +5461,81 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideTooltip();
             }, { passive: true });
         })();
+
+        // --- Ahorro Breakdown Listeners ---
+        if (elements.ahorroBreakdownBtn) {
+            elements.ahorroBreakdownBtn.addEventListener('click', () => {
+                const now = new Date();
+                if (elements.breakdownMonthInput) {
+                    elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
+                }
+                if (elements.breakdownYearInput) {
+                    elements.breakdownYearInput.value = now.getFullYear();
+                }
+                updateAhorroBreakdown();
+                elements.ahorroBreakdownModal?.classList.remove('hidden');
+            });
+        }
+
+        if (elements.closeBreakdownModal) {
+            elements.closeBreakdownModal.addEventListener('click', () => {
+                elements.ahorroBreakdownModal?.classList.add('hidden');
+            });
+        }
+
+        elements.breakdownFilterType?.addEventListener('change', (e) => {
+            const isYear = e.target.value === 'year';
+            elements.breakdownMonthInput?.classList.toggle('hidden', isYear);
+            elements.breakdownYearInput?.classList.toggle('hidden', !isYear);
+            updateAhorroBreakdown();
+        });
+
+        elements.breakdownMonthInput?.addEventListener('change', updateAhorroBreakdown);
+        elements.breakdownYearInput?.addEventListener('input', updateAhorroBreakdown);
+
+        // Click outside to close breakdown modal
+        window.addEventListener('click', (event) => {
+            if (event.target === elements.ahorroBreakdownModal) {
+                elements.ahorroBreakdownModal.classList.add('hidden');
+            }
+        });
+
+        function updateAhorroBreakdown() {
+            const filterType = elements.breakdownFilterType?.value || 'month';
+            const monthVal = elements.breakdownMonthInput?.value;
+            const yearVal = elements.breakdownYearInput?.value;
+
+            let totalIntereses = 0;
+            let totalDividendos = 0;
+            let totalEspeculacion = 0;
+
+            savingsDrawers.forEach(drawer => {
+                (drawer.movements || []).forEach(mov => {
+                    const movDate = new Date(mov.date);
+                    const movYear = movDate.getFullYear();
+                    const movMonthStr = movDate.toISOString().slice(0, 7);
+                    
+                    let match = false;
+                    if (filterType === 'month') {
+                        match = movMonthStr === monthVal;
+                    } else {
+                        match = movYear.toString() === yearVal.toString();
+                    }
+
+                    if (match) {
+                        const cat = mov.category;
+                        if (cat === 'Intereses') totalIntereses += mov.amount;
+                        else if (cat === 'Dividendos') totalDividendos += mov.amount;
+                        else if (cat === 'Especulación') totalEspeculacion += mov.amount;
+                    }
+                });
+            });
+
+            if (elements.breakdownIntereses) elements.breakdownIntereses.textContent = fmtEUR(totalIntereses);
+            if (elements.breakdownDividendos) elements.breakdownDividendos.textContent = fmtEUR(totalDividendos);
+            if (elements.breakdownEspeculacion) elements.breakdownEspeculacion.textContent = fmtEUR(totalEspeculacion);
+            if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalIntereses + totalDividendos + totalEspeculacion);
+        }
     }
 
     function updateFiscalCountdown() {
