@@ -49,3 +49,13 @@ window.loadCountdowns = () => {
     const data = localStorage.getItem(COUNTDOWNS_KEY);
     return data ? JSON.parse(data) : [];
 };
+
+const MANUAL_PRICES_KEY = 'msv_manual_prices_v1';
+window.saveManualPrices = (data) => {
+    localStorage.setItem(MANUAL_PRICES_KEY, JSON.stringify(data));
+};
+
+window.loadManualPrices = () => {
+    const data = localStorage.getItem(MANUAL_PRICES_KEY);
+    return data ? JSON.parse(data) : {};
+};

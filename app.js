@@ -269,6 +269,13 @@ document.addEventListener('DOMContentLoaded', () => {
         totalTrend: document.getElementById('totalTrend'),
         addStockBtn: document.getElementById('addStockBtn'),
         bolsaAddStockBtn: document.getElementById('bolsaAddStockBtn'),
+        bolsaManualPriceBtn: document.getElementById('bolsaManualPriceBtn'),
+        manualPriceBadge: document.getElementById('manualPriceBadge'),
+        manualPriceModal: document.getElementById('manualPriceModal'),
+        manualPriceList: document.getElementById('manualPriceList'),
+        saveManualPricesBtn: document.getElementById('saveManualPricesBtn'),
+        clearManualPricesBtn: document.getElementById('clearManualPricesBtn'),
+        closeManualPriceModal: document.getElementById('closeManualPriceModal'),
         addStockModal: document.getElementById('addStockModal'),
         closeModal: document.getElementById('closeAddStockModal'),
         addStockForm: document.getElementById('addStockForm'),
@@ -741,9 +748,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const totalInvestedAppCalc = totalInvestedEUR; // save original for return
+        // ALWAYS show a total value if we have any data, don't hide it with "-" unless truly empty
+        const totalCurrentValueEUR = totalCurrentValueEURValue;
 
-        const totalCurrentValueEUR = isAnyPriceMissing ? null : totalCurrentValueEURValue;
-
+        // 2. Update Totals UI (Badge for Manual Prices)
+        const nonLiveCount = displayStocksData.filter(s => !s.liveInfo.isLive && !s.liveInfo.isManual).length;
+        if (elements.manualPriceBadge) {
+            elements.manualPriceBadge.textContent = nonLiveCount;
+            elements.manualPriceBadge.classList.toggle('hidden', nonLiveCount === 0);
+        }
 
         // 2. Update Totals UI
         const pl = totalCurrentValueEUR - totalInvestedEUR;
@@ -943,12 +956,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayGroups.forEach((group, idx) => {
                     const pl = group.totalCurrentVal !== null ? group.totalCurrentVal - group.totalInvested : null;
                     const plClass = pl === null ? '' : (pl >= 0 ? 'profit' : 'loss');
-                    const rowBg = idx % 2 === 0 ? 'background: rgba(255,255,255,0.04);' : 'background: rgba(139,92,246,0.08);';
+                    const isManual = group.liveInfo.isManual;
+                    const rowBg = isManual ? 'background: rgba(245, 158, 11, 0.08);' : (idx % 2 === 0 ? 'background: rgba(255,255,255,0.04);' : 'background: rgba(139,92,246,0.08);');
                     const tr = document.createElement('tr');
-                    tr.className = 'group-row';
+                    tr.className = 'group-row' + (isManual ? ' manual-row' : '');
                     tr.style.cssText = `cursor: pointer; ${rowBg}`;
                     tr.innerHTML = `
-                        <td class="btc-siglas" style="padding:0.35rem 0.5rem; font-weight:700; font-size:0.85rem; color:var(--primary);">${group.ticker}</td>
+                        <td class="btc-siglas" style="padding:0.35rem 0.5rem; font-weight:700; font-size:0.85rem; color:var(--primary);">${group.ticker} ${isManual ? '<span style="color:#f59e0b; font-size:0.6rem; vertical-align:middle;">[M]</span>' : ''}</td>
                         <td class="btc-inv" style="padding:0.35rem 0.5rem; text-align:right; font-size:0.8rem;">${fmtEUR(group.totalInvested)}</td>
                         <td class="btc-val" style="padding:0.35rem 0.5rem; text-align:right; font-weight:700; font-size:0.8rem;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
                         <td class="btc-gp ${plClass}" style="padding:0.35rem 0.5rem; text-align:right; font-weight:600; font-size:0.8rem;">${pl === null ? '-' : (pl >= 0 ? '+' : '') + fmtEUR(pl)}</td>
@@ -1027,11 +1041,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const statusBadge = info.isLive
                         ? `<div style="display:flex; flex-direction:column; align-items:flex-end;"><span class="badge-live">Live</span>${info.date ? `<span style="font-size:0.75em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}</div>`
-                        : (info.isSimulated ? `
+                        : (info.isManual ? `
                         <div style="display:flex; flex-direction:column; align-items:flex-end;">
-                            <span class="badge-simulated">Cierre</span>
+                            <span class="badge-simulated" style="background: rgba(139, 92, 246, 0.1); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2);">Manual</span>
                             ${info.date ? `<span style="font-size:0.7em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
-                        </div>` : '');
+                        </div>` : (info.isSimulated ? `
+                        <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                            <span class="badge-simulated" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">Cierre</span>
+                            ${info.date ? `<span style="font-size:0.7em; color:var(--text-muted); opacity:0.8; margin-top:2px;">${info.date}</span>` : ''}
+                        </div>` : (info.price === null ? '<span class="badge-simulated" style="background:rgba(239, 68, 68, 0.1); color:var(--danger);">S.D.</span>' : '')));
 
                     let priceDisplay = '<span style="color:var(--text-muted);">-</span>';
                     if (info.price !== null) {
@@ -5213,6 +5231,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Data Portability (Export/Import) ---
 
+        elements.bolsaManualPriceBtn?.addEventListener('click', openManualPriceModal);
+        elements.closeManualPriceModal?.addEventListener('click', () => {
+            elements.manualPriceModal?.classList.add('hidden');
+        });
+        elements.saveManualPricesBtn?.addEventListener('click', saveManualPrices);
+        elements.clearManualPricesBtn?.addEventListener('click', clearAllManualPrices);
+
         elements.exportDataBtn?.addEventListener('click', () => {
             exportToCSV(false); // standard CSV
         });
@@ -5656,6 +5681,84 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleModal(true);
     }
 
+    function openManualPriceModal() {
+        if (!elements.manualPriceList) return;
+        elements.manualPriceList.innerHTML = '';
+
+        // Find tickers that are not live
+        const allTickers = [...new Set(stocks.map(s => s.ticker.toUpperCase()))];
+        const rows = allTickers.map(ticker => {
+            const info = window.getStockInfo(ticker);
+            const isTarget = !info.isLive;
+            return { ticker, info, isTarget };
+        });
+
+        // Filter to show only non-live or already manual ones
+        const listToDisplay = rows.filter(r => r.isTarget || r.info.isManual);
+
+        if (listToDisplay.length === 0) {
+            elements.manualPriceList.innerHTML = '<p style="text-align:center; opacity:0.6; padding: 2rem;">Todo en orden. Todos los activos tienen precios en vivo de la API. ✨</p>';
+        } else {
+            listToDisplay.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'manual-price-row';
+                div.style.cssText = 'display:flex; align-items:center; gap:1rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:10px; border:1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;';
+
+                const yahooTicker = item.ticker.endsWith('.MC') ? item.ticker : (item.ticker.endsWith('.ES') ? item.ticker.replace('.ES', '.MC') : item.ticker);
+                const yahooUrl = `https://finance.yahoo.com/quote/${yahooTicker}`;
+
+                const currentManualVal = window.MANUAL_PRICES[item.ticker]?.price || '';
+
+                div.innerHTML = `
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:var(--primary);">${item.ticker}</div>
+                        <a href="${yahooUrl}" target="_blank" style="font-size:0.75rem; color:#3b82f6; text-decoration:none;">🔗 Yahoo Finance</a>
+                    </div>
+                    <div style="width:120px;">
+                        <input type="number" step="0.0001" class="manual-price-input" data-ticker="${item.ticker}" value="${currentManualVal}" 
+                            placeholder="${item.info.price || '---'}"
+                            style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; padding:0.4rem; border-radius:6px; font-size:0.9rem;">
+                    </div>
+                `;
+                elements.manualPriceList.appendChild(div);
+            });
+        }
+
+        elements.manualPriceModal.classList.remove('hidden');
+    }
+
+    function saveManualPrices() {
+        const inputs = elements.manualPriceList.querySelectorAll('.manual-price-input');
+        let count = 0;
+        inputs.forEach(input => {
+            const ticker = input.dataset.ticker;
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val > 0) {
+                window.MANUAL_PRICES[ticker] = {
+                    price: val,
+                    date: new Date().toLocaleDateString()
+                };
+                count++;
+            } else {
+                delete window.MANUAL_PRICES[ticker];
+            }
+        });
+        if (window.saveManualPrices) window.saveManualPrices(window.MANUAL_PRICES);
+        elements.manualPriceModal.classList.add('hidden');
+        render();
+        showToast(count > 0 ? 'Precios manuales guardados' : 'Ajustes actualizados');
+    }
+
+    function clearAllManualPrices() {
+        showCustomConfirm('¿Estás seguro de que quieres borrar todos los ajustes manuales?', () => {
+            window.MANUAL_PRICES = {};
+            if (window.saveManualPrices) window.saveManualPrices({});
+            elements.manualPriceModal.classList.add('hidden');
+            render();
+            showToast('Ajustes manuales eliminados');
+        });
+    }
+
 
     function toggleModal(show) {
         if (!elements.addStockModal) return;
@@ -6041,6 +6144,7 @@ document.addEventListener('DOMContentLoaded', () => {
             savings: savingsDrawers,
             nomina: nominaData,
             countdowns: countdowns,
+            manualPrices: window.MANUAL_PRICES || {},
             settings: {
                 fiscalDay: fiscalDay,
                 incomeCategories: incomeCategories,
@@ -6048,7 +6152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 defaultTransferSource: localStorage.getItem('defaultTransferSource')
             },
             exportDate: new Date().toISOString(),
-            version: "1.1"
+            version: "1.2"
         };
         const blob = new Blob([JSON.stringify(globalData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -6066,12 +6170,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.stocks || !data.savings || !data.nomina) {
                     throw new Error("El archivo no tiene el formato de respaldo global esperado.");
                 }
-                showCustomConfirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`, () => {
+                showCustomConfirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.manualPrices ? '- Precios manuales\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`, () => {
                     stocks = data.stocks;
                     savingsDrawers = data.savings;
                     nominaData = migrateNominaData(data.nomina);
                     if (data.countdowns) {
                         countdowns = data.countdowns;
+                    }
+                    if (data.manualPrices) {
+                        window.MANUAL_PRICES = data.manualPrices;
                     }
 
                     // Restore settings if present
@@ -6097,6 +6204,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.saveSavings) window.saveSavings(savingsDrawers);
                     if (window.saveNomina) window.saveNomina(nominaData);
                     if (window.saveCountdowns) window.saveCountdowns(countdowns);
+                    if (window.saveManualPrices) window.saveManualPrices(window.MANUAL_PRICES);
                     render();
                     if (currentView === 'nomina') renderNomina();
                     showToast("✅ Respaldo global restaurado con éxito.", "success");
@@ -6168,6 +6276,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start
     const initApp = function () {
+        // Init Manual Prices
+        if (window.loadManualPrices) {
+            window.MANUAL_PRICES = window.loadManualPrices();
+        }
+
         // --- Manejo de Deep Linking / Accesos Directos ---
         const handleDeepLink = () => {
             const params = new URLSearchParams(window.location.search);

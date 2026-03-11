@@ -311,6 +311,7 @@ window.FINNHUB_API_KEY = 'd6b00s1r01qnr27j4hqgd6b00s1r01qnr27j4hr0';
 
 window.LIVE_PRICES = {}; // Cache for live data
 window.LIVE_DATES = {}; // Cache for update times
+window.MANUAL_PRICES = {}; // User-entered manual prices
 
 // Helper to format date as dd/mm/aaaa
 function formatDate(dateObj) {
@@ -331,16 +332,46 @@ window.getStockInfo = function (ticker) {
             price: window.LIVE_PRICES[key],
             currency: window.MOCK_DATA[key]?.currency || (key.endsWith('.MC') ? 'EUR' : 'USD'),
             isLive: true,
+            isManual: false,
             date: window.LIVE_DATES[key] || ''
         };
     }
 
-    // 2. Fallback: NO FALLBACK to mock data as per user preference.
-    // Return null to show "-" in the UI if price is not "real" (live).
+    // 1.5 Check if we have a manual override
+    if (window.MANUAL_PRICES && window.MANUAL_PRICES[key]) {
+        return {
+            price: window.MANUAL_PRICES[key].price,
+            currency: window.MOCK_DATA[key]?.currency || (key.endsWith('.MC') ? 'EUR' : 'USD'),
+            isLive: false,
+            isManual: true,
+            isSimulated: false,
+            date: window.MANUAL_PRICES[key].date || ''
+        };
+    }
+
+    // 2. Fallback: If not live, try to get the closing price from MOCK_DATA
     let data = window.MOCK_DATA[key];
+    if (data) {
+        let syncPrice = data.price;
+        let priceDate = '';
+        if (data.historical && data.historical['D'] && data.historical['D'].length > 0) {
+            const lastEntry = data.historical['D'][data.historical['D'].length - 1];
+            syncPrice = lastEntry.close;
+            priceDate = formatDate(new Date(lastEntry.time));
+        }
+        return {
+            price: syncPrice,
+            currency: data.currency,
+            isLive: false,
+            isSimulated: true,
+            date: priceDate
+        };
+    }
+
+    // 3. Last fallback: Return null if absolutely unknown
     return {
         price: null,
-        currency: data ? data.currency : (key.endsWith('.MC') ? 'EUR' : 'USD'),
+        currency: (key.endsWith('.MC') ? 'EUR' : 'USD'),
         isLive: false,
         isSimulated: false,
         date: ''
