@@ -322,7 +322,7 @@ window.SEARCH_DATA = Object.keys(window.MOCK_DATA).map(ticker => ({
     name: window.MOCK_DATA[ticker].name
 }));
 
-window.FX_RATE = 0.8467; // 1 USD = 0.8467 EUR (Adjusted to match real-time observed value)
+window.FX_RATE = 0.8645; // 1 USD = 0.8645 EUR (Updated to current March 11 2026 data)
 
 // --- Real-time API Configuration ---
 // Get your free key at https://finnhub.io/
@@ -403,6 +403,9 @@ window.getStockInfo = function (ticker) {
 // Function to fetch real prices (to be called by app.js)
 window.refreshLivePrices = async function (tickers) {
     if (!window.FINNHUB_API_KEY || tickers.length === 0) return;
+
+    // Refresh FX rate first
+    if (window.refreshFXRate) await window.refreshFXRate();
 
     for (const ticker of tickers) {
         const key = ticker.toUpperCase();
@@ -532,3 +535,24 @@ window.refreshLivePrices = async function (tickers) {
         }
     }
 }
+
+window.refreshFXRate = async function () {
+    try {
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/USDEUR=X?interval=1m&range=1d`)}`;
+        const resp = await fetch(proxyUrl, { timeout: 5000 });
+        const json = await resp.json();
+        const rawData = json.contents ? JSON.parse(json.contents) : json;
+        
+        if (rawData?.chart?.result?.[0]?.meta?.regularMarketPrice) {
+            const newRate = rawData.chart.result[0].meta.regularMarketPrice;
+            if (newRate > 0) {
+                window.FX_RATE = newRate;
+                console.log(`[FX] Updated USD/EUR rate: ${newRate}`);
+                return true;
+            }
+        }
+    } catch (err) {
+        console.warn("[FX] Failed to update FX rate:", err);
+    }
+    return false;
+};
