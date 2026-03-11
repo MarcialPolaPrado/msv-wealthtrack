@@ -5323,7 +5323,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.manualRefreshBtn) {
             elements.manualRefreshBtn.addEventListener('click', async () => {
                 const btn = elements.manualRefreshBtn;
-                btn.classList.add('spin-animation');
+                const originalContent = btn.textContent;
+                const originalFontSize = btn.style.fontSize;
+                
+                // btn.classList.add('spin-animation'); // Removed rotating icon as per request
+                btn.style.color = '#f59e0b'; // Amber color while syncing
+                btn.style.fontWeight = '700';
 
                 const currentTimerElement = document.getElementById('updateTimer');
                 if (currentTimerElement) {
@@ -5335,7 +5340,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     if (window.FINNHUB_API_KEY) {
                         const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
-                        await window.refreshLivePrices(uniqueTickers);
+                        // Call with progress callback
+                        await window.refreshLivePrices(uniqueTickers, (current, total) => {
+                            btn.textContent = current;
+                            btn.style.fontSize = '1rem';
+                            if (currentTimerElement) {
+                                currentTimerElement.textContent = `Sincronizando: ${current} de ${total}`;
+                            }
+                        });
                     }
                     lastSyncTime = new Date().toLocaleTimeString();
                     isFirstUpdateDone = true;
@@ -5354,7 +5366,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         card.classList.add('sync-flash');
                     });
                 } finally {
-                    btn.classList.remove('spin-animation');
+                    // Restore original state
+                    btn.textContent = originalContent;
+                    btn.style.fontSize = originalFontSize;
+                    btn.style.color = '';
+                    btn.style.fontWeight = '';
                 }
             });
         }
@@ -6320,8 +6336,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
                 if (window.refreshLivePrices) {
                     showToast("🔄 Cambiando fuente de datos...", "info");
-                    window.refreshLivePrices(uniqueTickers).then(() => {
+                    const btn = elements.manualRefreshBtn;
+                    const originalContent = btn ? btn.textContent : '';
+                    if (btn) btn.style.color = '#f59e0b';
+
+                    window.refreshLivePrices(uniqueTickers, (current) => {
+                        if (btn) btn.textContent = current;
+                    }).then(() => {
                         render();
+                        if (btn) {
+                            btn.textContent = originalContent;
+                            btn.style.color = '';
+                        }
                         showToast(`✅ Modo ${newMode === 'yahoo' ? 'Yahoo Finance' : 'Híbrido'} activado`, "success");
                     });
                 }
@@ -6362,13 +6388,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Simplified sync for first load
         if (window.FINNHUB_API_KEY && !isFirstUpdateDone) {
             const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
-            window.refreshLivePrices(uniqueTickers).then(() => {
+            const btn = elements.manualRefreshBtn;
+            const originalContent = btn ? btn.textContent : '';
+            if (btn) btn.style.color = '#f59e0b';
+
+            window.refreshLivePrices(uniqueTickers, (current) => {
+                if (btn) btn.textContent = current;
+            }).then(() => {
                 lastSyncTime = new Date().toLocaleTimeString();
                 isFirstUpdateDone = true;
                 console.log("Prices refreshed, rendering...");
+                if (btn) {
+                    btn.textContent = originalContent;
+                    btn.style.color = '';
+                }
                 render();
             }).catch(err => {
                 console.error("refreshLivePrices failed:", err);
+                if (btn) {
+                    btn.textContent = originalContent;
+                    btn.style.color = '';
+                }
                 render(); // Render anyway with old prices
             });
         }

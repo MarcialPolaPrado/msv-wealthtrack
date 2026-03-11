@@ -401,12 +401,13 @@ window.getStockInfo = function (ticker) {
 }
 
 // Function to fetch real prices (to be called by app.js)
-window.refreshLivePrices = async function (tickers) {
+window.refreshLivePrices = async function (tickers, onProgress) {
     if (!window.FINNHUB_API_KEY || tickers.length === 0) return;
 
     // Refresh FX rate first
     if (window.refreshFXRate) await window.refreshFXRate();
 
+    let processed = 0;
     for (const ticker of tickers) {
         const key = ticker.toUpperCase();
 
@@ -533,6 +534,8 @@ window.refreshLivePrices = async function (tickers) {
         if (!success && (key.endsWith('.MC') || key.endsWith('.ES'))) {
             // console.warn(`Could not fetch live price for IBEX stock ${key}. Note: Finnhub Free Tier may not support Spanish (BME) market.`);
         }
+        processed++;
+        if (onProgress) onProgress(processed, tickers.length);
     }
 }
 
