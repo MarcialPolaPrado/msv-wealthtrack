@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isNominaAhorroExpanded = localStorage.getItem('isNominaAhorroExpanded') !== 'false';
     let isNominaGastosExpanded = localStorage.getItem('isNominaGastosExpanded') !== 'false';
     let expandedSummaryDrawers = new Set();
+    let drawerDetailFilterMode = localStorage.getItem('drawerDetailFilterMode') || 'all';
 
 
 
@@ -3591,12 +3592,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showDrawerDetails(drawerId) {
+        // Remove existing detail overlay if any
+        const existingOverlay = document.getElementById('drawerDetailsOverlay');
+        if (existingOverlay) existingOverlay.remove();
+        
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer) return;
 
+        const currentFiscal = getFiscalMonth(new Date());
+        
+        // Filter movements based on drawerDetailFilterMode
+        // We map to maintain the original index for editing/deleting
+        const filteredMovementsWithIndex = (drawer.movements || []).map((m, idx) => ({ ...m, originalIndex: idx }));
+        
+        const displayedMovements = (!drawer.isAuto && drawerDetailFilterMode === 'month')
+            ? filteredMovementsWithIndex.filter(m => getFiscalMonth(m.date) === currentFiscal)
+            : filteredMovementsWithIndex;
+
         let movementsHtml = drawer.isAuto
             ? '<p style="opacity:0.7">Este cajón se sincroniza automáticamente con el valor de tu cartera de acciones.</p>'
-            : drawer.movements.map((m, idx) => `
+            : displayedMovements.map((m) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.8rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
                     <div style="flex-grow:1;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -3610,14 +3625,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${m.amount >= 0 ? '+' : ''}${fmtEUR(m.amount)}
                         </div>
                         <div style="display:flex; gap:0.5rem;">
-                            <button class="edit-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.5; padding:0.2rem;" title="Editar Movimiento">✏️</button>
-                            <button class="delete-mvmt-entry-btn" data-index="${idx}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1rem; opacity:0.7; padding:0.2rem;" title="Borrar Movimiento">🗑️</button>
+                            <button class="edit-mvmt-entry-btn" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.5; padding:0.2rem;" title="Editar Movimiento">✏️</button>
+                            <button class="delete-mvmt-entry-btn" data-index="${m.originalIndex}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1rem; opacity:0.7; padding:0.2rem;" title="Borrar Movimiento">🗑️</button>
                         </div>
                     </div>
                 </div>
-            `).join('') || '<p style="opacity:0.5; padding:1rem; text-align:center;">No hay movimientos aún.</p>';
+            `).join('') || `<p style="opacity:0.5; padding:2rem; text-align:center;">${drawerDetailFilterMode === 'month' ? 'No hay movimientos en este mes fiscal.' : 'No hay movimientos aún.'}</p>`;
 
         const overlay = document.createElement('div');
+        overlay.id = 'drawerDetailsOverlay';
         overlay.style.cssText = `
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000;
             display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);
@@ -3640,7 +3656,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="margin-top:1.5rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--primary); padding-bottom: 3px; margin-bottom: 1rem;">
                         <h3 style="margin:0">Historial</h3>
-                        ${!drawer.isAuto && drawer.movements.length > 1 ? `<button id="consolidateBtn" class="btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" title="Consolidar">📦</button>` : ''}
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            ${!drawer.isAuto && (drawer.movements || []).length > 0 ? `
+                                <button id="filterDrawerMvmtsBtn" class="btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" title="${drawerDetailFilterMode === 'all' ? 'Ver Mes Fiscal Actual' : 'Ver Todo'}">
+                                    ${drawerDetailFilterMode === 'all' ? '📅' : '♾️'}
+                                </button>
+                            ` : ''}
+                            ${!drawer.isAuto && (drawer.movements || []).length > 1 ? `<button id="consolidateBtn" class="btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" title="Consolidar">📦</button>` : ''}
+                        </div>
                     </div>
                     <div>${movementsHtml}</div>
                 </div>
@@ -3648,6 +3671,16 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         document.body.appendChild(overlay);
         document.getElementById('closeDetails').onclick = () => overlay.remove();
+        
+        const filterBtn = document.getElementById('filterDrawerMvmtsBtn');
+        if (filterBtn) {
+            filterBtn.onclick = () => {
+                drawerDetailFilterMode = (drawerDetailFilterMode === 'all') ? 'month' : 'all';
+                localStorage.setItem('drawerDetailFilterMode', drawerDetailFilterMode);
+                showDrawerDetails(drawer.id); // Re-render to apply filter
+            };
+        }
+
         const editBtn = document.getElementById('editDrawerFromDetails');
         if (editBtn) {
             editBtn.onclick = () => {
@@ -3666,8 +3699,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (consolidateBtn) {
             consolidateBtn.onclick = () => {
                 consolidateDrawerHistory(drawer.id);
-                overlay.remove(); // Close detail after consolidation to refresh
-                showDrawerDetails(drawer.id); // Re-open to see consolidated state
+                showDrawerDetails(drawer.id); // Refresh to see consolidated state
             };
         }
         overlay.querySelectorAll('.edit-mvmt-entry-btn').forEach(btn => {
