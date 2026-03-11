@@ -388,6 +388,7 @@ window.refreshLivePrices = async function (tickers) {
         let symbolsToTry = [key];
         if (key.endsWith('.MC')) {
             symbolsToTry.push(key.replace('.MC', '.MA')); // Madrid
+            symbolsToTry.push(key.replace('.MC', '.BME')); // Spanish BME format
             symbolsToTry.push(key.replace('.MC', ':MC')); // Some formats
             symbolsToTry.push(key.split('.')[0] + '.MC'); // redundant but safe
         } else if (key.endsWith('.ES')) {

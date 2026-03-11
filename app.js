@@ -2,6 +2,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     let stocks = (window.loadStocks) ? window.loadStocks() : [];
+    
+    // Migration: Normalize .ES tickers to .MC for API and Master Data compatibility
+    let needsMigrationSave = false;
+    stocks = stocks.map(s => {
+        if (s.ticker && s.ticker.toUpperCase().endsWith('.ES')) {
+            s.ticker = s.ticker.toUpperCase().replace('.ES', '.MC');
+            needsMigrationSave = true;
+        }
+        return s;
+    });
+    if (needsMigrationSave && window.saveStocks) {
+        window.saveStocks(stocks);
+    }
+
     let currentFilter = 'all';
     const getSortConfig = (key, defaultObj) => {
         try {
@@ -5000,7 +5014,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalInvested = parseFloat(elements.priceInput.value);
             const calculatedPrice = totalInvested / qty;
 
-            const tickerInput = elements.tickerInput.value.trim().toUpperCase();
+            let tickerInput = elements.tickerInput.value.trim().toUpperCase();
+            
+            // Normalize .ES to .MC for API compatibility
+            if (tickerInput.endsWith('.ES')) {
+                tickerInput = tickerInput.replace('.ES', '.MC');
+            }
+
             const mockInfo = window.MOCK_DATA[tickerInput];
 
             const stockData = {
