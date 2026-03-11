@@ -405,9 +405,6 @@ window.getStockInfo = function (ticker) {
 window.refreshLivePrices = async function (tickers, onProgress) {
     if (!window.FINNHUB_API_KEY || tickers.length === 0) return;
 
-    // Refresh FX rate first
-    if (window.refreshFXRate) await window.refreshFXRate();
-
     let processed = 0;
     for (const ticker of tickers) {
         const key = ticker.toUpperCase();
@@ -501,8 +498,13 @@ window.refreshLivePrices = async function (tickers, onProgress) {
 
                     for (const proxyUrl of proxies) {
                         try {
-                            const resp = await fetch(proxyUrl, { timeout: 5000 });
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s for proxy
+                            
+                            const resp = await fetch(proxyUrl, { signal: controller.signal });
                             const json = await resp.json();
+                            
+                            clearTimeout(timeoutId);
                             // AllOrigins wraps content in a 'contents' property, corsproxy.io doesn't
                             let rawData = json.contents ? JSON.parse(json.contents) : json;
                             
@@ -541,12 +543,17 @@ window.refreshLivePrices = async function (tickers, onProgress) {
 }
 
 window.refreshFXRate = async function () {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // A bit more time for FX
+
     try {
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/USDEUR=X?interval=1m&range=1d`)}`;
-        const resp = await fetch(proxyUrl, { timeout: 5000 });
+        const resp = await fetch(proxyUrl, { signal: controller.signal });
         const json = await resp.json();
         const rawData = json.contents ? JSON.parse(json.contents) : json;
         
+        clearTimeout(timeoutId);
+
         if (rawData?.chart?.result?.[0]?.meta?.regularMarketPrice) {
             const newRate = rawData.chart.result[0].meta.regularMarketPrice;
             if (newRate > 0) {
@@ -556,12 +563,12 @@ window.refreshFXRate = async function () {
                 window.FX_DATE = dateStr;
                 if (window.saveFXRate) window.saveFXRate(newRate);
                 if (window.saveFXDate) window.saveFXDate(dateStr);
-                console.log(`[FX] Updated USD/EUR rate: ${newRate} (${dateStr})`);
                 return true;
             }
         }
     } catch (err) {
-        console.warn("[FX] Failed to update FX rate:", err);
+        clearTimeout(timeoutId);
+        console.warn("[FX] Error fetching rate:", err.name === 'AbortError' ? 'Timeout' : err.message);
     }
     return false;
 };

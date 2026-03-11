@@ -5333,11 +5333,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentTimerElement = document.getElementById('updateTimer');
                 if (currentTimerElement) {
                     currentTimerElement.classList.remove('hidden');
-                    currentTimerElement.textContent = `Actualizando datos...`;
+                    currentTimerElement.textContent = `Actualizando Divisa USD/EUR...`;
                     currentTimerElement.style.color = '#f59e0b';
                 }
 
                 try {
+                    // --- Passo 1: Actualizar Divisa ---
+                    if (window.refreshFXRate) {
+                        if (currentTimerElement) currentTimerElement.textContent = `Actualizando Divisa USD/EUR...`;
+                        await window.refreshFXRate();
+                    }
+
                     if (window.FINNHUB_API_KEY) {
                         const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
                         // Call with progress callback
@@ -5354,8 +5360,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     render();
 
                     if (currentTimerElement) {
-                        currentTimerElement.style.color = 'var(--primary)';
-                        currentTimerElement.textContent = `Actualizado: ${lastSyncTime}`;
+                        currentTimerElement.style.color = '#10b981'; // Green for success
+                        currentTimerElement.textContent = `¡Sincronización completada! (${lastSyncTime})`;
                         setTimeout(() => currentTimerElement.classList.add('hidden'), 3000);
                     }
 
