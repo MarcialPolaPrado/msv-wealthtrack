@@ -5717,7 +5717,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Add movement to Savings
                 targetAhorroDrawer.movements.push({
-                    description: `Traspaso desde Nómina (${fiscalMonthStr}) - ${drawer.name}`,
+                    description: `Traspaso`,
                     date: new Date().toISOString().split('T')[0],
                     amount: amountToTransfer,
                     category: selectedCategory
