@@ -6450,7 +6450,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 try {
-                    if (window.refreshFXRate) await window.refreshFXRate();
+                    if (window.refreshFXRate) {
+                        const success = await window.refreshFXRate();
+                        if (!success) {
+                            console.warn("[InitialSync] FX Rate update failed.");
+                            if (window.showToast) window.showToast("⚠️ No se pudo actualizar la divisa en tiempo real. Usando caché.", "warning");
+                        }
+                    }
                     
                     await window.refreshLivePrices(uniqueTickers, (current, total) => {
                         if (btn) btn.textContent = current;
