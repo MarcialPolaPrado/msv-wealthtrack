@@ -6485,6 +6485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const clockMenuBtn = document.getElementById('clockMenuBtn');
         const clockModal = document.getElementById('clockCountdownModal');
         const closeClockModal = document.getElementById('closeClockModal');
+        const currentDateDisplay = document.getElementById('currentDateDisplay');
         const currentTimeDisplay = document.getElementById('currentTimeDisplay');
         const addCountdownForm = document.getElementById('addCountdownForm');
         const countdownConceptInput = document.getElementById('countdownConceptInput');
@@ -6499,6 +6500,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function updateClock() {
             const now = new Date();
+            if (currentDateDisplay) {
+                currentDateDisplay.textContent = now.toLocaleDateString('es-ES');
+            }
             if (currentTimeDisplay) {
                 currentTimeDisplay.textContent = now.toLocaleTimeString('es-ES', { hour12: false });
             }

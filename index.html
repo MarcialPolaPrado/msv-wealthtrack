@@ -13,11 +13,11 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link rel="manifest" href="manifest.json">
-    <title>Premium Stock Portfolio - v202603120625</title><!-- Feature: Breakdown -->
+    <title>Premium Stock Portfolio - v202603120626</title><!-- Feature: Breakdown -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603120625">
+    <link rel="stylesheet" href="styles.css?v=202603120626">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -56,7 +56,7 @@
                 <div>
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
                     <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">
-                        v202603120625</p>
+                        v202603120626</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -466,7 +466,7 @@
             <div class="modal-header">
                 <div style="display: flex; flex-direction: column;">
                     <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
-                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 202603120625</span>
+                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 202603120626</span>
                 </div>
                 <span id="closeSettingsModal" class="close-modal">&times;</span>
             </div>
@@ -1030,8 +1030,9 @@
     <div id="clockCountdownModal" class="modal hidden">
         <div class="modal-content glass-panel" style="max-width: 450px;">
             <div class="modal-header">
-                <h2 style="margin: 0; display:flex; align-items:center; gap:8px;">
-                    <span id="currentTimeDisplay" style="font-family: monospace; font-size: 1.5rem; color: var(--primary);">00:00:00</span>
+                <h2 style="margin: 0; display:flex; align-items:center; gap:12px; width: 100%;">
+                    <span id="currentDateDisplay" style="font-size: 1.1rem; opacity: 0.7;">12/03/2026</span>
+                    <span id="currentTimeDisplay" style="font-family: monospace; font-size: 1.5rem; color: var(--primary); margin-left: auto;">00:00:00</span>
                 </h2>
                 <span id="closeClockModal" class="close-modal">&times;</span>
             </div>
@@ -1080,9 +1081,9 @@
         </div>
     </div>
 
-    <script src="storage.js?v=202603120625"></script>
-    <script src="mock_data.js?v=202603120625"></script>
-    <script src="app.js?v=202603120625"></script>
+    <script src="storage.js?v=202603120626"></script>
+    <script src="mock_data.js?v=202603120626"></script>
+    <script src="app.js?v=202603120626"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1126,7 +1127,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603120625';
+        const APP_VERSION = '202603120626';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
