@@ -780,6 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const bolsaDrawer = savingsDrawers.find(d => d.id === 'bolsa');
         if (bolsaDrawer) {
             bolsaDrawer.balance = totalCurrentValueEURValue;
+            bolsaDrawer.pl = pl;
             if (currentView === 'ahorro') renderSavings();
         }
 
@@ -2047,11 +2048,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const pct = total > 0 ? (drawer.balance / total * 100).toFixed(1) : 0;
 
-            const colorIdx = drawer.colorIndex || 0;
-            const theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
+            let theme;
+            if (drawer.id === 'bolsa') {
+                const isProfit = (drawer.pl || 0) >= 0;
+                theme = isProfit ? DRAWER_COLORS[1] : DRAWER_COLORS[4]; // Blue for profit, Red for loss
+            } else {
+                const colorIdx = drawer.colorIndex || 0;
+                theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
+            }
 
             // Apply theme styles
-            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1,3), 16)}, ${parseInt(theme.border.slice(3,5), 16)}, ${parseInt(theme.border.slice(5,7), 16)}, 0.25)`, 'important');
+            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
             card.style.setProperty('background-color', theme.bg, 'important');
             card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
             card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
@@ -2067,7 +2074,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <div style="display: flex; flex-direction: column;">
-                        <span class="drawer-amount" style="color: ${theme.border} !important; font-weight: 800; font-size: 1.2rem;">${fmtEUR(drawer.balance)}</span>
+                        <div style="font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 2px; font-weight: 700; color: white;">${drawer.id === 'bolsa' ? 'En Bolsa' : ''}</div>
+                        <span class="drawer-amount" style="color: ${drawer.id === 'bolsa' ? 'white' : theme.border} !important; font-weight: 800; font-size: 1.2rem; display: block;">${fmtEUR(drawer.balance)}</span>
                         ${targetAmount > 0 ? `
                             <div class="target-info" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 4px;">
                                 <span>Obj: ${fmtEUR(targetAmount)}</span>
@@ -2075,7 +2083,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         ` : ''}
                     </div>
-                    <span style="font-size: 1.2rem; font-weight: 800; color: ${theme.border}; opacity: 0.9;">${pct}%</span>
+                    <span style="font-size: 1.2rem; font-weight: 800; color: ${drawer.id === 'bolsa' ? 'white' : theme.border}; opacity: 0.9;">${pct}%</span>
                 </div>
                 ${!drawer.isAuto ? `
                     <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:nowrap;">
@@ -2168,11 +2176,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = `card drawer-card glass-panel bolsa-drawer`;
 
-            // Color theme: similar to Nomina but for Bolsa (maybe blue/indigo)
-            card.style.background = 'rgba(99, 102, 241, 0.15)';
-            card.style.backgroundColor = '#1e1b4b';
-            card.style.backgroundImage = 'linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(15, 23, 42, 0.8) 100%)';
-            card.style.border = '2px solid #6366f1';
+            // Color theme based on profit/loss
+            const isProfit = plGroup >= 0;
+            const theme = isProfit ? DRAWER_COLORS[1] : DRAWER_COLORS[4]; // Blue for profit, Red for loss
+
+            // Apply theme styles
+            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
+            card.style.setProperty('background-color', theme.bg, 'important');
+            card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
+            card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
 
             const performanceClass = (plPercentGroup === null) ? 'neutral' : (plPercentGroup < 0 ? 'loss' : 'profit');
 
@@ -2186,34 +2198,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <span class="drawer-amount ${performanceClass}" style="font-weight: 800; font-size: 1.2rem; display: block;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
-                        <span class="${performanceClass}" style="font-size: 0.85rem; font-weight: 600;">${plGroup !== null ? (plGroup >= 0 ? '+' : '') + fmtEUR(plGroup) : '-'} (${fmtPct(plPercentGroup)})</span>
+                        <div style="font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 2px; font-weight: 700; color: white;">En Bolsa</div>
+                        <span class="drawer-amount" style="font-weight: 800; font-size: 1.2rem; display: block; color: white !important;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
+                        <span style="font-size: 0.85rem; font-weight: 600; color: white !important; opacity: 0.9;">${plGroup !== null ? (plGroup >= 0 ? '+' : '') + fmtEUR(plGroup) : '-'} (${fmtPct(plPercentGroup)})</span>
                     </div>
                 </div>
 
                 <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05); display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
                     <div>
-                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Invested</div>
-                        <div style="font-weight: 600;">${fmtEUR(group.totalInvested)}</div>
+                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Invertido</div>
+                        <div style="font-weight: 600; color: white;">${fmtEUR(group.totalInvested)}</div>
                     </div>
                     <div>
-                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Current Price</div>
-                        <div style="font-weight: 600;">${info.currentPriceEUR !== null ? fmtEUR(info.currentPriceEUR) : '-'}</div>
+                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Precio Actual</div>
+                        <div style="font-weight: 600; color: white;">${info.currentPriceEUR !== null ? fmtEUR(info.currentPriceEUR) : '-'}</div>
                     </div>
                     <div>
-                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Quantity</div>
-                        <div style="font-weight: 600;">${fmtNum(group.totalQty, 4)}</div>
+                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Cantidad</div>
+                        <div style="font-weight: 600; color: white;">${fmtNum(group.totalQty, 4)}</div>
                     </div>
                     <div>
-                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Market</div>
-                        <div style="font-weight: 600;">${group.market}</div>
+                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Mercado</div>
+                        <div style="font-weight: 600; color: white;">${group.market}</div>
                     </div>
                 </div>
 
                 <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                    <button class="add-mvmt-btn btn-primary" data-ticker="${group.ticker}" title="Añadir Movimiento" style="padding:0.4rem 0.8rem; font-size:0.8rem;">➕</button>
-                    <button class="history-btn btn-secondary" data-ticker="${group.ticker}" title="Historial" style="padding:0.4rem 0.8rem; font-size:0.8rem;">🕒</button>
-                    <button class="details-btn btn-secondary" data-ticker="${group.ticker}" title="Ver Detalles" style="padding:0.4rem 0.8rem; font-size:0.8rem;">🔍</button>
+                    <button class="add-mvmt-btn btn-primary" data-ticker="${group.ticker}" title="Añadir Movimiento" style="padding:0.4rem 0.8rem; font-size:0.8rem; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">➕</button>
+                    <button class="history-btn btn-secondary" data-ticker="${group.ticker}" title="Historial" style="padding:0.4rem 0.8rem; font-size:0.8rem; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">🕒</button>
+                    <button class="details-btn btn-secondary" data-ticker="${group.ticker}" title="Ver Detalles" style="padding:0.4rem 0.8rem; font-size:0.8rem; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">🔍</button>
                 </div>
 
                 <div id="history-${group.ticker.replace(/[^a-zA-Z0-9]/g, '_')}" class="hidden" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
