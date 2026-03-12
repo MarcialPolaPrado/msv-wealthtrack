@@ -2213,18 +2213,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const displayName = (group.name || group.ticker).length > 16 ? (group.name || group.ticker).substring(0, 14) + '..' : (group.name || group.ticker);
 
             card.innerHTML = `
-                <div class="shimmer-card" style="position: absolute; inset: 0; pointer-events: none; opacity: 0.3; border-radius: inherit;"></div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; position: relative; z-index: 1;">
-                    <div style="display: flex; align-items: center; gap: 10px; max-width: 65%;">
-                        <span class="drawer-icon" style="margin-bottom:0; font-size: 1.8rem;">${isProfit && plPercentGroup > 10 ? '🚀' : '📈'}</span>
-                        <div style="display: flex; flex-direction: column; overflow: hidden;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span class="drawer-name" style="color: white !important; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</span>
-                                <div style="display: flex; gap: 4px; flex-shrink: 0;">${signalsHtml}</div>
+                <div class="card-main-content">
+                    <div class="shimmer-card" style="position: absolute; inset: 0; pointer-events: none; opacity: 0.3; border-radius: inherit;"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; position: relative; z-index: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; max-width: 65%;">
+                            <span class="drawer-icon" style="margin-bottom:0; font-size: 1.8rem;">${isProfit && plPercentGroup > 10 ? '🚀' : '📈'}</span>
+                            <div style="display: flex; flex-direction: column; overflow: hidden;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="drawer-name stock-web-link" title="Ver en Yahoo Finance" style="color: white !important; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</span>
+                                    <div style="display: flex; gap: 4px; flex-shrink: 0;">${signalsHtml}</div>
+                                </div>
+                                <span style="font-size: 0.75rem; opacity: 0.7; font-weight: 500;">${group.ticker} • ${group.market}</span>
                             </div>
-                            <span style="font-size: 0.75rem; opacity: 0.7; font-weight: 500;">${group.ticker} • ${group.market}</span>
                         </div>
-                    </div>
                     <div style="text-align: right;">
                         <div style="font-size: 0.65rem; opacity: 0.9; text-transform: uppercase; margin-bottom: 2px; font-weight: 800; color: white; letter-spacing: 0.05em;">En Bolsa</div>
                         <span class="drawer-amount" style="font-weight: 800; font-size: 1.35rem; display: block; color: white !important; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
@@ -2288,15 +2289,108 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('')}
                     </div>
                 </div>
+            </div>
+            <div class="card-web-view hidden">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); border-radius: 12px 12px 0 0;">
+                        <span style="font-size: 0.7rem; font-weight: 700; color: #3b82f6;">Vista Técnica: ${group.ticker}</span>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="https://finance.yahoo.com/quote/${group.ticker}" target="_blank" title="Abrir en Yahoo Finance" style="text-decoration: none; font-size: 0.75rem; background: #7b1fa2; padding: 2px 8px; border-radius: 4px; color: white; display: flex; align-items: center; gap: 4px; font-weight: 700;" onclick="event.stopPropagation()">Yahoo ↗</a>
+                            <button class="close-web-view" title="Cerrar y volver" style="background: rgba(239, 68, 68, 0.2); border: none; color: #ef4444; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem;">✕</button>
+                        </div>
+                    </div>
+                    <div class="web-view-body" style="flex: 1; min-height: 250px; background: #0f172a; border-radius: 0 0 12px 12px; overflow: hidden;">
+                        <!-- Widget injected on demand -->
+                    </div>
+                </div>
             `;
 
             card.addEventListener('click', (e) => {
                 const ticker = group.ticker;
-                if (e.target.closest('.add-mvmt-btn')) {
+                const mainView = card.querySelector('.card-main-content');
+                const webView = card.querySelector('.card-web-view');
+
+                if (e.target.closest('.stock-web-link')) {
+                    if (mainView && webView) {
+                        card.classList.add('web-view-active');
+                        mainView.classList.add('hidden');
+                        webView.classList.remove('hidden');
+                        const body = webView.querySelector('.web-view-body');
+                        
+                        // Robust Ticker formatting for TradingView
+                        let tvTicker = (group.ticker || '').toUpperCase();
+                        
+                        // Mapping Yahoo/Common formats to TradingView Exchanges
+                        const tickerMap = {
+                            'SAN.MC': 'BME:SAN', 'BBVA.MC': 'BME:BBVA', 'TEF.MC': 'BME:TEF',
+                            'ITX.MC': 'BME:ITX', 'IBE.MC': 'BME:IBE', 'REP.MC': 'BME:REP',
+                            'CABK.MC': 'BME:CABK', 'SAB.MC': 'BME:SAB', 'ACS.MC': 'BME:ACS',
+                            'FER.MC': 'BME:FER', 'AMS.MC': 'BME:AMS', 'MTS.MC': 'BME:MTS',
+                            'AGNC': 'NASDAQ:AGNC', 'MAIN': 'NYSE:MAIN'
+                        };
+
+                        if (tickerMap[tvTicker]) {
+                            tvTicker = tickerMap[tvTicker];
+                        } else if (tvTicker.includes('.')) {
+                            // Generic conversion: TKR.MC -> BME:TKR
+                            const parts = tvTicker.split('.');
+                            const suffix = parts[1];
+                            let exchange = suffix;
+                            if (suffix === 'MC') exchange = 'BME';
+                            else if (suffix === 'L') exchange = 'LSE';
+                            else if (suffix === 'DE') exchange = 'XETR';
+                            else if (suffix === 'PA') exchange = 'EURONEXT';
+                            else if (suffix === 'MI') exchange = 'MIL';
+                            
+                            tvTicker = `${exchange}:${parts[0]}`;
+                        } else {
+                            // US Stocks normalization
+                            let market = (group.market || '').toUpperCase();
+                            let exchange = '';
+                            
+                            if (market.includes('NASDAQ') || market.includes('NAS')) exchange = 'NASDAQ';
+                            else if (market.includes('NYSE') || market.includes('NY')) exchange = 'NYSE';
+                            else if (market.includes('AMEX')) exchange = 'AMEX';
+                            
+                            if (exchange) {
+                                tvTicker = `${exchange}:${tvTicker}`;
+                            } else {
+                                // Default fallback for bare tickers (usually works for US)
+                                tvTicker = tvTicker;
+                            }
+                        }
+                        
+                        body.innerHTML = `
+                            <div style="height:100%; width:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; font-size:0.8rem; padding: 20px; text-align: center;">
+                                <div class="spinner" style="margin-bottom:15px;"></div>
+                                <div style="margin-bottom: 15px; font-weight: 600;">Cargando gráfico técnico...</div>
+                                <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 10px;">ID TradingView: ${tvTicker}</div>
+                                <a href="https://finance.yahoo.com/quote/${group.ticker}" target="_blank" style="color: #3b82f6; text-decoration: underline; font-size: 0.75rem;" onclick="event.stopPropagation()">¿Problemas? Abre Yahoo Finance aquí</a>
+                            </div>`;
+
+                        setTimeout(() => {
+                            body.innerHTML = `
+                                <div class="tradingview-widget-container" style="height:100%;width:100%;position:relative;">
+                                    <iframe scrolling="no" allowtransparency="true" frameborder="0" 
+                                        src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=es&symbol=${tvTicker}&interval=D&width=100%25&height=100%25&gridLineColor=rgba(42,46,57,0)&fontColor=rgba(255,255,255,1)&underLineColor=rgba(33,150,243,0.3)&underLineBottomColor=rgba(33,150,243,0)&trendLineColor=rgba(33,150,243,1)&colorTheme=dark" 
+                                        style="width:100%; height:100%; border:none;"></iframe>
+                                    <div style="position:absolute; bottom:5px; left:0; width:100%; text-align:center; pointer-events:none;">
+                                        <a href="https://es.tradingview.com/symbols/${tvTicker}" target="_blank" style="pointer-events:auto; color:rgba(255,255,255,0.3); font-size:0.5rem; text-decoration:none;">TradingView</a>
+                                    </div>
+                                </div>`;
+                        }, 100);
+                    }
+                } else if (e.target.closest('.close-web-view')) {
+                    if (mainView && webView) {
+                        card.classList.remove('web-view-active');
+                        webView.classList.add('hidden');
+                        mainView.classList.remove('hidden');
+                        webView.querySelector('.web-view-body').innerHTML = '';
+                    }
+                } else if (e.target.closest('.add-mvmt-btn')) {
                     addMoreFromStockByTicker(ticker);
                 } else if (e.target.closest('.history-btn')) {
                     const historyDiv = card.querySelector(`#history-${ticker.replace(/[^a-zA-Z0-9]/g, '_')}`);
-                    historyDiv.classList.toggle('hidden');
+                    if (historyDiv) historyDiv.classList.toggle('hidden');
                 } else if (e.target.closest('.details-btn')) {
                     showFinancialDetails(ticker);
                 } else if (e.target.closest('.edit-btn-small')) {
