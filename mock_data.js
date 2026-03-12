@@ -329,9 +329,9 @@ window.FX_DATE = (window.loadFXDate && window.loadFXDate()) || '';
 // Get your free key at https://finnhub.io/
 window.FINNHUB_API_KEY = 'd6b00s1r01qnr27j4hqgd6b00s1r01qnr27j4hr0';
 
-window.LIVE_PRICES = {}; // Cache for live data
-window.LIVE_DATES = {}; // Cache for update times
-window.LIVE_SOURCES = {}; // Cache for data source (finnhub, yahoo, manual)
+window.LIVE_PRICES = window.loadLivePrices ? window.loadLivePrices() : {}; // Cache for live data
+window.LIVE_DATES = window.loadLiveDates ? window.loadLiveDates() : {}; // Cache for update times
+window.LIVE_SOURCES = window.loadLiveSources ? window.loadLiveSources() : {}; // Cache for data source (finnhub, yahoo, manual)
 window.MANUAL_PRICES = window.loadManualPrices ? window.loadManualPrices() : {};
 window.DATA_SOURCE_MODE = window.loadDataSourceMode ? window.loadDataSourceMode() : 'hybrid';
 
@@ -540,6 +540,11 @@ window.refreshLivePrices = async function (tickers, onProgress) {
         processed++;
         if (onProgress) onProgress(processed, tickers.length);
     }
+    
+    // Save results to storage
+    if (window.saveLivePrices) window.saveLivePrices(window.LIVE_PRICES);
+    if (window.saveLiveDates) window.saveLiveDates(window.LIVE_DATES);
+    if (window.saveLiveSources) window.saveLiveSources(window.LIVE_SOURCES);
 }
 
 window.refreshFXRate = async function () {

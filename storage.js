@@ -2,6 +2,9 @@ const STORAGE_KEY = 'premium_portfolio_data';
 const SAVINGS_KEY = 'msv_savings_v1';
 const PRIVACY_KEY = 'msv_privacy_v1';
 const NOMINA_KEY = 'msv_nomina_v1';
+const LIVE_PRICES_KEY = 'msv_live_prices_v1';
+const LIVE_DATES_KEY = 'msv_live_dates_v1';
+const LIVE_SOURCES_KEY = 'msv_live_sources_v1';
 
 window.saveStocks = (stocks) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stocks));
@@ -88,4 +91,31 @@ window.saveFXDate = (date) => {
 window.loadFXDate = () => {
     const date = localStorage.getItem(FX_DATE_KEY);
     return date || '';
+};
+
+window.saveLivePrices = (data) => {
+    localStorage.setItem(LIVE_PRICES_KEY, JSON.stringify(data));
+};
+
+window.loadLivePrices = () => {
+    const data = localStorage.getItem(LIVE_PRICES_KEY);
+    return data ? JSON.parse(data) : {};
+};
+
+window.saveLiveDates = (data) => {
+    localStorage.setItem(LIVE_DATES_KEY, JSON.stringify(data));
+};
+
+window.loadLiveDates = () => {
+    const data = localStorage.getItem(LIVE_DATES_KEY);
+    return data ? JSON.parse(data) : {};
+};
+
+window.saveLiveSources = (data) => {
+    localStorage.setItem(LIVE_SOURCES_KEY, JSON.stringify(data));
+};
+
+window.loadLiveSources = () => {
+    const data = localStorage.getItem(LIVE_SOURCES_KEY);
+    return data ? JSON.parse(data) : {};
 };

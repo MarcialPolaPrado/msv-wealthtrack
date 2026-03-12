@@ -5320,13 +5320,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.target.value = '';
             });
         }
+        let isSyncing = false;
+
         if (elements.manualRefreshBtn) {
             elements.manualRefreshBtn.addEventListener('click', async () => {
+                if (isSyncing) return;
+                isSyncing = true;
+
                 const btn = elements.manualRefreshBtn;
                 const originalContent = btn.textContent;
                 const originalFontSize = btn.style.fontSize;
                 
-                // btn.classList.add('spin-animation'); // Removed rotating icon as per request
+                btn.classList.add('spin-animation');
                 btn.style.color = '#f59e0b'; // Amber color while syncing
                 btn.style.fontWeight = '700';
 
@@ -5372,7 +5377,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         card.classList.add('sync-flash');
                     });
                 } finally {
+                    isSyncing = false;
                     // Restore original state
+                    btn.classList.remove('spin-animation');
                     btn.textContent = originalContent;
                     btn.style.fontSize = originalFontSize;
                     btn.style.color = '';
@@ -5737,24 +5744,21 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         elements.manualPriceList.appendChild(fxDiv);
 
-        // Find tickers that are not live
+        // All tickers from all stocks
         const allTickers = [...new Set(stocks.map(s => s.ticker.toUpperCase()))];
         const rows = allTickers.map(ticker => {
             const info = window.getStockInfo(ticker);
-            const isTarget = !info.isLive;
-            return { ticker, info, isTarget };
+            return { ticker, info };
         });
 
-        // Filter to show only non-live or already manual ones
-        const listToDisplay = rows.filter(r => r.isTarget || r.info.isManual);
-
-        if (listToDisplay.length > 0) {
+        // Display all stocks
+        if (rows.length > 0) {
             const title = document.createElement('h4');
             title.textContent = 'Ajuste de Activos';
             title.style.cssText = 'margin: 1rem 0 0.5rem 0; font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.1em;';
             elements.manualPriceList.appendChild(title);
 
-            listToDisplay.forEach(item => {
+            rows.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'manual-price-row';
                 div.style.cssText = 'display:flex; align-items:center; gap:1rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:10px; border:1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;';
@@ -6222,6 +6226,11 @@ document.addEventListener('DOMContentLoaded', () => {
             nomina: nominaData,
             countdowns: countdowns,
             manualPrices: window.MANUAL_PRICES || {},
+            livePrices: window.LIVE_PRICES || {},
+            liveDates: window.LIVE_DATES || {},
+            liveSources: window.LIVE_SOURCES || {},
+            fxRate: window.FX_RATE,
+            fxDate: window.FX_DATE,
             settings: {
                 fiscalDay: fiscalDay,
                 incomeCategories: incomeCategories,
@@ -6229,7 +6238,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 defaultTransferSource: localStorage.getItem('defaultTransferSource')
             },
             exportDate: new Date().toISOString(),
-            version: "1.2"
+            version: "1.3"
         };
         const blob = new Blob([JSON.stringify(globalData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -6257,6 +6266,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.manualPrices) {
                         window.MANUAL_PRICES = data.manualPrices;
                     }
+                    if (data.livePrices) window.LIVE_PRICES = data.livePrices;
+                    if (data.liveDates) window.LIVE_DATES = data.liveDates;
+                    if (data.liveSources) window.LIVE_SOURCES = data.liveSources;
+                    if (data.fxRate) window.FX_RATE = data.fxRate;
+                    if (data.fxDate) window.FX_DATE = data.fxDate;
 
                     // Restore settings if present
                     if (data.settings) {
@@ -6282,6 +6296,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.saveNomina) window.saveNomina(nominaData);
                     if (window.saveCountdowns) window.saveCountdowns(countdowns);
                     if (window.saveManualPrices) window.saveManualPrices(window.MANUAL_PRICES);
+                    if (window.saveLivePrices) window.saveLivePrices(window.LIVE_PRICES);
+                    if (window.saveLiveDates) window.saveLiveDates(window.LIVE_DATES);
+                    if (window.saveLiveSources) window.saveLiveSources(window.LIVE_SOURCES);
+                    if (window.saveFXRate) window.saveFXRate(window.FX_RATE);
+                    if (window.saveFXDate) window.saveFXDate(window.FX_DATE);
                     render();
                     if (currentView === 'nomina') renderNomina();
                     showToast("✅ Respaldo global restaurado con éxito.", "success");
@@ -6430,63 +6449,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Escuchar cambios de historial (opcional, por si el TWA no recarga)
         window.addEventListener('popstate', handleDeepLink);
 
+        // --- New: detect if we have cached live data to avoid "-" total display ---
+        if (Object.keys(window.LIVE_PRICES || {}).length > 0) {
+            isFirstUpdateDone = true;
+            console.log("[Cache] Found stored prices, setting isFirstUpdateDone = true");
+        }
+
         render();
         setupEventListeners();
         // Automatic update cycle removed. Now manual via refresh button.
-        // Simplified sync for first load
-        if (window.FINNHUB_API_KEY && !isFirstUpdateDone) {
-            const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
-            const btn = elements.manualRefreshBtn;
-            const originalContent = btn ? btn.textContent : '';
-            if (btn) btn.style.color = '#f59e0b';
-
-            // Start with FX rate update
-            const runInitialSync = async () => {
-                const currentTimerElement = document.getElementById('updateTimer');
-                if (currentTimerElement) {
-                    currentTimerElement.classList.remove('hidden');
-                    currentTimerElement.textContent = `Actualizando Divisa USD/EUR...`;
-                    currentTimerElement.style.color = '#f59e0b';
-                }
-
-                try {
-                    if (window.refreshFXRate) {
-                        const success = await window.refreshFXRate();
-                        if (!success) {
-                            console.warn("[InitialSync] FX Rate update failed.");
-                            if (window.showToast) window.showToast("⚠️ No se pudo actualizar la divisa en tiempo real. Usando caché.", "warning");
-                        }
-                    }
-                    
-                    await window.refreshLivePrices(uniqueTickers, (current, total) => {
-                        if (btn) btn.textContent = current;
-                        if (currentTimerElement) {
-                            currentTimerElement.textContent = `Sincronizando: ${current} de ${total}`;
-                        }
-                    });
-
-                    lastSyncTime = new Date().toLocaleTimeString();
-                    isFirstUpdateDone = true;
-                    render();
-
-                    if (currentTimerElement) {
-                        currentTimerElement.style.color = '#10b981';
-                        currentTimerElement.textContent = `¡Sincronización completada!`;
-                        setTimeout(() => currentTimerElement.classList.add('hidden'), 2000);
-                    }
-                } catch (err) {
-                    console.error("Initial refresh failed:", err);
-                    render();
-                } finally {
-                    if (btn) {
-                        btn.textContent = originalContent;
-                        btn.style.color = '';
-                    }
-                }
-            };
-
-            runInitialSync();
-        }
+        // Simplified sync for first load REMOVED as per request to use persistent/cached data.
+        
         console.log("initApp completed");
     }
     function setupClockCountdown() {
