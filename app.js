@@ -5766,19 +5766,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 const yahooTicker = item.ticker.endsWith('.MC') ? item.ticker : (item.ticker.endsWith('.ES') ? item.ticker.replace('.ES', '.MC') : item.ticker);
                 const yahooUrl = `https://finance.yahoo.com/quote/${yahooTicker}`;
 
-                const currentManualVal = window.MANUAL_PRICES[item.ticker]?.price || '';
-                const currentManualDate = window.MANUAL_PRICES[item.ticker]?.date || '';
+                const currentPrice = item.info.price || '';
+                const isLive = item.info.isLive;
+                const lastUpdatedDate = item.info.date || '';
 
                 div.innerHTML = `
-                    <div style="flex:1;">
-                        <div style="font-weight:700; color:var(--primary);">${item.ticker}</div>
-                        <a href="${yahooUrl}" target="_blank" style="font-size:0.75rem; color:#3b82f6; text-decoration:none;">🔗 Yahoo Finance</a>
-                        ${currentManualDate ? `<div style="font-size:0.6rem; color:var(--text-muted); margin-top:2px;">Ajustado: ${currentManualDate}</div>` : ''}
+                    <div style="flex:1; display: flex; align-items: center; gap: 0.8rem;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="font-weight:700; color:var(--primary);">${item.ticker}</div>
+                                <span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: ${isLive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)'}; color: ${isLive ? '#10b981' : 'var(--text-muted)'}; border: 1px solid ${isLive ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.1)'};">
+                                    ${isLive ? 'EN VIVO' : (item.info.isManual ? 'MANUAL' : 'ESTÁTICO')}
+                                </span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
+                                <a href="${yahooUrl}" target="_blank" style="font-size:0.75rem; color:#3b82f6; text-decoration:none;">🔗 Yahoo</a>
+                                ${lastUpdatedDate ? `<div style="font-size:0.65rem; color:var(--text-muted);">Refreso: ${lastUpdatedDate}</div>` : ''}
+                            </div>
+                        </div>
                     </div>
                     <div style="width:120px;">
-                        <input type="number" step="0.0001" class="manual-price-input" data-ticker="${item.ticker}" value="${currentManualVal}" 
-                            placeholder="${item.info.price || '---'}"
-                            style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; padding:0.4rem; border-radius:6px; font-size:0.9rem;">
+                        <input type="number" step="0.0001" class="manual-price-input" data-ticker="${item.ticker}" value="${currentPrice}" 
+                            placeholder="${item.info.isSimulated ? item.info.price : '---'}"
+                            style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; padding:0.4rem; border-radius:6px; font-size:0.9rem; text-align: right;">
                     </div>
                 `;
                 elements.manualPriceList.appendChild(div);
