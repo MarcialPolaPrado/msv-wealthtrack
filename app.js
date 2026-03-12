@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ahorroListFilterMode = localStorage.getItem('ahorroListFilterMode') || 'detail'; // 'detail', 'totals'
     let bolsaViewMode = localStorage.getItem('bolsaViewMode') || 'list';
     let bolsaTotalsMode = localStorage.getItem('bolsaTotalsMode') === 'true' || false;
+    let bolsaSummaryVisible = localStorage.getItem('bolsaSummaryVisible') !== 'false'; // Default to true
 
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
     let isAhorroSummaryExpanded = localStorage.getItem('isAhorroSummaryExpanded') !== 'false';
@@ -349,6 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
         marketStatusIcon: document.getElementById('marketStatusIcon'),
         manualRefreshBtn: document.getElementById('manualRefreshBtn'),
         portfolioPieChart: document.getElementById('portfolioPieChart'),
+        bolsaSummarySection: document.getElementById('bolsaSummarySection'),
+        bolsaSummaryToggleBtn: document.getElementById('bolsaSummaryToggleBtn'),
 
         // Savings Elements
         navItems: document.querySelectorAll('.nav-item'),
@@ -486,8 +489,8 @@ document.addEventListener('DOMContentLoaded', () => {
         closeMonthDetailModal: document.getElementById('closeMonthDetailModal'),
         monthDetailContent: document.getElementById('monthDetailContent'),
         bolsaGrid: document.getElementById('bolsaGrid'),
-        bolsaTableViewBtn: document.getElementById('bolsaTableViewBtn'),
-        bolsaCardViewBtn: document.getElementById('bolsaCardViewBtn'),
+        bolsaViewToggleBtn: document.getElementById('bolsaViewToggleBtn'),
+        bolsaTotalesToggle: document.getElementById('bolsaTotalesToggle'),
         stockTable: document.getElementById('stockTable'),
         savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
         savingsCategorySelect: document.getElementById('savingsCategorySelect'),
@@ -708,6 +711,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let isFirstUpdateDone = false;
 
     function render() {
+        // Toggle Bolsa Summary Visibility
+        if (elements.bolsaSummarySection) {
+            elements.bolsaSummarySection.classList.toggle('hidden', !bolsaSummaryVisible);
+        }
+        if (elements.bolsaSummaryToggleBtn) {
+            elements.bolsaSummaryToggleBtn.style.background = bolsaSummaryVisible ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
+        }
+
         // 1. Prepare Data and Calculate Totals 
         let totalInvestedEUR = 0;
         let totalCurrentValueEURValue = 0;
@@ -836,6 +847,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Toggle Table vs Cards
+        if (elements.bolsaViewToggleBtn) {
+            elements.bolsaViewToggleBtn.textContent = bolsaViewMode === 'cards' ? '🗂️' : '📄';
+        }
+        
+        if (elements.bolsaTotalesToggle) {
+            elements.bolsaTotalesToggle.classList.toggle('hidden', bolsaViewMode === 'cards');
+            elements.bolsaTotalesToggle.style.background = bolsaTotalsMode ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
+        }
+
         if (bolsaViewMode === 'cards') {
             if (elements.stockTable) elements.stockTable.parentElement.classList.add('hidden');
             if (elements.bolsaGrid) {
@@ -845,25 +865,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             if (elements.stockTable) elements.stockTable.parentElement.classList.remove('hidden');
             if (elements.bolsaGrid) elements.bolsaGrid.classList.add('hidden');
-
-            // Inject Totales toggle button into the table wrapper (only once)
-            const tableWrapper = elements.stockTable?.parentElement;
-            if (tableWrapper && !tableWrapper.querySelector('#bolsaTotalesToggle')) {
-                const toggleBtn = document.createElement('div');
-                toggleBtn.style.cssText = 'display:flex; justify-content:flex-end; padding: 0.5rem 0 0.3rem 0;';
-                toggleBtn.innerHTML = `<button id="bolsaTotalesToggle" class="totales-toggle-btn" title="Alternar Vista Totales">📊</button>`;
-                tableWrapper.insertBefore(toggleBtn, elements.stockTable);
-                toggleBtn.querySelector('#bolsaTotalesToggle').addEventListener('click', () => {
-                    bolsaTotalsMode = !bolsaTotalsMode;
-                    localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
-                    render();
-                });
-            }
-            // Update button state
-            const totalesBtn = tableWrapper?.querySelector('#bolsaTotalesToggle');
-            if (totalesBtn) {
-                totalesBtn.classList.toggle('active', bolsaTotalsMode);
-            }
         }
 
         // 2.6 Group Data by Ticker
@@ -5389,29 +5390,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Bolsa View Toggle
-        if (elements.bolsaTableViewBtn) {
-            elements.bolsaTableViewBtn.addEventListener('click', () => {
-                bolsaViewMode = 'list';
-                localStorage.setItem('bolsaViewMode', 'list');
-                elements.bolsaTableViewBtn.classList.add('active');
-                elements.bolsaTableViewBtn.style.background = 'var(--primary)';
-                elements.bolsaTableViewBtn.style.color = 'white';
-                elements.bolsaCardViewBtn.classList.remove('active');
-                elements.bolsaCardViewBtn.style.background = 'transparent';
-                elements.bolsaCardViewBtn.style.color = 'var(--text-muted)';
-                render();
-            });
-        }
-        if (elements.bolsaCardViewBtn) {
-            elements.bolsaCardViewBtn.addEventListener('click', () => {
-                bolsaViewMode = 'cards';
-                localStorage.setItem('bolsaViewMode', 'cards');
-                elements.bolsaCardViewBtn.classList.add('active');
-                elements.bolsaCardViewBtn.style.background = 'var(--primary)';
-                elements.bolsaCardViewBtn.style.color = 'white';
-                elements.bolsaTableViewBtn.classList.remove('active');
-                elements.bolsaTableViewBtn.style.background = 'transparent';
-                elements.bolsaTableViewBtn.style.color = 'var(--text-muted)';
+        if (elements.bolsaViewToggleBtn) {
+            elements.bolsaViewToggleBtn.addEventListener('click', () => {
+                bolsaViewMode = bolsaViewMode === 'cards' ? 'list' : 'cards';
+                localStorage.setItem('bolsaViewMode', bolsaViewMode);
                 render();
             });
         }
@@ -5422,31 +5404,32 @@ document.addEventListener('DOMContentLoaded', () => {
             bolsaMobileTitle.style.cursor = 'pointer';
             const updateMobileTitle = () => {
                 bolsaMobileTitle.textContent = bolsaViewMode === 'cards'
-                    ? 'Sus Inversiones 🃏'
-                    : 'Sus Inversiones 📋';
+                    ? 'Mis Acciones 🃏'
+                    : 'Mis Acciones 📋';
             };
             updateMobileTitle();
             bolsaMobileTitle.addEventListener('click', () => {
                 bolsaViewMode = bolsaViewMode === 'cards' ? 'list' : 'cards';
                 localStorage.setItem('bolsaViewMode', bolsaViewMode);
-                if (elements.bolsaCardViewBtn && elements.bolsaTableViewBtn) {
-                    if (bolsaViewMode === 'cards') {
-                        elements.bolsaCardViewBtn.classList.add('active');
-                        elements.bolsaCardViewBtn.style.background = 'var(--primary)';
-                        elements.bolsaCardViewBtn.style.color = 'white';
-                        elements.bolsaTableViewBtn.classList.remove('active');
-                        elements.bolsaTableViewBtn.style.background = 'transparent';
-                        elements.bolsaTableViewBtn.style.color = 'var(--text-muted)';
-                    } else {
-                        elements.bolsaTableViewBtn.classList.add('active');
-                        elements.bolsaTableViewBtn.style.background = 'var(--primary)';
-                        elements.bolsaTableViewBtn.style.color = 'white';
-                        elements.bolsaCardViewBtn.classList.remove('active');
-                        elements.bolsaCardViewBtn.style.background = 'transparent';
-                        elements.bolsaCardViewBtn.style.color = 'var(--text-muted)';
-                    }
-                }
                 updateMobileTitle();
+                render();
+            });
+        }
+
+        // Bolsa Totals Toggle
+        if (elements.bolsaTotalesToggle) {
+            elements.bolsaTotalesToggle.addEventListener('click', () => {
+                bolsaTotalsMode = !bolsaTotalsMode;
+                localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
+                render();
+            });
+        }
+
+        // Bolsa Summary Toggle
+        if (elements.bolsaSummaryToggleBtn) {
+            elements.bolsaSummaryToggleBtn.addEventListener('click', () => {
+                bolsaSummaryVisible = !bolsaSummaryVisible;
+                localStorage.setItem('bolsaSummaryVisible', bolsaSummaryVisible);
                 render();
             });
         }

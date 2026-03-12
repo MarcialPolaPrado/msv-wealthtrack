@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603120631">
+    <link rel="stylesheet" href="styles.css?v=202603121328">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -103,8 +103,35 @@
         <main id="appMain">
             <!-- Bolsa Section -->
             <div id="bolsaSection" class="view-section">
+                <!-- Stock List Actions -->
+                <div class="savings-container">
+                    <div
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
+                        <div style="display:flex; align-items:center; gap:1rem;">
+                            <h2 style="margin:0" id="bolsaMobileTitle">Mis Acciones</h2>
+                            <button id="bolsaSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Resumen"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
+                        </div>
+                        <div style="display:flex; gap: 0.8rem;">
+                            <button id="bolsaDataSourceToggleBtn" class="btn-secondary" title="Modo de Lectura de Datos"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem; border-color: rgba(59, 130, 246, 0.4); display: flex; align-items: center; gap: 5px;">
+                                <span id="dataSourceIcon">⚡</span>
+                                <span id="dataSourceLabel" style="font-size: 0.75rem; font-weight: 700;">Híbrido</span>
+                            </button>
+                            <button id="bolsaManualPriceBtn" class="btn-secondary" title="Ajuste Manual de Precios"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem; position: relative; border-color: rgba(245, 158, 11, 0.4);">
+                                ⚙️<span id="manualPriceBadge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: #f59e0b; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid #0f172a;">!</span>
+                            </button>
+                            <button id="exportDataBtn" class="btn-secondary" title="Exportar CSV"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
+                            <button id="bolsaAddStockBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
+                                title="Añadir Inversión">✨</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Dashboard Section -->
-                <section class="dashboard-grid">
+                <section id="bolsaSummarySection" class="dashboard-grid">
                     <div class="card summary-card glass-panel">
                         <div
                             style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
@@ -150,40 +177,18 @@
                 </section>
 
 
-                <!-- Stock List Actions (Visible on Mobile) -->
-                <div class="savings-container">
-                    <div
-                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                        <h2 style="margin:0" id="bolsaMobileTitle">Sus Inversiones</h2>
-                        <div style="display:flex; gap: 0.8rem;">
-                            <button id="bolsaDataSourceToggleBtn" class="btn-secondary" title="Modo de Lectura de Datos"
-                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem; border-color: rgba(59, 130, 246, 0.4); display: flex; align-items: center; gap: 5px;">
-                                <span id="dataSourceIcon">⚡</span>
-                                <span id="dataSourceLabel" style="font-size: 0.75rem; font-weight: 700;">Híbrido</span>
-                            </button>
-                            <button id="bolsaManualPriceBtn" class="btn-secondary" title="Ajuste Manual de Precios"
-                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem; position: relative; border-color: rgba(245, 158, 11, 0.4);">
-                                ⚙️<span id="manualPriceBadge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: #f59e0b; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid #0f172a;">!</span>
-                            </button>
-                            <button id="exportDataBtn" class="btn-secondary" title="Exportar CSV"
-                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
-                            <button id="bolsaAddStockBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
-                                title="Añadir Inversión">✨</button>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- Stock List Section (Hidden on Mobile) -->
                 <section class="stock-list-section glass-panel">
                     <div class="section-header" id="bolsaListHeader"
                         style="display:flex; justify-content: space-between; align-items: center;">
                         <h2>Detalles de Cartera</h2>
-                        <div class="view-toggle"
-                            style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
-                            <button id="bolsaTableViewBtn" class="btn-sm" title="Vista Lista"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">📄</button>
-                            <button id="bolsaCardViewBtn" class="btn-sm active" title="Vista Cajones"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">🗂️</button>
+                        <div class="view-toggle" style="display:flex; gap: 1.2rem;">
+                            <button id="bolsaViewToggleBtn" class="btn-sm" title="Cambiar Vista"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
+                            <button id="bolsaTotalesToggle" class="btn-sm" title="Alternar Vista Totales"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
                         </div>
                     </div>
                     <div id="bolsaGrid" class="drawers-grid" style="margin-top: 1rem;">
@@ -1083,7 +1088,7 @@
 
     <script src="storage.js?v=202603120626"></script>
     <script src="mock_data.js?v=202603120626"></script>
-    <script src="app.js?v=202603120631"></script>
+    <script src="app.js?v=202603121328"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1127,7 +1132,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603120631';
+        const APP_VERSION = '202603121328';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
