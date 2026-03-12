@@ -2227,11 +2227,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 0.65rem; opacity: 0.9; text-transform: uppercase; margin-bottom: 2px; font-weight: 800; color: white; letter-spacing: 0.05em;">En Bolsa</div>
-                        <span class="drawer-amount" style="font-weight: 800; font-size: 1.35rem; display: block; color: white !important; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
-                        <span style="font-size: 0.9rem; font-weight: 700; color: white !important; opacity: 1; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                        <div style="font-size: 0.6rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 2px; font-weight: 800; color: white; letter-spacing: 0.05em;">En Bolsa</div>
+                        <span class="drawer-amount" style="font-weight: 800; font-size: 1.2rem; display: block; color: white !important; text-shadow: 0 2px 10px rgba(0,0,0,0.3); white-space: nowrap;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
+                        <span style="font-size: 0.8rem; font-weight: 700; color: white !important; opacity: 1; display: flex; align-items: center; justify-content: flex-end; gap: 4px; white-space: nowrap;">
                             ${plGroup !== null && plGroup !== 0 ? (plGroup >= 0 ? '▲' : '▼') : ''} ${plGroup !== null ? fmtEUR(Math.abs(plGroup)) : '-'} 
-                            <span style="font-size: 0.75rem; opacity: 0.8; font-weight: 600;">(${fmtPct(plPercentGroup)})</span>
+                            <span style="font-size: 0.65rem; opacity: 0.8; font-weight: 600;">(${fmtPct(plPercentGroup)})</span>
                         </span>
                     </div>
                 </div>
