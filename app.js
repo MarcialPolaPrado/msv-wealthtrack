@@ -2173,53 +2173,76 @@ document.addEventListener('DOMContentLoaded', () => {
             const plPercentGroup = group.totalInvested > 0 ? (plGroup / group.totalInvested) * 100 : 0;
             const isExpanded = expandedTickers.has(group.ticker);
 
-            const card = document.createElement('div');
-            card.className = `card drawer-card glass-panel bolsa-drawer`;
-
-            // Color theme based on profit/loss
             const isProfit = plGroup >= 0;
             const theme = isProfit ? DRAWER_COLORS[1] : DRAWER_COLORS[4]; // Blue for profit, Red for loss
+            const glowClass = isProfit ? 'profit-glow' : 'loss-glow';
 
             // Apply theme styles
+            card.className = `card drawer-card glass-panel bolsa-drawer ${glowClass}`;
             card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
             card.style.setProperty('background-color', theme.bg, 'important');
             card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
             card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
 
+            // Calculate Signals for the card
+            let signalsHtml = '';
+            const mockInfo = window.MOCK_DATA[group.ticker.toUpperCase()];
+            if (mockInfo && mockInfo.historical && mockInfo.historical['D']) {
+                const fx = mockInfo.currency === 'USD' ? window.FX_RATE : 1;
+                const analysis = calculateTechnicalAnalysis(group.ticker, mockInfo.historical['D'], fx);
+                if (analysis.patterns && analysis.patterns.length > 0) {
+                    signalsHtml = analysis.patterns.map(p => {
+                        const icon = p.includes('Hammer') ? '🔨' : (p.includes('Doji') ? '⚖️' : (p.includes('Envolvente') ? '🔥' : '✨'));
+                        return `<span title="${p}" style="cursor:help; font-size: 0.9rem; filter: drop-shadow(0 0 5px white);">${icon}</span>`;
+                    }).join(' ');
+                }
+            }
+
             const performanceClass = (plPercentGroup === null) ? 'neutral' : (plPercentGroup < 0 ? 'loss' : 'profit');
 
             card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                <div class="shimmer-card" style="position: absolute; inset: 0; pointer-events: none; opacity: 0.3; border-radius: inherit;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; position: relative; z-index: 1;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="drawer-icon">📈</span>
+                        <span class="drawer-icon" style="margin-bottom:0; font-size: 1.8rem;">${isProfit && plPercentGroup > 10 ? '🚀' : '📈'}</span>
                         <div style="display: flex; flex-direction: column;">
-                            <span class="drawer-name" style="color: white !important; font-weight: 700; margin: 0;">${group.name || group.ticker}</span>
-                            <span style="font-size: 0.75rem; opacity: 0.6;">${group.ticker} • ${group.market}</span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="drawer-name" style="color: white !important; font-weight: 700; margin: 0;">${group.name || group.ticker}</span>
+                                <div style="display: flex; gap: 4px;">${signalsHtml}</div>
+                            </div>
+                            <span style="font-size: 0.75rem; opacity: 0.7; font-weight: 500;">${group.ticker} • ${group.market}</span>
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 2px; font-weight: 700; color: white;">En Bolsa</div>
-                        <span class="drawer-amount" style="font-weight: 800; font-size: 1.2rem; display: block; color: white !important;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
-                        <span style="font-size: 0.85rem; font-weight: 600; color: white !important; opacity: 0.9;">${plGroup !== null ? (plGroup >= 0 ? '+' : '') + fmtEUR(plGroup) : '-'} (${fmtPct(plPercentGroup)})</span>
+                        <div style="font-size: 0.65rem; opacity: 0.9; text-transform: uppercase; margin-bottom: 2px; font-weight: 800; color: white; letter-spacing: 0.05em;">En Bolsa</div>
+                        <span class="drawer-amount" style="font-weight: 800; font-size: 1.35rem; display: block; color: white !important; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</span>
+                        <span style="font-size: 0.9rem; font-weight: 700; color: white !important; opacity: 1; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                            ${plGroup !== null ? (plGroup >= 0 ? '▲' : '▼') : ''} ${plGroup !== null ? fmtEUR(Math.abs(plGroup)) : '-'} 
+                            <span style="font-size: 0.75rem; opacity: 0.8; font-weight: 600;">(${fmtPct(plPercentGroup)})</span>
+                        </span>
                     </div>
                 </div>
 
-                <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05); display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                <div style="margin-top: 1rem; position: relative; z-index: 1;">
+                    ${createSparkline(group.ticker)}
+                </div>
+
+                <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.08); display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; position: relative; z-index: 1;">
                     <div>
-                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Invertido</div>
-                        <div style="font-weight: 600; color: white;">${fmtEUR(group.totalInvested)}</div>
+                        <div style="opacity: 0.7; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: white;">Invertido</div>
+                        <div style="font-weight: 600; color: white; font-size: 0.95rem;">${fmtEUR(group.totalInvested)}</div>
                     </div>
                     <div>
-                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Precio Actual</div>
-                        <div style="font-weight: 600; color: white;">${info.currentPriceEUR !== null ? fmtEUR(info.currentPriceEUR) : '-'}</div>
+                        <div style="opacity: 0.7; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: white;">Precio Actual</div>
+                        <div style="font-weight: 600; color: white; font-size: 0.95rem;">${info.currentPriceEUR !== null ? fmtEUR(info.currentPriceEUR) : '-'}</div>
                     </div>
                     <div>
-                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Cantidad</div>
-                        <div style="font-weight: 600; color: white;">${fmtNum(group.totalQty, 4)}</div>
+                        <div style="opacity: 0.7; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: white;">Cantidad</div>
+                        <div style="font-weight: 600; color: white; font-size: 0.95rem;">${fmtNum(group.totalQty, 3)}</div>
                     </div>
                     <div>
-                        <div style="opacity: 0.6; font-size: 0.7rem; text-transform: uppercase;">Mercado</div>
-                        <div style="font-weight: 600; color: white;">${group.market}</div>
+                        <div style="opacity: 0.7; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: white;">Market</div>
+                        <div style="font-weight: 600; color: white; font-size: 0.95rem;">${group.market}</div>
                     </div>
                 </div>
 

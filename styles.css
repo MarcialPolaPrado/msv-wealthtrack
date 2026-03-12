@@ -338,6 +338,38 @@ header a {
     background-image: linear-gradient(135deg, rgba(139, 92, 246, 0.5) 0%, rgba(30, 41, 59, 0.7) 100%) !important;
 }
 
+/* Premium Glow Styles */
+.profit-glow {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2), 0 0 30px rgba(59, 130, 246, 0.1);
+}
+
+.loss-glow {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2), 0 0 30px rgba(239, 68, 68, 0.1);
+}
+
+.profit-glow:hover {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.4), 0 0 50px rgba(59, 130, 246, 0.2) !important;
+}
+
+.loss-glow:hover {
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.4), 0 0 50px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Pulsing Shimmer for Premium Feel */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.shimmer-card {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.03) 50%, 
+        rgba(255, 255, 255, 0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite linear;
+}
+
 .drawer-target-icon {
     position: absolute;
     top: 1rem;
