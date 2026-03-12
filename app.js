@@ -3377,7 +3377,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { label: '📅 Mes en Curso', value: formatFiscalMonth(fiscalMonthStr) || '---', color: 'inherit' },
                 { label: `⏳ Dias para el ${paydayFormatted}`, value: `${diffDays || 0} dias`, color: dayColor || 'inherit' },
                 { label: '💰 Ingresos', value: fmtEUR(externalNetIncome || 0), color: 'var(--success)' },
-                { label: '💸 Gastos', value: `${fmtEUR(totalPaidExpensesManual || 0)} de ${fmtEUR(totalPlannedExpensesManual || 0)}`, color: 'var(--danger)' },
+                { label: '💸 Gastos', value: fmtEUR(totalPlannedExpensesManual || 0), color: 'var(--danger)' },
                 { label: '✨ Ahorro Neto', value: fmtEUR(totalAhorroNetoManual || 0), color: '#f59e0b' },
                 { label: '🟣 No Destinado', value: fmtEUR(undestined || 0), color: (undestined || 0) >= 0 ? 'var(--success)' : 'var(--danger)' }
             ];
