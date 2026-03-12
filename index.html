@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603121757">
+    <link rel="stylesheet" href="styles.css?v=202603121803">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -109,6 +109,8 @@
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
                         <div style="display:flex; align-items:center; gap:1rem;">
                             <h2 style="margin:0" id="bolsaMobileTitle">Mis Acciones</h2>
+                            <button id="bolsaHighlightsToggleBtn" class="btn-sm" title="Mostrar/Ocultar Highlights Animados"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🚀</button>
                             <button id="bolsaSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Resumen"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
                         </div>
@@ -128,6 +130,9 @@
                                 title="Añadir Inversión">✨</button>
                         </div>
                     </div>
+                    
+                    <!-- Bolsa Highlights (Animated Summary) -->
+                    <div id="bolsaHighlights" class="hidden" style="margin-bottom: 2rem;"></div>
                 </div>
 
                 <!-- Dashboard Section -->
@@ -1088,7 +1093,7 @@
 
     <script src="storage.js?v=202603120626"></script>
     <script src="mock_data.js?v=202603120626"></script>
-    <script src="app.js?v=202603121757"></script>
+    <script src="app.js?v=202603121803"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1132,7 +1137,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603121757';
+        const APP_VERSION = '202603121803';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

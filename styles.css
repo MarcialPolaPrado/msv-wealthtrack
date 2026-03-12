@@ -2092,3 +2092,86 @@ button,
 [title] {
     -webkit-tap-highlight-color: transparent;
 }
+
+/* Bolsa Highlights Animated Summary */
+.highlights-container {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 0.8rem 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+}
+
+.highlights-badge {
+    background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 0.3rem 0.8rem;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    z-index: 2;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.highlights-ticker {
+    display: flex;
+    gap: 40px;
+    animation: ticker-slide 30s linear infinite;
+    width: max-content;
+}
+
+@keyframes ticker-slide {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-20%); }
+}
+
+.ticker-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.ticker-label {
+    opacity: 0.6;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.ticker-value {
+    font-weight: 800;
+}
+
+.ticker-value.profit { color: var(--success); }
+.ticker-value.loss { color: var(--danger); }
+
+/* Animation for the container itself when appearing */
+#bolsaHighlights:not(.hidden) {
+    animation: slideDownIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownIn {
+    0% { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Fix for long names in drawers */
+.bolsa-drawer .drawer-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}

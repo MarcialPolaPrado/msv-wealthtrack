@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let bolsaViewMode = localStorage.getItem('bolsaViewMode') || 'list';
     let bolsaTotalsMode = localStorage.getItem('bolsaTotalsMode') === 'true' || false;
     let bolsaSummaryVisible = localStorage.getItem('bolsaSummaryVisible') !== 'false'; // Default to true
+    let bolsaHighlightsVisible = localStorage.getItem('bolsaHighlightsVisible') === 'true';
 
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
     let isAhorroSummaryExpanded = localStorage.getItem('isAhorroSummaryExpanded') !== 'false';
@@ -490,6 +491,8 @@ document.addEventListener('DOMContentLoaded', () => {
         monthDetailContent: document.getElementById('monthDetailContent'),
         bolsaGrid: document.getElementById('bolsaGrid'),
         bolsaViewToggleBtn: document.getElementById('bolsaViewToggleBtn'),
+        bolsaHighlights: document.getElementById('bolsaHighlights'),
+        bolsaHighlightsToggleBtn: document.getElementById('bolsaHighlightsToggleBtn'),
         bolsaTotalesToggle: document.getElementById('bolsaTotalesToggle'),
         stockTable: document.getElementById('stockTable'),
         savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
@@ -867,6 +870,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.stockTable) elements.stockTable.parentElement.classList.remove('hidden');
             if (elements.bolsaGrid) elements.bolsaGrid.classList.add('hidden');
         }
+
+        renderBolsaHighlights(displayStocksData);
 
         // 2.6 Group Data by Ticker
         const groupedData = {};
@@ -2205,16 +2210,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const performanceClass = (plPercentGroup === null) ? 'neutral' : (plPercentGroup < 0 ? 'loss' : 'profit');
+            const displayName = (group.name || group.ticker).length > 16 ? (group.name || group.ticker).substring(0, 14) + '..' : (group.name || group.ticker);
 
             card.innerHTML = `
                 <div class="shimmer-card" style="position: absolute; inset: 0; pointer-events: none; opacity: 0.3; border-radius: inherit;"></div>
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; position: relative; z-index: 1;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; max-width: 65%;">
                         <span class="drawer-icon" style="margin-bottom:0; font-size: 1.8rem;">${isProfit && plPercentGroup > 10 ? '🚀' : '📈'}</span>
-                        <div style="display: flex; flex-direction: column;">
+                        <div style="display: flex; flex-direction: column; overflow: hidden;">
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                <span class="drawer-name" style="color: white !important; font-weight: 700; margin: 0;">${group.name || group.ticker}</span>
-                                <div style="display: flex; gap: 4px;">${signalsHtml}</div>
+                                <span class="drawer-name" style="color: white !important; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</span>
+                                <div style="display: flex; gap: 4px; flex-shrink: 0;">${signalsHtml}</div>
                             </div>
                             <span style="font-size: 0.75rem; opacity: 0.7; font-weight: 500;">${group.ticker} • ${group.market}</span>
                         </div>
@@ -2307,6 +2313,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Card render error:", err);
             }
         });
+    }
+
+    function renderBolsaHighlights(displayStocksData) {
+        if (!elements.bolsaHighlights) return;
+        elements.bolsaHighlights.classList.toggle('hidden', !bolsaHighlightsVisible);
+        if (elements.bolsaHighlightsToggleBtn) {
+            elements.bolsaHighlightsToggleBtn.style.background = bolsaHighlightsVisible ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
+        }
+        if (!bolsaHighlightsVisible) return;
+
+        const validStocks = displayStocksData.filter(s => s.liveInfo && s.liveInfo.stockPLPercent !== null);
+        if (validStocks.length === 0) {
+            elements.bolsaHighlights.innerHTML = '';
+            return;
+        }
+
+        const best = [...validStocks].sort((a,b) => (b.liveInfo.stockPLPercent || 0) - (a.liveInfo.stockPLPercent || 0))[0];
+        const worst = [...validStocks].sort((a,b) => (a.liveInfo.stockPLPercent || 0) - (b.liveInfo.stockPLPercent || 0))[0];
+        
+        const totalInvested = validStocks.reduce((sum, s) => sum + s.liveInfo.stockInvested, 0);
+        const totalValue = validStocks.reduce((sum, s) => sum + (s.liveInfo.stockCurrentVal || 0), 0);
+        const totalPL = totalValue - totalInvested;
+        const totalPLPct = totalInvested > 0 ? (totalPL / totalInvested) * 100 : 0;
+
+        const items = [
+            { label: 'Cartera', value: fmtPct(totalPLPct), isProfit: totalPL >= 0 },
+            { label: 'Top', ticker: best.ticker, value: fmtPct(best.liveInfo.stockPLPercent), isProfit: best.liveInfo.stockPLPercent >= 0 },
+            { label: 'Low', ticker: worst.ticker, value: fmtPct(worst.liveInfo.stockPLPercent), isProfit: worst.liveInfo.stockPLPercent >= 0 }
+        ];
+
+        // Fill up for a nice scroll
+        const tickerContent = [...items, ...items, ...items, ...items].map(h => `
+            <div class="ticker-item">
+                <span class="ticker-label">${h.label}${h.ticker ? ' ' + h.ticker : ''}:</span>
+                <span class="ticker-value ${h.isProfit ? 'profit' : 'loss'}">${h.value}</span>
+            </div>
+        `).join('');
+
+        elements.bolsaHighlights.innerHTML = `
+            <div class="highlights-container">
+                <div class="highlights-badge">Resumen</div>
+                <div class="highlights-ticker">
+                    ${tickerContent}
+                </div>
+            </div>
+        `;
     }
 
     function addMoreFromStockByTicker(ticker) {
@@ -5466,6 +5518,15 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.bolsaTotalesToggle.addEventListener('click', () => {
                 bolsaTotalsMode = !bolsaTotalsMode;
                 localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
+                render();
+            });
+        }
+
+        // Bolsa Highlights Toggle
+        if (elements.bolsaHighlightsToggleBtn) {
+            elements.bolsaHighlightsToggleBtn.addEventListener('click', () => {
+                bolsaHighlightsVisible = !bolsaHighlightsVisible;
+                localStorage.setItem('bolsaHighlightsVisible', bolsaHighlightsVisible);
                 render();
             });
         }
