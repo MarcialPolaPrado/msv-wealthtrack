@@ -6272,6 +6272,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.fxRate) window.FX_RATE = data.fxRate;
                     if (data.fxDate) window.FX_DATE = data.fxDate;
 
+                    // Update UI state for immediate refresh
+                    isFirstUpdateDone = true;
+                    if (data.exportDate) {
+                        try {
+                            const dateObj = new Date(data.exportDate);
+                            lastSyncTime = dateObj.toLocaleTimeString();
+                        } catch(e) { lastSyncTime = '-'; }
+                    }
+
                     // Restore settings if present
                     if (data.settings) {
                         if (data.settings.fiscalDay) {
