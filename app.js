@@ -58,6 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let isNominaGastosExpanded = localStorage.getItem('isNominaGastosExpanded') !== 'false';
     let expandedSummaryDrawers = new Set();
     let drawerDetailFilterMode = localStorage.getItem('drawerDetailFilterMode') || 'all';
+    let activityListMonth = _initialMonthStr;
+    let activitySortConfig = getSortConfig('activitySortConfig', { key: 'date', direction: 'desc' });
+    let activityCellFilter = { column: null, value: null };
+    let previousView = 'bolsa';
 
     const DRAWER_COLORS = [
         { name: 'green', border: '#10b981', bg: '#064e3b', grad: 'rgba(16, 185, 129, 0.4)' },
@@ -260,6 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let rawNomina = (window.loadNomina) ? (window.loadNomina() || []) : [];
     let nominaData = migrateNominaData(rawNomina);
     if (window.saveNomina) window.saveNomina(nominaData);
+
+    // Helper for month navigation
+    const changeMonthVal = (current, delta) => {
+        let [y, m] = current.split('-').map(Number);
+        m += delta;
+        if (m > 12) { y++; m = 1; }
+        else if (m < 1) { y--; m = 12; }
+        return `${y}-${String(m).padStart(2, '0')}`;
+    };
 
     // DOM Elements
     const stockTableBody = document.getElementById('stockTableBody');
@@ -552,7 +565,19 @@ document.addEventListener('DOMContentLoaded', () => {
         breakdownYearUp: document.getElementById('breakdownYearUp'),
         breakdownYearDown: document.getElementById('breakdownYearDown'),
         breakdownMonthContainer: document.getElementById('breakdownMonthContainer'),
-        breakdownYearContainer: document.getElementById('breakdownYearContainer')
+        breakdownYearContainer: document.getElementById('breakdownYearContainer'),
+
+        // Global Activity Elements
+        logoBtn: document.getElementById('logoBtn'),
+        activitySection: document.getElementById('activitySection'),
+        activityBackBtn: document.getElementById('activityBackBtn'),
+        activityTable: document.getElementById('activityTable'),
+        activityTableBody: document.getElementById('activityTableBody'),
+        activityMonthLabel: document.getElementById('activityMonthLabel'),
+        activityMonthUp: document.getElementById('activityMonthUp'),
+        activityMonthDown: document.getElementById('activityMonthDown'),
+        activityDateTrigger: document.getElementById('activityDateTrigger'),
+        activityMonthInput: document.getElementById('activityMonthInput')
     };
 
     const updateNominaMovementType = (type) => {
@@ -1241,35 +1266,208 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR);
 
         // Section Toggling logic
-        if (currentView === 'bolsa') {
-            if (elements.bolsaSection) elements.bolsaSection.classList.remove('hidden');
-            if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-            if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-            if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-            if (elements.mobileActionBar) elements.mobileActionBar.classList.remove('hidden');
-            renderPortfolioPieChart();
-        } else if (currentView === 'ahorro') {
-            if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
-            if (elements.ahorroSection) elements.ahorroSection.classList.remove('hidden');
-            if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-            if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-            if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
-            renderSavings();
-        } else if (currentView === 'nomina') {
-            if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
-            if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-            if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-            if (elements.nominaSection) elements.nominaSection.classList.remove('hidden');
-            if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
-            renderNomina();
-        } else if (currentView === 'analisis') {
+        const header = document.querySelector('header');
+        const nav = document.querySelector('nav');
+
+        if (currentView === 'activity') {
+            header?.classList.add('hidden');
+            nav?.classList.add('hidden');
+            if (elements.activitySection) elements.activitySection.classList.remove('hidden');
             if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
             if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
             if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-            if (elements.analisisSection) elements.analisisSection.classList.remove('hidden');
+            if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
             if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
-            renderAnalisis();
+            renderActivity();
+        } else {
+            header?.classList.remove('hidden');
+            nav?.classList.remove('hidden');
+            if (elements.activitySection) elements.activitySection.classList.add('hidden');
+
+            if (currentView === 'bolsa') {
+                if (elements.bolsaSection) elements.bolsaSection.classList.remove('hidden');
+                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
+                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
+                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                if (elements.mobileActionBar) elements.mobileActionBar.classList.remove('hidden');
+                renderPortfolioPieChart();
+            } else if (currentView === 'ahorro') {
+                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
+                if (elements.ahorroSection) elements.ahorroSection.classList.remove('hidden');
+                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
+                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
+                renderSavings();
+            } else if (currentView === 'nomina') {
+                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
+                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
+                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                if (elements.nominaSection) elements.nominaSection.classList.remove('hidden');
+                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
+                renderNomina();
+            } else if (currentView === 'analisis') {
+                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
+                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
+                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
+                if (elements.analisisSection) elements.analisisSection.classList.remove('hidden');
+                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
+                renderAnalisis();
+            }
         }
+    }
+
+    function renderActivity() {
+        if (!elements.activityTableBody) return;
+
+        // 1. Unify Movements
+        let allMovements = [];
+
+        // From Bolsa (Stocks)
+        stocks.forEach(s => {
+            allMovements.push({
+                date: s.date,
+                concept: `${s.qty < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
+                category: `Bolsa: ${s.market}`,
+                amount: -(s.qty * s.price), // Cash flow: buy is negative, sell is positive
+                type: 'bolsa',
+                id: s.id,
+                qty: s.qty,
+                price: s.price,
+                ticker: s.ticker
+            });
+        });
+
+        // From Ahorro (Drawers)
+        savingsDrawers.forEach(drawer => {
+            (drawer.movements || []).forEach((m, idx) => {
+                allMovements.push({
+                    date: m.date,
+                    concept: m.description || m.concept,
+                    category: m.category || drawer.name,
+                    amount: m.amount,
+                    type: 'ahorro',
+                    drawerId: drawer.id,
+                    mvmtIndex: idx,
+                    id: m.id || `${drawer.id}_${idx}`
+                });
+            });
+        });
+
+        // 2. Filter by Month
+        let filtered = allMovements.filter(m => m.date && m.date.startsWith(activityListMonth));
+
+        // 2b. Apply Cell Filter
+        if (activityCellFilter.column && activityCellFilter.value !== null) {
+            filtered = filtered.filter(m => {
+                const val = m[activityCellFilter.column];
+                if (activityCellFilter.column === 'date') {
+                    return new Date(val).toLocaleDateString() === activityCellFilter.value;
+                }
+                if (activityCellFilter.column === 'amount') {
+                    return fmtEUR(val) === activityCellFilter.value;
+                }
+                return String(val) === activityCellFilter.value;
+            });
+        }
+
+        // 3. Sort
+        if (activitySortConfig.key) {
+            filtered.sort((a, b) => {
+                let valA = a[activitySortConfig.key];
+                let valB = b[activitySortConfig.key];
+
+                if (activitySortConfig.key === 'amount') {
+                    valA = Number(valA);
+                    valB = Number(valB);
+                } else if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                }
+
+                if (valA < valB) return activitySortConfig.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return activitySortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // 4. Update UI Month Label
+        if (elements.activityMonthLabel) {
+            elements.activityMonthLabel.textContent = formatFiscalMonth(activityListMonth);
+        }
+
+        // 5. Render Table
+        elements.activityTableBody.innerHTML = '';
+        filtered.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid var(--glass-border)';
+            tr.style.background = 'rgba(255,255,255,0.02)';
+            
+            const amountClass = m.amount >= 0 ? 'profit' : 'loss';
+            const dateStr = new Date(m.date).toLocaleDateString();
+            const amountStr = fmtEUR(m.amount);
+
+            const isFiltered = (col, val) => activityCellFilter.column === col && activityCellFilter.value === val;
+
+            tr.innerHTML = `
+                <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('date', dateStr) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="date" data-val="${dateStr}">${dateStr}</td>
+                <td style="padding: 1rem; font-size: 0.9rem; font-weight: 500; cursor: pointer; ${isFiltered('concept', m.concept) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="concept" data-val="${m.concept}">${m.concept}</td>
+                <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('category', m.category) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="category" data-val="${m.category}"><span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">${m.category}</span></td>
+                <td style="padding: 1rem; font-size: 0.95rem; text-align: right; font-weight: 700; cursor: pointer; ${isFiltered('amount', amountStr) ? 'background: var(--primary-glow); color: white;' : ''}" class="${amountClass}" data-col="amount" data-val="${amountStr}">${amountStr}</td>
+                <td style="padding: 1rem; text-align: center;">
+                    <button class="btn-icon activity-edit-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex || ''}" title="Editar" style="padding: 4px 8px;">✏️</button>
+                </td>
+            `;
+            elements.activityTableBody.appendChild(tr);
+        });
+
+        // Add sorting icons & styles
+        if (elements.activityTable) {
+             elements.activityTable.querySelectorAll('th[data-sort]').forEach(th => {
+                let icon = th.querySelector('.sort-icon');
+                if (!icon) {
+                    icon = document.createElement('span');
+                    icon.className = 'sort-icon';
+                    th.appendChild(icon);
+                }
+                if (th.dataset.sort === activitySortConfig.key) {
+                    icon.textContent = activitySortConfig.direction === 'asc' ? ' ▲' : ' ▼';
+                    th.style.color = 'var(--primary)';
+                    th.style.fontWeight = '700';
+                } else {
+                    icon.textContent = '';
+                    th.style.color = '';
+                    th.style.fontWeight = '';
+                }
+            });
+        }
+
+        // Action handlers
+        elements.activityTableBody.querySelectorAll('td[data-col]').forEach(td => {
+            td.addEventListener('click', (e) => {
+                const col = td.dataset.col;
+                const val = td.dataset.val;
+
+                if (activityCellFilter.column === col && activityCellFilter.value === val) {
+                    activityCellFilter = { column: null, value: null };
+                } else {
+                    activityCellFilter = { column: col, value: val };
+                }
+                renderActivity();
+            });
+        });
+
+        const editBtns = elements.activityTableBody.querySelectorAll('.activity-edit-btn');
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent cell click
+                const type = btn.dataset.type;
+                if (type === 'bolsa') {
+                    editStock(btn.dataset.id);
+                } else {
+                    showEditMovementModal(btn.dataset.drawer, parseInt(btn.dataset.index));
+                }
+            });
+        });
     }
 
     function renderAnalisis() {
@@ -3633,6 +3831,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function switchView(view) {
+        if (currentView !== 'activity') previousView = currentView;
         currentView = view;
         elements.navItems.forEach(item => {
             item.classList.toggle('active', item.dataset.view === view);
@@ -4716,6 +4915,42 @@ document.addEventListener('DOMContentLoaded', () => {
             item.addEventListener('click', () => switchView(item.dataset.view));
         });
 
+        // Logo Listener
+        elements.logoBtn?.addEventListener('click', () => switchView('activity'));
+
+        // Activity Listeners
+        elements.activityBackBtn?.addEventListener('click', () => switchView(previousView));
+
+        elements.activityMonthUp?.addEventListener('click', () => {
+            activityListMonth = changeMonthVal(activityListMonth, 1);
+            renderActivity();
+        });
+        elements.activityMonthDown?.addEventListener('click', () => {
+            activityListMonth = changeMonthVal(activityListMonth, -1);
+            renderActivity();
+        });
+        elements.activityDateTrigger?.addEventListener('click', () => {
+            if (elements.activityMonthInput) elements.activityMonthInput.showPicker();
+        });
+        elements.activityMonthInput?.addEventListener('change', (e) => {
+            activityListMonth = e.target.value;
+            renderActivity();
+        });
+
+        elements.activityTable?.querySelector('thead')?.addEventListener('click', (e) => {
+            const th = e.target.closest('th[data-sort]');
+            if (!th) return;
+            const key = th.dataset.sort;
+            if (activitySortConfig.key === key) {
+                activitySortConfig.direction = activitySortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                activitySortConfig.key = key;
+                activitySortConfig.direction = 'asc';
+            }
+            localStorage.setItem('activitySortConfig', JSON.stringify(activitySortConfig));
+            renderActivity();
+        });
+
         // Goal Modal Listeners
         if (elements.closeGoalModal) {
             elements.closeGoalModal.addEventListener('click', () => {
@@ -5685,13 +5920,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateAhorroBreakdown();
         });
 
-        const changeMonthVal = (current, delta) => {
-            let [y, m] = current.split('-').map(Number);
-            m += delta;
-            if (m > 12) { y++; m = 1; }
-            else if (m < 1) { y--; m = 12; }
-            return `${y}-${String(m).padStart(2, '0')}`;
-        };
 
         elements.breakdownMonthUp?.addEventListener('click', () => {
             elements.breakdownMonthInput.value = changeMonthVal(elements.breakdownMonthInput.value, 1);
@@ -5737,6 +5965,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nominaListMonth = changeMonthVal(nominaListMonth, -1);
             renderNomina();
         });
+
 
         // Click on breakdown rows
         document.querySelectorAll('.breakdown-row').forEach(row => {

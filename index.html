@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603131442">
+    <link rel="stylesheet" href="styles.css?v=202603131847">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -51,12 +51,12 @@
 
     <div class="app-container" id="mainApp">
         <header class="glass-header">
-            <div class="logo">
+            <div class="logo" id="logoBtn" style="cursor: pointer;">
                 <span class="logo-icon">✨</span>
                 <div>
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
-                    <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">
-                        v202603120626</p>
+                    <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);" id="logoVersion">
+                        v202603131846</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -317,6 +317,54 @@
                             style="padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;">
                             <div id="savingsPieChart" style="width: 100%; display: block;"></div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Activity Section -->
+            <div id="activitySection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header"
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <button id="activityBackBtn" class="btn-icon" title="Volver"
+                                style="background: var(--danger); color: white; padding: 4px 12px; border-radius: 6px;">⬅️</button>
+                            <h2 style="margin:0">Actividad Global</h2>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
+                                <button id="activityMonthUp" class="nav-arrow" style="padding: 2px 8px;">🔼</button>
+                                <button id="activityMonthDown" class="nav-arrow" style="padding: 2px 8px;">🔽</button>
+                            </div>
+                            <h3 id="activityMonthLabel"
+                                style="margin:0; min-width:140px; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">
+                                Marzo 2024</h3>
+                            <button id="activityDateTrigger" class="nav-icon-btn" title="Selector de Mes"
+                                style="margin-left:5px">📅</button>
+                            <input type="month" id="activityMonthInput" class="hidden">
+                        </div>
+                    </div>
+
+                    <div id="activityTableContainer" class="table-container glass-panel"
+                        style="margin-bottom: 2rem; overflow-x: auto;">
+                        <table id="activityTable" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary); user-select: none;">
+                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="date">Fecha
+                                        <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="concept">
+                                        Concepto <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="category">
+                                        Categoría <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="amount">
+                                        Importe <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: center;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityTableBody">
+                                <!-- Rows injected here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1115,9 +1163,9 @@
         </div>
     </div>
 
-    <script src="storage.js?v=202603120626"></script>
-    <script src="mock_data.js?v=202603120626"></script>
-    <script src="app.js?v=202603131442"></script>
+    <script src="storage.js?v=202603131846"></script>
+    <script src="mock_data.js?v=202603131846"></script>
+    <script src="app.js?v=202603131847"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1161,7 +1209,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603131442';
+        const APP_VERSION = '202603131847';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
