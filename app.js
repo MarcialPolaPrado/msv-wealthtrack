@@ -1094,7 +1094,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span style="font-weight:700"><a href="#" class="company-link ${performanceClass}" data-ticker="${group.ticker}">${group.name || group.ticker}</a></span>
                                     <span style="font-size:0.8em; color:var(--text-muted); margin-left: 0.3rem;">(${group.ticker})</span>
                                 </div>
-                                ${createSparkline(group.ticker)}
                             </div>
                         </div>
                     </td>
@@ -2237,7 +2236,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div style="margin-top: 1rem; position: relative; z-index: 1;">
-                    ${typeof createSparkline === 'function' ? createSparkline(group.ticker) : ''}
                 </div>
 
                 <div style="margin-top: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 12px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.08); display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; position: relative; z-index: 1;">
@@ -4185,51 +4183,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <!-- Body -->
                 <rect x="${width / 4}" y="${rectY}" width="${width / 2}" height="${rectHeight}" fill="${color}" stroke="${color}" stroke-width="1" />
             </svg>
-        `;
-    }
-
-    /**
-     * Generates a mini sparkline SVG for a given ticker.
-     */
-    function createSparkline(ticker, days = 30) {
-        const mockInfo = window.MOCK_DATA[ticker.toUpperCase()];
-        if (!mockInfo || !mockInfo.historical || !mockInfo.historical['D']) {
-            return '<div class="sparkline-placeholder">-</div>';
-        }
-
-        const data = mockInfo.historical['D'].slice(-days);
-        if (data.length < 2) return '';
-
-        const min = Math.min(...data.map(d => d.close));
-        const max = Math.max(...data.map(d => d.close));
-        const range = max - min || 1;
-
-        const width = 80;
-        const height = 30;
-        const padding = 2;
-
-        const points = data.map((d, i) => {
-            const x = (i / (data.length - 1)) * width;
-            const y = height - padding - ((d.close - min) / range) * (height - 2 * padding);
-            return `${x.toFixed(1)},${y.toFixed(1)} `;
-        }).join(' ');
-
-        const isUp = data[data.length - 1].close >= data[0].close;
-        const color = isUp ? 'var(--success)' : 'var(--danger)';
-
-        return `
-            <div class="sparkline-container" title="Últimos 30 días">
-                <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-                    <polyline
-                        fill="none"
-                        stroke="${color}"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        points="${points}"
-                    />
-                </svg>
-            </div>
         `;
     }
 

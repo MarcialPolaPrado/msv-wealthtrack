@@ -293,19 +293,12 @@ window.MOCK_DATA = {
     'PHMMF': { price: 75.00, currency: 'USD', name: 'PHX Minerals' },
 };
 
-window.HISTORICAL_DATA = window.loadHistoricalData ? window.loadHistoricalData() : {};
-
 // --- New: Automatically populate historical data for all stocks if missing ---
 try {
     console.log("Populating historical data for all stocks...");
     Object.keys(window.MOCK_DATA).forEach(ticker => {
         const stock = window.MOCK_DATA[ticker];
         
-        // Use real historical data if available in cache
-        if (window.HISTORICAL_DATA[ticker]) {
-            stock.historical = window.HISTORICAL_DATA[ticker];
-        }
-
         if (!stock.historical && stock.price) {
             try {
                 stock.historical = {
@@ -553,107 +546,6 @@ window.refreshLivePrices = async function (tickers, onProgress) {
     if (window.saveLivePrices) window.saveLivePrices(window.LIVE_PRICES);
     if (window.saveLiveDates) window.saveLiveDates(window.LIVE_DATES);
     if (window.saveLiveSources) window.saveLiveSources(window.LIVE_SOURCES);
-
-    // After refreshing prices, refresh historical data for sparklines
-    window.refreshHistoricalData(tickers);
-}
-
-window.refreshHistoricalData = async function(tickers) {
-    if (tickers.length === 0) return;
-    
-    console.log("[History] Refreshing historical data for sparklines...");
-    let changed = false;
-
-    for (const ticker of tickers) {
-        const key = ticker.toUpperCase();
-        
-        let yahooTicker = key;
-        if (key.endsWith('.ES')) yahooTicker = key.replace('.ES', '.MC');
-
-        const range = '1mo';
-        const interval = '1d';
-        
-        // Symbols to try for historical data if the first one fails
-        let symbolsToTry = [yahooTicker];
-        if (yahooTicker.endsWith('.MC')) {
-            symbolsToTry.push(yahooTicker.replace('.MC', '.MA')); // Alternative Madrid
-        }
-
-        let success = false;
-        
-        for (const symbol of symbolsToTry) {
-            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
-            
-            const proxies = [
-                `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`,
-                `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`
-            ];
-
-            for (const proxyUrl of proxies) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    
-                    const resp = await fetch(proxyUrl, { signal: controller.signal });
-                    const json = await resp.json();
-                    clearTimeout(timeoutId);
-
-                    let rawData = json.contents ? JSON.parse(json.contents) : json;
-                    
-                    if (rawData && rawData.chart && rawData.chart.result && rawData.chart.result[0]) {
-                        const result = rawData.chart.result[0];
-                        const timestamps = result.timestamp;
-                        const indicators = result.indicators.quote[0];
-                        
-                        if (timestamps && timestamps.length > 2 && indicators && indicators.close) {
-                            // Extract data and fill nulls (v8 charts often have nulls for low volume days)
-                            let historyD = [];
-                            let lastValidClose = null;
-
-                            for (let i = 0; i < timestamps.length; i++) {
-                                let c = indicators.close[i];
-                                if (c === null) {
-                                    c = lastValidClose; // Fill with previous if available
-                                } else {
-                                    lastValidClose = c;
-                                }
-
-                                if (c !== null) {
-                                    historyD.push({
-                                        time: new Date(timestamps[i] * 1000).toISOString().split('T')[0],
-                                        open: (indicators.open && indicators.open[i] !== null) ? indicators.open[i] : c,
-                                        high: (indicators.high && indicators.high[i] !== null) ? indicators.high[i] : c,
-                                        low: (indicators.low && indicators.low[i] !== null) ? indicators.low[i] : c,
-                                        close: c
-                                    });
-                                }
-                            }
-
-                            if (historyD.length > 5) { // Ensure we have enough points to not look like a "slanted line"
-                                if (!window.HISTORICAL_DATA[key]) window.HISTORICAL_DATA[key] = {};
-                                window.HISTORICAL_DATA[key]['D'] = historyD;
-                                
-                                if (window.MOCK_DATA[key]) {
-                                    window.MOCK_DATA[key].historical = {
-                                        ...window.MOCK_DATA[key].historical,
-                                        'D': historyD
-                                    };
-                                }
-                                success = true;
-                                break;
-                            }
-                        }
-                    }
-                } catch (e) {}
-            }
-            if (success) break;
-        }
-        if (success) changed = true;
-    }
-
-    if (changed && window.saveHistoricalData) {
-        window.saveHistoricalData(window.HISTORICAL_DATA);
-    }
 }
 
 window.refreshFXRate = async function () {

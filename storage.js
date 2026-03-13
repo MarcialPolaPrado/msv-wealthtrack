@@ -119,13 +119,3 @@ window.loadLiveSources = () => {
     const data = localStorage.getItem(LIVE_SOURCES_KEY);
     return data ? JSON.parse(data) : {};
 };
-
-const HISTORICAL_DATA_KEY = 'msv_historical_data_v1';
-window.saveHistoricalData = (data) => {
-    localStorage.setItem(HISTORICAL_DATA_KEY, JSON.stringify(data));
-};
-
-window.loadHistoricalData = () => {
-    const data = localStorage.getItem(HISTORICAL_DATA_KEY);
-    return data ? JSON.parse(data) : {};
-};
