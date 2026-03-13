@@ -194,9 +194,9 @@ window.MOCK_DATA = {
             { date: '2026-02-19', title: 'Santander refuerza su banca digital', summary: 'La entidad anuncia una inversión millonaria en su plataforma Openbank.' }
         ],
         historical: {
-            'D': generateHistory(4.92, 60, 'D'),
-            'W': generateHistory(4.92, 52, 'W'),
-            'M': generateHistory(4.92, 24, 'M')
+            'D': generateHistory(4.92, 100, 'D', 'SAN.MC'),
+            'W': generateHistory(4.92, 52, 'W', 'SAN.MC'),
+            'M': generateHistory(4.92, 24, 'M', 'SAN.MC')
         }
     },
     'ITX.MC': {
@@ -206,9 +206,9 @@ window.MOCK_DATA = {
             { date: '2026-02-14', title: 'Inditex supera previsiones de ventas', summary: 'La estrategia omnicanal sigue dando resultados positivos a nivel global.' }
         ],
         historical: {
-            'D': generateHistory(53.40, 60, 'D'),
-            'W': generateHistory(53.40, 52, 'W'),
-            'M': generateHistory(53.40, 24, 'M')
+            'D': generateHistory(53.40, 100, 'D', 'ITX.MC'),
+            'W': generateHistory(53.40, 52, 'W', 'ITX.MC'),
+            'M': generateHistory(53.40, 24, 'M', 'ITX.MC')
         }
     },
     'BBVA.MC': {
@@ -218,35 +218,35 @@ window.MOCK_DATA = {
             { date: '2026-02-12', title: 'BBVA eleva su previsión de dividendos', summary: 'Los excelentes resultados en México impulsan la retribución al accionista.' }
         ],
         historical: {
-            'D': generateHistory(9.85, 60, 'D'),
-            'W': generateHistory(9.85, 52, 'W'),
-            'M': generateHistory(9.85, 24, 'M')
+            'D': generateHistory(9.85, 100, 'D', 'BBVA.MC'),
+            'W': generateHistory(9.85, 52, 'W', 'BBVA.MC'),
+            'M': generateHistory(9.85, 24, 'M', 'BBVA.MC')
         }
     },
     'TEF.MC': {
         price: 4.25, currency: 'EUR', name: 'Telefónica',
         historical: {
-            'D': generateHistory(4.25, 60, 'D'),
-            'W': generateHistory(4.25, 52, 'W'),
-            'M': generateHistory(4.25, 24, 'M')
+            'D': generateHistory(4.25, 100, 'D', 'TEF.MC'),
+            'W': generateHistory(4.25, 52, 'W', 'TEF.MC'),
+            'M': generateHistory(4.25, 24, 'M', 'TEF.MC')
         }
     },
     'IBE.MC': {
         price: 13.40, currency: 'EUR', name: 'Iberdrola',
         financials: { lastDiv: 0.35, nextDiv: 0.35, exDiv: '2026-03-31', yield: 4.2, pe: 15.1, pb: 1.4, ps: 2.2, eps: 1.33 },
         historical: {
-            'D': generateHistory(13.40, 60, 'D'),
-            'W': generateHistory(13.40, 52, 'W'),
-            'M': generateHistory(13.40, 24, 'M')
+            'D': generateHistory(13.40, 100, 'D', 'IBE.MC'),
+            'W': generateHistory(13.40, 52, 'W', 'IBE.MC'),
+            'M': generateHistory(13.40, 24, 'M', 'IBE.MC')
         }
     },
     'REP.MC': {
         price: 15.10, currency: 'EUR', name: 'Repsol',
         financials: { lastDiv: 0.40, nextDiv: 0.40, exDiv: '2026-03-11', yield: 6.1, pe: 4.8, pb: 0.6, ps: 0.3, eps: 3.14 },
         historical: {
-            'D': generateHistory(15.10, 60, 'D'),
-            'W': generateHistory(15.10, 52, 'W'),
-            'M': generateHistory(15.10, 24, 'M')
+            'D': generateHistory(15.10, 100, 'D', 'REP.MC'),
+            'W': generateHistory(15.10, 52, 'W', 'REP.MC'),
+            'M': generateHistory(15.10, 24, 'M', 'REP.MC')
         }
     },
     'CABK.MC': { price: 4.35, currency: 'EUR', name: 'CaixaBank' },
@@ -293,11 +293,19 @@ window.MOCK_DATA = {
     'PHMMF': { price: 75.00, currency: 'USD', name: 'PHX Minerals' },
 };
 
+window.HISTORICAL_DATA = window.loadHistoricalData ? window.loadHistoricalData() : {};
+
 // --- New: Automatically populate historical data for all stocks if missing ---
 try {
     console.log("Populating historical data for all stocks...");
     Object.keys(window.MOCK_DATA).forEach(ticker => {
         const stock = window.MOCK_DATA[ticker];
+        
+        // Use real historical data if available in cache
+        if (window.HISTORICAL_DATA[ticker]) {
+            stock.historical = window.HISTORICAL_DATA[ticker];
+        }
+
         if (!stock.historical && stock.price) {
             try {
                 stock.historical = {
@@ -545,6 +553,107 @@ window.refreshLivePrices = async function (tickers, onProgress) {
     if (window.saveLivePrices) window.saveLivePrices(window.LIVE_PRICES);
     if (window.saveLiveDates) window.saveLiveDates(window.LIVE_DATES);
     if (window.saveLiveSources) window.saveLiveSources(window.LIVE_SOURCES);
+
+    // After refreshing prices, refresh historical data for sparklines
+    window.refreshHistoricalData(tickers);
+}
+
+window.refreshHistoricalData = async function(tickers) {
+    if (tickers.length === 0) return;
+    
+    console.log("[History] Refreshing historical data for sparklines...");
+    let changed = false;
+
+    for (const ticker of tickers) {
+        const key = ticker.toUpperCase();
+        
+        let yahooTicker = key;
+        if (key.endsWith('.ES')) yahooTicker = key.replace('.ES', '.MC');
+
+        const range = '1mo';
+        const interval = '1d';
+        
+        // Symbols to try for historical data if the first one fails
+        let symbolsToTry = [yahooTicker];
+        if (yahooTicker.endsWith('.MC')) {
+            symbolsToTry.push(yahooTicker.replace('.MC', '.MA')); // Alternative Madrid
+        }
+
+        let success = false;
+        
+        for (const symbol of symbolsToTry) {
+            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
+            
+            const proxies = [
+                `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`,
+                `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`
+            ];
+
+            for (const proxyUrl of proxies) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    
+                    const resp = await fetch(proxyUrl, { signal: controller.signal });
+                    const json = await resp.json();
+                    clearTimeout(timeoutId);
+
+                    let rawData = json.contents ? JSON.parse(json.contents) : json;
+                    
+                    if (rawData && rawData.chart && rawData.chart.result && rawData.chart.result[0]) {
+                        const result = rawData.chart.result[0];
+                        const timestamps = result.timestamp;
+                        const indicators = result.indicators.quote[0];
+                        
+                        if (timestamps && timestamps.length > 2 && indicators && indicators.close) {
+                            // Extract data and fill nulls (v8 charts often have nulls for low volume days)
+                            let historyD = [];
+                            let lastValidClose = null;
+
+                            for (let i = 0; i < timestamps.length; i++) {
+                                let c = indicators.close[i];
+                                if (c === null) {
+                                    c = lastValidClose; // Fill with previous if available
+                                } else {
+                                    lastValidClose = c;
+                                }
+
+                                if (c !== null) {
+                                    historyD.push({
+                                        time: new Date(timestamps[i] * 1000).toISOString().split('T')[0],
+                                        open: (indicators.open && indicators.open[i] !== null) ? indicators.open[i] : c,
+                                        high: (indicators.high && indicators.high[i] !== null) ? indicators.high[i] : c,
+                                        low: (indicators.low && indicators.low[i] !== null) ? indicators.low[i] : c,
+                                        close: c
+                                    });
+                                }
+                            }
+
+                            if (historyD.length > 5) { // Ensure we have enough points to not look like a "slanted line"
+                                if (!window.HISTORICAL_DATA[key]) window.HISTORICAL_DATA[key] = {};
+                                window.HISTORICAL_DATA[key]['D'] = historyD;
+                                
+                                if (window.MOCK_DATA[key]) {
+                                    window.MOCK_DATA[key].historical = {
+                                        ...window.MOCK_DATA[key].historical,
+                                        'D': historyD
+                                    };
+                                }
+                                success = true;
+                                break;
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+            if (success) break;
+        }
+        if (success) changed = true;
+    }
+
+    if (changed && window.saveHistoricalData) {
+        window.saveHistoricalData(window.HISTORICAL_DATA);
+    }
 }
 
 window.refreshFXRate = async function () {
