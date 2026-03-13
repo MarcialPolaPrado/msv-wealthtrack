@@ -1397,7 +1397,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 5. Render Table
         elements.activityTableBody.innerHTML = '';
+        let totalAmount = 0;
         filtered.forEach(m => {
+            totalAmount += m.amount;
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid var(--glass-border)';
             tr.style.background = 'rgba(255,255,255,0.02)';
@@ -1419,6 +1421,20 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             elements.activityTableBody.appendChild(tr);
         });
+
+        // 6. Add Totals Row
+        if (filtered.length > 0) {
+            const totalTr = document.createElement('tr');
+            totalTr.style.background = 'rgba(255,255,255,0.05)';
+            totalTr.style.fontWeight = '700';
+            totalTr.style.borderTop = '2px solid rgba(255,255,255,0.1)';
+            totalTr.innerHTML = `
+                <td colspan="3" style="padding: 1rem; text-align: right; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Balance Total</td>
+                <td style="padding: 1rem; font-size: 1.1rem; text-align: right;" class="${totalAmount >= 0 ? 'profit' : 'loss'}">${fmtEUR(totalAmount)}</td>
+                <td></td>
+            `;
+            elements.activityTableBody.appendChild(totalTr);
+        }
 
         // Add sorting icons & styles
         if (elements.activityTable) {
