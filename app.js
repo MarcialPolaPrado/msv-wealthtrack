@@ -1366,6 +1366,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (activityCellFilter.column === 'amount') {
                     return fmtEUR(val) === activityCellFilter.value;
                 }
+                if (activityCellFilter.column === 'category' && activityCellFilter.value.startsWith('Bolsa')) {
+                    return String(val).startsWith('Bolsa');
+                }
                 return String(val) === activityCellFilter.value;
             });
         }
@@ -1408,7 +1411,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateStr = new Date(m.date).toLocaleDateString();
             const amountStr = fmtEUR(m.amount);
 
-            const isFiltered = (col, val) => activityCellFilter.column === col && activityCellFilter.value === val;
+            const isFiltered = (col, val) => {
+                if (activityCellFilter.column !== col) return false;
+                if (col === 'category' && val.startsWith('Bolsa') && activityCellFilter.value?.startsWith('Bolsa')) return true;
+                return activityCellFilter.value === val;
+            };
 
             tr.innerHTML = `
                 <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('date', dateStr) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="date" data-val="${dateStr}">${dateStr}</td>
@@ -1463,7 +1470,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const col = td.dataset.col;
                 const val = td.dataset.val;
 
-                if (activityCellFilter.column === col && activityCellFilter.value === val) {
+                let isSameFilter = (activityCellFilter.column === col && activityCellFilter.value === val);
+                if (col === 'category' && activityCellFilter.column === 'category') {
+                    if (val.startsWith('Bolsa') && activityCellFilter.value?.startsWith('Bolsa')) {
+                        isSameFilter = true;
+                    }
+                }
+
+                if (isSameFilter) {
                     activityCellFilter = { column: null, value: null };
                 } else {
                     activityCellFilter = { column: col, value: val };
