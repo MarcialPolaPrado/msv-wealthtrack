@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let bolsaTotalsMode = localStorage.getItem('bolsaTotalsMode') === 'true' || false;
     let bolsaSummaryVisible = localStorage.getItem('bolsaSummaryVisible') !== 'false'; // Default to true
     let bolsaHighlightsVisible = localStorage.getItem('bolsaHighlightsVisible') === 'true';
+    let breakdownDrawerFilter = null;
 
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
     let isAhorroSummaryExpanded = localStorage.getItem('isAhorroSummaryExpanded') !== 'false';
@@ -491,6 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         monthDetailContent: document.getElementById('monthDetailContent'),
         bolsaGrid: document.getElementById('bolsaGrid'),
         bolsaViewToggleBtn: document.getElementById('bolsaViewToggleBtn'),
+        bolsaDefaultDrawerBreakdownBtn: document.getElementById('bolsaDefaultDrawerBreakdownBtn'),
         bolsaHighlights: document.getElementById('bolsaHighlights'),
         bolsaHighlightsToggleBtn: document.getElementById('bolsaHighlightsToggleBtn'),
         bolsaTotalesToggle: document.getElementById('bolsaTotalesToggle'),
@@ -540,7 +542,17 @@ document.addEventListener('DOMContentLoaded', () => {
         breakdownIntereses: document.getElementById('breakdownIntereses'),
         breakdownDividendos: document.getElementById('breakdownDividendos'),
         breakdownEspeculacion: document.getElementById('breakdownEspeculacion'),
-        breakdownTotal: document.getElementById('breakdownTotal')
+        breakdownTotal: document.getElementById('breakdownTotal'),
+        breakdownModalTitle: document.getElementById('breakdownModalTitle'),
+        breakdownDetailContainer: document.getElementById('breakdownDetailContainer'),
+        breakdownDetailTitle: document.getElementById('breakdownDetailTitle'),
+        breakdownDetailList: document.getElementById('breakdownDetailList'),
+        breakdownMonthUp: document.getElementById('breakdownMonthUp'),
+        breakdownMonthDown: document.getElementById('breakdownMonthDown'),
+        breakdownYearUp: document.getElementById('breakdownYearUp'),
+        breakdownYearDown: document.getElementById('breakdownYearDown'),
+        breakdownMonthContainer: document.getElementById('breakdownMonthContainer'),
+        breakdownYearContainer: document.getElementById('breakdownYearContainer')
     };
 
     const updateNominaMovementType = (type) => {
@@ -5664,6 +5676,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Ahorro Breakdown Listeners ---
         if (elements.ahorroBreakdownBtn) {
             elements.ahorroBreakdownBtn.addEventListener('click', () => {
+                breakdownDrawerFilter = null;
                 const now = new Date();
                 if (elements.breakdownMonthInput) {
                     elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
@@ -5671,6 +5684,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.breakdownYearInput) {
                     elements.breakdownYearInput.value = now.getFullYear();
                 }
+                elements.breakdownDetailContainer?.classList.add('hidden');
+                updateAhorroBreakdown();
+                elements.ahorroBreakdownModal?.classList.remove('hidden');
+            });
+        }
+
+        if (elements.bolsaDefaultDrawerBreakdownBtn) {
+            elements.bolsaDefaultDrawerBreakdownBtn.addEventListener('click', () => {
+                const defaultSourceId = localStorage.getItem('defaultTransferSource');
+                if (!defaultSourceId) {
+                    alert("No hay un cajón por defecto seleccionado en los Ajustes.");
+                    return;
+                }
+                breakdownDrawerFilter = defaultSourceId;
+                const now = new Date();
+                if (elements.breakdownMonthInput) {
+                    elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
+                }
+                if (elements.breakdownYearInput) {
+                    elements.breakdownYearInput.value = now.getFullYear();
+                }
+                elements.breakdownDetailContainer?.classList.add('hidden');
                 updateAhorroBreakdown();
                 elements.ahorroBreakdownModal?.classList.remove('hidden');
             });
@@ -5684,13 +5719,115 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.breakdownFilterType?.addEventListener('change', (e) => {
             const isYear = e.target.value === 'year';
-            elements.breakdownMonthInput?.classList.toggle('hidden', isYear);
-            elements.breakdownYearInput?.classList.toggle('hidden', !isYear);
+            elements.breakdownMonthContainer?.classList.toggle('hidden', isYear);
+            elements.breakdownYearContainer?.classList.toggle('hidden', !isYear);
+            elements.breakdownDetailContainer?.classList.add('hidden');
             updateAhorroBreakdown();
         });
 
-        elements.breakdownMonthInput?.addEventListener('change', updateAhorroBreakdown);
-        elements.breakdownYearInput?.addEventListener('input', updateAhorroBreakdown);
+        elements.breakdownMonthInput?.addEventListener('change', () => {
+            elements.breakdownDetailContainer?.classList.add('hidden');
+            updateAhorroBreakdown();
+        });
+        elements.breakdownYearInput?.addEventListener('input', () => {
+            elements.breakdownDetailContainer?.classList.add('hidden');
+            updateAhorroBreakdown();
+        });
+
+        const changeMonthVal = (current, delta) => {
+            let [y, m] = current.split('-').map(Number);
+            m += delta;
+            if (m > 12) { y++; m = 1; }
+            else if (m < 1) { y--; m = 12; }
+            return `${y}-${String(m).padStart(2, '0')}`;
+        };
+
+        elements.breakdownMonthUp?.addEventListener('click', () => {
+            elements.breakdownMonthInput.value = changeMonthVal(elements.breakdownMonthInput.value, 1);
+            elements.breakdownMonthInput.dispatchEvent(new Event('change'));
+        });
+        elements.breakdownMonthDown?.addEventListener('click', () => {
+            elements.breakdownMonthInput.value = changeMonthVal(elements.breakdownMonthInput.value, -1);
+            elements.breakdownMonthInput.dispatchEvent(new Event('change'));
+        });
+        elements.breakdownYearUp?.addEventListener('click', () => {
+            elements.breakdownYearInput.value = parseInt(elements.breakdownYearInput.value) + 1;
+            elements.breakdownYearInput.dispatchEvent(new Event('input'));
+        });
+        elements.breakdownYearDown?.addEventListener('click', () => {
+            elements.breakdownYearInput.value = parseInt(elements.breakdownYearInput.value) - 1;
+            elements.breakdownYearInput.dispatchEvent(new Event('input'));
+        });
+
+        // Other month filters navigation
+        elements.nextAhorroMonthBtn?.addEventListener('click', () => {
+            if (elements.ahorroFilterMode?.value === 'year') {
+                let [y, m] = ahorroListMonth.split('-').map(Number);
+                ahorroListMonth = `${y + 1}-${String(m).padStart(2, '0')}`;
+            } else if (elements.ahorroFilterMode?.value === 'month') {
+                ahorroListMonth = changeMonthVal(ahorroListMonth, 1);
+            }
+            renderSavings();
+        });
+        elements.prevAhorroMonthBtn?.addEventListener('click', () => {
+            if (elements.ahorroFilterMode?.value === 'year') {
+                let [y, m] = ahorroListMonth.split('-').map(Number);
+                ahorroListMonth = `${y - 1}-${String(m).padStart(2, '0')}`;
+            } else if (elements.ahorroFilterMode?.value === 'month') {
+                ahorroListMonth = changeMonthVal(ahorroListMonth, -1);
+            }
+            renderSavings();
+        });
+        elements.nextNominaMonthBtn?.addEventListener('click', () => {
+            nominaListMonth = changeMonthVal(nominaListMonth, 1);
+            renderNomina();
+        });
+        elements.prevNominaMonthBtn?.addEventListener('click', () => {
+            nominaListMonth = changeMonthVal(nominaListMonth, -1);
+            renderNomina();
+        });
+
+        // Click on breakdown rows
+        document.querySelectorAll('.breakdown-row').forEach(row => {
+            row.addEventListener('click', () => {
+                const cat = row.getAttribute('data-category');
+                showBreakdownDetail(cat);
+            });
+        });
+
+        let currentBreakdownMovements = {
+            Intereses: [],
+            Dividendos: [],
+            Especulación: []
+        };
+
+        function showBreakdownDetail(category) {
+            if (!elements.breakdownDetailContainer || !elements.breakdownDetailList) return;
+            
+            const movs = currentBreakdownMovements[category] || [];
+            if (movs.length === 0) {
+                elements.breakdownDetailContainer.classList.add('hidden');
+                return;
+            }
+
+            if (elements.breakdownDetailTitle) {
+                elements.breakdownDetailTitle.textContent = `Detalle: ${category}`;
+            }
+
+            elements.breakdownDetailList.innerHTML = movs.map(m => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.9rem; font-weight: 600;">${m.concept || m.description || 'Sin concepto'}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">${m.date} - ${m.drawerName}</span>
+                    </div>
+                    <span style="font-weight: 700; color: ${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">${fmtEUR(m.amount)}</span>
+                </div>
+            `).join('');
+
+            elements.breakdownDetailContainer.classList.remove('hidden');
+            // Scroll to detail
+            elements.breakdownDetailContainer.scrollIntoView({ behavior: 'smooth' });
+        }
 
         // Click outside to close breakdown modal
         window.addEventListener('click', (event) => {
@@ -5708,7 +5845,26 @@ document.addEventListener('DOMContentLoaded', () => {
             let totalDividendos = 0;
             let totalEspeculacion = 0;
 
-            savingsDrawers.forEach(drawer => {
+            currentBreakdownMovements = {
+                Intereses: [],
+                Dividendos: [],
+                Especulación: []
+            };
+
+            const filteredDrawers = breakdownDrawerFilter 
+                ? savingsDrawers.filter(d => d.id === breakdownDrawerFilter)
+                : savingsDrawers;
+
+            if (elements.breakdownModalTitle) {
+                if (breakdownDrawerFilter) {
+                    const drawer = savingsDrawers.find(d => d.id === breakdownDrawerFilter);
+                    elements.breakdownModalTitle.textContent = `Ingresos: ${drawer ? drawer.name : 'Cajón'}`;
+                } else {
+                    elements.breakdownModalTitle.textContent = "Resumen de Ingresos (Global)";
+                }
+            }
+
+            filteredDrawers.forEach(drawer => {
                 (drawer.movements || []).forEach(mov => {
                     const movDate = new Date(mov.date);
                     const movYear = movDate.getFullYear();
@@ -5723,9 +5879,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (match) {
                         const cat = mov.category;
-                        if (cat === 'Intereses') totalIntereses += mov.amount;
-                        else if (cat === 'Dividendos') totalDividendos += mov.amount;
-                        else if (cat === 'Especulación') totalEspeculacion += mov.amount;
+                        const movWithDrawer = { ...mov, drawerName: drawer.name };
+                        if (cat === 'Intereses') {
+                            totalIntereses += mov.amount;
+                            currentBreakdownMovements.Intereses.push(movWithDrawer);
+                        } else if (cat === 'Dividendos') {
+                            totalDividendos += mov.amount;
+                            currentBreakdownMovements.Dividendos.push(movWithDrawer);
+                        } else if (cat === 'Especulación') {
+                            totalEspeculacion += mov.amount;
+                            currentBreakdownMovements.Especulación.push(movWithDrawer);
+                        }
                     }
                 });
             });
@@ -6034,7 +6198,7 @@ document.addEventListener('DOMContentLoaded', () => {
             blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         }
         const url = URL.createObjectURL(blob);
-        triggerDownload(url, fileName);
+        triggerDownload(url, fileName, blob);
     }
 
 
@@ -6391,7 +6555,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileName = getFormattedDateWithTime() + '.json';
 
 
-        triggerDownload(url, fileName);
+        triggerDownload(url, fileName, blob);
     }
 
     function importGlobalJSON(file) {
@@ -6491,11 +6655,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }, duration);
     }
 
-    async function triggerDownload(contentUri, fileName) {
+    async function triggerDownload(contentUri, fileName, blobData = null) {
+        let pickerUsed = false;
         try {
             // Try to use File System Access API for better experience (handles Overwrite natively)
-            if ('showSaveFilePicker' in window) {
-                const blob = await fetch(contentUri).then(r => r.blob());
+            // But skip if we are in PWA standalone mode on Android as it often fails partially
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
+            if ('showSaveFilePicker' in window && !(isAndroid && isPWA)) {
+                pickerUsed = true;
+                const blob = blobData || await fetch(contentUri).then(r => r.blob());
                 const handle = await window.showSaveFilePicker({
                     suggestedName: fileName,
                     types: [{
@@ -6513,9 +6683,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // User cancelled or error occurred in FilePicker
             if (err.name === 'AbortError') return;
             console.error("FilePicker error:", err);
+            // If picker was already used/prompted, don't fall back immediately as it might double-up or confuse
+            // but if it's a known issue, maybe we should just allow the fallback.
+            if (pickerUsed) {
+                showToast(`Error al guardar el archivo: ${err.message || 'Operación fallida'}`, 'error');
+                return;
+            }
         }
 
-        // Fallback for browsers/mobile without FileSystem API
+        // Fallback for browsers/mobile without FileSystem API or if Picker failed/was skipped
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', contentUri);
         linkElement.setAttribute('download', fileName);

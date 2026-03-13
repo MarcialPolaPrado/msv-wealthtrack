@@ -2241,3 +2241,60 @@ button,
     text-overflow: ellipsis;
     max-width: 140px;
 }
+
+/* Breakdown Detail Styles */
+.breakdown-row {
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.breakdown-row:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: var(--glass-border);
+    transform: translateX(4px);
+}
+
+.breakdown-row:active {
+    transform: scale(0.98);
+}
+
+#breakdownDetailList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#breakdownDetailList::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+#breakdownDetailList::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 10px;
+}
+
+#breakdownDetailList::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+.navigation-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.btn-nav-arrow {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+.btn-nav-arrow:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+}
