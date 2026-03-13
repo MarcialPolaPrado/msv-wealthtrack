@@ -4928,23 +4928,6 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        // Nomina Month Navigation
-        if (elements.prevNominaMonthBtn) {
-            elements.prevNominaMonthBtn.onclick = () => {
-                const [y, m] = nominaListMonth.split('-').map(Number);
-                const d = new Date(y, m - 2);
-                nominaListMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                renderNominaList();
-            };
-        }
-        if (elements.nextNominaMonthBtn) {
-            elements.nextNominaMonthBtn.onclick = () => {
-                const [y, m] = nominaListMonth.split('-').map(Number);
-                const d = new Date(y, m);
-                nominaListMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                renderNominaList();
-            };
-        }
         // Nomina Listeners
 
 
@@ -5260,38 +5243,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderSavings();
         });
 
-        // Ahorro Month Navigation
-        elements.prevAhorroMonthBtn?.addEventListener('click', () => {
-            let [y, m] = ahorroListMonth.split('-').map(Number);
-            if (ahorroFilterMode === 'year') {
-                y--;
-            } else {
-                m--;
-                if (m < 1) {
-                    m = 12;
-                    y--;
-                }
-            }
-            ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
-            renderSavingsList();
-            renderAhorroSummaryDrawer();
-        });
-
-        elements.nextAhorroMonthBtn?.addEventListener('click', () => {
-            let [y, m] = ahorroListMonth.split('-').map(Number);
-            if (ahorroFilterMode === 'year') {
-                y++;
-            } else {
-                m++;
-                if (m > 12) {
-                    m = 1;
-                    y++;
-                }
-            }
-            ahorroListMonth = `${y}-${String(m).padStart(2, '0')}`;
-            renderSavingsList();
-            renderAhorroSummaryDrawer();
-        });
 
         elements.ahorroFilterMode?.addEventListener('change', (e) => {
             ahorroFilterMode = e.target.value;
