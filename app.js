@@ -6031,6 +6031,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     elements.breakdownYearInput.value = now.getFullYear();
                 }
                 elements.breakdownDetailContainer?.classList.add('hidden');
+                currentActiveBreakdownCategory = null;
                 updateAhorroBreakdown();
                 elements.ahorroBreakdownModal?.classList.remove('hidden');
             });
@@ -6052,6 +6053,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     elements.breakdownYearInput.value = now.getFullYear();
                 }
                 elements.breakdownDetailContainer?.classList.add('hidden');
+                currentActiveBreakdownCategory = null;
                 updateAhorroBreakdown();
                 elements.ahorroBreakdownModal?.classList.remove('hidden');
             });
@@ -6068,15 +6070,18 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.breakdownMonthContainer?.classList.toggle('hidden', isYear);
             elements.breakdownYearContainer?.classList.toggle('hidden', !isYear);
             elements.breakdownDetailContainer?.classList.add('hidden');
+            currentActiveBreakdownCategory = null;
             updateAhorroBreakdown();
         });
 
         elements.breakdownMonthInput?.addEventListener('change', () => {
             elements.breakdownDetailContainer?.classList.add('hidden');
+            currentActiveBreakdownCategory = null;
             updateAhorroBreakdown();
         });
         elements.breakdownYearInput?.addEventListener('input', () => {
             elements.breakdownDetailContainer?.classList.add('hidden');
+            currentActiveBreakdownCategory = null;
             updateAhorroBreakdown();
         });
 
@@ -6140,15 +6145,26 @@ document.addEventListener('DOMContentLoaded', () => {
             Dividendos: [],
             Especulación: []
         };
+        let currentActiveBreakdownCategory = null;
 
         function showBreakdownDetail(category) {
             if (!elements.breakdownDetailContainer || !elements.breakdownDetailList) return;
             
+            // Toggle: If same category is clicked while visible, hide it
+            if (currentActiveBreakdownCategory === category && !elements.breakdownDetailContainer.classList.contains('hidden')) {
+                elements.breakdownDetailContainer.classList.add('hidden');
+                currentActiveBreakdownCategory = null;
+                return;
+            }
+
             const movs = currentBreakdownMovements[category] || [];
             if (movs.length === 0) {
                 elements.breakdownDetailContainer.classList.add('hidden');
+                currentActiveBreakdownCategory = null;
                 return;
             }
+
+            currentActiveBreakdownCategory = category;
 
             if (elements.breakdownDetailTitle) {
                 elements.breakdownDetailTitle.textContent = `Detalle: ${category}`;
