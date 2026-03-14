@@ -1592,14 +1592,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const conceptInput = document.getElementById('movementConceptInput');
         const amountInput = document.getElementById('movementAmountInput');
-        const categorySelect = document.getElementById('savingsCategorySelect');
 
         if (conceptInput) conceptInput.value = m.concept || m.description || '';
         if (amountInput) amountInput.value = Math.abs(m.amount).toFixed(2);
-        if (categorySelect) categorySelect.value = m.category || drawer.name || '';
         if (elements.savingsDateInput) elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
         
+        // Call updateSavingsMovementType FIRST because it rebuilds category options
         updateSavingsMovementType(m.amount >= 0 ? 'income' : 'expense');
+        
+        // Now set the category value
+        if (elements.savingsCategorySelect) {
+            elements.savingsCategorySelect.value = m.category || drawer.name || '';
+        }
         
         const title = document.getElementById('savingsModalTitle');
         if (title) title.textContent = `Copiar: ${drawer.name}`;
