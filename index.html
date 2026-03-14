@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603140705">
+    <link rel="stylesheet" href="styles.css?v=202603140805">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -56,7 +56,7 @@
                 <div>
                     <h1 style="margin:0;">Wealth<span class="highlight">Track</span></h1>
                     <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);" id="logoVersion">
-                        v202603140705</p>
+                        v202603140808</p>
                 </div>
             </div>
             <div id="updateTimer" class="digital-timer hidden">Sincronizando en 30s...</div>
@@ -332,6 +332,8 @@
                             <h2 style="margin:0">Actividad Global</h2>
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                            <input type="text" id="activitySearchInput" placeholder="Buscar..." 
+                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 10px; font-size: 0.85rem; outline: none; width: 120px;">
                             <select id="activityFilterMode"
                                 style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
                                 <option value="month">📅 Mes</option>
@@ -1168,9 +1170,9 @@
         </div>
     </div>
 
-    <script src="storage.js?v=202603140705"></script>
-    <script src="mock_data.js?v=202603140705"></script>
-    <script src="app.js?v=202603140705"></script>
+    <script src="storage.js?v=202603140808"></script>
+    <script src="mock_data.js?v=202603140808"></script>
+    <script src="app.js?v=202603140805"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1214,7 +1216,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603140705';
+        const APP_VERSION = '202603140805';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

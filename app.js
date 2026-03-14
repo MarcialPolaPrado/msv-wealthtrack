@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activitySortConfig = getSortConfig('activitySortConfig', { key: 'date', direction: 'desc' });
     let activityCellFilter = { column: null, value: null };
     let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'month' or 'year'
+    let activitySearchQuery = '';
     let previousView = 'bolsa';
 
     const DRAWER_COLORS = [
@@ -579,7 +580,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activityMonthDown: document.getElementById('activityMonthDown'),
         activityDateTrigger: document.getElementById('activityDateTrigger'),
         activityMonthInput: document.getElementById('activityMonthInput'),
-        activityFilterMode: document.getElementById('activityFilterMode')
+        activityFilterMode: document.getElementById('activityFilterMode'),
+        activitySearchInput: document.getElementById('activitySearchInput')
     };
 
     const updateNominaMovementType = (type) => {
@@ -1382,6 +1384,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // 2c. Apply Search Filter
+        if (activitySearchQuery) {
+            const q = activitySearchQuery.toLowerCase();
+            filtered = filtered.filter(m => {
+                const concept = (m.concept || '').toLowerCase();
+                const category = (m.category || '').toLowerCase();
+                return concept.includes(q) || category.includes(q);
+            });
+        }
+
         // 3. Sort
         if (activitySortConfig.key) {
             filtered.sort((a, b) => {
@@ -1410,6 +1422,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (elements.activityFilterMode) {
             elements.activityFilterMode.value = activityFilterMode;
+        }
+        if (elements.activitySearchInput) {
+            elements.activitySearchInput.value = activitySearchQuery;
         }
 
         // 5. Render Table
@@ -1495,6 +1510,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     activityCellFilter = { column: null, value: null };
                 } else {
                     activityCellFilter = { column: col, value: val };
+                    // Clear search input if a field is selected
+                    activitySearchQuery = '';
                 }
                 renderActivity();
             });
@@ -4994,6 +5011,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         elements.activityMonthInput?.addEventListener('change', (e) => {
             activityListMonth = e.target.value;
+            renderActivity();
+        });
+
+        elements.activitySearchInput?.addEventListener('input', (e) => {
+            activitySearchQuery = e.target.value;
             renderActivity();
         });
 
