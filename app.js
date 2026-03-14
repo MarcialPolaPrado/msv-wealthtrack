@@ -1452,7 +1452,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('category', m.category) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="category" data-val="${m.category}"><span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">${m.category}</span></td>
                 <td style="padding: 1rem; font-size: 0.95rem; text-align: right; font-weight: 700; cursor: pointer; ${isFiltered('amount', amountStr) ? 'background: var(--primary-glow); color: white;' : ''}" class="${amountClass}" data-col="amount" data-val="${amountStr}">${amountStr}</td>
                 <td style="padding: 1rem; text-align: center;">
-                    <button class="btn-icon activity-edit-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex || ''}" title="Editar" style="padding: 4px 8px;">✏️</button>
+                    <div style="display: flex; gap: 4px; justify-content: center;">
+                        <button class="btn-icon activity-edit-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex || ''}" title="Editar" style="padding: 4px 8px;">✏️</button>
+                        <button class="btn-icon activity-copy-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex || ''}" title="Copiar" style="padding: 4px 8px;">📋</button>
+                        <button class="btn-icon activity-delete-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex || ''}" title="Eliminar" style="padding: 4px 8px; filter: contrast(0.5) opacity(0.8);">🗑️</button>
+                    </div>
                 </td>
             `;
             elements.activityTableBody.appendChild(tr);
@@ -1494,6 +1498,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Action handlers
+        elements.activityTableBody.querySelectorAll('.activity-edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (btn.dataset.type === 'bolsa') {
+                    editStock(btn.dataset.id);
+                } else {
+                    showEditMovementModal(btn.dataset.drawer, parseInt(btn.dataset.index));
+                }
+            });
+        });
+
+        elements.activityTableBody.querySelectorAll('.activity-copy-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (btn.dataset.type === 'bolsa') {
+                    copyStock(btn.dataset.id);
+                } else {
+                    copySavingsMovement(btn.dataset.drawer, parseInt(btn.dataset.index));
+                }
+            });
+        });
+
+        elements.activityTableBody.querySelectorAll('.activity-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const type = btn.dataset.type;
+                const id = btn.dataset.id;
+                const drawerId = btn.dataset.drawer;
+                const index = btn.dataset.index;
+
+                if (type === 'bolsa') {
+                    showCustomConfirm("¿Estás seguro de que quieres eliminar esta inversión?", () => {
+                        removeStock(id);
+                        renderActivity();
+                    });
+                } else {
+                    // deleteSavingsMovement already has confirmation
+                    deleteSavingsMovement(drawerId, parseInt(index));
+                    // Check if we need to re-render activity if it's currently showing
+                    setTimeout(() => renderActivity(), 100); 
+                }
+            });
+        });
+
         elements.activityTableBody.querySelectorAll('td[data-col]').forEach(td => {
             td.addEventListener('click', (e) => {
                 const col = td.dataset.col;
@@ -1516,19 +1564,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderActivity();
             });
         });
+    }
 
-        const editBtns = elements.activityTableBody.querySelectorAll('.activity-edit-btn');
-        editBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent cell click
-                const type = btn.dataset.type;
-                if (type === 'bolsa') {
-                    editStock(btn.dataset.id);
-                } else {
-                    showEditMovementModal(btn.dataset.drawer, parseInt(btn.dataset.index));
-                }
-            });
-        });
+    function copyStock(id) {
+        const stock = stocks.find(s => s.id === id);
+        if (!stock) return;
+
+        elements.editId.value = ""; // Clear ID for new entry
+        elements.tickerInput.value = stock.ticker;
+        elements.marketSelect.value = stock.market;
+        elements.dateInput.value = new Date().toISOString().split('T')[0];
+        elements.qtyInput.value = stock.qty;
+        elements.priceInput.value = (stock.price * stock.qty).toFixed(2);
+
+        elements.modalTitle.textContent = "Copiar Inversión";
+        elements.submitStockBtn.textContent = "Añadir Inversión";
+        toggleModal(true);
+    }
+
+    function copySavingsMovement(drawerId, mvmtIndex) {
+        const drawer = savingsDrawers.find(d => d.id === drawerId);
+        if (!drawer || !drawer.movements[mvmtIndex]) return;
+
+        const m = drawer.movements[mvmtIndex];
+        
+        showAddMovementModal(drawerId);
+        
+        const conceptInput = document.getElementById('movementConceptInput');
+        const amountInput = document.getElementById('movementAmountInput');
+        const categorySelect = document.getElementById('savingsCategorySelect');
+
+        if (conceptInput) conceptInput.value = m.concept || m.description || '';
+        if (amountInput) amountInput.value = Math.abs(m.amount).toFixed(2);
+        if (categorySelect) categorySelect.value = m.category || drawer.name || '';
+        if (elements.savingsDateInput) elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
+        
+        updateSavingsMovementType(m.amount >= 0 ? 'income' : 'expense');
+        
+        const title = document.getElementById('savingsModalTitle');
+        if (title) title.textContent = `Copiar: ${drawer.name}`;
     }
 
     function renderAnalisis() {
