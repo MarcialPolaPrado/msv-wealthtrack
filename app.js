@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activityListMonth = _initialMonthStr;
     let activitySortConfig = getSortConfig('activitySortConfig', { key: 'date', direction: 'desc' });
     let activityCellFilter = { column: null, value: null };
+    let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'month' or 'year'
     let previousView = 'bolsa';
 
     const DRAWER_COLORS = [
@@ -577,7 +578,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activityMonthUp: document.getElementById('activityMonthUp'),
         activityMonthDown: document.getElementById('activityMonthDown'),
         activityDateTrigger: document.getElementById('activityDateTrigger'),
-        activityMonthInput: document.getElementById('activityMonthInput')
+        activityMonthInput: document.getElementById('activityMonthInput'),
+        activityFilterMode: document.getElementById('activityFilterMode')
     };
 
     const updateNominaMovementType = (type) => {
@@ -1353,8 +1355,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // 2. Filter by Month
-        let filtered = allMovements.filter(m => m.date && m.date.startsWith(activityListMonth));
+        // 2. Filter by Month/Year
+        let filtered = [];
+        if (activityFilterMode === 'month') {
+            filtered = allMovements.filter(m => m.date && m.date.startsWith(activityListMonth));
+        } else {
+            // Filter by Year
+            const year = activityListMonth.split('-')[0];
+            filtered = allMovements.filter(m => m.date && m.date.startsWith(year));
+        }
 
         // 2b. Apply Cell Filter
         if (activityCellFilter.column && activityCellFilter.value !== null) {
@@ -1393,9 +1402,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 4. Update UI Month Label
+        // 4. Update UI Label and Filter Select
         if (elements.activityMonthLabel) {
-            elements.activityMonthLabel.textContent = formatFiscalMonth(activityListMonth);
+            elements.activityMonthLabel.textContent = activityFilterMode === 'month' 
+                ? formatFiscalMonth(activityListMonth) 
+                : activityListMonth.split('-')[0];
+        }
+        if (elements.activityFilterMode) {
+            elements.activityFilterMode.value = activityFilterMode;
         }
 
         // 5. Render Table
@@ -4951,12 +4965,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Activity Listeners
         elements.activityBackBtn?.addEventListener('click', () => switchView(previousView));
 
+        elements.activityFilterMode?.addEventListener('change', (e) => {
+            activityFilterMode = e.target.value;
+            localStorage.setItem('activityFilterMode', activityFilterMode);
+            renderActivity();
+        });
+
         elements.activityMonthUp?.addEventListener('click', () => {
-            activityListMonth = changeMonthVal(activityListMonth, 1);
+            if (activityFilterMode === 'month') {
+                activityListMonth = changeMonthVal(activityListMonth, 1);
+            } else {
+                let [y, m] = activityListMonth.split('-').map(Number);
+                activityListMonth = `${y + 1}-${String(m).padStart(2, '0')}`;
+            }
             renderActivity();
         });
         elements.activityMonthDown?.addEventListener('click', () => {
-            activityListMonth = changeMonthVal(activityListMonth, -1);
+            if (activityFilterMode === 'month') {
+                activityListMonth = changeMonthVal(activityListMonth, -1);
+            } else {
+                let [y, m] = activityListMonth.split('-').map(Number);
+                activityListMonth = `${y - 1}-${String(m).padStart(2, '0')}`;
+            }
             renderActivity();
         });
         elements.activityDateTrigger?.addEventListener('click', () => {
