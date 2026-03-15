@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603150617">
+    <link rel="stylesheet" href="styles.css?v=202603150650">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -71,18 +71,55 @@
             <nav class="sidebar-nav">
                 <div class="nav-group">
                     <p class="nav-group-title">Portfolio</p>
-                    <button class="wealth-nav-item active" data-view="bolsa">
-                        <span class="nav-icon">📈</span>
-                        <span class="nav-text">Bolsa</span>
-                    </button>
-                    <button class="wealth-nav-item" data-view="ahorro">
-                        <span class="nav-icon">💰</span>
-                        <span class="nav-text">Ahorro</span>
-                    </button>
-                    <button class="wealth-nav-item" data-view="nomina">
-                        <span class="nav-icon">💶</span>
-                        <span class="nav-text">Nómina</span>
-                    </button>
+                    <div class="nav-item-container" id="bolsaNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item active" data-view="bolsa">
+                                <span class="nav-icon">📈</span>
+                                <span class="nav-text">Bolsa</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir Inversión</button>
+                            <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
+                            <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Resumen</button>
+                            <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen Datos</button>
+                            <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios Manuales</button>
+                            <button id="bolsaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
+                            <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales</button>
+                            <button id="exportDataBtn2" class="submenu-item"><span>💾</span> Exportar CSV</button>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-container" id="ahorroNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item" data-view="ahorro">
+                                <span class="nav-icon">💰</span>
+                                <span class="nav-text">Ahorro</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="ahorroViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
+                            <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📉</span> Desglose Ingresos</button>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-container" id="nominaNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item" data-view="nomina">
+                                <span class="nav-icon">💶</span>
+                                <span class="nav-text">Nómina</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="addNominaBtn2" class="submenu-item"><span>➕</span> Añadir Concepto</button>
+                            <button id="nominaAnalisisViewBtn2" class="submenu-item"><span>📈</span> Análisis Anual</button>
+                            <button id="nominaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
+                            <button id="fiscalCountdownBtn2" class="submenu-item"><span>⏳</span> Días Mes Fiscal: <span id="fiscalDaysLeft2">--</span></button>
+                        </div>
+                    </div>
                     <button class="wealth-nav-item" data-view="activity" id="sidebarActivityBtn">
                         <span class="nav-icon">🔄</span>
                         <span class="nav-text">Actividad</span>
@@ -159,7 +196,7 @@
             <div id="bolsaSection" class="view-section">
                 <!-- Stock List Actions -->
                 <div class="savings-container">
-                    <div
+                    <div id="bolsaHeaderActions"
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
                         <div style="display:flex; align-items:center; gap:1rem;">
                             <h2 style="margin:0" id="bolsaMobileTitle">Mis Acciones</h2>
@@ -291,7 +328,7 @@
             <!-- Ahorro Section -->
             <div id="ahorroSection" class="view-section hidden">
                 <div class="savings-container" style="margin-top: 1rem;">
-                    <div
+                    <div id="ahorroHeaderActions"
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <div style="display:flex; align-items:center; gap:1rem;">
                             <h2 id="misCajonesTitle" style="margin:0">Mis Cajones</h2>
@@ -434,7 +471,7 @@
             <div id="nominaSection" class="view-section hidden">
 
                 <!-- Unified Title and Action Buttons -->
-                <div
+                <div id="nominaHeaderActions"
                     style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <h2 style="margin:0">Conceptos Mensuales</h2>
@@ -1224,9 +1261,13 @@
         </div>
     </div>
 
+    <!-- Hidden technical elements -->
+    <input type="file" id="globalJsonInput" class="hidden" accept=".json">
+    <button id="clockMenuBtn" class="hidden"></button>
+
     <script src="storage.js?v=202603141659"></script>
     <script src="mock_data.js?v=202603141659"></script>
-    <script src="app.js?v=202603150617"></script>
+    <script src="app.js?v=202603150650"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1270,7 +1311,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603150617';
+        const APP_VERSION = '202603150650';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

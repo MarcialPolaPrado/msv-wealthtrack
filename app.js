@@ -910,6 +910,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.bolsaTotalesToggle) {
             elements.bolsaTotalesToggle.classList.toggle('hidden', bolsaViewMode === 'cards');
             elements.bolsaTotalesToggle.style.background = bolsaTotalsMode ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
+            
+            // Sync with Sidebar
+            const sidebarTotalsBtn = document.getElementById('bolsaTotalesToggle2');
+            if (sidebarTotalsBtn) {
+                sidebarTotalsBtn.style.background = bolsaTotalsMode ? 'rgba(59, 130, 246, 0.2)' : 'transparent';
+                sidebarTotalsBtn.style.color = bolsaTotalsMode ? 'white' : 'var(--text-muted)';
+            }
         }
 
         if (bolsaViewMode === 'cards') {
@@ -995,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Compact Totals Mode ---
             if (bolsaTotalsMode && bolsaViewMode !== 'cards') {
                 // Mark table as compact mode for CSS targeting
-                elements.stockTable.className = 'bolsa-totals-compact';
+                if (elements.stockTable) elements.stockTable.classList.add('bolsa-totals-compact');
 
                 // Helper to render sort arrow
                 const getArrow = (key) => {
@@ -1048,9 +1055,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else {
                 // --- Full Detail Table ---
+                if (elements.stockTable) elements.stockTable.classList.remove('bolsa-totals-compact');
+
                 // Restore full thead if we are not in compact mode or if headers are the wrong ones
                 const thead = elements.stockTable?.querySelector('thead');
-                if (thead && !thead.querySelector('th[data-sort="market"]')) {
+                if (thead && (!thead.querySelector('th[data-sort="market"]') || thead.innerHTML.includes('btc-siglas'))) {
                     thead.innerHTML = `
                     <tr>
                         <th data-sort="name">Asset <span class="sort-icon"></span></th>
@@ -4014,6 +4023,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Manage Sidebar Submenus
+        // ONLY force open if we are switching TO that specific view. 
+        // If we are switching to something like "activity", we don't necessarily want to close others if they were manually opened.
+        document.querySelectorAll('.nav-item-container').forEach(container => {
+            const isTarget = container.id === `${view}NavContainer`;
+            if (isTarget) {
+                container.classList.add('open');
+            } else if (view !== 'activity' && view !== 'analisis') {
+                // If switching between main sections, we close others. 
+                // But if going to Activity, we leave them as they were.
+                container.classList.remove('open');
+            }
+        });
+
         // Use generalized render to handle visibility and specific rendering
         render();
     }
@@ -5078,6 +5101,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- View Toggle Helpers ---
+    function toggleBolsaView() {
+        bolsaViewMode = bolsaViewMode === 'cards' ? 'list' : 'cards';
+        localStorage.setItem('bolsaViewMode', bolsaViewMode);
+        render();
+    }
+
+    function toggleAhorroView() {
+        ahorroViewMode = ahorroViewMode === 'cards' ? 'list' : 'cards';
+        localStorage.setItem('ahorroViewMode', ahorroViewMode);
+        render();
+    }
+
+    function toggleNominaView() {
+        nominaViewMode = nominaViewMode === 'cards' ? 'list' : 'cards';
+        localStorage.setItem('nominaViewMode', nominaViewMode);
+        render();
+    }
+
+    function toggleDataSource() {
+        const newMode = (window.DATA_SOURCE_MODE === 'hybrid') ? 'yahoo' : 'hybrid';
+        window.DATA_SOURCE_MODE = newMode;
+        if (window.saveDataSourceMode) window.saveDataSourceMode(newMode);
+        updateDataSourceUI();
+        
+        // Trigger a refresh of prices with the new mode
+        const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
+        if (window.refreshLivePrices) {
+            showToast("🔄 Cambiando fuente de datos...", "info");
+            const btn = elements.manualRefreshBtn;
+            const originalContent = btn ? btn.textContent : '';
+            if (btn) btn.style.color = '#f59e0b';
+
+            window.refreshLivePrices(uniqueTickers, (current) => {
+                if (btn) btn.textContent = current;
+            }).then(() => {
+                render();
+                if (btn) {
+                    btn.textContent = originalContent;
+                    btn.style.color = '';
+                }
+                showToast(`✅ Modo ${newMode === 'yahoo' ? 'Yahoo Finance' : 'Híbrido'} activado`, "success");
+            });
+        }
+    }
+
     // --- Event Listeners ---
 
     function setupEventListeners() {
@@ -5113,9 +5182,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // New Navigation Logic
         const allNavs = [...elements.wealthNavItems, ...elements.bottomNavItems];
         allNavs.forEach(nav => {
-            nav.addEventListener('click', () => {
+            nav.addEventListener('click', (e) => {
                 const view = nav.dataset.view;
-                if (view) switchView(view);
+                if (!view) return;
+
+                // Toggle logic for sidebar items
+                const isSidebar = nav.classList.contains('wealth-nav-item');
+                const container = nav.closest('.nav-item-container');
+                
+                if (isSidebar && container && currentView === view) {
+                    // Clicking the same active section in sidebar: TOGGLE menu
+                    container.classList.toggle('open');
+                    return;
+                }
+                
+                switchView(view);
                 
                 // Close sidebar on mobile after choosing a view
                 if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
@@ -5168,6 +5249,88 @@ document.addEventListener('DOMContentLoaded', () => {
              document.getElementById('clockMenuBtn')?.click();
         });
         elements.sidebarResetBtn?.addEventListener('click', () => forceAppUpdate());
+
+        // Submenu button listeners (Direct calls to avoid "display:none" click issues)
+        document.getElementById('sidebarAddStockBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openAddStockModal();
+        });
+        document.getElementById('bolsaHighlightsToggleBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bolsaHighlightsVisible = !bolsaHighlightsVisible;
+            localStorage.setItem('bolsaHighlightsVisible', bolsaHighlightsVisible);
+            render();
+        });
+        document.getElementById('bolsaSummaryToggleBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bolsaSummaryVisible = !bolsaSummaryVisible;
+            localStorage.setItem('bolsaSummaryVisible', bolsaSummaryVisible);
+            render();
+        });
+        document.getElementById('bolsaDataSourceToggleBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDataSource();
+        });
+        document.getElementById('bolsaManualPriceBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openManualPriceModal();
+        });
+        document.getElementById('bolsaViewToggleBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleBolsaView();
+        });
+        document.getElementById('bolsaTotalesToggle2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bolsaTotalsMode = !bolsaTotalsMode;
+            localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
+            render();
+        });
+
+        document.getElementById('ahorroViewToggleBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleAhorroView();
+        });
+        document.getElementById('ahorroBreakdownBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showAhorroBreakdown();
+        });
+
+        document.getElementById('addNominaBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showAddNomina();
+        });
+        document.getElementById('nominaAnalisisViewBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            switchView('analisis');
+        });
+        document.getElementById('nominaViewToggleBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNominaView();
+        });
+        document.getElementById('exportDataBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportToCSV();
+        });
+        document.getElementById('fiscalCountdownBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showFiscalCalendarModal();
+        });
+
+        // Independent Chevron Toggle Logic
+        document.querySelectorAll('.nav-item-chevron').forEach(chevron => {
+            chevron.classList.add('clickable'); // Visual hint
+            chevron.style.cursor = 'pointer';
+            chevron.style.pointerEvents = 'auto'; 
+            
+            chevron.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const container = chevron.closest('.nav-item-container');
+                if (container) {
+                    container.classList.toggle('open');
+                }
+            });
+        });
 
         // Activity via Sidebar
         elements.sidebarActivityBtn?.addEventListener('click', () => switchView('activity'));
@@ -5431,11 +5594,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         if (elements.nominaViewToggleBtn) {
-            elements.nominaViewToggleBtn.onclick = () => {
-                nominaViewMode = nominaViewMode === 'cards' ? 'list' : 'cards';
-                localStorage.setItem('nominaViewMode', nominaViewMode);
-                renderNomina();
-            };
+            elements.nominaViewToggleBtn.onclick = toggleNominaView;
         }
 
         // Nomina Listeners
@@ -5747,11 +5906,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Ahorro View Toggles
-        elements.ahorroViewToggleBtn?.addEventListener('click', () => {
-            ahorroViewMode = ahorroViewMode === 'cards' ? 'list' : 'cards';
-            localStorage.setItem('ahorroViewMode', ahorroViewMode);
-            renderSavings();
-        });
+        elements.ahorroViewToggleBtn?.addEventListener('click', toggleAhorroView);
 
 
         elements.ahorroFilterMode?.addEventListener('change', (e) => {
@@ -6008,11 +6163,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Bolsa View Toggle
         if (elements.bolsaViewToggleBtn) {
-            elements.bolsaViewToggleBtn.addEventListener('click', () => {
-                bolsaViewMode = bolsaViewMode === 'cards' ? 'list' : 'cards';
-                localStorage.setItem('bolsaViewMode', bolsaViewMode);
-                render();
-            });
+            elements.bolsaViewToggleBtn.addEventListener('click', toggleBolsaView);
         }
 
         // Mobile: tap "Sus Inversiones" title to toggle list/cards view
@@ -6401,7 +6552,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
         console.log(`Calculating days until ${targetYear}-${targetMonth + 1}-${fiscalDay}: ${diffDays} days. fiscalDay: ${fiscalDay}`);
-        elements.fiscalDaysLeft.textContent = (diffDays >= 0 ? diffDays : 0);
+        const days = (diffDays >= 0 ? diffDays : 0);
+        if (elements.fiscalDaysLeft) elements.fiscalDaysLeft.textContent = days;
+        const sidebarDays = document.getElementById('fiscalDaysLeft2');
+        if (sidebarDays) sidebarDays.textContent = days;
     }
 
     function showFiscalCalendarModal() {
@@ -7190,37 +7344,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.bolsaDataSourceToggleBtn.title = 'Modo: Finnhub + Yahoo Fallback (Pulsa para Solo Yahoo)';
             }
         }
+        // Update sidebar button text
+        const sidebarSourceBtn = document.getElementById('bolsaDataSourceToggleBtn2');
+        if (sidebarSourceBtn) {
+            sidebarSourceBtn.innerHTML = mode === 'yahoo' 
+                ? '<span>📊</span> Origen: Yahoo' 
+                : '<span>⚡</span> Origen: Híbrido';
+        }
     }
 
     // Start
     const initApp = function () {
         if (elements.bolsaDataSourceToggleBtn) {
-            elements.bolsaDataSourceToggleBtn.addEventListener('click', () => {
-                const newMode = (window.DATA_SOURCE_MODE === 'hybrid') ? 'yahoo' : 'hybrid';
-                window.DATA_SOURCE_MODE = newMode;
-                if (window.saveDataSourceMode) window.saveDataSourceMode(newMode);
-                updateDataSourceUI();
-                
-                // Trigger a refresh of prices with the new mode
-                const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
-                if (window.refreshLivePrices) {
-                    showToast("🔄 Cambiando fuente de datos...", "info");
-                    const btn = elements.manualRefreshBtn;
-                    const originalContent = btn ? btn.textContent : '';
-                    if (btn) btn.style.color = '#f59e0b';
-
-                    window.refreshLivePrices(uniqueTickers, (current) => {
-                        if (btn) btn.textContent = current;
-                    }).then(() => {
-                        render();
-                        if (btn) {
-                            btn.textContent = originalContent;
-                            btn.style.color = '';
-                        }
-                        showToast(`✅ Modo ${newMode === 'yahoo' ? 'Yahoo Finance' : 'Híbrido'} activado`, "success");
-                    });
-                }
-            });
+            elements.bolsaDataSourceToggleBtn.addEventListener('click', toggleDataSource);
         }
         updateDataSourceUI();
         // Init Manual Prices

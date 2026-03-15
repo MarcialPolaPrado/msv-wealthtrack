@@ -357,6 +357,88 @@ header a {
     font-size: 0.95rem;
 }
 
+/* Submenu Styles */
+.nav-item-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.nav-item-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.nav-item-chevron {
+    position: absolute;
+    right: 1rem;
+    pointer-events: none;
+    font-size: 0.7rem;
+    opacity: 0.5;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: white;
+    z-index: 5;
+}
+
+.wealth-nav-item {
+    padding-right: 3rem !important; /* Extra space for chevron */
+}
+
+.nav-item-container.open .nav-item-chevron {
+    transform: rotate(180deg);
+}
+
+.sidebar-submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    padding-left: 2.5rem;
+    margin-top: 2px;
+    opacity: 0;
+}
+
+.nav-item-container.open .sidebar-submenu {
+    max-height: 500px;
+    opacity: 1;
+    margin-bottom: 0.5rem;
+}
+
+.submenu-item {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: inherit;
+}
+
+.submenu-item:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px);
+}
+
+.submenu-item span {
+    font-size: 1rem;
+}
+
+/* Hide old header icons as requested */
+#bolsaHeaderActions, #ahorroHeaderActions, #nominaHeaderActions {
+    display: none !important;
+}
+
 /* Bottom Nav Hub for Mobile */
 .bottom-nav-hub {
     display: none; /* Only mobile */
