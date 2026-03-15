@@ -1452,11 +1452,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2c. Apply Search Filter
         if (activitySearchQuery) {
-            const q = activitySearchQuery.toLowerCase();
+            // Support OR (|) and AND (+) logic
+            const orGroups = activitySearchQuery.toLowerCase().split('|').map(g => g.trim()).filter(g => g);
             filtered = filtered.filter(m => {
                 const concept = (m.concept || '').toLowerCase();
                 const category = (m.category || '').toLowerCase();
-                return concept.includes(q) || category.includes(q);
+                const text = concept + " " + category;
+                
+                // Return true if ANY of the OR groups match
+                return orGroups.some(group => {
+                    const andTerms = group.split('+').map(t => t.trim()).filter(t => t);
+                    // Match only if ALL terms in this group are present
+                    return andTerms.every(term => text.includes(term));
+                });
             });
         }
 
@@ -5526,6 +5534,44 @@ document.addEventListener('DOMContentLoaded', () => {
             
             render();
         });
+
+        // Activity Submenu Listeners
+        const setActivitySearch = (query) => {
+            if (elements.activitySearchInput) {
+                elements.activitySearchInput.value = query;
+                activitySearchQuery = query;
+                switchView('activity');
+                renderActivity();
+            }
+        };
+
+        document.getElementById('sidebarFilterBuyBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setActivitySearch('Compra');
+        });
+        document.getElementById('sidebarFilterDivBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setActivitySearch('Dividendos');
+        });
+        document.getElementById('sidebarFilterIntBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setActivitySearch('Intereses');
+        });
+        document.getElementById('sidebarFilterEspBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setActivitySearch('Especulación');
+        });
+        document.getElementById('sidebarFilterRendBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Using a special format that we will handle as OR in renderActivity
+            setActivitySearch('Dividendos | Intereses | Especulación');
+        });
+        document.getElementById('sidebarFilterAllBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            activityCellFilter = { column: null, value: null };
+            setActivitySearch('');
+        });
+        
         document.getElementById('ahorroBreakdownBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             showAhorroBreakdown();

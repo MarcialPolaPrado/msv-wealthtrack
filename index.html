@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603151534">
+    <link rel="stylesheet" href="styles.css?v=202603151545">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -125,10 +125,23 @@
                             <button id="fiscalCountdownBtn2" class="submenu-item"><span>⏳</span> Días Mes Fiscal: <span id="fiscalDaysLeft2">--</span></button>
                         </div>
                     </div>
-                    <button class="wealth-nav-item" data-view="activity" id="sidebarActivityBtn">
-                        <span class="nav-icon">🔄</span>
-                        <span class="nav-text">Actividad</span>
-                    </button>
+                    <div class="nav-item-container" id="activityNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item" data-view="activity" id="sidebarActivityBtn">
+                                <span class="nav-icon">🔄</span>
+                                <span class="nav-text">Actividad</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="sidebarFilterBuyBtn" class="submenu-item"><span>🛍️</span> Compra</button>
+                            <button id="sidebarFilterDivBtn" class="submenu-item"><span>💰</span> Div.</button>
+                            <button id="sidebarFilterIntBtn" class="submenu-item"><span>🏦</span> Int.</button>
+                            <button id="sidebarFilterEspBtn" class="submenu-item"><span>🚀</span> Esp.</button>
+                            <button id="sidebarFilterRendBtn" class="submenu-item"><span>📊</span> Rend. (D+I+E)</button>
+                            <button id="sidebarFilterAllBtn" class="submenu-item"><span>🔄</span> Todo</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="nav-group">
@@ -1267,9 +1280,9 @@
     <input type="file" id="globalJsonInput" class="hidden" accept=".json">
     <button id="clockMenuBtn" class="hidden"></button>
 
-    <script src="storage.js?v=202603151336"></script>
-    <script src="mock_data.js?v=202603151336"></script>
-    <script src="app.js?v=202603151534"></script>
+    <script src="storage.js?v=202603151540"></script>
+    <script src="mock_data.js?v=202603151540"></script>
+    <script src="app.js?v=202603151545"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1313,7 +1326,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603151534';
+        const APP_VERSION = '202603151545';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
