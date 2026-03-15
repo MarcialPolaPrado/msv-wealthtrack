@@ -5328,22 +5328,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const view = nav.dataset.view;
                 if (!view) return;
 
-                // Toggle logic for sidebar items
                 const isSidebar = nav.classList.contains('wealth-nav-item');
                 const container = nav.closest('.nav-item-container');
-                
+
                 if (currentView === view) {
+                    if (view === 'bolsa') toggleBolsaView();
+                    else if (view === 'ahorro') toggleAhorroView();
+                    else if (view === 'nomina') toggleNominaView();
+                    
                     if (isSidebar && container) {
-                        // Clicking the same active section in sidebar: TOGGLE menu
                         container.classList.toggle('open');
                     }
-                    // Prevent any further action (like toggling view mode) on already active tabs
                     return;
                 }
-                
+
                 switchView(view);
-                
-                // Close sidebar on mobile after choosing a view
+
                 if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
                 if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove('visible');
             });
