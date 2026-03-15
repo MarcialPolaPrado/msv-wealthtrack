@@ -587,7 +587,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarOverlay: document.getElementById('sidebarOverlay'),
         mobileMoreBtn: document.getElementById('mobileMoreBtn'),
         mobileMenuBtn: document.getElementById('mobileMenuBtn'),
-        sidebarAddStockBtn: document.getElementById('sidebarAddStockBtn'),
         sidebarPrivacyToggleBtn: document.getElementById('sidebarPrivacyToggleBtn'),
         sidebarSettingsBtn: document.getElementById('sidebarSettingsBtn'),
         sidebarExportBtn: document.getElementById('sidebarExportBtn'),
@@ -5378,7 +5377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Action Buttons in Sidebar & Mobile Dynamic FAB
-        elements.sidebarAddStockBtn?.addEventListener('click', openAddStockModal);
+
         elements.mobileMenuBtn?.addEventListener('click', () => {
             if (currentView === 'bolsa') openAddStockModal();
             else if (currentView === 'ahorro') showAddDrawer();
