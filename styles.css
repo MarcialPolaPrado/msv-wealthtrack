@@ -468,10 +468,15 @@ header a {
     transition: bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.3s ease;
 }
 
-.bottom-nav-hub.is-minimized .bottom-nav-item,
-.bottom-nav-hub.is-minimized .floating-action-btn {
+.bottom-nav-hub.is-minimized .bottom-nav-item {
     opacity: 0;
     pointer-events: none;
+}
+
+/* Keep FAB visible and clickable even when minimized */
+.bottom-nav-hub.is-minimized .floating-action-btn {
+    transform: translateY(10px) scale(0.8);
+    opacity: 0.8;
 }
 
 .bottom-nav-hub.is-minimized {
@@ -490,6 +495,11 @@ header a {
     justify-content: space-between;
     align-items: center;
     padding: 0 16px;
+    pointer-events: none; /* Let clicks pass through to buttons under it */
+}
+
+.drag-handle > * {
+    pointer-events: auto; /* Re-enable for the actual controls */
 }
 
 .drag-indicator {
@@ -584,6 +594,11 @@ header a {
     box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
     transform: translateY(-20px);
     transition: all 0.3s ease;
+    z-index: 50; /* Above handle but within hub's context */
+}
+
+.floating-action-btn span {
+    pointer-events: none;
 }
 
 .floating-action-btn:active {

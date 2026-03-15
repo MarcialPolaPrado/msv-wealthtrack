@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603151723">
+    <link rel="stylesheet" href="styles.css?v=202603151914">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -139,6 +139,7 @@
                             <button id="sidebarFilterIntBtn" class="submenu-item"><span>🏦</span> Int.</button>
                             <button id="sidebarFilterEspBtn" class="submenu-item"><span>🚀</span> Esp.</button>
                             <button id="sidebarFilterRendBtn" class="submenu-item"><span>📊</span> Rend. (D+I+E)</button>
+                            <button id="sidebarFilterStocksBtn" class="submenu-item"><span>📈</span> Acciones</button>
                             <button id="sidebarFilterAllBtn" class="submenu-item"><span>🔄</span> Todo</button>
                         </div>
                     </div>
@@ -454,29 +455,24 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
                             <input type="text" id="activitySearchInput" placeholder="Buscar..." 
-                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 10px; font-size: 0.85rem; outline: none; width: 120px;">
+                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; outline: none; width: 100px; height: 30px; box-sizing: border-box;">
                             <select id="activityFilterMode"
-                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; cursor: pointer; outline: none; width: 100px; height: 30px; box-sizing: border-box;">
                                 <option value="month">📅 Mes</option>
                                 <option value="year">🗓️ Año</option>
                             </select>
                             <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
-                                <button id="activityMonthUp" class="nav-arrow" style="padding: 2px 8px;">🔼</button>
-                                <button id="activityMonthDown" class="nav-arrow" style="padding: 2px 8px;">🔽</button>
+                                <button id="activityMonthUp" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="activityMonthDown" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
                             </div>
                             <h3 id="activityMonthLabel"
-                                style="margin:0; min-width:140px; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">
+                                style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">
                                 Marzo 2024</h3>
                             <button id="activityDateTrigger" class="nav-icon-btn" title="Selector de Mes"
                                 style="margin-left:5px">📅</button>
                             <input type="month" id="activityMonthInput" class="hidden">
                         </div>
-                    <div id="activityStockFilters" 
-                        style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
-                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-right: 0.5rem;">🎯 Filtrar por Acción:</span>
-                        <!-- Chips like [AAPL] [MSFT] [Todo] will be injected here -->
                     </div>
-
                     <div id="activityTableContainer" class="table-container glass-panel"
                         style="margin-bottom: 2rem; overflow-x: auto;">
                         <table id="activityTable" style="width: 100%; border-collapse: collapse;">
@@ -1294,7 +1290,7 @@
 
     <script src="storage.js?v=202603151612"></script>
     <script src="mock_data.js?v=202603151612"></script>
-    <script src="app.js?v=202603151723"></script>
+    <script src="app.js?v=202603151914"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1338,7 +1334,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603151723';
+        const APP_VERSION = '202603151914';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
