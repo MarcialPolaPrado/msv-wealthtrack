@@ -589,6 +589,10 @@ document.addEventListener('DOMContentLoaded', () => {
         activityTableBody: document.getElementById('activityTableBody'),
         activityMonthLabel: document.getElementById('activityMonthLabel'),
         activityMonthUp: document.getElementById('activityMonthUp'),
+        activityMonthDown: document.getElementById('activityMonthDown'),
+        activityFilterMode: document.getElementById('activityFilterMode'),
+        activityDateTrigger: document.getElementById('activityDateTrigger'),
+        activityMonthInput: document.getElementById('activityMonthInput'),
         activitySearchInput: document.getElementById('activitySearchInput'),
         // New Nav Elements
         wealthSidebar: document.getElementById('wealthSidebar'),
@@ -2870,7 +2874,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.bolsaHighlights.innerHTML = `
             <div class="highlights-container">
-                <div class="highlights-badge">Resumen</div>
                 <div class="highlights-ticker">
                     ${tickerContent}
                 </div>
