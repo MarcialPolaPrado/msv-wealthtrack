@@ -607,6 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bottomNav: document.getElementById('bottomNavHub'),
         sidebarClockBtn: document.getElementById('sidebarClockBtn'),
         sidebarResetBtn: document.getElementById('sidebarResetBtn'),
+        sidebarDeleteAllBtn: document.getElementById('sidebarDeleteAllBtn'),
         sidebarActivityBtn: document.getElementById('sidebarActivityBtn'),
         wealthNavItems: document.querySelectorAll('.wealth-nav-item'),
         bottomNavItems: document.querySelectorAll('.bottom-nav-item')
@@ -5185,7 +5186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // 3. Clear localStorage versions if needed (optional, keeping data is safer)
+                // 3. Clear localStorage versions if needed
                 localStorage.removeItem('app_version');
 
                 showToast('Caché restablecida. Recargando...', 'success');
@@ -5200,6 +5201,99 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Error al restablecer caché: ' + err.message);
             }
         });
+    }
+
+    async function deleteAllData() {
+        showCustomConfirm('¿Estás seguro de que quieres BORRAR TODOS los datos de la aplicación? Esta acción es irreversible.', async () => {
+            try {
+                // Clear local session state
+                stocks = [];
+                savingsDrawers = [
+                    { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 }
+                ];
+                countdowns = [];
+                
+                // Persist clear state via storage.js
+                if (window.saveStocks) window.saveStocks(stocks);
+                if (window.saveSavings) window.saveSavings(savingsDrawers);
+                if (window.saveCountdowns) window.saveCountdowns(countdowns);
+                if (window.saveNomina) window.saveNomina({ incomeMovements: [], ahorroMovements: [], expenseMovements: [] });
+                
+                // Clear extra system keys
+                localStorage.removeItem('msv_fx_rate_v1');
+                localStorage.removeItem('msv_fx_date_v1');
+                localStorage.removeItem('msv_live_prices_v1');
+                
+                showToast('Todos los datos han sido borrados', 'info');
+                render(); 
+
+                // Ask for demo data
+                setTimeout(() => {
+                    showCustomConfirm('La aplicación está vacía. ¿Quieres cargar unos datos de ejemplo para explorar las funcionalidades?', () => {
+                        loadDemoData();
+                        render();
+                    });
+                }, 800);
+            } catch (err) {
+                console.error('Error deleting data:', err);
+                showToast('Error al borrar los datos', 'danger');
+            }
+        });
+    }
+
+    function loadDemoData() {
+        const now = new Date();
+        const past = new Date();
+        past.setMonth(now.getMonth() - 1);
+        const pastStr = past.toISOString().split('T')[0];
+        const currentStr = now.toISOString().split('T')[0];
+
+        stocks = [
+            { ticker: 'AAPL', shares: 12, costBasis: 175.50, currency: 'USD', name: 'Apple Inc.' },
+            { ticker: 'MSFT', shares: 8, costBasis: 395.20, currency: 'USD', name: 'Microsoft Corp.' },
+            { ticker: 'NVDA', shares: 5, costBasis: 680.15, currency: 'USD', name: 'NVIDIA Corp.' },
+            { ticker: 'KO', shares: 45, costBasis: 58.20, currency: 'USD', name: 'Coca-Cola Co.' },
+            { ticker: 'SAN.MC', shares: 500, costBasis: 4.15, currency: 'EUR', name: 'Banco Santander' },
+            { ticker: 'ITX.MC', shares: 25, costBasis: 51.10, currency: 'EUR', name: 'Inditex' }
+        ];
+        
+        savingsDrawers = [
+            { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 },
+            { id: 'emergency_demo', name: 'Fondo de Emergencia', icon: '🛡️', balance: 3500, movements: [
+                { id: Date.now() + 1, date: pastStr, amount: 3500, category: 'Ahorro', concept: 'Aportación inicial (Ahorros acumulados)', type: 'income' }
+            ], isAuto: false, targetAmount: 5000 },
+            { id: 'travel_demo', name: 'Hucha Viajes', icon: '✈️', balance: 1350, movements: [
+                { id: Date.now() + 2, date: pastStr, amount: 1500, category: 'Ahorro', concept: 'Venta material segunda mano', type: 'income' },
+                { id: Date.now() + 3, date: currentStr, amount: 150, category: 'Gasto', concept: 'Reserva hotel Venecia', type: 'expense' }
+            ], isAuto: false, targetAmount: 2500 },
+            { id: 'car_demo', name: 'Coche Nuevo', icon: '🚗', balance: 500, movements: [
+                { id: Date.now() + 6, date: currentStr, amount: 500, category: 'Ahorro', concept: 'Primera aportación coche', type: 'income' }
+            ], isAuto: false, targetAmount: 20000 }
+        ];
+
+        countdowns = [
+            { id: Date.now() + 4, name: 'Vacaciones Verano', date: '2026-08-01T09:00:00', icon: '☀️' }
+        ];
+
+        const demoNomina = {
+            incomeMovements: [
+                { id: Date.now() + 10, date: currentStr, amount: 2500, category: 'Ahorro', concept: 'Nómina Marzo', type: 'income' }
+            ],
+            ahorroMovements: [
+                { id: Date.now() + 11, date: currentStr, amount: 500, category: 'Ahorro', concept: 'Hacia Hucha Coche', type: 'ahorro' }
+            ],
+            expenseMovements: [
+                { id: Date.now() + 12, date: currentStr, amount: 850, category: 'Gasto', concept: 'Alquiler / Hipoteca', type: 'expense' },
+                { id: Date.now() + 13, date: currentStr, amount: 120, category: 'Gasto', concept: 'Suministros (Luz, Agua)', type: 'expense' }
+            ]
+        };
+
+        if (window.saveStocks) window.saveStocks(stocks);
+        if (window.saveSavings) window.saveSavings(savingsDrawers);
+        if (window.saveCountdowns) window.saveCountdowns(countdowns);
+        if (window.saveNomina) window.saveNomina(demoNomina);
+        
+        showToast('¡Datos de demostración enriquecidos cargados!', 'success');
     }
 
     // --- View Toggle Helpers ---
@@ -5470,6 +5564,7 @@ document.addEventListener('DOMContentLoaded', () => {
              document.getElementById('clockMenuBtn')?.click();
         });
         elements.sidebarResetBtn?.addEventListener('click', () => forceAppUpdate());
+        elements.sidebarDeleteAllBtn?.addEventListener('click', () => deleteAllData());
 
         // Submenu button listeners (Direct calls to avoid "display:none" click issues)
         document.getElementById('sidebarAddStockBtn2')?.addEventListener('click', (e) => {
