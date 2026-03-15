@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fmtEUR = (num) => {
         if (isPrivacyActive) return '€ ****';
         if (num === null || num === undefined) return '-';
-        return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', useGrouping: true }).format(Number(num));
+        return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', useGrouping: true, maximumFractionDigits: 0 }).format(Number(num));
     };
     const fmtNum = (num, decimals = 2) => {
         if (isPrivacyActive) return '****';
@@ -577,11 +577,22 @@ document.addEventListener('DOMContentLoaded', () => {
         activityTableBody: document.getElementById('activityTableBody'),
         activityMonthLabel: document.getElementById('activityMonthLabel'),
         activityMonthUp: document.getElementById('activityMonthUp'),
-        activityMonthDown: document.getElementById('activityMonthDown'),
-        activityDateTrigger: document.getElementById('activityDateTrigger'),
-        activityMonthInput: document.getElementById('activityMonthInput'),
-        activityFilterMode: document.getElementById('activityFilterMode'),
-        activitySearchInput: document.getElementById('activitySearchInput')
+        activitySearchInput: document.getElementById('activitySearchInput'),
+        // New Nav Elements
+        wealthSidebar: document.getElementById('wealthSidebar'),
+        sidebarOverlay: document.getElementById('sidebarOverlay'),
+        mobileMoreBtn: document.getElementById('mobileMoreBtn'),
+        mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+        sidebarAddStockBtn: document.getElementById('sidebarAddStockBtn'),
+        sidebarPrivacyToggleBtn: document.getElementById('sidebarPrivacyToggleBtn'),
+        sidebarSettingsBtn: document.getElementById('sidebarSettingsBtn'),
+        sidebarExportBtn: document.getElementById('sidebarExportBtn'),
+        sidebarImportBtn: document.getElementById('sidebarImportBtn'),
+        sidebarClockBtn: document.getElementById('sidebarClockBtn'),
+        sidebarResetBtn: document.getElementById('sidebarResetBtn'),
+        sidebarActivityBtn: document.getElementById('sidebarActivityBtn'),
+        wealthNavItems: document.querySelectorAll('.wealth-nav-item'),
+        bottomNavItems: document.querySelectorAll('.bottom-nav-item')
     };
 
     const updateNominaMovementType = (type) => {
@@ -3970,14 +3981,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function switchView(view) {
-        if (currentView !== 'activity') previousView = currentView;
+        if (currentView !== 'activity' && currentView !== 'analisis') previousView = currentView;
         currentView = view;
-        elements.navItems.forEach(item => {
+        
+        // Sync Sidebar Items
+        elements.wealthNavItems?.forEach(item => {
+            item.classList.toggle('active', item.dataset.view === view);
+        });
+        
+        // Sync Bottom Bar Items
+        elements.bottomNavItems?.forEach(item => {
             item.classList.toggle('active', item.dataset.view === view);
         });
 
         // Use generalized render to handle visibility and specific rendering
         render();
+    }
+
+    function toggleSidebarCollapse() {
+        const sidebar = elements.wealthSidebar;
+        if (!sidebar) return;
+        
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+        
+        // Update main content padding if necessary
+        const appMain = document.getElementById('appMain');
+        if (appMain) {
+            appMain.classList.toggle('sidebar-collapsed', isCollapsed);
+        }
     }
 
     function showAddDrawer() {
@@ -5048,14 +5080,54 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.mobilePrivacyToggleBtn.addEventListener('click', togglePrivacy);
         }
 
-        // Navigation
-        console.log("Setting up nav items listeners. Count:", elements.navItems?.length || 0);
-        elements.navItems?.forEach(item => {
-            item.addEventListener('click', () => switchView(item.dataset.view));
+        // New Navigation Logic
+        const allNavs = [...elements.wealthNavItems, ...elements.bottomNavItems];
+        allNavs.forEach(nav => {
+            nav.addEventListener('click', () => {
+                const view = nav.dataset.view;
+                if (view) switchView(view);
+                
+                // Close sidebar on mobile after choosing a view
+                if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
+                if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove('visible');
+            });
         });
 
-        // Logo Listener
-        elements.logoBtn?.addEventListener('click', () => switchView('activity'));
+        // Mobile "More" Menu
+        elements.mobileMoreBtn?.addEventListener('click', () => {
+            elements.wealthSidebar?.classList.toggle('mobile-open');
+            elements.sidebarOverlay?.classList.toggle('visible');
+        });
+
+        elements.sidebarOverlay?.addEventListener('click', () => {
+            elements.wealthSidebar?.classList.remove('mobile-open');
+            elements.sidebarOverlay?.classList.remove('visible');
+        });
+
+        // Sidebar Collapse Toggle
+        document.getElementById('sidebarCollapseBtn')?.addEventListener('click', toggleSidebarCollapse);
+        
+        // Restore Sidebar State
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            elements.wealthSidebar?.classList.add('collapsed');
+            document.getElementById('appMain')?.classList.add('sidebar-collapsed');
+        }
+
+        // Action Buttons in Sidebar
+        elements.sidebarAddStockBtn?.addEventListener('click', openAddStockModal);
+        elements.mobileMenuBtn?.addEventListener('click', openAddStockModal);
+        elements.sidebarPrivacyToggleBtn?.addEventListener('click', togglePrivacy);
+        elements.sidebarSettingsBtn?.addEventListener('click', openSettingsModal);
+        elements.sidebarExportBtn?.addEventListener('click', () => exportGlobalJSON());
+        elements.sidebarImportBtn?.addEventListener('click', () => elements.globalJsonInput?.click());
+        elements.sidebarClockBtn?.addEventListener('click', () => {
+             // Simulate old clockMenuBtn trigger
+             document.getElementById('clockMenuBtn')?.click();
+        });
+        elements.sidebarResetBtn?.addEventListener('click', () => forceAppUpdate());
+
+        // Activity via Sidebar
+        elements.sidebarActivityBtn?.addEventListener('click', () => switchView('activity'));
 
         // Activity Listeners
         elements.activityBackBtn?.addEventListener('click', () => switchView(previousView));
