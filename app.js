@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activitySortConfig = getSortConfig('activitySortConfig', { key: 'date', direction: 'desc' });
     let activityCellFilter = { column: null, value: null };
     let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'month' or 'year'
+    let activityStockFilter = null;
     let activitySearchQuery = '';
 
     const DRAWER_COLORS = [
@@ -596,6 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activityDateTrigger: document.getElementById('activityDateTrigger'),
         activityMonthInput: document.getElementById('activityMonthInput'),
         activitySearchInput: document.getElementById('activitySearchInput'),
+        activityStockFilters: document.getElementById('activityStockFilters'),
         // New Nav Elements
         wealthSidebar: document.getElementById('wealthSidebar'),
         sidebarOverlay: document.getElementById('sidebarOverlay'),
@@ -1468,6 +1470,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return andTerms.every(term => text.includes(term));
                 });
             });
+        // 2d. Apply Stock Filter
+        if (activityStockFilter) {
+            filtered = filtered.filter(m => m.ticker === activityStockFilter);
         }
 
         // 3. Sort
@@ -1502,6 +1507,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.activitySearchInput) {
             elements.activitySearchInput.value = activitySearchQuery;
         }
+
+        // 4b. Update Stock Filters UI
+        updateActivityStockFiltersUI(allMovements);
 
         // 5. Render Table
         elements.activityTableBody.innerHTML = '';
@@ -1538,7 +1546,90 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.activityTableBody.appendChild(tr);
         });
 
-        // 6. Add Totals Row
+        // Add event listener for cell clicks to filter
+        elements.activityTableBody.querySelectorAll('td[data-col]').forEach(td => {
+            td.onclick = (e) => {
+                const col = e.currentTarget.dataset.col;
+                const val = e.currentTarget.dataset.val;
+                if (activityCellFilter.column === col && activityCellFilter.value === val) {
+                    activityCellFilter = { column: null, value: null };
+                } else {
+                    activityCellFilter = { column: col, value: val };
+                }
+                renderActivity();
+            };
+        });
+
+        // Add event listeners for buttons
+        elements.activityTableBody.querySelectorAll('.activity-edit-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                const { type, id, drawer, index } = e.currentTarget.dataset;
+                handleActivityEdit(type, id, drawer, index);
+            };
+        });
+        elements.activityTableBody.querySelectorAll('.activity-copy-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                const { type, id, drawer, index } = e.currentTarget.dataset;
+                handleActivityCopy(type, id, drawer, index);
+            };
+        });
+        elements.activityTableBody.querySelectorAll('.activity-delete-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                const { type, id, drawer, index } = e.currentTarget.dataset;
+                handleActivityDelete(type, id, drawer, index);
+            };
+        });
+
+        if (elements.activityTotal) elements.activityTotal.textContent = fmtEUR(totalAmount, 2);
+    }
+
+    function updateActivityStockFiltersUI(allMovements) {
+        if (!elements.activityStockFilters) return;
+
+        // Get unique tickers from all bolsa movements
+        const tickers = [...new Set(allMovements
+            .filter(m => m.type === 'bolsa' && m.ticker)
+            .map(m => m.ticker)
+        )].sort();
+
+        if (tickers.length === 0) {
+            elements.activityStockFilters.classList.add('hidden');
+            return;
+        }
+        elements.activityStockFilters.classList.remove('hidden');
+
+        // Render chips
+        let html = `<span style="font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-right: 0.5rem;">🎯 Filtrar por Acción:</span>`;
+        
+        // "Todo" chip
+        const allActive = !activityStockFilter;
+        html += `
+            <button class="filter-chip ${allActive ? 'active' : ''}" 
+                    style="padding: 4px 12px; border-radius: 20px; border: 1px solid ${allActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
+                    background: ${allActive ? 'var(--primary)' : 'transparent'}; color: ${allActive ? 'white' : 'rgba(255,255,255,0.6)'}; 
+                    font-size: 0.75rem; cursor: pointer; transition: all 0.2s;"
+                    onclick="activityStockFilter = null; renderActivity();">
+                Todas
+            </button>
+        `;
+
+        tickers.forEach(t => {
+            const isActive = activityStockFilter === t;
+            html += `
+                <button class="filter-chip ${isActive ? 'active' : ''}" 
+                        style="padding: 4px 12px; border-radius: 20px; border: 1px solid ${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
+                        background: ${isActive ? 'var(--primary)' : 'transparent'}; color: ${isActive ? 'white' : 'rgba(255,255,255,0.6)'}; 
+                        font-size: 0.75rem; cursor: pointer; transition: all 0.2s;"
+                        onclick="activityStockFilter = '${t}'; renderActivity();">
+                    ${t}
+                </button>
+            `;
+        });
+
+        elements.activityStockFilters.innerHTML = html;
+    }
+
+    // 6. Add Totals Row
         if (filtered.length > 0) {
             const totalTr = document.createElement('tr');
             totalTr.style.background = 'rgba(255,255,255,0.05)';
