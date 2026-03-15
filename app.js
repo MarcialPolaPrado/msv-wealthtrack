@@ -277,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let rawNomina = (window.loadNomina) ? (window.loadNomina() || []) : [];
+    if (!Array.isArray(rawNomina)) rawNomina = [];
     let nominaData = migrateNominaData(rawNomina);
     if (window.saveNomina) window.saveNomina(nominaData);
 
@@ -3573,6 +3574,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Helper to ensure the automatic drawer exists - DO THIS BEFORE RENDERING LIST
+        if (!Array.isArray(nominaData)) {
+            console.error('nominaData is not an array! Resetting to empty.');
+            nominaData = [];
+        }
         let autoDrawer = nominaData.find(d => d.isAutomatic);
         if (!autoDrawer) {
             autoDrawer = {
@@ -4514,6 +4519,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showCustomConfirm(message, onConfirm, onCancel = null) {
+        // Remove existing overlay if any (failsafe)
+        const oldOverlay = document.getElementById('customConfirmOverlay');
+        if (oldOverlay) oldOverlay.remove();
+
         const overlay = document.createElement('div');
         overlay.id = 'customConfirmOverlay';
         overlay.style.cssText = `
@@ -5165,6 +5174,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => location.reload(), 1000);
     }
 
+    function panicReset() {
+        if (confirm('¿ESTADO DE PÁNICO? Esto borrará ABSOLUTAMENTE TODO (Inversiones, Huchas, Nóminas) y reiniciará la app. ¿Continuar?')) {
+            localStorage.clear();
+            window.location.reload(true);
+        }
+    }
+    window.panicReset = panicReset;
+
     async function forceAppUpdate() {
         showCustomConfirm('Esto borrará toda la caché del navegador para esta aplicación y forzará una recarga total. ¿Continuar?', async () => {
             try {
@@ -5217,7 +5234,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.saveStocks) window.saveStocks(stocks);
                 if (window.saveSavings) window.saveSavings(savingsDrawers);
                 if (window.saveCountdowns) window.saveCountdowns(countdowns);
-                if (window.saveNomina) window.saveNomina({ incomeMovements: [], ahorroMovements: [], expenseMovements: [] });
+                if (window.saveCountdowns) window.saveCountdowns(countdowns);
+                nominaData = [];
+                if (window.saveNomina) window.saveNomina(nominaData);
                 
                 // Clear extra system keys
                 localStorage.removeItem('msv_fx_rate_v1');
@@ -5231,7 +5250,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     showCustomConfirm('La aplicación está vacía. ¿Quieres cargar unos datos de ejemplo para explorar las funcionalidades?', () => {
                         loadDemoData();
-                        render();
                     });
                 }, 800);
             } catch (err) {
@@ -5249,12 +5267,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentStr = now.toISOString().split('T')[0];
 
         stocks = [
-            { ticker: 'AAPL', shares: 12, costBasis: 175.50, currency: 'USD', name: 'Apple Inc.' },
-            { ticker: 'MSFT', shares: 8, costBasis: 395.20, currency: 'USD', name: 'Microsoft Corp.' },
-            { ticker: 'NVDA', shares: 5, costBasis: 680.15, currency: 'USD', name: 'NVIDIA Corp.' },
-            { ticker: 'KO', shares: 45, costBasis: 58.20, currency: 'USD', name: 'Coca-Cola Co.' },
-            { ticker: 'SAN.MC', shares: 500, costBasis: 4.15, currency: 'EUR', name: 'Banco Santander' },
-            { ticker: 'ITX.MC', shares: 25, costBasis: 51.10, currency: 'EUR', name: 'Inditex' }
+            { id: 'demo_1', ticker: 'AAPL', qty: 12, price: 175.50, currency: 'USD', name: 'Apple Inc.' },
+            { id: 'demo_2', ticker: 'MSFT', qty: 8, price: 395.20, currency: 'USD', name: 'Microsoft Corp.' },
+            { id: 'demo_3', ticker: 'NVDA', qty: 5, price: 680.15, currency: 'USD', name: 'NVIDIA Corp.' },
+            { id: 'demo_4', ticker: 'KO', qty: 45, price: 58.20, currency: 'USD', name: 'Coca-Cola Co.' },
+            { id: 'demo_5', ticker: 'SAN.MC', qty: 500, price: 4.15, currency: 'EUR', name: 'Banco Santander' },
+            { id: 'demo_6', ticker: 'ITX.MC', qty: 25, price: 51.10, currency: 'EUR', name: 'Inditex' }
         ];
         
         savingsDrawers = [
@@ -5275,25 +5293,47 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: Date.now() + 4, name: 'Vacaciones Verano', date: '2026-08-01T09:00:00', icon: '☀️' }
         ];
 
-        const demoNomina = {
-            incomeMovements: [
-                { id: Date.now() + 10, date: currentStr, amount: 2500, category: 'Ahorro', concept: 'Nómina Marzo', type: 'income' }
-            ],
-            ahorroMovements: [
-                { id: Date.now() + 11, date: currentStr, amount: 500, category: 'Ahorro', concept: 'Hacia Hucha Coche', type: 'ahorro' }
-            ],
-            expenseMovements: [
-                { id: Date.now() + 12, date: currentStr, amount: 850, category: 'Gasto', concept: 'Alquiler / Hipoteca', type: 'expense' },
-                { id: Date.now() + 13, date: currentStr, amount: 120, category: 'Gasto', concept: 'Suministros (Luz, Agua)', type: 'expense' }
-            ]
-        };
+        const demoNomina = [
+            {
+                id: 'demo_nom_1',
+                name: 'Nómina Principal',
+                icon: '💼',
+                type: 'income',
+                movements: [
+                    { id: 'demo_mov_1', date: currentStr, amount: 2500, category: 'Ahorro', concept: 'Nómina Mensual', type: 'income', activeMonths: [1,2,3,4,5,6,7,8,9,10,11,12], paid: true }
+                ]
+            },
+            {
+                id: 'demo_nom_2',
+                name: 'Alquiler / Hipoteca',
+                icon: '🏠',
+                type: 'expense',
+                movements: [
+                    { id: 'demo_mov_2', date: currentStr, amount: 850, category: 'Gasto', concept: 'Recibo Mensual', type: 'expense', activeMonths: [1,2,3,4,5,6,7,8,9,10,11,12], paid: true }
+                ]
+            },
+            {
+                id: 'demo_nom_3',
+                name: 'Ahorro Coche',
+                icon: '🚗',
+                type: 'saving',
+                linkedSavingsDrawerId: 'car_demo',
+                movements: [
+                    { id: 'demo_mov_3', date: currentStr, amount: 500, category: 'Ahorro', concept: 'Aportación Hucha', type: 'income', activeMonths: [1,2,3,4,5,6,7,8,9,10,11,12], paid: true }
+                ]
+            }
+        ];
+
+        nominaData = demoNomina;
+        isFirstUpdateDone = true; 
 
         if (window.saveStocks) window.saveStocks(stocks);
         if (window.saveSavings) window.saveSavings(savingsDrawers);
         if (window.saveCountdowns) window.saveCountdowns(countdowns);
-        if (window.saveNomina) window.saveNomina(demoNomina);
+        if (window.saveNomina) window.saveNomina(nominaData);
         
         showToast('¡Datos de demostración enriquecidos cargados!', 'success');
+        render();
     }
 
     // --- View Toggle Helpers ---

@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603151616">
+    <link rel="stylesheet" href="styles.css?v=202603151635">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -1290,7 +1290,7 @@
 
     <script src="storage.js?v=202603151612"></script>
     <script src="mock_data.js?v=202603151612"></script>
-    <script src="app.js?v=202603151616"></script>
+    <script src="app.js?v=202603151635"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1334,7 +1334,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603151616';
+        const APP_VERSION = '202603151635';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -1453,6 +1453,15 @@
         const mobileResetBtn = document.getElementById('mobileResetBtn');
         if (mobileResetBtn) mobileResetBtn.addEventListener('click', handleReset);
     </script>
+    <!-- Panic Rescue Button (Independent of app.js) -->
+    <div id="rescueUI" style="position:fixed; bottom:5px; left:5px; z-index:10000; opacity:0.3; pointer-events: auto;">
+        <button onclick="if(confirm('¿BORRAR TODO Y REINICIAR APP? (Estado de Pánico)')){localStorage.clear();location.reload();}" 
+                style="background:rgba(239, 68, 68, 0.4); color:white; border:1px solid rgba(255,255,255,0.1); border-radius:4px; font-size:8px; padding:4px 8px; cursor:pointer;"
+                onmouseover="this.parentElement.style.opacity='1'"
+                onmouseout="this.parentElement.style.opacity='0.3'">
+            PANIC RECOVERY
+        </button>
+    </div>
 </body>
 
 </html>
