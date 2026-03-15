@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603150823">
+    <link rel="stylesheet" href="styles.css?v=202603151258">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -82,11 +82,12 @@
                         <div class="sidebar-submenu">
                             <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir Inversión</button>
                             <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
-                            <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Resumen</button>
+                            <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
+                            <button id="bolsaBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
                             <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen Datos</button>
                             <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios Manuales</button>
                             <button id="bolsaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
-                            <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales</button>
+                            <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Acción</button>
                             <button id="exportDataBtn2" class="submenu-item"><span>💾</span> Exportar CSV</button>
                         </div>
                     </div>
@@ -101,7 +102,9 @@
                         </div>
                         <div class="sidebar-submenu">
                             <button id="ahorroViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
-                            <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📉</span> Desglose Ingresos</button>
+                            <button id="ahorroSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
+                            <button id="ahorroTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Cajón</button>
+                            <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
                             <button id="addDrawerBtn2" class="submenu-item"><span>📁</span> Añadir Cajón</button>
                         </div>
                     </div>
@@ -199,10 +202,10 @@
                             <h2 style="margin:0" id="bolsaMobileTitle">Mis Acciones</h2>
                             <button id="bolsaHighlightsToggleBtn" class="btn-sm" title="Mostrar/Ocultar Highlights Animados"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🚀</button>
-                            <button id="bolsaSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Resumen"
+                            <button id="bolsaSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Totales"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
-                            <button id="bolsaDefaultDrawerBreakdownBtn" class="btn-sm" title="Ver Ingresos Cajón por Defecto"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🏦</button>
+                            <button id="bolsaBreakdownBtn" class="btn-sm" title="Rendimientos"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📉</button>
                         </div>
                         <div style="display:flex; gap: 0.8rem;">
                             <button id="bolsaDataSourceToggleBtn" class="btn-secondary" title="Modo de Lectura de Datos"
@@ -333,11 +336,18 @@
                                     style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
                         </div>
                         <div style="display:flex; gap: 0.8rem;">
-                            <button id="ahorroBreakdownBtn" class="btn-secondary" style="padding: 0.5rem 1rem;" title="Desglose de Ingresos">📊</button>
+                            <button id="ahorroSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Totales"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
+                            <button id="ahorroBreakdownBtn" class="btn-secondary" style="padding: 0.5rem 1rem;" title="Rendimientos">📈</button>
                             <button id="addDrawerBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
                                 title="Añadir Cajón">📁</button>
                         </div>
                     </div>
+
+                    <!-- Summary area for Ahorro -->
+                    <section id="ahorroSummarySection" class="dashboard-grid" style="margin-bottom: 2rem;">
+                        <!-- Cards will be rendered here -->
+                    </section>
 
                     <div id="drawersGrid" class="drawers-grid">
                         <!-- Drawers will be rendered here -->
@@ -393,17 +403,19 @@
                         </div>
                     </div>
 
-                    <!-- Summary Drawer Section -->
-                    <div id="ahorroSummaryDrawer" style="margin-top: 2rem;">
-                        <!-- Category distribution will be rendered here -->
-                    </div>
-
-                    <!-- Pie Chart Section -->
-                    <div style="margin-top: 2rem;">
-
-                        <div id="savingsPieChartContainer" class="glass-panel"
-                            style="padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;">
-                            <div id="savingsPieChart" style="width: 100%; display: block;"></div>
+                    <!-- Summary area for Detailed distribution -->
+                    <div id="ahorroDistributionSection">
+                        <!-- Summary Drawer Section -->
+                        <div id="ahorroSummaryDrawer" style="margin-top: 2rem;">
+                            <!-- Category distribution will be rendered here -->
+                        </div>
+    
+                        <!-- Pie Chart Section -->
+                        <div style="margin-top: 2rem;">
+                            <div id="savingsPieChartContainer" class="glass-panel"
+                                style="padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;">
+                                <div id="savingsPieChart" style="width: 100%; display: block;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1017,7 +1029,7 @@
     <div id="ahorroBreakdownModal" class="modal hidden">
         <div class="modal-content glass-panel" style="max-width: 450px;">
             <div class="modal-header">
-                <h2 id="breakdownModalTitle">Resumen de Ingresos</h2>
+                <h2 id="breakdownModalTitle">Resumen de Rendimientos</h2>
                 <span id="closeBreakdownModal" class="close-modal">&times;</span>
             </div>
             <div style="margin: 1.5rem 0;">
@@ -1057,10 +1069,7 @@
                         <span style="opacity: 0.8;">Especulación:</span>
                         <span id="breakdownEspeculacion" style="font-weight: 600; color: #f59e0b; font-size: 1.1rem;">€ 0,00</span>
                     </div>
-                    <div class="breakdown-row" data-category="Ahorro" style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
-                        <span style="opacity: 0.8;">Ahorro General:</span>
-                        <span id="breakdownAhorro" style="font-weight: 600; color: var(--text-muted); font-size: 1.1rem;">€ 0,00</span>
-                    </div>
+
                     <div style="display: flex; justify-content: space-between; padding-top: 1.2rem; border-top: 1px solid var(--border-color); font-size: 1.4rem; font-weight: 700;">
                         <span>Total:</span>
                         <span id="breakdownTotal" class="highlight">€ 0,00</span>
@@ -1262,9 +1271,9 @@
     <input type="file" id="globalJsonInput" class="hidden" accept=".json">
     <button id="clockMenuBtn" class="hidden"></button>
 
-    <script src="storage.js?v=202603141659"></script>
-    <script src="mock_data.js?v=202603141659"></script>
-    <script src="app.js?v=202603150823"></script>
+    <script src="storage.js?v=202603151302"></script>
+    <script src="mock_data.js?v=202603151302"></script>
+    <script src="app.js?v=202603151258"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1308,7 +1317,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603150823';
+        const APP_VERSION = '202603151258';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

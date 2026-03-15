@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let bolsaViewMode = localStorage.getItem('bolsaViewMode') || 'list';
     let bolsaTotalsMode = localStorage.getItem('bolsaTotalsMode') === 'true' || false;
     let bolsaSummaryVisible = localStorage.getItem('bolsaSummaryVisible') !== 'false'; // Default to true
+    let ahorroSummaryVisible = localStorage.getItem('ahorroSummaryVisible') !== 'false';
     let bolsaHighlightsVisible = localStorage.getItem('bolsaHighlightsVisible') === 'true';
     let breakdownDrawerFilter = null;
     let currentBreakdownMovements = {
@@ -374,6 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
         portfolioPieChart: document.getElementById('portfolioPieChart'),
         bolsaSummarySection: document.getElementById('bolsaSummarySection'),
         bolsaSummaryToggleBtn: document.getElementById('bolsaSummaryToggleBtn'),
+        ahorroSummarySection: document.getElementById('ahorroSummarySection'),
+        ahorroSummaryToggleBtn: document.getElementById('ahorroSummaryToggleBtn'),
 
         // Savings Elements
         navItems: document.querySelectorAll('.nav-item'),
@@ -511,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
         monthDetailContent: document.getElementById('monthDetailContent'),
         bolsaGrid: document.getElementById('bolsaGrid'),
         bolsaViewToggleBtn: document.getElementById('bolsaViewToggleBtn'),
-        bolsaDefaultDrawerBreakdownBtn: document.getElementById('bolsaDefaultDrawerBreakdownBtn'),
+        bolsaBreakdownBtn: document.getElementById('bolsaBreakdownBtn'),
         bolsaHighlights: document.getElementById('bolsaHighlights'),
         bolsaHighlightsToggleBtn: document.getElementById('bolsaHighlightsToggleBtn'),
         bolsaTotalesToggle: document.getElementById('bolsaTotalesToggle'),
@@ -561,7 +564,6 @@ document.addEventListener('DOMContentLoaded', () => {
         breakdownIntereses: document.getElementById('breakdownIntereses'),
         breakdownDividendos: document.getElementById('breakdownDividendos'),
         breakdownEspeculacion: document.getElementById('breakdownEspeculacion'),
-        breakdownAhorro: document.getElementById('breakdownAhorro'),
         breakdownTotal: document.getElementById('breakdownTotal'),
         breakdownModalTitle: document.getElementById('breakdownModalTitle'),
         breakdownDetailContainer: document.getElementById('breakdownDetailContainer'),
@@ -2386,7 +2388,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderSavings() {
         if (!elements.drawersGrid) return;
+        
+        if (elements.ahorroSummarySection) {
+            elements.ahorroSummarySection.classList.toggle('hidden', !ahorroSummaryVisible);
+            
+            if (elements.ahorroSummaryToggleBtn) {
+                elements.ahorroSummaryToggleBtn.style.background = ahorroSummaryVisible ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
+            }
 
+            const cashTotal = savingsDrawers.filter(d => d.id !== 'bolsa').reduce((s, d) => s + d.balance, 0);
+            const bolsaBalance = savingsDrawers.find(d => d.id === 'bolsa')?.balance || 0;
+            const patrimonyTotal = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
+
+            elements.ahorroSummarySection.innerHTML = `
+                <div class="card summary-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; border-color: rgba(255,255,255,0.1);">
+                    <div class="summary-icon" style="font-size: 1.75rem; background: rgba(255,255,255,0.05); min-width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: 14px;">🏦</div>
+                    <div class="summary-info" style="display: flex; flex-direction: column; gap: 2px;">
+                        <span class="summary-label" style="font-size: 0.7rem; opacity: 0.6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">EFECTIVO</span>
+                        <span class="summary-value" style="font-size: 1.4rem; font-weight: 800; color: white;">${fmtEUR(cashTotal)}</span>
+                    </div>
+                </div>
+                <div class="card summary-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; border-color: rgba(59, 130, 246, 0.3);">
+                    <div class="summary-icon" style="font-size: 1.75rem; background: rgba(59, 130, 246, 0.1); min-width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: 14px;">📈</div>
+                    <div class="summary-info" style="display: flex; flex-direction: column; gap: 2px;">
+                        <span class="summary-label" style="font-size: 0.7rem; opacity: 0.6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">INVERSIONES</span>
+                        <span class="summary-value" style="color: var(--primary); font-size: 1.4rem; font-weight: 800;">${fmtEUR(bolsaBalance)}</span>
+                    </div>
+                </div>
+                <div class="card summary-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="summary-icon" style="font-size: 1.75rem; background: rgba(16, 185, 129, 0.1); min-width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: 14px;">💎</div>
+                    <div class="summary-info" style="display: flex; flex-direction: column; gap: 2px;">
+                        <span class="summary-label" style="font-size: 0.7rem; opacity: 0.6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">PATRIMONIO TOTAL</span>
+                        <span class="summary-value" style="color: var(--success); font-weight: 800; font-size: 1.4rem;">${fmtEUR(patrimonyTotal)}</span>
+                    </div>
+                </div>
+            `;
+        }
 
         // Calculate Global Total
         const total = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
@@ -5199,13 +5236,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalIntereses = 0;
         let totalDividendos = 0;
         let totalEspeculacion = 0;
-        let totalAhorro = 0;
 
         currentBreakdownMovements = {
             Intereses: [],
             Dividendos: [],
-            Especulación: [],
-            Ahorro: []
+            Especulación: []
         };
 
         const filteredDrawers = breakdownDrawerFilter 
@@ -5215,9 +5250,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.breakdownModalTitle) {
             if (breakdownDrawerFilter) {
                 const drawer = savingsDrawers.find(d => d.id === breakdownDrawerFilter);
-                elements.breakdownModalTitle.textContent = `Ingresos: ${drawer ? drawer.name : 'Cajón'}`;
+                elements.breakdownModalTitle.textContent = `Rendimientos: ${drawer ? drawer.name : 'Cajón'}`;
             } else {
-                elements.breakdownModalTitle.textContent = "Resumen de Ingresos (Global)";
+                elements.breakdownModalTitle.textContent = "Resumen de Rendimientos (Global)";
             }
         }
 
@@ -5246,9 +5281,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (cat === 'Especulación') {
                         totalEspeculacion += mov.amount;
                         currentBreakdownMovements.Especulación.push(movWithDrawer);
-                    } else if (cat === 'Ahorro') {
-                        totalAhorro += mov.amount;
-                        currentBreakdownMovements.Ahorro.push(movWithDrawer);
                     }
                 }
             });
@@ -5257,8 +5289,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.breakdownIntereses) elements.breakdownIntereses.textContent = fmtEUR(totalIntereses);
         if (elements.breakdownDividendos) elements.breakdownDividendos.textContent = fmtEUR(totalDividendos);
         if (elements.breakdownEspeculacion) elements.breakdownEspeculacion.textContent = fmtEUR(totalEspeculacion);
-        if (elements.breakdownAhorro) elements.breakdownAhorro.textContent = fmtEUR(totalAhorro);
-        if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalIntereses + totalDividendos + totalEspeculacion + totalAhorro);
+        if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalIntereses + totalDividendos + totalEspeculacion);
     }
 
     function toggleDataSource() {
@@ -5439,6 +5470,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('ahorroViewToggleBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             toggleAhorroView();
+        });
+        document.getElementById('ahorroSummaryToggleBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ahorroSummaryVisible = !ahorroSummaryVisible;
+            localStorage.setItem('ahorroSummaryVisible', ahorroSummaryVisible);
+            render();
+        });
+        document.getElementById('ahorroTotalesToggle2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ahorroListFilterMode = (ahorroListFilterMode === 'totals' ? 'detail' : 'totals');
+            localStorage.setItem('ahorroListFilterMode', ahorroListFilterMode);
+            
+            // Force list view
+            ahorroViewMode = 'list';
+            localStorage.setItem('ahorroViewMode', 'list');
+            
+            render();
         });
         document.getElementById('ahorroBreakdownBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -6362,6 +6410,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Ahorro Summary Toggle (Header button)
+        if (elements.ahorroSummaryToggleBtn) {
+            elements.ahorroSummaryToggleBtn.addEventListener('click', () => {
+                ahorroSummaryVisible = !ahorroSummaryVisible;
+                localStorage.setItem('ahorroSummaryVisible', ahorroSummaryVisible);
+                render();
+            });
+        }
+
         // ── Mobile Tooltip System (Long Press) ──
         (function () {
             let tooltipTimeout;
@@ -6441,27 +6498,35 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroBreakdownBtn.addEventListener('click', showAhorroBreakdown);
         }
 
-        if (elements.bolsaDefaultDrawerBreakdownBtn) {
-            elements.bolsaDefaultDrawerBreakdownBtn.addEventListener('click', () => {
-                const defaultSourceId = localStorage.getItem('defaultTransferSource');
-                if (!defaultSourceId) {
-                    alert("No hay un cajón por defecto seleccionado en los Ajustes.");
-                    return;
-                }
-                breakdownDrawerFilter = defaultSourceId;
-                const now = new Date();
-                if (elements.breakdownMonthInput) {
-                    elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
-                }
-                if (elements.breakdownYearInput) {
-                    elements.breakdownYearInput.value = now.getFullYear();
-                }
-                elements.breakdownDetailContainer?.classList.add('hidden');
-                currentActiveBreakdownCategory = null;
-                updateAhorroBreakdown();
-                elements.ahorroBreakdownModal?.classList.remove('hidden');
-            });
+        const openDefaultBreakdown = () => {
+            const defaultSourceId = localStorage.getItem('defaultTransferSource');
+            if (!defaultSourceId) {
+                alert("No hay un cajón por defecto seleccionado en los Ajustes.");
+                return;
+            }
+            breakdownDrawerFilter = defaultSourceId;
+            const now = new Date();
+            if (elements.breakdownMonthInput) {
+                elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
+            }
+            if (elements.breakdownYearInput) {
+                elements.breakdownYearInput.value = now.getFullYear();
+            }
+            elements.breakdownDetailContainer?.classList.add('hidden');
+            currentActiveBreakdownCategory = null;
+            updateAhorroBreakdown();
+            elements.ahorroBreakdownModal?.classList.remove('hidden');
+        };
+
+        if (elements.bolsaBreakdownBtn) {
+            elements.bolsaBreakdownBtn.addEventListener('click', openDefaultBreakdown);
         }
+        document.getElementById('bolsaBreakdownBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openDefaultBreakdown();
+        });
+
+
 
         if (elements.closeBreakdownModal) {
             elements.closeBreakdownModal.addEventListener('click', () => {
