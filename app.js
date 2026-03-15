@@ -603,6 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarSettingsBtn: document.getElementById('sidebarSettingsBtn'),
         sidebarExportBtn: document.getElementById('sidebarExportBtn'),
         sidebarImportBtn: document.getElementById('sidebarImportBtn'),
+        bottomNav: document.getElementById('bottomNavHub'),
         sidebarClockBtn: document.getElementById('sidebarClockBtn'),
         sidebarResetBtn: document.getElementById('sidebarResetBtn'),
         sidebarActivityBtn: document.getElementById('sidebarActivityBtn'),
@@ -7804,5 +7805,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupNumericSignToggles();
     setupClockCountdown();
+    // Draggable Bottom Nav Hub (Mobile)
+    function setupDraggableBottomNav() {
+        const nav = elements.bottomNav;
+        if (!nav) return;
+
+        let isDragging = false;
+        let startY, startBottom;
+
+        nav.addEventListener('pointerdown', (e) => {
+            // Avoid dragging when clicking buttons
+            if (e.target.closest('.bottom-nav-item') || e.target.closest('.floating-action-btn')) return;
+            
+            isDragging = true;
+            startY = e.clientY;
+            const style = window.getComputedStyle(nav);
+            startBottom = parseInt(style.bottom) || 0;
+            
+            nav.setPointerCapture(e.pointerId);
+            nav.style.transition = 'none';
+        });
+
+        nav.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            
+            const dy = startY - e.clientY;
+            let newBottom = startBottom + dy;
+            
+            // Constrain movement: from 10px to top of screen
+            const maxB = window.innerHeight - 100; 
+            newBottom = Math.max(10, Math.min(newBottom, maxB));
+            
+            nav.style.bottom = `${newBottom}px`;
+        });
+
+        nav.addEventListener('pointerup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            nav.style.transition = 'bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        });
+    }
+
+    setupDraggableBottomNav();
     showApp();
 });
