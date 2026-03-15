@@ -465,6 +465,17 @@ header a {
                 0 0 20px rgba(59, 130, 246, 0.05);
     user-select: none;
     touch-action: none; /* Crucial for dragging */
+    transition: bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.3s ease;
+}
+
+.bottom-nav-hub.is-minimized .bottom-nav-item,
+.bottom-nav-hub.is-minimized .floating-action-btn {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.bottom-nav-hub.is-minimized {
+    background: rgba(15, 23, 42, 0.4); /* Extra glass effect when small */
 }
 
 .drag-handle {

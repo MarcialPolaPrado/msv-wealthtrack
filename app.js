@@ -7933,6 +7933,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isDragging) return;
             isDragging = false;
             
+            const currentB = parseInt(nav.style.bottom) || 0;
+            updateMinimizedState(currentB < -10);
+
             nav.style.transition = 'bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
             localStorage.setItem('bottomNavPos', nav.style.bottom);
             
@@ -7946,18 +7949,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Minimize/Maximize Toggle
         const minimizeBtn = document.getElementById('bottomNavMinimizeBtn');
+        const updateMinimizedState = (isNowMinimized) => {
+            nav.classList.toggle('is-minimized', isNowMinimized);
+            if (minimizeBtn) minimizeBtn.classList.toggle('rotated', !isNowMinimized);
+        };
+
         if (minimizeBtn) {
             minimizeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const currentB = parseInt(nav.style.bottom) || 0;
                 
-                // If it's very close to 24px, we "open" it to 120px
-                const isDown = currentB <= 30;
-                const targetB = isDown ? 120 : 24;
+                // If it's above -10px, it's "open", so we minimize it to -45px
+                const currentlyOpen = currentB > -10;
+                const targetB = currentlyOpen ? -45 : 24;
                 
                 nav.style.transition = 'bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
                 nav.style.bottom = `${targetB}px`;
-                minimizeBtn.classList.toggle('rotated', isDown);
+                updateMinimizedState(!currentlyOpen);
                 
                 localStorage.setItem('bottomNavPos', nav.style.bottom);
             });
@@ -7968,7 +7976,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedPos) {
             nav.style.bottom = savedPos;
             const bVal = parseInt(savedPos) || 0;
-            if (minimizeBtn) minimizeBtn.classList.toggle('rotated', bVal > 30);
+            updateMinimizedState(bVal < -10);
+        } else {
+            // Default open
+            updateMinimizedState(false);
         }
     }
 
