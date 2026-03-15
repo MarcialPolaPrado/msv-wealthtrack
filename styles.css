@@ -302,7 +302,7 @@ header a {
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-muted);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.4rem;
     padding-left: 1rem;
     opacity: 0.6;
 }
@@ -311,7 +311,7 @@ header a {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.85rem 1rem;
+    padding: 0.5rem 1rem;
     border-radius: 12px;
     color: var(--text-muted);
     background: transparent;
@@ -362,7 +362,7 @@ header a {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .nav-item-header {
@@ -409,7 +409,7 @@ header a {
 }
 
 .submenu-item {
-    padding: 0.6rem 0.75rem;
+    padding: 0.35rem 0.75rem;
     font-size: 0.8rem;
     color: var(--text-muted);
     background: transparent;
