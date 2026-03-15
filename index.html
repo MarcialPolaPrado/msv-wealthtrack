@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603151942">
+    <link rel="stylesheet" href="styles.css?v=202603151946">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -995,8 +995,7 @@
                         <button type="button" id="selectAllDrawerMonths" class="btn-sm"
                             style="background:transparent; color:var(--primary); border:1px solid var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer;">Todos</button>
                     </div>
-                    <div id="nominaDrawerMonthsCheckboxes"
-                        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="nominaDrawerMonthsCheckboxes" class="months-grid">
                         <label
                             style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
                                 type="checkbox" class="nomina-checkbox" value="1" checked> Ene</label>
@@ -1141,8 +1140,7 @@
                         <button type="button" id="selectAllMonths" class="btn-sm"
                             style="background:transparent; color:var(--primary); border:1px solid var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer;">Todos</button>
                     </div>
-                    <div id="nominaMonthsCheckboxes"
-                        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="nominaMonthsCheckboxes" class="months-grid">
                         <label
                             style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
                                 type="checkbox" class="nomina-checkbox" value="1" checked> Ene</label>
@@ -1290,7 +1288,7 @@
 
     <script src="storage.js?v=202603151612"></script>
     <script src="mock_data.js?v=202603151612"></script>
-    <script src="app.js?v=202603151942"></script>
+    <script src="app.js?v=202603151946"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1334,7 +1332,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603151942';
+        const APP_VERSION = '202603151946';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
