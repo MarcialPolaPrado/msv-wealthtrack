@@ -1581,9 +1581,9 @@ select:focus {
         letter-spacing: 1px;
     }
 
-    .mobile-action-bar:not(.hidden) {
+    /* .mobile-action-bar:not(.hidden) {
         display: flex !important;
-    }
+    } */
 }
 
 /* ── Foldable / Tablet: 601–900px (Fold 5 abierto, etc.) ────────── */
@@ -1615,9 +1615,9 @@ select:focus {
     }
 
     /* Show the mobile action bar so 💾 📂 ➕ are always reachable */
-    .mobile-action-bar:not(.hidden) {
+    /* .mobile-action-bar:not(.hidden) {
         display: flex !important;
-    }
+    } */
 }
 
 /* Mobile Action Bar - hidden by default, shown only on mobile */

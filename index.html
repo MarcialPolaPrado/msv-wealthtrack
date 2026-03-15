@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603151524">
+    <link rel="stylesheet" href="styles.css?v=202603151534">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -615,14 +615,8 @@
                 </div>
             </div>
         </main>
-        <!-- Mobile Action Bar (only visible on mobile, since header is hidden) -->
-        <div id="mobileActionBar" class="mobile-action-bar">
-            <button id="mobileResetBtn" title="🔄 Reset App" style="color: var(--danger);">🔄</button>
-            <button id="mobileSettingsBtn" title="⚙️ Ajustes"
-                style="background:none; border:none; color: var(--text-color); font-size: 1.2rem; cursor:pointer;">⚙️</button>
-            <button id="mobilePrivacyToggleBtn" title="Ocultar/Mostrar Datos Privados">👁️</button>
-            <button id="mobileAddStockBtn" title="Añadir Inversión">➕</button>
-        </div>
+        <!-- Mobile Action Bar removed as it is redundant with bottom-nav-hub -->
+        <div id="mobileActionBar" class="mobile-action-bar hidden" style="display:none !important;"></div>
     </div>
 
     <!-- Settings Modal -->
@@ -1275,7 +1269,7 @@
 
     <script src="storage.js?v=202603151336"></script>
     <script src="mock_data.js?v=202603151336"></script>
-    <script src="app.js?v=202603151524"></script>
+    <script src="app.js?v=202603151534"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1319,7 +1313,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603151524';
+        const APP_VERSION = '202603151534';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
