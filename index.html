@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603150708">
+    <link rel="stylesheet" href="styles.css?v=202603150737">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -1057,9 +1057,13 @@
                         <span style="opacity: 0.8;">Dividendos:</span>
                         <span id="breakdownDividendos" style="font-weight: 600; color: var(--success); font-size: 1.1rem;">€ 0,00</span>
                     </div>
-                    <div class="breakdown-row" data-category="Especulación" style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
+                    <div class="breakdown-row" data-category="Especulación" style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
                         <span style="opacity: 0.8;">Especulación:</span>
                         <span id="breakdownEspeculacion" style="font-weight: 600; color: #f59e0b; font-size: 1.1rem;">€ 0,00</span>
+                    </div>
+                    <div class="breakdown-row" data-category="Ahorro" style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
+                        <span style="opacity: 0.8;">Ahorro General:</span>
+                        <span id="breakdownAhorro" style="font-weight: 600; color: var(--text-muted); font-size: 1.1rem;">€ 0,00</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding-top: 1.2rem; border-top: 1px solid var(--border-color); font-size: 1.4rem; font-weight: 700;">
                         <span>Total:</span>
@@ -1264,7 +1268,7 @@
 
     <script src="storage.js?v=202603141659"></script>
     <script src="mock_data.js?v=202603141659"></script>
-    <script src="app.js?v=202603150708"></script>
+    <script src="app.js?v=202603150737"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1308,7 +1312,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603150708';
+        const APP_VERSION = '202603150737';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

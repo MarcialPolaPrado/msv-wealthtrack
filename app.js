@@ -47,6 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let bolsaSummaryVisible = localStorage.getItem('bolsaSummaryVisible') !== 'false'; // Default to true
     let bolsaHighlightsVisible = localStorage.getItem('bolsaHighlightsVisible') === 'true';
     let breakdownDrawerFilter = null;
+    let currentBreakdownMovements = {
+        Intereses: [],
+        Dividendos: [],
+        Especulación: []
+    };
+    let currentActiveBreakdownCategory = null;
 
     let ahorroSummaryFilterMode = localStorage.getItem('ahorroSummaryFilterMode') || 'month'; // 'month', 'year', 'all'
     let isAhorroSummaryExpanded = localStorage.getItem('isAhorroSummaryExpanded') !== 'false';
@@ -555,6 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
         breakdownIntereses: document.getElementById('breakdownIntereses'),
         breakdownDividendos: document.getElementById('breakdownDividendos'),
         breakdownEspeculacion: document.getElementById('breakdownEspeculacion'),
+        breakdownAhorro: document.getElementById('breakdownAhorro'),
         breakdownTotal: document.getElementById('breakdownTotal'),
         breakdownModalTitle: document.getElementById('breakdownModalTitle'),
         breakdownDetailContainer: document.getElementById('breakdownDetailContainer'),
@@ -901,7 +908,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Toggle Table vs Cards
         if (elements.bolsaViewToggleBtn) {
-            elements.bolsaViewToggleBtn.textContent = bolsaViewMode === 'cards' ? '🗂️' : '📄';
+            elements.bolsaViewToggleBtn.innerHTML = bolsaViewMode === 'cards' ? '<span>📄</span>' : '<span>🗂️</span>';
+            elements.bolsaViewToggleBtn.title = bolsaViewMode === 'cards' ? 'Vista Lista' : 'Vista Tarjetas';
+        }
+
+        // Sync Sidebar View Toggle
+        const sidebarViewBtn = document.getElementById('bolsaViewToggleBtn2');
+        if (sidebarViewBtn) {
+            sidebarViewBtn.innerHTML = bolsaViewMode === 'cards' 
+                ? '<span>📄</span> Vista Lista' 
+                : '<span>🗂️</span> Vista Tarjetas';
         }
         
         if (elements.bolsaTotalesToggle) {
@@ -2385,9 +2401,13 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroTableContainer?.classList.remove('hidden');
 
             if (elements.ahorroViewToggleBtn) {
-                elements.ahorroViewToggleBtn.innerHTML = '🗂️';
+                elements.ahorroViewToggleBtn.innerHTML = '<span>🗂️</span>';
                 elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Cajones';
             }
+            
+            // Sync with Sidebar
+            const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
+            if (sidebarBtn) sidebarBtn.innerHTML = '<span>🗂️</span> Vista Cajones';
 
             renderSavingsList();
         } else {
@@ -2395,9 +2415,13 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroTableContainer?.classList.add('hidden');
 
             if (elements.ahorroViewToggleBtn) {
-                elements.ahorroViewToggleBtn.innerHTML = '📄';
+                elements.ahorroViewToggleBtn.innerHTML = '<span>📄</span>';
                 elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Listado';
             }
+            
+            // Sync with Sidebar
+            const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
+            if (sidebarBtn) sidebarBtn.innerHTML = '<span>📄</span> Vista Listado';
         }
 
         elements.drawersGrid.innerHTML = '';
@@ -3446,17 +3470,23 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nominaTableContainer?.classList.remove('hidden');
 
             if (elements.nominaViewToggleBtn) {
-                elements.nominaViewToggleBtn.innerHTML = '🗂️';
-                elements.nominaViewToggleBtn.title = 'Cambiar a Vista Cajones';
+                elements.nominaViewToggleBtn.innerHTML = '<span>🗂️</span>';
+                elements.nominaViewToggleBtn.title = 'Cambiar a Vista Tarjetas';
             }
+            // Sync with Sidebar
+            const sidebarBtn = document.getElementById('nominaViewToggleBtn2');
+            if (sidebarBtn) sidebarBtn.innerHTML = '<span>🗂️</span> Vista Tarjetas';
         } else {
             elements.nominaGridContainer?.classList.remove('hidden');
             elements.nominaTableContainer?.classList.add('hidden');
 
             if (elements.nominaViewToggleBtn) {
-                elements.nominaViewToggleBtn.innerHTML = '📄';
+                elements.nominaViewToggleBtn.innerHTML = '<span>📄</span>';
                 elements.nominaViewToggleBtn.title = 'Cambiar a Vista Listado';
             }
+            // Sync with Sidebar
+            const sidebarBtn = document.getElementById('nominaViewToggleBtn2');
+            if (sidebarBtn) sidebarBtn.innerHTML = '<span>📄</span> Vista Listado';
         }
 
         // Helper to ensure the automatic drawer exists - DO THIS BEFORE RENDERING LIST
@@ -4019,9 +4049,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const isTarget = container.id === `${view}NavContainer`;
             if (isTarget) {
                 container.classList.add('open');
-            } else if (view !== 'activity' && view !== 'analisis') {
-                // If switching between main sections, we close others. 
-                // But if going to Activity, we leave them as they were.
+            } else if (view !== 'activity' && view !== 'analisis' && view !== 'settings') {
+                // If switching between main sections (Bolsa/Ahorro/Nomina), we close others. 
+                // But for utility views like Activity, we leave them as they were.
                 container.classList.remove('open');
             }
         });
@@ -5124,6 +5154,114 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.ahorroBreakdownModal?.classList.remove('hidden');
     }
 
+    function showBreakdownDetail(category) {
+        if (!elements.breakdownDetailContainer || !elements.breakdownDetailList) return;
+        
+        // Toggle: If same category is clicked while visible, hide it
+        if (currentActiveBreakdownCategory === category && !elements.breakdownDetailContainer.classList.contains('hidden')) {
+            elements.breakdownDetailContainer.classList.add('hidden');
+            currentActiveBreakdownCategory = null;
+            return;
+        }
+
+        const movs = currentBreakdownMovements[category] || [];
+        if (movs.length === 0) {
+            elements.breakdownDetailContainer.classList.add('hidden');
+            currentActiveBreakdownCategory = null;
+            return;
+        }
+
+        currentActiveBreakdownCategory = category;
+
+        if (elements.breakdownDetailTitle) {
+            elements.breakdownDetailTitle.textContent = `Detalle: ${category}`;
+        }
+
+        elements.breakdownDetailList.innerHTML = movs.map(m => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 0.9rem; font-weight: 600;">${m.concept || m.description || 'Sin concepto'}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">${m.date} - ${m.drawerName}</span>
+                </div>
+                <span style="font-weight: 700; color: ${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">${fmtEUR(m.amount)}</span>
+            </div>
+        `).join('');
+
+        elements.breakdownDetailContainer.classList.remove('hidden');
+        // Scroll to detail
+        elements.breakdownDetailContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function updateAhorroBreakdown() {
+        const filterType = elements.breakdownFilterType?.value || 'month';
+        const monthVal = elements.breakdownMonthInput?.value;
+        const yearVal = elements.breakdownYearInput?.value;
+
+        let totalIntereses = 0;
+        let totalDividendos = 0;
+        let totalEspeculacion = 0;
+        let totalAhorro = 0;
+
+        currentBreakdownMovements = {
+            Intereses: [],
+            Dividendos: [],
+            Especulación: [],
+            Ahorro: []
+        };
+
+        const filteredDrawers = breakdownDrawerFilter 
+            ? savingsDrawers.filter(d => d.id === breakdownDrawerFilter)
+            : savingsDrawers;
+
+        if (elements.breakdownModalTitle) {
+            if (breakdownDrawerFilter) {
+                const drawer = savingsDrawers.find(d => d.id === breakdownDrawerFilter);
+                elements.breakdownModalTitle.textContent = `Ingresos: ${drawer ? drawer.name : 'Cajón'}`;
+            } else {
+                elements.breakdownModalTitle.textContent = "Resumen de Ingresos (Global)";
+            }
+        }
+
+        filteredDrawers.forEach(drawer => {
+            (drawer.movements || []).forEach(mov => {
+                const movDate = new Date(mov.date);
+                const movYear = movDate.getFullYear();
+                const movMonthStr = movDate.toISOString().slice(0, 7);
+                
+                let match = false;
+                if (filterType === 'month') {
+                    match = movMonthStr === monthVal;
+                } else {
+                    match = movYear.toString() === yearVal.toString();
+                }
+
+                if (match) {
+                    const cat = mov.category;
+                    const movWithDrawer = { ...mov, drawerName: drawer.name };
+                    if (cat === 'Intereses') {
+                        totalIntereses += mov.amount;
+                        currentBreakdownMovements.Intereses.push(movWithDrawer);
+                    } else if (cat === 'Dividendos') {
+                        totalDividendos += mov.amount;
+                        currentBreakdownMovements.Dividendos.push(movWithDrawer);
+                    } else if (cat === 'Especulación') {
+                        totalEspeculacion += mov.amount;
+                        currentBreakdownMovements.Especulación.push(movWithDrawer);
+                    } else if (cat === 'Ahorro') {
+                        totalAhorro += mov.amount;
+                        currentBreakdownMovements.Ahorro.push(movWithDrawer);
+                    }
+                }
+            });
+        });
+
+        if (elements.breakdownIntereses) elements.breakdownIntereses.textContent = fmtEUR(totalIntereses);
+        if (elements.breakdownDividendos) elements.breakdownDividendos.textContent = fmtEUR(totalDividendos);
+        if (elements.breakdownEspeculacion) elements.breakdownEspeculacion.textContent = fmtEUR(totalEspeculacion);
+        if (elements.breakdownAhorro) elements.breakdownAhorro.textContent = fmtEUR(totalAhorro);
+        if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalIntereses + totalDividendos + totalEspeculacion + totalAhorro);
+    }
+
     function toggleDataSource() {
         const newMode = (window.DATA_SOURCE_MODE === 'hybrid') ? 'yahoo' : 'hybrid';
         window.DATA_SOURCE_MODE = newMode;
@@ -5194,9 +5332,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isSidebar = nav.classList.contains('wealth-nav-item');
                 const container = nav.closest('.nav-item-container');
                 
-                if (isSidebar && container && currentView === view) {
-                    // Clicking the same active section in sidebar: TOGGLE menu
-                    container.classList.toggle('open');
+                if (currentView === view) {
+                    if (isSidebar && container) {
+                        // Clicking the same active section in sidebar: TOGGLE menu
+                        container.classList.toggle('open');
+                    }
+                    // Prevent any further action (like toggling view mode) on already active tabs
                     return;
                 }
                 
@@ -5287,6 +5428,12 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             bolsaTotalsMode = !bolsaTotalsMode;
             localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
+            
+            // If turning on totals, force list view to see the effect
+            if (bolsaTotalsMode) {
+                bolsaViewMode = 'list';
+                localStorage.setItem('bolsaViewMode', 'list');
+            }
             render();
         });
 
@@ -6188,6 +6335,12 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.bolsaTotalesToggle.addEventListener('click', () => {
                 bolsaTotalsMode = !bolsaTotalsMode;
                 localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
+                
+                // If turning on totals, force list view to see the effect
+                if (bolsaTotalsMode) {
+                    bolsaViewMode = 'list';
+                    localStorage.setItem('bolsaViewMode', 'list');
+                }
                 render();
             });
         }
@@ -6392,121 +6545,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        let currentBreakdownMovements = {
-            Intereses: [],
-            Dividendos: [],
-            Especulación: []
-        };
-        let currentActiveBreakdownCategory = null;
 
-        function showBreakdownDetail(category) {
-            if (!elements.breakdownDetailContainer || !elements.breakdownDetailList) return;
-            
-            // Toggle: If same category is clicked while visible, hide it
-            if (currentActiveBreakdownCategory === category && !elements.breakdownDetailContainer.classList.contains('hidden')) {
-                elements.breakdownDetailContainer.classList.add('hidden');
-                currentActiveBreakdownCategory = null;
-                return;
-            }
-
-            const movs = currentBreakdownMovements[category] || [];
-            if (movs.length === 0) {
-                elements.breakdownDetailContainer.classList.add('hidden');
-                currentActiveBreakdownCategory = null;
-                return;
-            }
-
-            currentActiveBreakdownCategory = category;
-
-            if (elements.breakdownDetailTitle) {
-                elements.breakdownDetailTitle.textContent = `Detalle: ${category}`;
-            }
-
-            elements.breakdownDetailList.innerHTML = movs.map(m => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                    <div style="display: flex; flex-direction: column;">
-                        <span style="font-size: 0.9rem; font-weight: 600;">${m.concept || m.description || 'Sin concepto'}</span>
-                        <span style="font-size: 0.75rem; color: var(--text-muted);">${m.date} - ${m.drawerName}</span>
-                    </div>
-                    <span style="font-weight: 700; color: ${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">${fmtEUR(m.amount)}</span>
-                </div>
-            `).join('');
-
-            elements.breakdownDetailContainer.classList.remove('hidden');
-            // Scroll to detail
-            elements.breakdownDetailContainer.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Click outside to close breakdown modal
-        window.addEventListener('click', (event) => {
-            if (event.target === elements.ahorroBreakdownModal) {
-                elements.ahorroBreakdownModal.classList.add('hidden');
-            }
-        });
-
-        function updateAhorroBreakdown() {
-            const filterType = elements.breakdownFilterType?.value || 'month';
-            const monthVal = elements.breakdownMonthInput?.value;
-            const yearVal = elements.breakdownYearInput?.value;
-
-            let totalIntereses = 0;
-            let totalDividendos = 0;
-            let totalEspeculacion = 0;
-
-            currentBreakdownMovements = {
-                Intereses: [],
-                Dividendos: [],
-                Especulación: []
-            };
-
-            const filteredDrawers = breakdownDrawerFilter 
-                ? savingsDrawers.filter(d => d.id === breakdownDrawerFilter)
-                : savingsDrawers;
-
-            if (elements.breakdownModalTitle) {
-                if (breakdownDrawerFilter) {
-                    const drawer = savingsDrawers.find(d => d.id === breakdownDrawerFilter);
-                    elements.breakdownModalTitle.textContent = `Ingresos: ${drawer ? drawer.name : 'Cajón'}`;
-                } else {
-                    elements.breakdownModalTitle.textContent = "Resumen de Ingresos (Global)";
-                }
-            }
-
-            filteredDrawers.forEach(drawer => {
-                (drawer.movements || []).forEach(mov => {
-                    const movDate = new Date(mov.date);
-                    const movYear = movDate.getFullYear();
-                    const movMonthStr = movDate.toISOString().slice(0, 7);
-                    
-                    let match = false;
-                    if (filterType === 'month') {
-                        match = movMonthStr === monthVal;
-                    } else {
-                        match = movYear.toString() === yearVal.toString();
-                    }
-
-                    if (match) {
-                        const cat = mov.category;
-                        const movWithDrawer = { ...mov, drawerName: drawer.name };
-                        if (cat === 'Intereses') {
-                            totalIntereses += mov.amount;
-                            currentBreakdownMovements.Intereses.push(movWithDrawer);
-                        } else if (cat === 'Dividendos') {
-                            totalDividendos += mov.amount;
-                            currentBreakdownMovements.Dividendos.push(movWithDrawer);
-                        } else if (cat === 'Especulación') {
-                            totalEspeculacion += mov.amount;
-                            currentBreakdownMovements.Especulación.push(movWithDrawer);
-                        }
-                    }
-                });
-            });
-
-            if (elements.breakdownIntereses) elements.breakdownIntereses.textContent = fmtEUR(totalIntereses);
-            if (elements.breakdownDividendos) elements.breakdownDividendos.textContent = fmtEUR(totalDividendos);
-            if (elements.breakdownEspeculacion) elements.breakdownEspeculacion.textContent = fmtEUR(totalEspeculacion);
-            if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalIntereses + totalDividendos + totalEspeculacion);
-        }
     }
 
     function updateFiscalCountdown() {
@@ -6783,8 +6822,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function exportToCSV(isExcel) {
+        if (currentView === 'nomina') {
+            exportNominaToCSV(isExcel);
+            return;
+        }
 
-        // Bolsa Export: Ticker, Quantity, Cost Per Share, Currency, Date
+        // Default to Bolsa Export
         const headers = ['Ticker', 'Quantity', 'Cost Per Share', 'Currency', 'Date'];
         const rows = stocks.map(s => {
             const currency = 'EUR';
@@ -6795,12 +6838,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return [ticker, s.qty, price.toFixed(4), currency, s.date].join(',');
         });
-        let csvContent = headers.join('\n') === headers.join(',') ? '' : (headers.join(',') + '\n' + rows.join('\n'));
+        let csvContent = headers.join(',') + '\n' + rows.join('\n');
         if (rows.length === 0) csvContent = headers.join(',');
 
         let blob;
-        let fileName = getFormattedDateWithTime() + '.csv';
-
+        let fileName = 'bolsa_' + getFormattedDateWithTime() + '.csv';
 
         if (isExcel) {
             const BOM = '\uFEFF';
@@ -6808,6 +6850,27 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         }
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, fileName, blob);
+    }
+
+    function exportNominaToCSV(isExcel) {
+        const headers = ['Concepto', 'Tipo', 'Importe', 'Meses Activos'];
+        const rows = [];
+        nominaData.forEach(drawer => {
+            drawer.movements.forEach(m => {
+                rows.push([
+                    m.concept,
+                    m.amount >= 0 ? 'Ingreso' : 'Gasto',
+                    Math.abs(m.amount).toFixed(2),
+                    (m.activeMonths || []).join('|')
+                ].join(','));
+            });
+        });
+        
+        let csvContent = headers.join(',') + '\n' + rows.join('\n');
+        let fileName = 'nomina_' + getFormattedDateWithTime() + '.csv';
+        let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         triggerDownload(url, fileName, blob);
     }
@@ -7315,20 +7378,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateDataSourceUI() {
         if (!elements.dataSourceIcon || !elements.dataSourceLabel) return;
         const mode = window.DATA_SOURCE_MODE;
-        if (mode === 'yahoo') {
-            elements.dataSourceIcon.textContent = '📊';
-            elements.dataSourceLabel.textContent = 'Yahoo';
-            if (elements.bolsaDataSourceToggleBtn) {
-                elements.bolsaDataSourceToggleBtn.style.borderColor = 'rgba(59, 130, 246, 0.8)';
-                elements.bolsaDataSourceToggleBtn.title = 'Modo: Solo Yahoo Finance (Pulsa para Híbrido)';
-            }
-        } else {
-            elements.dataSourceIcon.textContent = '⚡';
-            elements.dataSourceLabel.textContent = 'Híbrido';
-            if (elements.bolsaDataSourceToggleBtn) {
-                elements.bolsaDataSourceToggleBtn.style.borderColor = 'rgba(59, 130, 246, 0.4)';
-                elements.bolsaDataSourceToggleBtn.title = 'Modo: Finnhub + Yahoo Fallback (Pulsa para Solo Yahoo)';
-            }
+        const isYahoo = mode === 'yahoo';
+        
+        elements.dataSourceIcon.textContent = isYahoo ? '📊' : '⚡';
+        elements.dataSourceLabel.textContent = isYahoo ? 'Yahoo' : 'Híbrido';
+        
+        if (elements.bolsaDataSourceToggleBtn) {
+            elements.bolsaDataSourceToggleBtn.style.borderColor = isYahoo ? 'rgba(59, 130, 246, 0.8)' : 'rgba(59, 130, 246, 0.4)';
+            elements.bolsaDataSourceToggleBtn.title = isYahoo 
+                ? 'Modo: Solo Yahoo Finance (Pulsa para Híbrido)' 
+                : 'Modo: Finnhub + Yahoo Fallback (Pulsa para Solo Yahoo)';
         }
         // Update sidebar button text
         const sidebarSourceBtn = document.getElementById('bolsaDataSourceToggleBtn2');
