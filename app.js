@@ -683,10 +683,36 @@ document.addEventListener('DOMContentLoaded', () => {
         btns.forEach(btn => {
             if (btn) {
                 btn.classList.toggle('active', isPrivacyActive);
-                btn.innerHTML = isPrivacyActive ? '🔒' : '👁️';
+                btn.innerHTML = isPrivacyActive ? '👁️' : '🕶️';
                 btn.title = isPrivacyActive ? 'Mostrar Datos' : 'Ocultar Datos';
             }
         });
+
+        // Update Sidebar Privacy Button with text status
+        const sidebarPrivacyBtn = elements.sidebarPrivacyToggleBtn;
+        if (sidebarPrivacyBtn) {
+            const navText = sidebarPrivacyBtn.querySelector('.nav-text');
+            if (navText) {
+                navText.textContent = `Privacidad (${isPrivacyActive ? 'on' : 'off'})`;
+            }
+            sidebarPrivacyBtn.classList.toggle('active', isPrivacyActive);
+        }
+    }
+
+    function updateSidebarTogglesUI() {
+        const updateSubmenuBtn = (id, isActive, baseText) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const iconSpan = btn.querySelector('span:first-child');
+            const icon = iconSpan ? iconSpan.outerHTML : '';
+            btn.innerHTML = `${icon} ${baseText} (${isActive ? 'on' : 'off'})`;
+        };
+
+        updateSubmenuBtn('bolsaHighlightsToggleBtn2', bolsaHighlightsVisible, 'Highlights');
+        updateSubmenuBtn('bolsaSummaryToggleBtn2', bolsaSummaryVisible, 'Mostrar/Ocultar Totales');
+        updateSubmenuBtn('bolsaTotalesToggle2', bolsaTotalsMode, 'Totales por Acción');
+        updateSubmenuBtn('ahorroSummaryToggleBtn2', ahorroSummaryVisible, 'Mostrar/Ocultar Totales');
+        updateSubmenuBtn('ahorroTotalesToggle2', ahorroListFilterMode === 'totals', 'Totales por Cajón');
     }
 
     // --- Logic ---
@@ -783,6 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isFirstUpdateDone = false;
 
     function render() {
+        updateSidebarTogglesUI();
         // Toggle Bolsa Summary Visibility
         if (elements.bolsaSummarySection) {
             elements.bolsaSummarySection.classList.toggle('hidden', !bolsaSummaryVisible);

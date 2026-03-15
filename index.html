@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603151349">
+    <link rel="stylesheet" href="styles.css?v=202603151524">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -82,14 +82,14 @@
                         <div class="sidebar-submenu">
                             <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir Inversión</button>
                             <button id="bolsaRefreshBtn2" class="submenu-item"><span>🔄</span> Actualizar Datos</button>
-                            <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
-                            <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
                             <button id="bolsaBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
                             <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen Datos</button>
                             <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios Manuales</button>
                             <button id="bolsaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
-                            <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Acción</button>
                             <button id="exportDataBtn2" class="submenu-item"><span>💾</span> Exportar CSV</button>
+                            <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
+                            <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
+                            <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Acción</button>
                         </div>
                     </div>
 
@@ -103,10 +103,10 @@
                         </div>
                         <div class="sidebar-submenu">
                             <button id="ahorroViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
-                            <button id="ahorroSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
-                            <button id="ahorroTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Cajón</button>
                             <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
                             <button id="addDrawerBtn2" class="submenu-item"><span>📁</span> Añadir Cajón</button>
+                            <button id="ahorroSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
+                            <button id="ahorroTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Cajón</button>
                         </div>
                     </div>
 
@@ -1275,7 +1275,7 @@
 
     <script src="storage.js?v=202603151336"></script>
     <script src="mock_data.js?v=202603151336"></script>
-    <script src="app.js?v=202603151349"></script>
+    <script src="app.js?v=202603151524"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1319,7 +1319,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603151349';
+        const APP_VERSION = '202603151524';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
