@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603151545">
+    <link rel="stylesheet" href="styles.css?v=202603151556">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -184,7 +184,11 @@
 
         <!-- New Bottom Nav (Mobile) -->
         <nav class="bottom-nav-hub" id="bottomNavHub">
-        <div class="drag-handle"></div>
+            <div class="drag-handle">
+                <button id="bottomNavMinimizeBtn" class="nav-control-btn" title="Minimizar">▼</button>
+                <div class="drag-indicator"></div>
+                <div class="move-icon" title="Arrastrar">✥</div>
+            </div>
             <button class="bottom-nav-item active" data-view="bolsa">
                 <span class="bottom-nav-icon">📈</span>
                 <span class="bottom-nav-text">Bolsa</span>
@@ -1282,7 +1286,7 @@
 
     <script src="storage.js?v=202603151540"></script>
     <script src="mock_data.js?v=202603151540"></script>
-    <script src="app.js?v=202603151545"></script>
+    <script src="app.js?v=202603151556"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1326,7 +1330,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603151545';
+        const APP_VERSION = '202603151556';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -7879,62 +7879,97 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupNumericSignToggles();
     setupClockCountdown();
-    // Draggable Bottom Nav Hub (Mobile)
+    // Draggable Bottom Nav Hub (Mobile) - Robust Implementation
     function setupDraggableBottomNav() {
         const nav = elements.bottomNav;
         if (!nav) return;
+
+        // Prevent browser scrolling while dragging
+        nav.style.touchAction = 'none';
 
         let isDragging = false;
         let startY = 0;
         let startBottom = 0;
 
         const onStart = (e) => {
-            // Only drag if clicking the nav itself or the drag handle
-            // Avoid dragging when clicking buttons or links
-            if (e.target.closest('.bottom-nav-item') || e.target.closest('.floating-action-btn')) return;
+            // Ignore if clicking a button (don't block the button click)
+            if (e.target.closest('button') || e.target.closest('.bottom-nav-item') || e.target.closest('.floating-action-btn')) {
+                // If it's the DRAG HANDLE itself, we DO want to drag even if it's inside/covered
+                if (!e.target.closest('.drag-handle')) return;
+            }
             
-            e.preventDefault();
             isDragging = true;
-            startY = e.clientY;
+            startY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
             
             const style = window.getComputedStyle(nav);
             startBottom = parseInt(style.bottom) || 0;
             
-            nav.setPointerCapture(e.pointerId);
             nav.style.transition = 'none';
+            
+            // Add global listeners to handle fast movement or leaving element
+            document.addEventListener('pointermove', onMove, { passive: false });
+            document.addEventListener('pointerup', onEnd);
+            document.addEventListener('pointercancel', onEnd);
         };
 
         const onMove = (e) => {
             if (!isDragging) return;
             
-            const dy = startY - e.clientY;
+            const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            const dy = startY - clientY;
             let newBottom = startBottom + dy;
             
-            // Constrain movement: from 10px to top of screen minus some margin
+            // Constraints
             const maxB = window.innerHeight - 80; 
             newBottom = Math.max(10, Math.min(newBottom, maxB));
             
             nav.style.bottom = `${newBottom}px`;
+            
+            // Prevent event from bubbling or causing scroll
+            if (e.cancelable) e.preventDefault();
         };
 
-        const onEnd = (e) => {
+        const onEnd = () => {
             if (!isDragging) return;
             isDragging = false;
-            nav.releasePointerCapture(e.pointerId);
-            nav.style.transition = 'bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
             
-            // Re-save position if you want persistence, otherwise just leave it
+            nav.style.transition = 'bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
             localStorage.setItem('bottomNavPos', nav.style.bottom);
+            
+            // Clean up global listeners
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onEnd);
+            document.removeEventListener('pointercancel', onEnd);
         };
 
         nav.addEventListener('pointerdown', onStart);
-        nav.addEventListener('pointermove', onMove);
-        nav.addEventListener('pointerup', onEnd);
-        nav.addEventListener('pointercancel', onEnd);
-        
-        // Restore position if exists
+
+        // Minimize/Maximize Toggle
+        const minimizeBtn = document.getElementById('bottomNavMinimizeBtn');
+        if (minimizeBtn) {
+            minimizeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const currentB = parseInt(nav.style.bottom) || 0;
+                
+                // If it's very close to 24px, we "open" it to 120px
+                const isDown = currentB <= 30;
+                const targetB = isDown ? 120 : 24;
+                
+                nav.style.transition = 'bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+                nav.style.bottom = `${targetB}px`;
+                minimizeBtn.classList.toggle('rotated', isDown);
+                
+                localStorage.setItem('bottomNavPos', nav.style.bottom);
+            });
+        }
+
+        // Restore position
         const savedPos = localStorage.getItem('bottomNavPos');
-        if (savedPos) nav.style.bottom = savedPos;
+        if (savedPos) {
+            nav.style.bottom = savedPos;
+            const bVal = parseInt(savedPos) || 0;
+            if (minimizeBtn) minimizeBtn.classList.toggle('rotated', bVal > 30);
+        }
     }
 
     setupDraggableBottomNav();
