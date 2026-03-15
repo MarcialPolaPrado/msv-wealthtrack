@@ -5622,24 +5622,46 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             e.stopPropagation();
             
-            // Re-sync currentView if somehow lost, though it shouldn't be
             const activeNav = document.querySelector('.bottom-nav-item.active');
             const viewContext = activeNav ? activeNav.dataset.view : currentView;
-            
-            console.log("[FAB] Clicked. Context:", viewContext, "currentView:", currentView);
-            
-            // Use viewContext as extra safety
             const effectiveView = viewContext || currentView;
-
+            
+            console.log("[FAB] Toggle. Context:", effectiveView);
+            
             if (effectiveView === 'bolsa') {
-                openAddStockModal();
+                const modal = elements.addStockModal;
+                if (modal && !modal.classList.contains('hidden')) {
+                    toggleModal(false);
+                } else {
+                    openAddStockModal();
+                }
             } else if (effectiveView === 'ahorro') {
-                showAddDrawer();
+                const modal = document.getElementById('savingsInputModal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    toggleSavingsModal(false);
+                } else {
+                    showAddDrawer();
+                }
             } else if (effectiveView === 'nomina') {
-                showAddNomina();
+                const nModal = elements.nominaModal;
+                const nmModal = elements.nominaMovementModal;
+                const nOpen = nModal && !nModal.classList.contains('hidden');
+                const nmOpen = nmModal && !nmModal.classList.contains('hidden');
+                
+                if (nOpen || nmOpen) {
+                    if (nOpen) toggleNominaModal(false);
+                    if (nmOpen) toggleNominaMovementModal(false);
+                } else {
+                    showAddNomina();
+                }
             } else {
-                // Default to stock addition
-                openAddStockModal();
+                // Default toggle for other views (usually Bolsa modal)
+                const modal = elements.addStockModal;
+                if (modal && !modal.classList.contains('hidden')) {
+                    toggleModal(false);
+                } else {
+                    openAddStockModal();
+                }
             }
         });
         elements.sidebarPrivacyToggleBtn?.addEventListener('click', togglePrivacy);
