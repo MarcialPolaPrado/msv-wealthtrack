@@ -102,10 +102,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastSyncTime = '-';
 
     // Global Formatters
-    const fmtEUR = (num) => {
+    const fmtEUR = (num, decimals = 0) => {
         if (isPrivacyActive) return '€ ****';
         if (num === null || num === undefined) return '-';
-        return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', useGrouping: true, maximumFractionDigits: 0 }).format(Number(num));
+        return new Intl.NumberFormat('es-ES', { 
+            style: 'currency', 
+            currency: 'EUR', 
+            useGrouping: true, 
+            minimumFractionDigits: decimals, 
+            maximumFractionDigits: decimals 
+        }).format(Number(num));
     };
     const fmtNum = (num, decimals = 2) => {
         if (isPrivacyActive) return '****';
@@ -5219,7 +5225,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span style="font-size: 0.9rem; font-weight: 600;">${m.concept || m.description || 'Sin concepto'}</span>
                     <span style="font-size: 0.75rem; color: var(--text-muted);">${m.date} - ${m.drawerName}</span>
                 </div>
-                <span style="font-weight: 700; color: ${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">${fmtEUR(m.amount)}</span>
+                <span style="font-weight: 700; color: ${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">${fmtEUR(m.amount, 2)}</span>
             </div>
         `).join('');
 
@@ -5286,10 +5292,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        if (elements.breakdownIntereses) elements.breakdownIntereses.textContent = fmtEUR(totalIntereses);
-        if (elements.breakdownDividendos) elements.breakdownDividendos.textContent = fmtEUR(totalDividendos);
-        if (elements.breakdownEspeculacion) elements.breakdownEspeculacion.textContent = fmtEUR(totalEspeculacion);
-        if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalIntereses + totalDividendos + totalEspeculacion);
+        if (elements.breakdownIntereses) elements.breakdownIntereses.textContent = fmtEUR(totalIntereses, 2);
+        if (elements.breakdownDividendos) elements.breakdownDividendos.textContent = fmtEUR(totalDividendos, 2);
+        if (elements.breakdownEspeculacion) elements.breakdownEspeculacion.textContent = fmtEUR(totalEspeculacion, 2);
+        if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalIntereses + totalDividendos + totalEspeculacion, 2);
     }
 
     function toggleDataSource() {
@@ -5530,6 +5536,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const container = chevron.closest('.nav-item-container');
                 if (container) {
                     container.classList.toggle('open');
+                    
+                    // Also trigger navigation for that item
+                    const navBtn = container.querySelector('.wealth-nav-item');
+                    if (navBtn) {
+                        const view = navBtn.getAttribute('data-view');
+                        if (view && currentView !== view) {
+                            switchView(view);
+                        }
+                    }
                 }
             });
         });
@@ -6288,71 +6303,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         let isSyncing = false;
 
-        if (elements.manualRefreshBtn) {
-            elements.manualRefreshBtn.addEventListener('click', async () => {
-                if (isSyncing) return;
-                isSyncing = true;
+        async function manualRefreshBolsa() {
+            if (isSyncing) return;
+            isSyncing = true;
 
-                const btn = elements.manualRefreshBtn;
-                const originalContent = btn.textContent;
-                const originalFontSize = btn.style.fontSize;
-                
-                btn.classList.add('spin-animation');
-                btn.style.color = '#f59e0b'; // Amber color while syncing
-                btn.style.fontWeight = '700';
+            const btn1 = elements.manualRefreshBtn;
+            const btn2 = document.getElementById('bolsaRefreshBtn2');
+            const btn2Icon = btn2?.querySelector('span');
+            
+            const originalContent1 = btn1 ? btn1.textContent : '';
+            const originalContent2 = btn2Icon ? btn2Icon.textContent : '';
+            
+            if (btn1) {
+                btn1.classList.add('spin-animation');
+                btn1.style.color = '#f59e0b';
+                btn1.style.fontWeight = '700';
+            }
+            if (btn2Icon) {
+                btn2Icon.classList.add('spin-animation');
+                btn2Icon.style.color = '#f59e0b';
+            }
 
-                const currentTimerElement = document.getElementById('updateTimer');
-                if (currentTimerElement) {
-                    currentTimerElement.classList.remove('hidden');
-                    currentTimerElement.textContent = `Actualizando Divisa USD/EUR...`;
-                    currentTimerElement.style.color = '#f59e0b';
+            const currentTimerElement = document.getElementById('updateTimer');
+            if (currentTimerElement) {
+                currentTimerElement.classList.remove('hidden');
+                currentTimerElement.textContent = `Actualizando Divisa USD/EUR...`;
+                currentTimerElement.style.color = '#f59e0b';
+            }
+
+            try {
+                if (window.refreshFXRate) {
+                    if (currentTimerElement) currentTimerElement.textContent = `Actualizando Divisa USD/EUR...`;
+                    await window.refreshFXRate();
                 }
 
-                try {
-                    // --- Passo 1: Actualizar Divisa ---
-                    if (window.refreshFXRate) {
-                        if (currentTimerElement) currentTimerElement.textContent = `Actualizando Divisa USD/EUR...`;
-                        await window.refreshFXRate();
-                    }
-
-                    if (window.FINNHUB_API_KEY) {
-                        const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
-                        // Call with progress callback
-                        await window.refreshLivePrices(uniqueTickers, (current, total) => {
-                            btn.textContent = current;
-                            btn.style.fontSize = '1rem';
-                            if (currentTimerElement) {
-                                currentTimerElement.textContent = `Sincronizando: ${current} de ${total}`;
-                            }
-                        });
-                    }
-                    lastSyncTime = new Date().toLocaleTimeString();
-                    isFirstUpdateDone = true;
-                    render();
-
-                    if (currentTimerElement) {
-                        currentTimerElement.style.color = '#10b981'; // Green for success
-                        currentTimerElement.textContent = `¡Sincronización completada! (${lastSyncTime})`;
-                        setTimeout(() => currentTimerElement.classList.add('hidden'), 3000);
-                    }
-
-                    // Show flash animation
-                    document.querySelectorAll('.summary-card').forEach(card => {
-                        card.classList.remove('sync-flash');
-                        void card.offsetWidth;
-                        card.classList.add('sync-flash');
+                if (window.FINNHUB_API_KEY) {
+                    const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
+                    await window.refreshLivePrices(uniqueTickers, (current, total) => {
+                        if (btn1) {
+                            btn1.textContent = current;
+                            btn1.style.fontSize = '1rem';
+                        }
+                        if (btn2Icon) {
+                            btn2Icon.textContent = current;
+                        }
+                        if (currentTimerElement) {
+                            currentTimerElement.textContent = `Sincronizando: ${current} de ${total}`;
+                        }
                     });
-                } finally {
-                    isSyncing = false;
-                    // Restore original state
-                    btn.classList.remove('spin-animation');
-                    btn.textContent = originalContent;
-                    btn.style.fontSize = originalFontSize;
-                    btn.style.color = '';
-                    btn.style.fontWeight = '';
                 }
-            });
+                lastSyncTime = new Date().toLocaleTimeString();
+                isFirstUpdateDone = true;
+                render();
+
+                if (currentTimerElement) {
+                    currentTimerElement.style.color = '#10b981';
+                    currentTimerElement.textContent = `¡Sincronización completada! (${lastSyncTime})`;
+                    setTimeout(() => currentTimerElement.classList.add('hidden'), 3000);
+                }
+
+                document.querySelectorAll('.summary-card').forEach(card => {
+                    card.classList.remove('sync-flash');
+                    void card.offsetWidth;
+                    card.classList.add('sync-flash');
+                });
+            } finally {
+                isSyncing = false;
+                if (btn1) {
+                    btn1.classList.remove('spin-animation');
+                    btn1.textContent = originalContent1;
+                    btn1.style.fontSize = '';
+                    btn1.style.color = '';
+                    btn1.style.fontWeight = '';
+                }
+                if (btn2Icon) {
+                    btn2Icon.classList.remove('spin-animation');
+                    btn2Icon.textContent = originalContent2;
+                    btn2Icon.style.color = '';
+                }
+            }
         }
+
+        if (elements.manualRefreshBtn) {
+            elements.manualRefreshBtn.addEventListener('click', manualRefreshBolsa);
+        }
+
+        document.getElementById('bolsaRefreshBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            manualRefreshBolsa();
+        });
 
         // Bolsa View Toggle
         if (elements.bolsaViewToggleBtn) {

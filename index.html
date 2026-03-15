@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603151258">
+    <link rel="stylesheet" href="styles.css?v=202603151316">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -81,6 +81,7 @@
                         </div>
                         <div class="sidebar-submenu">
                             <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir Inversión</button>
+                            <button id="bolsaRefreshBtn2" class="submenu-item"><span>🔄</span> Actualizar Datos</button>
                             <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
                             <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
                             <button id="bolsaBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
@@ -140,6 +141,10 @@
                         <span class="nav-icon">⚙️</span>
                         <span class="nav-text">Ajustes</span>
                     </button>
+                    <button class="wealth-nav-item" id="sidebarResetBtn" style="color: var(--danger);">
+                        <span class="nav-icon">🔄</span>
+                        <span class="nav-text">Hard Reset</span>
+                    </button>
                 </div>
 
                 <div class="nav-group">
@@ -155,10 +160,6 @@
                     <button class="wealth-nav-item" id="sidebarClockBtn">
                         <span class="nav-icon">⏱️</span>
                         <span class="nav-text">Cuenta Atrás</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarResetBtn" style="color: var(--danger);">
-                        <span class="nav-icon">🔄</span>
-                        <span class="nav-text">Hard Reset</span>
                     </button>
                 </div>
             </nav>
@@ -1273,7 +1274,7 @@
 
     <script src="storage.js?v=202603151302"></script>
     <script src="mock_data.js?v=202603151302"></script>
-    <script src="app.js?v=202603151258"></script>
+    <script src="app.js?v=202603151316"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1317,7 +1318,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603151258';
+        const APP_VERSION = '202603151316';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
