@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let activityCellFilter = { column: null, value: null };
     let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'month' or 'year'
     let activitySearchQuery = '';
-    let previousView = 'bolsa';
 
     const DRAWER_COLORS = [
         { name: 'green', border: '#10b981', bg: '#064e3b', grad: 'rgba(16, 185, 129, 0.4)' },
@@ -469,7 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
         analisisChart: document.getElementById('analisisChart'),
         analisisTableContainer: document.getElementById('analisisTableContainer'),
         analisisGrid: document.getElementById('analisisGrid'),
-        analisisVolverBtn: document.getElementById('analisisVolverBtn'),
         analisisTableViewBtn: document.getElementById('analisisTableViewBtn'),
         analisisCardViewBtn: document.getElementById('analisisCardViewBtn'),
         analisisMobileTitle: document.getElementById('analisisMobileTitle'),
@@ -572,7 +570,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Global Activity Elements
         logoBtn: document.getElementById('logoBtn'),
         activitySection: document.getElementById('activitySection'),
-        activityBackBtn: document.getElementById('activityBackBtn'),
         activityTable: document.getElementById('activityTable'),
         activityTableBody: document.getElementById('activityTableBody'),
         activityMonthLabel: document.getElementById('activityMonthLabel'),
@@ -1290,12 +1287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR);
 
         // Section Toggling logic
-        const header = document.querySelector('header');
-        const nav = document.querySelector('nav');
-
         if (currentView === 'activity') {
-            header?.classList.add('hidden');
-            nav?.classList.add('hidden');
             if (elements.activitySection) elements.activitySection.classList.remove('hidden');
             if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
             if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
@@ -1304,8 +1296,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
             renderActivity();
         } else {
-            header?.classList.remove('hidden');
-            nav?.classList.remove('hidden');
             if (elements.activitySection) elements.activitySection.classList.add('hidden');
 
             if (currentView === 'bolsa') {
@@ -3990,7 +3980,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function switchView(view) {
-        if (currentView !== 'activity' && currentView !== 'analisis') previousView = currentView;
         currentView = view;
         
         // Sync Sidebar Items
@@ -5120,6 +5109,21 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     }
 
+    function showAhorroBreakdown() {
+        breakdownDrawerFilter = null;
+        const now = new Date();
+        if (elements.breakdownMonthInput) {
+            elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
+        }
+        if (elements.breakdownYearInput) {
+            elements.breakdownYearInput.value = now.getFullYear();
+        }
+        elements.breakdownDetailContainer?.classList.add('hidden');
+        currentActiveBreakdownCategory = null;
+        updateAhorroBreakdown();
+        elements.ahorroBreakdownModal?.classList.remove('hidden');
+    }
+
     function toggleDataSource() {
         const newMode = (window.DATA_SOURCE_MODE === 'hybrid') ? 'yahoo' : 'hybrid';
         window.DATA_SOURCE_MODE = newMode;
@@ -5294,6 +5298,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             showAhorroBreakdown();
         });
+        document.getElementById('addDrawerBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showAddDrawer();
+        });
 
         document.getElementById('addNominaBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -5332,11 +5340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Activity via Sidebar
-        elements.sidebarActivityBtn?.addEventListener('click', () => switchView('activity'));
-
         // Activity Listeners
-        elements.activityBackBtn?.addEventListener('click', () => switchView(previousView));
 
         elements.activityFilterMode?.addEventListener('change', (e) => {
             activityFilterMode = e.target.value;
@@ -5455,7 +5459,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })();
 
         if (elements.addDrawerBtn) {
-            elements.addDrawerBtn.addEventListener('click', () => showAddDrawer());
+            elements.addDrawerBtn.addEventListener('click', showAddDrawer);
         }
         if (elements.closeSavingsModal) {
             elements.closeSavingsModal.addEventListener('click', () => toggleSavingsModal(false));
@@ -5709,11 +5713,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Analisis Listeners
-        if (elements.analisisVolverBtn) {
-            elements.analisisVolverBtn.addEventListener('click', () => {
-                switchView('nomina');
-            });
-        }
         if (elements.analisisTableViewBtn) {
             elements.analisisTableViewBtn.onclick = () => {
                 analisisViewMode = 'list';
@@ -6287,20 +6286,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Ahorro Breakdown Listeners ---
         if (elements.ahorroBreakdownBtn) {
-            elements.ahorroBreakdownBtn.addEventListener('click', () => {
-                breakdownDrawerFilter = null;
-                const now = new Date();
-                if (elements.breakdownMonthInput) {
-                    elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
-                }
-                if (elements.breakdownYearInput) {
-                    elements.breakdownYearInput.value = now.getFullYear();
-                }
-                elements.breakdownDetailContainer?.classList.add('hidden');
-                currentActiveBreakdownCategory = null;
-                updateAhorroBreakdown();
-                elements.ahorroBreakdownModal?.classList.remove('hidden');
-            });
+            elements.ahorroBreakdownBtn.addEventListener('click', showAhorroBreakdown);
         }
 
         if (elements.bolsaDefaultDrawerBreakdownBtn) {
