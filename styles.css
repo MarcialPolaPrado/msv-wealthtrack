@@ -1975,9 +1975,11 @@ select:focus {
     cursor: pointer;
     position: relative;
     transition: all 0.2s ease;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    vertical-align: middle;
 }
 
 .nomina-checkbox:checked {
@@ -1987,9 +1989,9 @@ select:focus {
 }
 
 .nomina-checkbox:checked::after {
-    content: '✓';
+    content: '✔';
     color: white;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 900;
 }
 
