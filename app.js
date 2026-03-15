@@ -1399,10 +1399,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // From Bolsa (Stocks)
         stocks.forEach(s => {
             allMovements.push({
-                date: s.date,
+                date: s.date || new Date().toISOString().split('T')[0], // Fallback to current if missing
                 concept: `${s.qty < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
-                category: `Bolsa: ${s.market}`,
-                amount: -(s.qty * s.price), // Cash flow: buy is negative, sell is positive
+                category: `Bolsa: ${s.market || 'Mercado'}`,
+                amount: -( (s.qty || 0) * (s.price || 0) ), 
                 type: 'bolsa',
                 id: s.id,
                 qty: s.qty,
@@ -1599,34 +1599,40 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.activityStockFilters.classList.remove('hidden');
 
         // Render chips
-        let html = `<span style="font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-right: 0.5rem;">🎯 Filtrar por Acción:</span>`;
-        
-        // "Todo" chip
+        elements.activityStockFilters.innerHTML = '';
+        const label = document.createElement('span');
+        label.style.cssText = 'font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-right: 0.5rem;';
+        label.textContent = '🎯 Filtrar por Acción:';
+        elements.activityStockFilters.appendChild(label);
+
+        // "Todas" chip
         const allActive = !activityStockFilter;
-        html += `
-            <button class="filter-chip ${allActive ? 'active' : ''}" 
-                    style="padding: 4px 12px; border-radius: 20px; border: 1px solid ${allActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
-                    background: ${allActive ? 'var(--primary)' : 'transparent'}; color: ${allActive ? 'white' : 'rgba(255,255,255,0.6)'}; 
-                    font-size: 0.75rem; cursor: pointer; transition: all 0.2s;"
-                    onclick="activityStockFilter = null; renderActivity();">
-                Todas
-            </button>
-        `;
+        const allChip = document.createElement('button');
+        allChip.className = `filter-chip ${allActive ? 'active' : ''}`;
+        allChip.style.cssText = `padding: 4px 12px; border-radius: 20px; border: 1px solid ${allActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
+                                background: ${allActive ? 'var(--primary)' : 'transparent'}; color: ${allActive ? 'white' : 'rgba(255,255,255,0.6)'}; 
+                                font-size: 0.75rem; cursor: pointer; transition: all 0.2s;`;
+        allChip.textContent = 'Todas';
+        allChip.onclick = () => {
+            activityStockFilter = null;
+            renderActivity();
+        };
+        elements.activityStockFilters.appendChild(allChip);
 
         tickers.forEach(t => {
             const isActive = activityStockFilter === t;
-            html += `
-                <button class="filter-chip ${isActive ? 'active' : ''}" 
-                        style="padding: 4px 12px; border-radius: 20px; border: 1px solid ${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
-                        background: ${isActive ? 'var(--primary)' : 'transparent'}; color: ${isActive ? 'white' : 'rgba(255,255,255,0.6)'}; 
-                        font-size: 0.75rem; cursor: pointer; transition: all 0.2s;"
-                        onclick="activityStockFilter = '${t}'; renderActivity();">
-                    ${t}
-                </button>
-            `;
+            const chip = document.createElement('button');
+            chip.className = `filter-chip ${isActive ? 'active' : ''}`;
+            chip.style.cssText = `padding: 4px 12px; border-radius: 20px; border: 1px solid ${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; 
+                                 background: ${isActive ? 'var(--primary)' : 'transparent'}; color: ${isActive ? 'white' : 'rgba(255,255,255,0.6)'}; 
+                                 font-size: 0.75rem; cursor: pointer; transition: all 0.2s;`;
+            chip.textContent = t;
+            chip.onclick = () => {
+                activityStockFilter = t;
+                renderActivity();
+            };
+            elements.activityStockFilters.appendChild(chip);
         });
-
-        elements.activityStockFilters.innerHTML = html;
     }
 
     // 6. Add Totals Row
@@ -5327,6 +5333,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.saveCountdowns) window.saveCountdowns(countdowns);
                 if (window.saveCountdowns) window.saveCountdowns(countdowns);
                 nominaData = [];
+                activityStockFilter = null;
                 if (window.saveNomina) window.saveNomina(nominaData);
                 
                 // Clear extra system keys
@@ -5358,12 +5365,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentStr = now.toISOString().split('T')[0];
 
         stocks = [
-            { id: 'demo_1', ticker: 'AAPL', qty: 12, price: 175.50, currency: 'USD', name: 'Apple Inc.' },
-            { id: 'demo_2', ticker: 'MSFT', qty: 8, price: 395.20, currency: 'USD', name: 'Microsoft Corp.' },
-            { id: 'demo_3', ticker: 'NVDA', qty: 5, price: 680.15, currency: 'USD', name: 'NVIDIA Corp.' },
-            { id: 'demo_4', ticker: 'KO', qty: 45, price: 58.20, currency: 'USD', name: 'Coca-Cola Co.' },
-            { id: 'demo_5', ticker: 'SAN.MC', qty: 500, price: 4.15, currency: 'EUR', name: 'Banco Santander' },
-            { id: 'demo_6', ticker: 'ITX.MC', qty: 25, price: 51.10, currency: 'EUR', name: 'Inditex' }
+            { id: 'demo_1', ticker: 'AAPL', qty: 12, price: 175.50, currency: 'USD', name: 'Apple Inc.', date: currentStr, market: 'NASDAQ' },
+            { id: 'demo_2', ticker: 'MSFT', qty: 8, price: 395.20, currency: 'USD', name: 'Microsoft Corp.', date: currentStr, market: 'NASDAQ' },
+            { id: 'demo_3', ticker: 'NVDA', qty: 5, price: 680.15, currency: 'USD', name: 'NVIDIA Corp.', date: currentStr, market: 'NASDAQ' },
+            { id: 'demo_4', ticker: 'KO', qty: 45, price: 58.20, currency: 'USD', name: 'Coca-Cola Co.', date: pastStr, market: 'NYSE' },
+            { id: 'demo_5', ticker: 'SAN.MC', qty: 500, price: 4.15, currency: 'EUR', name: 'Banco Santander', date: pastStr, market: 'IBEX35' },
+            { id: 'demo_6', ticker: 'ITX.MC', qty: 25, price: 51.10, currency: 'EUR', name: 'Inditex', date: currentStr, market: 'IBEX35' }
         ];
         
         savingsDrawers = [
