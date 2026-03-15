@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastSyncTime = '-';
 
     // Global Formatters
-    const fmtEUR = (num, decimals = 0) => {
+    const fmtEUR = (num, decimals = 2) => {
         if (isPrivacyActive) return '€ ****';
         if (num === null || num === undefined) return '-';
         return new Intl.NumberFormat('es-ES', { 
@@ -1471,7 +1471,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const amountClass = m.amount >= 0 ? 'profit' : 'loss';
             const dateStr = new Date(m.date).toLocaleDateString();
-            const amountStr = fmtEUR(m.amount);
+            const amountStr = fmtEUR(m.amount, 2);
 
             const isFiltered = (col, val) => {
                 if (activityCellFilter.column !== col) return false;
@@ -1503,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalTr.style.borderTop = '2px solid rgba(255,255,255,0.1)';
             totalTr.innerHTML = `
                 <td colspan="3" style="padding: 1rem; text-align: right; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Balance Total</td>
-                <td style="padding: 1rem; font-size: 1.1rem; text-align: right;" class="${totalAmount >= 0 ? 'profit' : 'loss'}">${fmtEUR(totalAmount)}</td>
+                <td style="padding: 1rem; font-size: 1.1rem; text-align: right;" class="${totalAmount >= 0 ? 'profit' : 'loss'}">${fmtEUR(totalAmount, 2)}</td>
                 <td></td>
             `;
             elements.activityTableBody.appendChild(totalTr);
