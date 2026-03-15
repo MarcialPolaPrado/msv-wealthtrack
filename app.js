@@ -203,9 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatFiscalMonth(isoMonth) {
-        if (!isoMonth) return '---';
+        if (!isoMonth || typeof isoMonth !== 'string' || !isoMonth.includes('-')) return isoMonth || '---';
         const [year, month] = isoMonth.split('-');
-        const date = new Date(year, month - 1);
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        if (isNaN(date.getTime())) return isoMonth;
         const str = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(date);
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
@@ -1491,9 +1492,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="padding: 1rem; font-size: 0.95rem; text-align: right; font-weight: 700; cursor: pointer; ${isFiltered('amount', amountStr) ? 'background: var(--primary-glow); color: white;' : ''}" class="${amountClass}" data-col="amount" data-val="${amountStr}">${amountStr}</td>
                 <td style="padding: 1rem; text-align: center;">
                     <div style="display: flex; gap: 4px; justify-content: center;">
-                        <button class="btn-icon activity-edit-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex || ''}" title="Editar" style="padding: 4px 8px;">✏️</button>
-                        <button class="btn-icon activity-copy-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex || ''}" title="Copiar" style="padding: 4px 8px;">📋</button>
-                        <button class="btn-icon activity-delete-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex || ''}" title="Eliminar" style="padding: 4px 8px; filter: contrast(0.5) opacity(0.8);">🗑️</button>
+                        <button class="btn-icon activity-edit-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Editar" style="padding: 4px 8px;">✏️</button>
+                        <button class="btn-icon activity-copy-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Copiar" style="padding: 4px 8px;">📋</button>
+                        <button class="btn-icon activity-delete-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Eliminar" style="padding: 4px 8px; filter: contrast(0.5) opacity(0.8);">🗑️</button>
                     </div>
                 </td>
             `;
@@ -7811,39 +7812,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!nav) return;
 
         let isDragging = false;
-        let startY, startBottom;
+        let startY = 0;
+        let startBottom = 0;
 
-        nav.addEventListener('pointerdown', (e) => {
-            // Avoid dragging when clicking buttons
+        const onStart = (e) => {
+            // Only drag if clicking the nav itself or the drag handle
+            // Avoid dragging when clicking buttons or links
             if (e.target.closest('.bottom-nav-item') || e.target.closest('.floating-action-btn')) return;
             
+            e.preventDefault();
             isDragging = true;
             startY = e.clientY;
+            
             const style = window.getComputedStyle(nav);
             startBottom = parseInt(style.bottom) || 0;
             
             nav.setPointerCapture(e.pointerId);
             nav.style.transition = 'none';
-        });
+        };
 
-        nav.addEventListener('pointermove', (e) => {
+        const onMove = (e) => {
             if (!isDragging) return;
             
             const dy = startY - e.clientY;
             let newBottom = startBottom + dy;
             
-            // Constrain movement: from 10px to top of screen
-            const maxB = window.innerHeight - 100; 
+            // Constrain movement: from 10px to top of screen minus some margin
+            const maxB = window.innerHeight - 80; 
             newBottom = Math.max(10, Math.min(newBottom, maxB));
             
             nav.style.bottom = `${newBottom}px`;
-        });
+        };
 
-        nav.addEventListener('pointerup', () => {
+        const onEnd = (e) => {
             if (!isDragging) return;
             isDragging = false;
-            nav.style.transition = 'bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        });
+            nav.releasePointerCapture(e.pointerId);
+            nav.style.transition = 'bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+            
+            // Re-save position if you want persistence, otherwise just leave it
+            localStorage.setItem('bottomNavPos', nav.style.bottom);
+        };
+
+        nav.addEventListener('pointerdown', onStart);
+        nav.addEventListener('pointermove', onMove);
+        nav.addEventListener('pointerup', onEnd);
+        nav.addEventListener('pointercancel', onEnd);
+        
+        // Restore position if exists
+        const savedPos = localStorage.getItem('bottomNavPos');
+        if (savedPos) nav.style.bottom = savedPos;
     }
 
     setupDraggableBottomNav();
