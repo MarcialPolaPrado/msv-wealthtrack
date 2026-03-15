@@ -59,7 +59,11 @@ body {
     max-width: 1600px;
     margin: 0 auto;
     width: 100%;
-    transition: padding 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+#appMain.sidebar-collapsed {
+    padding-left: 2rem; /* Small padding or global padding */
 }
 
 @media (max-width: 1024px) {
@@ -205,7 +209,43 @@ header a {
 }
 
 .wealth-sidebar.collapsed {
-    width: var(--sidebar-collapsed-width);
+    width: 0;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+    border-right: none;
+    transform: translateX(-100%);
+}
+
+.sidebar-desktop-toggle-btn {
+    position: fixed;
+    top: 32px;
+    left: 32px;
+    z-index: 1200; /* Higher than sidebar */
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-desktop-toggle-btn:hover {
+    background: var(--bg-card);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-desktop-toggle-btn.sidebar-open {
+    left: 212px; /* Close to the sidebar's edge or inside header area */
 }
 
 .sidebar-header {
@@ -213,55 +253,14 @@ header a {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 3rem;
-    padding: 0 0.5rem;
+    padding: 0 44px 0 0.5rem; /* Space for the fixed toggle button */
     height: 48px;
 }
 
-.sidebar-collapse-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border);
-    color: var(--text-muted);
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.sidebar-collapse-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-.collapse-icon {
-    font-size: 0.8rem;
-    transition: transform 0.3s ease;
-}
-
-.wealth-sidebar.collapsed .collapse-icon {
-    transform: rotate(180deg);
-}
-
-.wealth-sidebar.collapsed .sidebar-header {
-    justify-content: center;
-    padding: 0;
-}
-
-.wealth-sidebar.collapsed .sidebar-logo {
-    gap: 0;
-}
-
-.wealth-sidebar.collapsed .sidebar-collapse-btn {
-    position: absolute;
-    right: -16px;
-    top: 32px;
-    background: var(--bg-dark);
-    border-radius: 50%;
-    z-index: 1100;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+@media (max-width: 1024px) {
+    .sidebar-desktop-toggle-btn {
+        display: none; /* Only desktop */
+    }
 }
 
 .wealth-sidebar.collapsed .logo-text,

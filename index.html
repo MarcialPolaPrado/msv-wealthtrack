@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603150605">
+    <link rel="stylesheet" href="styles.css?v=202603150617">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -51,6 +51,11 @@
 
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="app-container" id="mainApp">
+        <!-- Sidebar Toggle (Desktop) -->
+        <button class="sidebar-desktop-toggle-btn" id="sidebarCollapseBtn" title="Mostrar/Ocultar Menú">
+            <span class="collapse-icon">☰</span>
+        </button>
+
         <!-- New Sidebar -->
         <aside class="wealth-sidebar" id="wealthSidebar">
             <div class="sidebar-header">
@@ -61,9 +66,6 @@
                         <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603141659</p>
                     </div>
                 </div>
-                <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Contraer/Expandir Menú">
-                    <span class="collapse-icon">◀</span>
-                </button>
             </div>
 
             <nav class="sidebar-nav">
@@ -1224,7 +1226,7 @@
 
     <script src="storage.js?v=202603141659"></script>
     <script src="mock_data.js?v=202603141659"></script>
-    <script src="app.js?v=202603150605"></script>
+    <script src="app.js?v=202603150617"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1268,7 +1270,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603150605';
+        const APP_VERSION = '202603150617';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

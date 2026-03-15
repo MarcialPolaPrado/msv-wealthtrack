@@ -3994,21 +3994,51 @@ document.addEventListener('DOMContentLoaded', () => {
             item.classList.toggle('active', item.dataset.view === view);
         });
 
+        // Update Mobile FAB (mobileMenuBtn) Icon/Label based on view context
+        if (elements.mobileMenuBtn) {
+            const iconSpan = elements.mobileMenuBtn.querySelector('span');
+            if (iconSpan) {
+                if (view === 'bolsa') {
+                    iconSpan.textContent = '✨';
+                    elements.mobileMenuBtn.title = 'Añadir Inversión';
+                } else if (view === 'ahorro') {
+                    iconSpan.textContent = '📂';
+                    elements.mobileMenuBtn.title = 'Crear Cajón';
+                } else if (view === 'nomina') {
+                    iconSpan.textContent = '➕';
+                    elements.mobileMenuBtn.title = 'Añadir Concepto';
+                } else {
+                    iconSpan.textContent = '✨';
+                    elements.mobileMenuBtn.title = 'Añadir';
+                }
+            }
+        }
+
         // Use generalized render to handle visibility and specific rendering
         render();
     }
 
     function toggleSidebarCollapse() {
         const sidebar = elements.wealthSidebar;
+        const btn = document.getElementById('sidebarCollapseBtn');
         if (!sidebar) return;
         
         const isCollapsed = sidebar.classList.toggle('collapsed');
         localStorage.setItem('sidebarCollapsed', isCollapsed);
         
-        // Update main content padding if necessary
+        // Update main content padding
         const appMain = document.getElementById('appMain');
         if (appMain) {
             appMain.classList.toggle('sidebar-collapsed', isCollapsed);
+        }
+
+        // Toggle state icon/class on button
+        if (btn) {
+            btn.classList.toggle('sidebar-open', !isCollapsed);
+            const icon = btn.querySelector('.collapse-icon');
+            if (icon) {
+                icon.textContent = isCollapsed ? '☰' : '◀';
+            }
         }
     }
 
@@ -5108,14 +5138,27 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sidebarCollapseBtn')?.addEventListener('click', toggleSidebarCollapse);
         
         // Restore Sidebar State
-        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        const sidebarIsCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (sidebarIsCollapsed) {
             elements.wealthSidebar?.classList.add('collapsed');
             document.getElementById('appMain')?.classList.add('sidebar-collapsed');
         }
 
-        // Action Buttons in Sidebar
+        const collapseBtn = document.getElementById('sidebarCollapseBtn');
+        if (collapseBtn) {
+            collapseBtn.classList.toggle('sidebar-open', !sidebarIsCollapsed);
+            const icon = collapseBtn.querySelector('.collapse-icon');
+            if (icon) icon.textContent = sidebarIsCollapsed ? '☰' : '◀';
+        }
+
+        // Action Buttons in Sidebar & Mobile Dynamic FAB
         elements.sidebarAddStockBtn?.addEventListener('click', openAddStockModal);
-        elements.mobileMenuBtn?.addEventListener('click', openAddStockModal);
+        elements.mobileMenuBtn?.addEventListener('click', () => {
+            if (currentView === 'bolsa') openAddStockModal();
+            else if (currentView === 'ahorro') showAddDrawer();
+            else if (currentView === 'nomina') showAddNomina();
+            else openAddStockModal(); // Fallback
+        });
         elements.sidebarPrivacyToggleBtn?.addEventListener('click', togglePrivacy);
         elements.sidebarSettingsBtn?.addEventListener('click', openSettingsModal);
         elements.sidebarExportBtn?.addEventListener('click', () => exportGlobalJSON());
