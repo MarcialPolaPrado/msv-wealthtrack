@@ -63,7 +63,12 @@ body {
 }
 
 #appMain.sidebar-collapsed {
-    padding-left: 2rem; /* Small padding or global padding */
+    padding-left: 2rem;
+    max-width: 100%;
+}
+
+#appMain.sidebar-collapsed .savings-container {
+    max-width: 1560px;
 }
 
 @media (max-width: 1024px) {
