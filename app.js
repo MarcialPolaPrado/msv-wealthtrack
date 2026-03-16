@@ -6247,9 +6247,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.gDriveAutoBackup) elements.gDriveAutoBackup.checked = savedAuto;
                 
                 const wasLoggedIn = localStorage.getItem('gDriveIsLoggedIn') === 'true';
+                const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
+                
                 if (wasLoggedIn && google.accounts.oauth2) {
-                    // Try silent background login
-                    gDriveTokenClient.requestAccessToken({ prompt: '' });
+                    // Only try silent refresh if we're close to expiry or have no token
+                    if (Date.now() > expiresAt - 300000) { // 5 minutes before expiry
+                         // We don't auto-request here to avoid annoying popups on every load
+                         // Instead, we wait for a user action or the auto-backup trigger
+                    }
                 }
                 
                 const lastSync = localStorage.getItem('gDriveLastSyncTime');
@@ -6348,15 +6353,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (!silent) showToast("Backup guardado en Drive", "success");
                 
-                // Update Last Sync Time
-                const nowStr = new Date().toLocaleTimeString();
-                localStorage.setItem('gDriveLastSyncTime', nowStr);
+                // Update Last Sync Time (Date + Time)
+                const now = new Date();
+                const timestampStr = now.toLocaleDateString() + " " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                localStorage.setItem('gDriveLastSyncTime', timestampStr);
                 if (elements.gDriveLastSync) {
-                    elements.gDriveLastSync.textContent = "Última copia: " + nowStr;
+                    elements.gDriveLastSync.textContent = "Última copia: " + timestampStr;
                 }
+                
+                return true;
             } catch (err) {
                 console.error("GDrive Upload Error:", err);
                 if (!silent) showToast("Error al subir a Drive", "danger");
+                return false;
             }
         }
 
@@ -6411,6 +6420,36 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.gDriveRestoreBtn?.addEventListener('click', () => downloadDataFromGDrive());
         elements.gDriveAutoBackup?.addEventListener('change', (e) => {
             localStorage.setItem('gDriveAutoBackup', e.target.checked);
+        });
+
+        const sidebarGDriveSyncExitBtn = document.getElementById('sidebarGDriveSyncExitBtn');
+        sidebarGDriveSyncExitBtn?.addEventListener('click', async () => {
+            if (!gDriveAccessToken) {
+                showToast("Primero debes conectar con Google", "warning");
+                gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
+            } else {
+                const success = await uploadDataToGDrive(false);
+                if (success) {
+                    const now = new Date();
+                    const finalTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const finalDate = now.toLocaleDateString();
+
+                    // Create a nice landing screen
+                    document.body.innerHTML = `
+                        <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f172a; color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 2rem;">
+                            <div style="font-size: 4rem; margin-bottom: 1.5rem;">✅</div>
+                            <h1 style="font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sincronización Completada</h1>
+                            <p style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--success); font-weight: 600;">${finalDate} - ${finalTime}</p>
+                            <p style="opacity: 0.7; max-width: 450px; line-height: 1.6; margin-bottom: 2rem;">Tus datos están a salvo en la nube. Puedes cerrar la aplicación o volver a entrar si lo necesitas.</p>
+                            <div style="display: flex; gap: 1rem;">
+                                <button onclick="location.reload()" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; cursor: pointer; font-weight: 600; font-family: inherit;">🔄 Volver a la App</button>
+                                <button onclick="window.close();" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600; font-family: inherit;">🔒 Cerrar Ventana</button>
+                            </div>
+                            <p style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.4;">MSV WealthTrack Cloud Security</p>
+                        </div>
+                    `;
+                }
+            }
         });
 
         // Effect: Auto backup on exit (Reliable for mobile)
