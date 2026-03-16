@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isNominaIngresosExpanded = localStorage.getItem('isNominaIngresosExpanded') !== 'false';
     let isNominaAhorroExpanded = localStorage.getItem('isNominaAhorroExpanded') !== 'false';
     let isNominaGastosExpanded = localStorage.getItem('isNominaGastosExpanded') !== 'false';
+    let isNominaEgresosExpanded = localStorage.getItem('isNominaEgresosExpanded') !== 'false';
     let expandedSummaryDrawers = new Set();
     let drawerDetailFilterMode = localStorage.getItem('drawerDetailFilterMode') || 'all';
     let activityListMonth = _initialMonthStr;
@@ -3296,6 +3297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (storageKey === 'isNominaIngresosExpanded') isNominaIngresosExpanded = nowExpanded;
                 if (storageKey === 'isNominaAhorroExpanded') isNominaAhorroExpanded = nowExpanded;
                 if (storageKey === 'isNominaGastosExpanded') isNominaGastosExpanded = nowExpanded;
+                if (storageKey === 'isNominaEgresosExpanded') isNominaEgresosExpanded = nowExpanded;
             };
 
             header.addEventListener('click', toggleHandler);
@@ -3428,6 +3430,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return acc;
         }, {});
 
+        const egresosMap = new Map();
+        nominaData.forEach(concept => {
+            if (concept.type === 'saving' || concept.type === 'expense') {
+                if (concept.isAutomatic) return;
+                const monthlyMovements = (concept.movements || []).filter(m => (m.activeMonths || []).map(Number).includes(currentMonthNum));
+                const isSavings = concept.type === 'saving';
+                const provision = isSavings 
+                    ? monthlyMovements.filter(m => m.amount > 0).reduce((sum, m) => sum + m.amount, 0)
+                    : (monthlyMovements.find(m => isProvision(m))?.amount || 0);
+                
+                if (!egresosMap.has(concept.name)) {
+                    egresosMap.set(concept.name, {
+                        name: concept.name,
+                        amount: 0,
+                        icon: concept.icon || getNominaIcon(concept.name, concept.type)
+                    });
+                }
+                egresosMap.get(concept.name).amount += provision;
+            }
+        });
+
+        let totalEgresos = 0;
+        egresosMap.forEach(v => totalEgresos += v.amount);
+
         sortedDrawers.forEach(drawer => {
             // Check if drawer is active for this month
             const drawerMovements = (drawer.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum));
@@ -3552,6 +3578,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+
+        // Add Egresos section at the end of the list
+        if (egresosMap.size > 0) {
+            const sepTr = document.createElement('tr');
+            sepTr.className = 'list-section-header';
+            sepTr.style.borderTop = '2px solid #a855f7';
+            sepTr.innerHTML = `
+                <td colspan="2">DISTRIBUCIÓN DE EGRESOS</td>
+                <td style="text-align: right; padding-right: 1rem;">${fmtEUR(totalEgresos)}</td>
+            `;
+            elements.nominaTableBody.appendChild(sepTr);
+
+            egresosMap.forEach(egreso => {
+                if (egreso.amount === 0) return;
+                const tr = document.createElement('tr');
+                tr.className = 'ahorro-list-header';
+                tr.innerHTML = `
+                    <td colspan="2">
+                        <div class="header-content">
+                            <span>${egreso.icon} ${egreso.name}</span>
+                        </div>
+                    </td>
+                    <td class="balance">${fmtEUR(egreso.amount)}</td>
+                `;
+                elements.nominaTableBody.appendChild(tr);
+            });
+        }
     }
 
     function renderNomina() {
@@ -3850,12 +3903,70 @@ document.addEventListener('DOMContentLoaded', () => {
             else expenseCards.push(card);
         });
 
+        // Calculate Egresos (Ahorro + Gastos summed by name)
+        const egresosMap = new Map();
+        nominaData.forEach(concept => {
+            if (concept.type === 'saving' || concept.type === 'expense') {
+                if (concept.isAutomatic) return;
+                const monthlyMovements = (concept.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum));
+                const isSavings = concept.type === 'saving';
+                const provision = isSavings 
+                    ? monthlyMovements.filter(m => m.amount > 0).reduce((sum, m) => sum + m.amount, 0)
+                    : (monthlyMovements.find(m => isProvision(m))?.amount || 0);
+                
+                if (!egresosMap.has(concept.name)) {
+                    egresosMap.set(concept.name, {
+                        name: concept.name,
+                        amount: 0,
+                        icon: concept.icon || getNominaIcon(concept.name, concept.type),
+                        colorIndex: concept.colorIndex
+                    });
+                }
+                egresosMap.get(concept.name).amount += provision;
+            }
+        });
+
+        const egresoCards = [];
+        let totalEgresos = 0;
+        egresosMap.forEach(egreso => {
+            if (egreso.amount === 0) return;
+            totalEgresos += egreso.amount;
+
+            const card = document.createElement('div');
+            card.className = 'card drawer-card glass-panel egreso-drawer';
+            
+            const colorIdx = egreso.colorIndex !== undefined ? egreso.colorIndex : 2;
+            const theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
+            
+            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1,3), 16)}, ${parseInt(theme.border.slice(3,5), 16)}, ${parseInt(theme.border.slice(5,7), 16)}, 0.25)`, 'important');
+            card.style.setProperty('background-color', theme.bg, 'important');
+            card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
+            card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
+
+            card.innerHTML = `
+                <div class="drawer-header">
+                    <div style="display:flex; align-items:center; gap: 10px;">
+                        <span class="drawer-icon">${egreso.icon}</span>
+                        <div class="drawer-info">
+                            <h4 style="margin:0">${egreso.name}</h4>
+                            <p style="font-size: 0.8rem; opacity: 0.7;">Total Egresos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="drawer-balance" style="color: ${theme.border}; margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
+                    ${fmtEUR(egreso.amount)}
+                </div>
+            `;
+            egresoCards.push(card);
+        });
+
         // Render the sections
 
         grid.style.display = 'block'; // sections handle their own grid
         const incomeSubGrid = buildSection(grid, 'Distrib. Ingresos', '📈', '#10b981', incomeCards, totalPrimaryIncome, 'isNominaIngresosExpanded');
         buildSection(grid, 'Distrib. Ahorro', '🏦', '#f59e0b', savingCards, savingsSecTotal, 'isNominaAhorroExpanded');
         buildSection(grid, 'Distrib. Gastos', '📉', '#ef4444', expenseCards, totalPlannedExpensesManual, 'isNominaGastosExpanded');
+        buildSection(grid, 'Distrib. Egresos', '📤', '#a855f7', egresoCards, totalEgresos, 'isNominaEgresosExpanded');
 
         // Pie chart next to income drawers — same grid item, auto-placed to the right or below
         if (incomeSubGrid) {
