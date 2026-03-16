@@ -5053,7 +5053,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Scale values for display (relative to H/L)
         const range = totalHigh - totalLow || 1;
-        const scale = (val) => height - padding - ((val - totalLow) / range) * (height - 2 * padding);
+       const scale = (val) => height - padding - ((val - totalLow) / range) * (height - 2 * padding);
 
         const yHigh = scale(totalHigh);
         const yLow = scale(totalLow);
@@ -6277,11 +6277,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
                 
                 if (wasLoggedIn && google.accounts.oauth2) {
-                    // No automatic requests on startup to avoid flashing screens in PWA.
-                    // The 'hint' from last session is saved and will be used 
-                    // only when the user explicitly triggers a GDrive action.
+                    // Try to restore session on first interaction (more likely to succeed than on startup)
+                    const restoreSession = () => {
+                        const hint = localStorage.getItem('gDriveUserHint');
+                        gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
+                        
+                        // Also setup regular refresh if successful
+                        window.removeEventListener('click', restoreSession);
+                        window.removeEventListener('touchstart', restoreSession);
+                        
+                        setInterval(() => {
+                            if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
+                                gDriveTokenClient.requestAccessToken({ prompt: '', hint: localStorage.getItem('gDriveUserHint') || '' });
+                            }
+                        }, 50 * 60 * 1000);
+                    };
+                    window.addEventListener('click', restoreSession);
+                    window.addEventListener('touchstart', restoreSession);
                 }
-                updateGDriveUI(wasLoggedIn);
+                updateGDriveUI(false);
                 
                 const lastSync = localStorage.getItem('gDriveLastSyncTime');
                 if (lastSync && elements.gDriveLastSync) {
@@ -6293,16 +6307,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function updateGDriveUI(connected) {
-            const isLoggedInValue = localStorage.getItem('gDriveIsLoggedIn') === 'true';
-            const showConnected = connected || isLoggedInValue;
+            const hasToken = !!gDriveAccessToken;
+            const wasLoggedIn = localStorage.getItem('gDriveIsLoggedIn') === 'true';
             
             if (elements.gDriveStatusText) {
-                elements.gDriveStatusText.textContent = showConnected ? '✅ Conectado' : '❌ No conectado';
-                elements.gDriveStatusText.style.opacity = showConnected ? '1' : '0.6';
-                elements.gDriveStatusText.style.color = showConnected ? 'var(--success)' : 'inherit';
+                if (hasToken) {
+                    elements.gDriveStatusText.textContent = '✅ Conectado';
+                    elements.gDriveStatusText.style.color = 'var(--success)';
+                    elements.gDriveStatusText.style.opacity = '1';
+                } else if (wasLoggedIn) {
+                    elements.gDriveStatusText.textContent = '⏳ Reconectando...';
+                    elements.gDriveStatusText.style.color = 'var(--accent)';
+                    elements.gDriveStatusText.style.opacity = '0.8';
+                } else {
+                    elements.gDriveStatusText.textContent = '❌ No conectado';
+                    elements.gDriveStatusText.style.color = 'inherit';
+                    elements.gDriveStatusText.style.opacity = '0.6';
+                }
             }
-            elements.gDriveLoginBtn?.classList.toggle('hidden', showConnected);
-            elements.gDriveLoggedActions?.classList.toggle('hidden', !showConnected);
+            
+            const isVisible = hasToken || wasLoggedIn;
+            elements.gDriveLoginBtn?.classList.toggle('hidden', isVisible);
+            elements.gDriveLoggedActions?.classList.toggle('hidden', !isVisible);
         }
 
         async function uploadDataToGDrive(silent = false) {
@@ -6322,11 +6348,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
                         const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
                         const hint = localStorage.getItem('gDriveUserHint');
-                        gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
-                        // Wait for the callback to set gDriveAccessToken
-                        const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 5000))]);
-                        if (!ok && !gDriveAccessToken) {
-                            if (!silent) showToast("Sesión de Google caducada", "warning");
+                        // Only attempt silent refresh if a hint is available
+                        if (hint) {
+                            gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint });
+                            // Wait for the callback to set gDriveAccessToken
+                            const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 5000))]);
+                            if (!ok && !gDriveAccessToken) {
+                                if (!silent) showToast("Sesión de Google caducada", "warning");
+                                return false;
+                            }
+                        } else {
+                            if (!silent) showToast("Sesión de Google caducada. Requiere interacción.", "warning");
                             return false;
                         }
                     } else {
@@ -6504,16 +6536,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Effect: Auto backup on exit (Reliable for mobile)
+        // Effect: Auto backup on exit (Only if token is already valid to avoid popups)
         window.addEventListener('pagehide', () => {
-            if (gDriveAccessToken && localStorage.getItem('gDriveAutoBackup') === 'true') {
+            const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
+            const isValid = gDriveAccessToken && (Date.now() < expiresAt - 60000);
+            const hasHint = localStorage.getItem('gDriveUserHint'); // Check for hint for truly silent refresh
+            
+            if (isValid && localStorage.getItem('gDriveAutoBackup') === 'true' && hasHint) {
                 uploadDataToGDrive(true);
             }
         });
         
         // Also keep visibilitychange as secondary fallback
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden' && gDriveAccessToken && localStorage.getItem('gDriveAutoBackup') === 'true') {
+            const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
+            const isValid = gDriveAccessToken && (Date.now() < expiresAt - 60000);
+            const hasHint = localStorage.getItem('gDriveUserHint'); // Check for hint for truly silent refresh
+
+            if (document.visibilityState === 'hidden' && isValid && localStorage.getItem('gDriveAutoBackup') === 'true' && hasHint) {
                 uploadDataToGDrive(true);
             }
         });
