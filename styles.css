@@ -56,9 +56,9 @@ body {
 #appMain {
     flex-grow: 1;
     padding: 2rem;
-    max-width: 1600px;
+    max-width: none !important;
+    width: 98%;
     margin: 0 auto;
-    width: 100%;
     transition: all 0.3s ease;
 }
 
@@ -688,14 +688,15 @@ header a {
 
 /* Drawers Grid */
 .savings-container {
-    max-width: 1200px;
+    max-width: none !important;
+    width: 100%;
     margin: 0 auto;
     padding: 0 1rem;
 }
 
 .drawers-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1.5rem;
     perspective: 1000px;
 }
