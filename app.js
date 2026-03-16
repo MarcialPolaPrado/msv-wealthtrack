@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activitySortConfig = getSortConfig('activitySortConfig', { key: 'date', direction: 'desc' });
     let activityCellFilter = { column: null, value: null };
     let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'month' or 'year'
+    let activityDrawerFilter = localStorage.getItem('activityDrawerFilter') || 'all';
     let activitySearchQuery = '';
     let activityPageSize = 50;
     let activityCurrentLimit = 50;
@@ -623,6 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activityDateTrigger: document.getElementById('activityDateTrigger'),
         activityMonthInput: document.getElementById('activityMonthInput'),
         activitySearchInput: document.getElementById('activitySearchInput'),
+        activityDrawerFilter: document.getElementById('activityDrawerFilter'),
         activityLoadMoreBtn: document.getElementById('activityLoadMoreBtn'),
         activityPaginationContainer: document.getElementById('activityPaginationContainer'),
         activityPaginationInfo: document.getElementById('activityPaginationInfo'),
@@ -1471,6 +1473,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 category: `Bolsa: ${s.market || 'Mercado'}`,
                 amount: -( (s.qty || 0) * (s.price || 0) ), 
                 type: 'bolsa',
+                drawerId: 'bolsa',
                 id: s.id,
                 qty: s.qty,
                 price: s.price,
@@ -1505,6 +1508,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // mode === 'all'
             filtered = allMovements;
+        }
+
+        // 2a. Filter by Drawer
+        if (activityDrawerFilter !== 'all') {
+            filtered = filtered.filter(m => m.drawerId === activityDrawerFilter);
         }
         
         // Show navigation arrows unless mode is 'all'
@@ -1734,6 +1742,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
         });
+    }
+
+    function updateActivityDrawerFilterOptions() {
+        if (!elements.activityDrawerFilter) return;
+        const currentValue = activityDrawerFilter;
+        let html = '<option value="all">📁 Todos los Cajones</option>';
+        savingsDrawers.forEach(drawer => {
+            html += `<option value="${drawer.id}">${drawer.icon || '📁'} ${drawer.name}</option>`;
+        });
+        elements.activityDrawerFilter.innerHTML = html;
+        elements.activityDrawerFilter.value = currentValue;
+        if (elements.activityDrawerFilter.value !== currentValue) {
+            activityDrawerFilter = 'all';
+            elements.activityDrawerFilter.value = 'all';
+            localStorage.setItem('activityDrawerFilter', 'all');
+        }
     }
 
     function copyStock(id) {
@@ -4415,6 +4439,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Use generalized render to handle visibility and specific rendering
+        if (view === 'activity') {
+            updateActivityDrawerFilterOptions();
+        }
         render();
     }
 
@@ -6616,6 +6643,13 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.activitySearchInput?.addEventListener('input', (e) => {
             activitySearchQuery = e.target.value;
             activityCurrentLimit = activityPageSize; // Reset limit on search
+            renderActivity();
+        });
+
+        elements.activityDrawerFilter?.addEventListener('change', (e) => {
+            activityDrawerFilter = e.target.value;
+            localStorage.setItem('activityDrawerFilter', activityDrawerFilter);
+            activityCurrentLimit = activityPageSize;
             renderActivity();
         });
 

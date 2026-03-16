@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603161836">
+    <link rel="stylesheet" href="styles.css?v=202603161935">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -471,6 +471,10 @@
                                 <option value="all">🌐 Todo</option>
                                 <option value="month">📅 Mes</option>
                                 <option value="year">🗓️ Año</option>
+                            </select>
+                            <select id="activityDrawerFilter"
+                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; cursor: pointer; outline: none; width: 120px; height: 30px; box-sizing: border-box;">
+                                <option value="all">📁 Todos los Cajones</option>
                             </select>
                             <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
                                 <button id="activityMonthUp" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
@@ -1340,7 +1344,7 @@
 
     <script src="storage.js?v=202603161637"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603161836"></script>
+    <script src="app.js?v=202603161935"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1384,7 +1388,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603161836';
+        const APP_VERSION = '202603161935';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
