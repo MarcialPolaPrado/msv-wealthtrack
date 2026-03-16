@@ -3594,10 +3594,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (egreso.amount === 0) return;
                 const tr = document.createElement('tr');
                 tr.className = 'ahorro-list-header';
+                const pct = totalPrimaryIncome > 0 ? (egreso.amount / totalPrimaryIncome) * 100 : 0;
+                const pctStr = pct > 0 ? ` <span style="font-size: 0.8rem; opacity: 0.5;">(${fmtPct(pct)})</span>` : '';
                 tr.innerHTML = `
                     <td colspan="2">
                         <div class="header-content">
-                            <span>${egreso.icon} ${egreso.name}</span>
+                            <span>${egreso.icon} ${egreso.name}${pctStr}</span>
                         </div>
                     </td>
                     <td class="balance">${fmtEUR(egreso.amount)}</td>
@@ -3943,6 +3945,9 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
             card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
 
+            const pct = totalPrimaryIncome > 0 ? (egreso.amount / totalPrimaryIncome) * 100 : 0;
+            const pctStr = pct > 0 ? `<span style="font-size: 0.85rem; opacity: 0.6; font-weight: 400; color: var(--text-color); margin-left: 4px;">(${fmtPct(pct)})</span>` : '';
+
             card.innerHTML = `
                 <div class="drawer-header">
                     <div style="display:flex; align-items:center; gap: 10px;">
@@ -3954,7 +3959,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="drawer-balance" style="color: ${theme.border}; margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
-                    ${fmtEUR(egreso.amount)}
+                    ${fmtEUR(egreso.amount)} ${pctStr}
                 </div>
             `;
             egresoCards.push(card);
