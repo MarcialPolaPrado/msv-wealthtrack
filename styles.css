@@ -63,12 +63,19 @@ body {
 }
 
 #appMain.sidebar-collapsed {
-    padding-left: 2rem;
-    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: none !important;
 }
 
-#appMain.sidebar-collapsed .savings-container {
-    max-width: 1560px;
+#appMain.sidebar-collapsed .savings-container,
+#appMain.sidebar-collapsed .stock-list-section,
+#appMain.sidebar-collapsed .dashboard-grid,
+#appMain.sidebar-collapsed .view-section {
+    max-width: none !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 @media (max-width: 1024px) {

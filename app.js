@@ -2650,7 +2650,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.drawersGrid.appendChild(header);
 
                 subGrid.className = `collapsible-content ${isExpanded ? 'expanded' : ''}`;
-                subGrid.style.cssText = 'grid-column: 1 / -1; display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;';
+                subGrid.style.cssText = 'grid-column: 1 / -1; display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;';
 
                 header.onclick = () => {
                     const nowExpanded = !subGrid.classList.contains('expanded');
