@@ -6232,10 +6232,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 gDriveTokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GOOGLE_CLIENT_ID,
                     scope: GOOGLE_SCOPES,
-                    callback: (resp) => {
+                    callback: async (resp) => {
                         if (resp.error !== undefined) {
                              console.error("GIS Error:", resp);
-                             // If there's a waiter, resolve it as false
                              if (window._resolveToken) {
                                  window._resolveToken(false);
                                  delete window._resolveToken;
@@ -6250,9 +6249,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem('gDriveExpiresAt', expiresAt);
                         localStorage.setItem('gDriveIsLoggedIn', 'true');
                         
+                        // NEW: Fetch and store user email to use as hint for multiple accounts
+                        try {
+                            const uiResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                headers: { Authorization: `Bearer ${gDriveAccessToken}` }
+                            });
+                            const userData = await uiResp.json();
+                            if (userData.email) {
+                                localStorage.setItem('gDriveUserHint', userData.email);
+                            }
+                        } catch (e) { console.error("Error fetching userinfo", e); }
+
                         updateGDriveUI(true);
                         
-                        // Signal that we have a token
                         if (window._resolveToken) {
                             window._resolveToken(true);
                             delete window._resolveToken;
@@ -6268,15 +6277,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
                 
                 if (wasLoggedIn && google.accounts.oauth2) {
-                    // Try silent refresh immediately on load
+                    // Try silent refresh immediately on load with hint
                     setTimeout(() => {
-                        gDriveTokenClient.requestAccessToken({ prompt: '' });
+                        const hint = localStorage.getItem('gDriveUserHint');
+                        gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
                     }, 1000);
                     
                     // Keep session alive
                     setInterval(() => {
                         if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
-                            gDriveTokenClient.requestAccessToken({ prompt: '' });
+                            const hint = localStorage.getItem('gDriveUserHint');
+                            gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
                         }
                     }, 50 * 60 * 1000);
                 }
@@ -6320,7 +6331,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!gDriveAccessToken || isExpired) {
                     if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
                         const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                        gDriveTokenClient.requestAccessToken({ prompt: '' });
+                        const hint = localStorage.getItem('gDriveUserHint');
+                        gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
                         // Wait for the callback to set gDriveAccessToken
                         const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 5000))]);
                         if (!ok && !gDriveAccessToken) {
@@ -6465,14 +6477,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // If failed because of token, try SILENT first, then manual if needed
             if (!success && !gDriveAccessToken) {
                 const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                gDriveTokenClient.requestAccessToken({ prompt: '' });
+                const hint = localStorage.getItem('gDriveUserHint');
+                gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
                 
                 let ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 3000))]);
                 
                 if (!ok && !gDriveAccessToken) {
                     showToast("Se requiere elegir cuenta de Google", "info");
                     const manualPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                    gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
+                    gDriveTokenClient.requestAccessToken({ prompt: 'select_account', hint: hint || '' });
                     ok = await Promise.race([manualPromise, new Promise(r => setTimeout(r, 45000))]);
                 }
                 
