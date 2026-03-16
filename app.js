@@ -6268,15 +6268,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
                 
                 if (wasLoggedIn && google.accounts.oauth2) {
-                    // Try silent refresh immediately on load to have a valid token ready
-                    gDriveTokenClient.requestAccessToken({ prompt: '' });
-                    
-                    // Setup background refresh every 50 minutes to keep it alive
-                    setInterval(() => {
-                        if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
-                            gDriveTokenClient.requestAccessToken({ prompt: '' });
-                        }
-                    }, 50 * 60 * 1000);
+                    // We don't auto-request here anymore to avoid popups on startup.
+                    // Instead, the token will be requested when the user clicks 'Backup & Exit' 
+                    // or any other GDrive manual action.
                 }
                 
                 const lastSync = localStorage.getItem('gDriveLastSyncTime');
