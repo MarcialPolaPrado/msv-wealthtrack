@@ -1449,9 +1449,9 @@ document.addEventListener('DOMContentLoaded', () => {
             filtered = allMovements;
         }
         
-        // Always show navigation arrows (user requested)
-        elements.activityMonthUp?.classList.remove('hidden');
-        elements.activityMonthDown?.classList.remove('hidden');
+        // Show navigation arrows unless mode is 'all'
+        elements.activityMonthUp?.classList.toggle('hidden', activityFilterMode === 'all');
+        elements.activityMonthDown?.classList.toggle('hidden', activityFilterMode === 'all');
         elements.activityDateTrigger?.classList.toggle('hidden', activityFilterMode !== 'month');
 
         // 2b. Apply Cell Filter
@@ -1513,15 +1513,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (activityFilterMode === 'month') {
                 elements.activityMonthLabel.textContent = formatFiscalMonth(activityListMonth);
             } else {
-                elements.activityMonthLabel.textContent = ''; // Empty for 'all' mode
+                elements.activityMonthLabel.textContent = 'Historial Completo';
             }
         }
         
         if (elements.activityFilterMode) {
-            // Only set if month/year, if 'all' we don't change selector text to 'Historial'
-            if (activityFilterMode !== 'all') {
-                elements.activityFilterMode.value = activityFilterMode;
-            }
+            elements.activityFilterMode.value = activityFilterMode;
         }
         if (elements.activitySearchInput) {
             elements.activitySearchInput.value = activitySearchQuery;
@@ -6086,7 +6083,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.activityMonthUp?.addEventListener('click', () => {
             if (activityFilterMode === 'all') {
-                activityFilterMode = elements.activityFilterMode?.value || 'month';
+                activityFilterMode = 'month';
+                if (elements.activityFilterMode) elements.activityFilterMode.value = 'month';
             }
             if (activityFilterMode === 'month') {
                 activityListMonth = changeMonthVal(activityListMonth, 1);
@@ -6098,7 +6096,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         elements.activityMonthDown?.addEventListener('click', () => {
             if (activityFilterMode === 'all') {
-                activityFilterMode = elements.activityFilterMode?.value || 'month';
+                activityFilterMode = 'month';
+                if (elements.activityFilterMode) elements.activityFilterMode.value = 'month';
             }
             if (activityFilterMode === 'month') {
                 activityListMonth = changeMonthVal(activityListMonth, -1);
