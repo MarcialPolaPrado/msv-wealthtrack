@@ -697,18 +697,18 @@ header a {
 .drawers-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1.5rem;
+    gap: 0.5rem 1.5rem; /* Reduced row gap from 1.5rem to 0.5rem */
     perspective: 1000px;
 }
 
 .drawer-group-title {
     grid-column: 1 / -1;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--primary);
-    margin: 2rem 0 1rem 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+    margin: 0.75rem 0 0 0 !important; /* Minimal top margin */
+    padding: 0.5rem !important;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.15);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -878,16 +878,20 @@ header a {
 .collapsible-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0, 1, 0, 1), opacity 0.3s ease, margin 0.3s ease;
     opacity: 0;
+    margin-top: 0;
+}
+
+.collapsible-content:not(.expanded) {
+    display: none !important; /* Hide completely to remove grid footprints/gaps */
 }
 
 .collapsible-content.expanded {
-    max-height: 5000px;
-    /* Large enough for many cards */
+    display: grid !important;
+    max-height: none !important;
     opacity: 1;
-    margin-top: 0.5rem;
-    transition: max-height 0.6s cubic-bezier(1, 0, 1, 0), opacity 0.4s ease, margin 0.3s ease;
+    margin-top: 0.5rem !important;
+    padding-top: 0.25rem;
 }
 
 .toggle-arrow {
