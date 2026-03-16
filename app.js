@@ -104,6 +104,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let gapiInited = false;
     let gDriveTokenClient;
     let gDriveAccessToken = null;
+    let gDriveIsUploading = false; 
+    let gDriveLastBackupTime = 0; // Prevent redundant copies within seconds
 
     if (!expenseCategories.includes('Traspaso')) {
         expenseCategories.push('Traspaso');
@@ -6289,26 +6291,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         async function uploadDataToGDrive(silent = false) {
-            // Check if token expired
-            const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
-            const isExpired = Date.now() > expiresAt - 60000; // 1 minute buffer
+            // Check both the lock and a 10-second cooldown
+            if (gDriveIsUploading) return false;
+            const nowTime = Date.now();
+            if (silent && (nowTime - gDriveLastBackupTime < 10000)) return false; 
+            
+            gDriveIsUploading = true;
+            
+            try {
+                // Check if token expired
+                const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
+                const isExpired = Date.now() > expiresAt - 60000; // 1 minute buffer
 
-            if (!gDriveAccessToken || isExpired) {
-                if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
-                    const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                    gDriveTokenClient.requestAccessToken({ prompt: '' });
-                    // Wait for the callback to set gDriveAccessToken
-                    const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 5000))]);
-                    if (!ok && !gDriveAccessToken) {
-                        if (!silent) showToast("Sesión de Google caducada", "warning");
+                if (!gDriveAccessToken || isExpired) {
+                    if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
+                        const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
+                        gDriveTokenClient.requestAccessToken({ prompt: '' });
+                        // Wait for the callback to set gDriveAccessToken
+                        const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 5000))]);
+                        if (!ok && !gDriveAccessToken) {
+                            if (!silent) showToast("Sesión de Google caducada", "warning");
+                            return false;
+                        }
+                    } else {
+                        if (!silent) showToast("No conectado a Google Drive", "warning");
                         return false;
                     }
-                } else {
-                    if (!silent) showToast("No conectado a Google Drive", "warning");
-                    return false;
                 }
-            }
-            try {
+            
                 if (!silent) showToast("Subiendo copia a Drive...", "info");
                 
                 const now = new Date();
@@ -6360,12 +6370,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.gDriveLastSync) {
                     elements.gDriveLastSync.textContent = "Última copia: " + timestampStr;
                 }
-                
+                gDriveLastBackupTime = Date.now();
                 return true;
             } catch (err) {
                 console.error("GDrive Upload Error:", err);
                 if (!silent) showToast("Error al subir a Drive", "danger");
                 return false;
+            } finally {
+                gDriveIsUploading = false;
             }
         }
 
