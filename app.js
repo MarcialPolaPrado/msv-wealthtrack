@@ -6268,10 +6268,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
                 
                 if (wasLoggedIn && google.accounts.oauth2) {
-                    // We don't auto-request here anymore to avoid popups on startup.
-                    // Instead, the token will be requested when the user clicks 'Backup & Exit' 
-                    // or any other GDrive manual action.
+                    // Try silent refresh immediately on load
+                    setTimeout(() => {
+                        gDriveTokenClient.requestAccessToken({ prompt: '' });
+                    }, 1000);
+                    
+                    // Keep session alive
+                    setInterval(() => {
+                        if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
+                            gDriveTokenClient.requestAccessToken({ prompt: '' });
+                        }
+                    }, 50 * 60 * 1000);
                 }
+                updateGDriveUI(wasLoggedIn);
                 
                 const lastSync = localStorage.getItem('gDriveLastSyncTime');
                 if (lastSync && elements.gDriveLastSync) {
@@ -6283,13 +6292,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function updateGDriveUI(connected) {
+            const isLoggedInValue = localStorage.getItem('gDriveIsLoggedIn') === 'true';
+            const showConnected = connected || isLoggedInValue;
+            
             if (elements.gDriveStatusText) {
-                elements.gDriveStatusText.textContent = connected ? '✅ Conectado' : '❌ No conectado';
-                elements.gDriveStatusText.style.opacity = connected ? '1' : '0.6';
-                elements.gDriveStatusText.style.color = connected ? 'var(--success)' : 'inherit';
+                elements.gDriveStatusText.textContent = showConnected ? '✅ Conectado' : '❌ No conectado';
+                elements.gDriveStatusText.style.opacity = showConnected ? '1' : '0.6';
+                elements.gDriveStatusText.style.color = showConnected ? 'var(--success)' : 'inherit';
             }
-            elements.gDriveLoginBtn?.classList.toggle('hidden', connected);
-            elements.gDriveLoggedActions?.classList.toggle('hidden', !connected);
+            elements.gDriveLoginBtn?.classList.toggle('hidden', showConnected);
+            elements.gDriveLoggedActions?.classList.toggle('hidden', !showConnected);
         }
 
         async function uploadDataToGDrive(silent = false) {
@@ -6450,15 +6462,21 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarGDriveSyncExitBtn?.addEventListener('click', async () => {
             let success = await uploadDataToGDrive(false);
             
-            // If failed because of token, try ONE manual login and then retry backup
+            // If failed because of token, try SILENT first, then manual if needed
             if (!success && !gDriveAccessToken) {
-                showToast("Se requiere autorización", "info");
                 const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
+                gDriveTokenClient.requestAccessToken({ prompt: '' });
                 
-                const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 30000))]);
-                if (ok) {
-                    // Retry backup now that we should have a fresh token
+                let ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 3000))]);
+                
+                if (!ok && !gDriveAccessToken) {
+                    showToast("Se requiere elegir cuenta de Google", "info");
+                    const manualPromise = new Promise(resolve => { window._resolveToken = resolve; });
+                    gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
+                    ok = await Promise.race([manualPromise, new Promise(r => setTimeout(r, 45000))]);
+                }
+                
+                if (ok || gDriveAccessToken) {
                     success = await uploadDataToGDrive(false);
                 }
             }
