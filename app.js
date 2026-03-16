@@ -6231,14 +6231,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     client_id: GOOGLE_CLIENT_ID,
                     scope: GOOGLE_SCOPES,
                     callback: (resp) => {
-                        if (resp.error !== undefined) throw resp;
+                        if (resp.error !== undefined) {
+                             console.error("GIS Error:", resp);
+                             return;
+                        }
                         gDriveAccessToken = resp.access_token;
-                        // Store expiration to know when to refresh
+                        gapi.client.setToken({ access_token: gDriveAccessToken });
+                        
+                        // Store expiration
                         const expiresAt = Date.now() + (resp.expires_in * 1000);
                         localStorage.setItem('gDriveExpiresAt', expiresAt);
                         localStorage.setItem('gDriveIsLoggedIn', 'true');
+                        
                         updateGDriveUI(true);
                         showToast("Conectado a Google Drive", "success");
+                        
+                        // Signal that we have a token
+                        if (window._resolveToken) {
+                            window._resolveToken(true);
+                            delete window._resolveToken;
+                        }
                     },
                 });
 
@@ -6277,41 +6289,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         async function uploadDataToGDrive(silent = false) {
-            // If no token but we WERE logged in, try a quick refresh first
-            if (!gDriveAccessToken && localStorage.getItem('gDriveIsLoggedIn') === 'true') {
-                try {
+            // Check if token expired
+            const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
+            const isExpired = Date.now() > expiresAt - 60000; // 1 minute buffer
+
+            if (!gDriveAccessToken || isExpired) {
+                if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
+                    const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
                     gDriveTokenClient.requestAccessToken({ prompt: '' });
-                    // Wait a bit for the callback
-                    await new Promise(r => setTimeout(r, 1000));
-                } catch(e) { console.error("Silent refresh failed", e); }
-            }
-            if (!gDriveAccessToken) {
-                if (!silent) showToast("No conectado a Google Drive", "warning");
-                return;
+                    // Wait for the callback to set gDriveAccessToken
+                    const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 5000))]);
+                    if (!ok && !gDriveAccessToken) {
+                        if (!silent) showToast("Sesión de Google caducada", "warning");
+                        return false;
+                    }
+                } else {
+                    if (!silent) showToast("No conectado a Google Drive", "warning");
+                    return false;
+                }
             }
             try {
                 if (!silent) showToast("Subiendo copia a Drive...", "info");
                 
+                const now = new Date();
+                const datePart = now.toISOString().split('T')[0];
+                const timePart = now.getHours().toString().padStart(2, '0') + "-" + now.getMinutes().toString().padStart(2, '0');
+                const filename = `msv_wealth_backup_${datePart}_${timePart}.json`;
+
                 const data = {
                     stocks: stocks,
                     savingsDrawers: savingsDrawers,
-                    timestamp: new Date().toISOString(),
+                    timestamp: now.toISOString(),
                     version: APP_VERSION
                 };
                 const content = JSON.stringify(data);
                 
-                // 1. Search for existing backup file
-                const response = await gapi.client.drive.files.list({
-                    q: "name = 'msv_wealth_backup.json' and trashed = false",
-                    fields: 'files(id, name)',
-                    spaces: 'drive'
-                });
-                
-                const files = response.result.files;
-                let fileId = files && files.length > 0 ? files[0].id : null;
-
                 const metadata = {
-                    name: 'msv_wealth_backup.json',
+                    name: filename,
                     mimeType: 'application/json'
                 };
 
@@ -6327,34 +6341,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     content +
                     close_delim;
 
-                if (fileId) {
-                    // Update existing
-                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
-                        method: 'PATCH',
-                        keepalive: true,
-                        headers: new Headers({
-                            'Authorization': 'Bearer ' + gDriveAccessToken,
-                            'Content-Type': 'multipart/related; boundary=' + boundary
-                        }),
-                        body: body
-                    });
-                } else {
-                    // Create new
-                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                        method: 'POST',
-                        keepalive: true,
-                        headers: new Headers({
-                            'Authorization': 'Bearer ' + gDriveAccessToken,
-                            'Content-Type': 'multipart/related; boundary=' + boundary
-                        }),
-                        body: body
-                    });
-                }
+                // Always create new to keep history with timestamps
+                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    keepalive: true,
+                    headers: new Headers({
+                        'Authorization': 'Bearer ' + gDriveAccessToken,
+                        'Content-Type': 'multipart/related; boundary=' + boundary
+                    }),
+                    body: body
+                });
                 
                 if (!silent) showToast("Backup guardado en Drive", "success");
                 
                 // Update Last Sync Time (Date + Time)
-                const now = new Date();
                 const timestampStr = now.toLocaleDateString() + " " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 localStorage.setItem('gDriveLastSyncTime', timestampStr);
                 if (elements.gDriveLastSync) {
@@ -6372,10 +6372,11 @@ document.addEventListener('DOMContentLoaded', () => {
         async function downloadDataFromGDrive() {
             if (!gDriveAccessToken) return;
             try {
-                showToast("Buscando copia en Drive...", "info");
+                showToast("Buscando copia reciente en Drive...", "info");
                 const response = await gapi.client.drive.files.list({
-                    q: "name = 'msv_wealth_backup.json' and trashed = false",
-                    fields: 'files(id, name)',
+                    q: "name contains 'msv_wealth_backup' and trashed = false",
+                    orderBy: 'createdTime desc',
+                    fields: 'files(id, name, createdTime)',
                     spaces: 'drive'
                 });
                 
@@ -6385,7 +6386,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                // Pick the first one (most recent due to orderBy)
                 const fileId = files[0].id;
+                const fileName = files[0].name;
+                
                 const fileData = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
                     headers: new Headers({ 'Authorization': 'Bearer ' + gDriveAccessToken })
                 });
@@ -6424,31 +6428,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const sidebarGDriveSyncExitBtn = document.getElementById('sidebarGDriveSyncExitBtn');
         sidebarGDriveSyncExitBtn?.addEventListener('click', async () => {
-            if (!gDriveAccessToken) {
+            // If not connected at all, trigger full login
+            if (!gDriveAccessToken && localStorage.getItem('gDriveIsLoggedIn') !== 'true') {
                 showToast("Primero debes conectar con Google", "warning");
                 gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
-            } else {
-                const success = await uploadDataToGDrive(false);
-                if (success) {
-                    const now = new Date();
-                    const finalTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    const finalDate = now.toLocaleDateString();
+                return;
+            }
+            
+            const success = await uploadDataToGDrive(false);
+            if (success) {
+                const now = new Date();
+                const finalTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const finalDate = now.toLocaleDateString();
 
-                    // Create a nice landing screen
-                    document.body.innerHTML = `
-                        <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f172a; color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 2rem;">
-                            <div style="font-size: 4rem; margin-bottom: 1.5rem;">✅</div>
-                            <h1 style="font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sincronización Completada</h1>
-                            <p style="font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--success); font-weight: 600;">${finalDate} - ${finalTime}</p>
-                            <p style="opacity: 0.7; max-width: 450px; line-height: 1.6; margin-bottom: 2rem;">Tus datos están a salvo en la nube. Puedes cerrar la aplicación o volver a entrar si lo necesitas.</p>
-                            <div style="display: flex; gap: 1rem;">
-                                <button onclick="location.reload()" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; cursor: pointer; font-weight: 600; font-family: inherit;">🔄 Volver a la App</button>
-                                <button onclick="window.close();" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600; font-family: inherit;">🔒 Cerrar Ventana</button>
-                            </div>
-                            <p style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.4;">MSV WealthTrack Cloud Security</p>
+                // Create a nice landing screen
+                document.body.innerHTML = `
+                    <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f172a; color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 2rem;">
+                        <div style="font-size: 4rem; margin-bottom: 1.5rem;">✅</div>
+                        <h1 style="font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sincronización Completada</h1>
+                        <p style="font-size: 1.1rem; margin-bottom: 1.5rem; color: #10b981; font-weight: 600;">${finalDate} - ${finalTime}</p>
+                        <p style="opacity: 0.7; max-width: 450px; line-height: 1.6; margin-bottom: 2rem;">Tus datos están a salvo en la nube. Puedes cerrar la aplicación o volver a entrar si lo necesitas.</p>
+                        <div style="display: flex; gap: 1rem;">
+                            <button onclick="location.reload()" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; cursor: pointer; font-weight: 600; font-family: inherit;">🔄 Volver a la App</button>
+                            <button onclick="window.close();" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600; font-family: inherit;">🔒 Cerrar Ventana</button>
                         </div>
-                    `;
-                }
+                        <p style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.4;">MSV WealthTrack Cloud Security</p>
+                    </div>
+                `;
+            } else {
+                 if (!gDriveAccessToken) {
+                     // Try one last manual attempt
+                     gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
+                 }
             }
         });
 
