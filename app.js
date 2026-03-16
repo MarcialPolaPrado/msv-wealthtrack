@@ -97,6 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
         incomeCategories.push('Traspaso');
         localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
     }
+    const GOOGLE_CLIENT_ID = '900404772870-108c7ta8vr5670edu5avva2gsbbn75pt.apps.googleusercontent.com';
+    const GOOGLE_API_KEY = 'AIzaSyAzte6NZ_OhwA15GlzxheOxk3owRYFf-4U';
+    const GOOGLE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    let gapiInited = false;
+    let gDriveTokenClient;
+    let gDriveAccessToken = null;
+
     if (!expenseCategories.includes('Traspaso')) {
         expenseCategories.push('Traspaso');
         localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
@@ -627,7 +635,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarDeleteAllBtn: document.getElementById('sidebarDeleteAllBtn'),
         sidebarActivityBtn: document.getElementById('sidebarActivityBtn'),
         wealthNavItems: document.querySelectorAll('.wealth-nav-item'),
-        bottomNavItems: document.querySelectorAll('.bottom-nav-item')
+        bottomNavItems: document.querySelectorAll('.bottom-nav-item'),
+        
+        // Google Drive Elements
+        gDriveStatusText: document.getElementById('gDriveStatusText'),
+        gDriveLoginBtn: document.getElementById('gDriveLoginBtn'),
+        gDriveLoggedActions: document.getElementById('gDriveLoggedActions'),
+        gDriveAutoBackup: document.getElementById('gDriveAutoBackup'),
+        gDriveManualBackup: document.getElementById('gDriveManualBackup'),
+        gDriveRestoreBtn: document.getElementById('gDriveRestoreBtn')
     };
 
     const updateNominaMovementType = (type) => {
@@ -6198,6 +6214,177 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+
+
+        // Google Drive Integration Logic
+        async function gDriveInit() {
+            try {
+                await new Promise((resolve) => gapi.load('client', resolve));
+                await gapi.client.init({
+                    apiKey: GOOGLE_API_KEY,
+                    discoveryDocs: GOOGLE_DISCOVERY_DOCS,
+                });
+                gapiInited = true;
+                
+                gDriveTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: GOOGLE_SCOPES,
+                    callback: (resp) => {
+                        if (resp.error !== undefined) throw resp;
+                        gDriveAccessToken = resp.access_token;
+                        updateGDriveUI(true);
+                        showToast("Conectado a Google Drive", "success");
+                    },
+                });
+
+                // Auto-login check (if token in memory/session is not practical, just wait for user)
+                const savedAuto = localStorage.getItem('gDriveAutoBackup') === 'true';
+                if (elements.gDriveAutoBackup) elements.gDriveAutoBackup.checked = savedAuto;
+            } catch (err) {
+                console.error("error gDriveInit", err);
+            }
+        }
+
+        function updateGDriveUI(connected) {
+            if (elements.gDriveStatusText) {
+                elements.gDriveStatusText.textContent = connected ? '✅ Conectado' : '❌ No conectado';
+                elements.gDriveStatusText.style.opacity = connected ? '1' : '0.6';
+                elements.gDriveStatusText.style.color = connected ? 'var(--success)' : 'inherit';
+            }
+            elements.gDriveLoginBtn?.classList.toggle('hidden', connected);
+            elements.gDriveLoggedActions?.classList.toggle('hidden', !connected);
+        }
+
+        async function uploadDataToGDrive(silent = false) {
+            if (!gDriveAccessToken) return;
+            try {
+                if (!silent) showToast("Subiendo copia a Drive...", "info");
+                
+                const data = {
+                    stocks: stocks,
+                    savingsDrawers: savingsDrawers,
+                    timestamp: new Date().toISOString(),
+                    version: APP_VERSION
+                };
+                const content = JSON.stringify(data);
+                
+                // 1. Search for existing backup file
+                const response = await gapi.client.drive.files.list({
+                    q: "name = 'msv_wealth_backup.json' and trashed = false",
+                    fields: 'files(id, name)',
+                    spaces: 'drive'
+                });
+                
+                const files = response.result.files;
+                let fileId = files && files.length > 0 ? files[0].id : null;
+
+                const metadata = {
+                    name: 'msv_wealth_backup.json',
+                    mimeType: 'application/json'
+                };
+
+                const boundary = '-------314159265358979323846';
+                const delimiter = "\r\n--" + boundary + "\r\n";
+                const close_delim = "\r\n--" + boundary + "--";
+
+                let body = delimiter +
+                    'Content-Type: application/json\r\n\r\n' +
+                    JSON.stringify(metadata) +
+                    delimiter +
+                    'Content-Type: application/json\r\n\r\n' +
+                    content +
+                    close_delim;
+
+                if (fileId) {
+                    // Update existing
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
+                        method: 'PATCH',
+                        headers: new Headers({
+                            'Authorization': 'Bearer ' + gDriveAccessToken,
+                            'Content-Type': 'multipart/related; boundary=' + boundary
+                        }),
+                        body: body
+                    });
+                } else {
+                    // Create new
+                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: new Headers({
+                            'Authorization': 'Bearer ' + gDriveAccessToken,
+                            'Content-Type': 'multipart/related; boundary=' + boundary
+                        }),
+                        body: body
+                    });
+                }
+                
+                if (!silent) showToast("Backup guardado en Drive", "success");
+            } catch (err) {
+                console.error("GDrive Upload Error:", err);
+                if (!silent) showToast("Error al subir a Drive", "danger");
+            }
+        }
+
+        async function downloadDataFromGDrive() {
+            if (!gDriveAccessToken) return;
+            try {
+                showToast("Buscando copia en Drive...", "info");
+                const response = await gapi.client.drive.files.list({
+                    q: "name = 'msv_wealth_backup.json' and trashed = false",
+                    fields: 'files(id, name)',
+                    spaces: 'drive'
+                });
+                
+                const files = response.result.files;
+                if (!files || files.length === 0) {
+                    showToast("No se encontró ningún backup", "warning");
+                    return;
+                }
+
+                const fileId = files[0].id;
+                const fileData = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                    headers: new Headers({ 'Authorization': 'Bearer ' + gDriveAccessToken })
+                });
+                
+                const json = await fileData.json();
+                
+                showCustomConfirm("Se ha encontrado un backup con fecha " + new Date(json.timestamp).toLocaleString() + ". ¿Deseas restaurarlo? Esto sobrescribirá tus datos actuales.", () => {
+                    if (json.stocks) stocks = json.stocks;
+                    if (json.savingsDrawers) {
+                        savingsDrawers = json.savingsDrawers.map(d => ({
+                            group: '', 
+                            ...d
+                        }));
+                    }
+                    if (window.saveStocks) window.saveStocks(stocks);
+                    if (window.saveSavings) window.saveSavings(savingsDrawers);
+                    showToast("Datos restaurados correctamente", "success");
+                    render();
+                });
+            } catch (err) {
+                console.error("GDrive Download Error:", err);
+                showToast("Error al descargar de Drive", "danger");
+            }
+        }
+
+        elements.gDriveLoginBtn?.addEventListener('click', () => {
+            if (!gapiInited) return;
+            gDriveTokenClient.requestAccessToken({ prompt: 'consent' });
+        });
+
+        elements.gDriveManualBackup?.addEventListener('click', () => uploadDataToGDrive(false));
+        elements.gDriveRestoreBtn?.addEventListener('click', () => downloadDataFromGDrive());
+        elements.gDriveAutoBackup?.addEventListener('change', (e) => {
+            localStorage.setItem('gDriveAutoBackup', e.target.checked);
+        });
+
+        // Effect: Auto backup on exit
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && gDriveAccessToken && localStorage.getItem('gDriveAutoBackup') === 'true') {
+                uploadDataToGDrive(true);
+            }
+        });
+
+        setTimeout(gDriveInit, 1500); // Small delay to let gapi/google scripts load
 
         // Activity Listeners
         elements.activityLoadMoreBtn?.addEventListener('click', () => {
