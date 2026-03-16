@@ -6277,19 +6277,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
                 
                 if (wasLoggedIn && google.accounts.oauth2) {
-                    // Try silent refresh immediately on load with hint
-                    setTimeout(() => {
-                        const hint = localStorage.getItem('gDriveUserHint');
-                        gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
-                    }, 1000);
-                    
-                    // Keep session alive
-                    setInterval(() => {
-                        if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
-                            const hint = localStorage.getItem('gDriveUserHint');
-                            gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
-                        }
-                    }, 50 * 60 * 1000);
+                    // No automatic requests on startup to avoid flashing screens in PWA.
+                    // The 'hint' from last session is saved and will be used 
+                    // only when the user explicitly triggers a GDrive action.
                 }
                 updateGDriveUI(wasLoggedIn);
                 
