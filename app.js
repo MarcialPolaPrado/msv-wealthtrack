@@ -98,8 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
         incomeCategories.push('Traspaso');
         localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
     }
-    const GOOGLE_CLIENT_ID = window.CONFIG?.GOOGLE_CLIENT_ID || '';
-    const GOOGLE_API_KEY = window.CONFIG?.GOOGLE_API_KEY || '';
+    let GOOGLE_CLIENT_ID = localStorage.getItem('googleClientId') || window.CONFIG?.GOOGLE_CLIENT_ID || '';
+    let GOOGLE_API_KEY = localStorage.getItem('googleApiKey') || window.CONFIG?.GOOGLE_API_KEY || '';
     const GOOGLE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
     const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
     let gapiInited = false;
@@ -653,7 +653,9 @@ document.addEventListener('DOMContentLoaded', () => {
         gDriveAutoBackup: document.getElementById('gDriveAutoBackup'),
         gDriveManualBackup: document.getElementById('gDriveManualBackup'),
         gDriveRestoreBtn: document.getElementById('gDriveRestoreBtn'),
-        gDriveLastSync: document.getElementById('gDriveLastSync')
+        gDriveLastSync: document.getElementById('gDriveLastSync'),
+        googleClientIdInput: document.getElementById('googleClientIdInput'),
+        googleApiKeyInput: document.getElementById('googleApiKeyInput')
     };
 
     const updateNominaMovementType = (type) => {
@@ -5579,6 +5581,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const storedSource = localStorage.getItem('defaultTransferSource');
             if (storedSource) elements.defaultTransferSourceSelect.value = storedSource;
         }
+
+        if (elements.googleClientIdInput) elements.googleClientIdInput.value = localStorage.getItem('googleClientId') || '';
+        if (elements.googleApiKeyInput) elements.googleApiKeyInput.value = localStorage.getItem('googleApiKey') || '';
+
         toggleSettingsModal(true);
     }
 
@@ -5609,6 +5615,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Default Transfer Source
         if (elements.defaultTransferSourceSelect) {
             localStorage.setItem('defaultTransferSource', elements.defaultTransferSourceSelect.value);
+        }
+
+        // Google Credentials
+        const newClientId = elements.googleClientIdInput?.value.trim();
+        const newApiKey = elements.googleApiKeyInput?.value.trim();
+        if (newClientId) {
+            localStorage.setItem('googleClientId', newClientId);
+            GOOGLE_CLIENT_ID = newClientId;
+        }
+        if (newApiKey) {
+            localStorage.setItem('googleApiKey', newApiKey);
+            GOOGLE_API_KEY = newApiKey;
         }
 
         // Apply visual updates and notify user
@@ -6326,6 +6344,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Google Drive Integration Logic
         async function gDriveInit() {
             try {
+                if (!GOOGLE_API_KEY || !GOOGLE_CLIENT_ID) {
+                    console.warn("Faltan credenciales de Google Drive. Configúralas en Ajustes.");
+                    if (elements.gDriveStatusText) {
+                        elements.gDriveStatusText.textContent = "Faltan credenciales API (Ajustes)";
+                        elements.gDriveStatusText.style.color = "var(--warning)";
+                    }
+                    return;
+                }
+
                 await new Promise((resolve) => gapi.load('client', resolve));
                 await gapi.client.init({
                     apiKey: GOOGLE_API_KEY,
@@ -6545,7 +6572,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         elements.gDriveLoginBtn?.addEventListener('click', () => {
-            if (!gapiInited) return;
+            if (!GOOGLE_API_KEY || !GOOGLE_CLIENT_ID) {
+                showToast("⚠️ Faltan las credenciales de Google Drive. Ve a Ajustes (⬇️) para añadirlas.", "warning");
+                openSettingsModal();
+                return;
+            }
+            if (!gapiInited) {
+                showToast("⚠️ Inicializando Google API... inténtalo de nuevo en 1 segundo.", "warning");
+                return;
+            }
             gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
         });
 

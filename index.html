@@ -13,11 +13,11 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link rel="manifest" href="manifest.json">
-    <title>Premium Stock Portfolio - v202603161632</title><!-- Feature: Manual GDrive Only -->
+    <title>Premium Stock Portfolio - v202603162033</title><!-- Feature: Manual GDrive Only -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603162020">
+    <link rel="stylesheet" href="styles.css?v=202603162030">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -701,6 +701,17 @@
                         <div id="gDriveStatusText" style="opacity: 0.6;">No conectado</div>
                         <div id="gDriveLastSync" style="font-size: 0.7rem; opacity: 0.4; margin-top: 0.2rem;"></div>
                     </div>
+
+                    <div id="gDriveCredentialsForm" style="margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem; opacity: 0.8;">Google Client ID (Necesario en la nube)</label>
+                            <input type="text" id="googleClientIdInput" placeholder="...apps.googleusercontent.com" style="font-size: 0.75rem;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem; opacity: 0.8;">Google API Key (Necesario en la nube)</label>
+                            <input type="password" id="googleApiKeyInput" placeholder="AIza..." style="font-size: 0.75rem;">
+                        </div>
+                    </div>
                     
                     <button type="button" id="gDriveLoginBtn" class="btn-secondary" style="width: 100%; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 8px; background: white; color: #1f2937; border: none;">
                         <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" style="width: 18px; height: 18px;">
@@ -1343,10 +1354,10 @@
     <button id="clockMenuBtn" class="hidden"></button>
 
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
-    <script src="config.js?v=202603162012"></script>
+    <script src="config.js?v=202603162033"></script>
     <script src="storage.js?v=202603161637"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603162020"></script>
+    <script src="app.js?v=202603162030"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1390,7 +1401,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603162020';
+        const APP_VERSION = '202603162030';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
