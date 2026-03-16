@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603161509">
+    <link rel="stylesheet" href="styles.css?v=202603161516">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -683,7 +683,7 @@
                     <small style="opacity:0.6; display:block; margin-top:0.3rem;">Se seleccionará automáticamente al
                         añadir una nueva inversión.</small>
                 </div>
-                <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                <div class="form-group gdrive-sync-container" style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
                     <label style="font-weight: 700; color: white; display: block; margin-bottom: 0.8rem;">☁️ Sincronización en la Nube (Google Drive)</label>
                     <div id="gDriveStatus" style="font-size: 0.8rem; margin-bottom: 1rem; padding: 0.5rem; border-radius: 8px; background: rgba(255,255,255,0.05); text-align: center;">
                         <div id="gDriveStatusText" style="opacity: 0.6;">No conectado</div>
@@ -696,11 +696,11 @@
                     </button>
                     
                     <div id="gDriveLoggedActions" class="hidden">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; cursor: pointer;" onclick="document.getElementById('gDriveAutoBackup').click()">
                             <span style="font-size: 0.85rem; color: white;">Copia automática al salir</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 20px;">
-                                <input type="checkbox" id="gDriveAutoBackup" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
+                            <label class="switch" style="pointer-events: none;">
+                                <input type="checkbox" id="gDriveAutoBackup">
+                                <span class="slider"></span>
                             </label>
                         </div>
                         <button type="button" id="gDriveManualBackup" class="btn-primary" style="width: 100%; margin-bottom: 0.5rem; background: var(--success); border: none;">📤 Guardar Backup Ahora</button>
@@ -1329,7 +1329,7 @@
 
     <script src="storage.js?v=202603151952"></script>
     <script src="mock_data.js?v=202603151952"></script>
-    <script src="app.js?v=202603161509"></script>
+    <script src="app.js?v=202603161516"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1373,7 +1373,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603161509';
+        const APP_VERSION = '202603161516';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

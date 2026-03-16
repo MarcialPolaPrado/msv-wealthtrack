@@ -6233,6 +6233,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     callback: (resp) => {
                         if (resp.error !== undefined) throw resp;
                         gDriveAccessToken = resp.access_token;
+                        // Store expiration to know when to refresh
+                        const expiresAt = Date.now() + (resp.expires_in * 1000);
+                        localStorage.setItem('gDriveExpiresAt', expiresAt);
                         localStorage.setItem('gDriveIsLoggedIn', 'true');
                         updateGDriveUI(true);
                         showToast("Conectado a Google Drive", "success");
@@ -6323,6 +6326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Update existing
                     await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
                         method: 'PATCH',
+                        keepalive: true,
                         headers: new Headers({
                             'Authorization': 'Bearer ' + gDriveAccessToken,
                             'Content-Type': 'multipart/related; boundary=' + boundary
@@ -6333,6 +6337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Create new
                     await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                         method: 'POST',
+                        keepalive: true,
                         headers: new Headers({
                             'Authorization': 'Bearer ' + gDriveAccessToken,
                             'Content-Type': 'multipart/related; boundary=' + boundary
