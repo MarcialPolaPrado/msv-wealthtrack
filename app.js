@@ -6269,32 +6269,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                 });
 
-                // Auto-login check
-                const savedAuto = localStorage.getItem('gDriveAutoBackup') === 'true';
-                if (elements.gDriveAutoBackup) elements.gDriveAutoBackup.checked = savedAuto;
-                
-                const wasLoggedIn = localStorage.getItem('gDriveIsLoggedIn') === 'true';
-                const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
-                
-                if (wasLoggedIn && google.accounts.oauth2) {
-                    // Try to restore session on first interaction (more likely to succeed than on startup)
-                    const restoreSession = () => {
-                        const hint = localStorage.getItem('gDriveUserHint');
-                        gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
-                        
-                        // Also setup regular refresh if successful
-                        window.removeEventListener('click', restoreSession);
-                        window.removeEventListener('touchstart', restoreSession);
-                        
-                        setInterval(() => {
-                            if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
-                                gDriveTokenClient.requestAccessToken({ prompt: '', hint: localStorage.getItem('gDriveUserHint') || '' });
-                            }
-                        }, 50 * 60 * 1000);
-                    };
-                    window.addEventListener('click', restoreSession);
-                    window.addEventListener('touchstart', restoreSession);
-                }
+                // Removed all auto-login and background refresh logic.
                 updateGDriveUI(false);
                 
                 const lastSync = localStorage.getItem('gDriveLastSyncTime');
@@ -6308,17 +6283,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function updateGDriveUI(connected) {
             const hasToken = !!gDriveAccessToken;
-            const wasLoggedIn = localStorage.getItem('gDriveIsLoggedIn') === 'true';
             
             if (elements.gDriveStatusText) {
                 if (hasToken) {
                     elements.gDriveStatusText.textContent = '✅ Conectado';
                     elements.gDriveStatusText.style.color = 'var(--success)';
                     elements.gDriveStatusText.style.opacity = '1';
-                } else if (wasLoggedIn) {
-                    elements.gDriveStatusText.textContent = '⏳ Reconectando...';
-                    elements.gDriveStatusText.style.color = 'var(--accent)';
-                    elements.gDriveStatusText.style.opacity = '0.8';
                 } else {
                     elements.gDriveStatusText.textContent = '❌ No conectado';
                     elements.gDriveStatusText.style.color = 'inherit';
@@ -6326,9 +6296,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            const isVisible = hasToken || wasLoggedIn;
-            elements.gDriveLoginBtn?.classList.toggle('hidden', isVisible);
-            elements.gDriveLoggedActions?.classList.toggle('hidden', !isVisible);
+            elements.gDriveLoginBtn?.classList.toggle('hidden', hasToken);
+            elements.gDriveLoggedActions?.classList.toggle('hidden', !hasToken);
         }
 
         async function uploadDataToGDrive(silent = false) {
@@ -6345,24 +6314,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isExpired = Date.now() > expiresAt - 60000; // 1 minute buffer
 
                 if (!gDriveAccessToken || isExpired) {
-                    if (localStorage.getItem('gDriveIsLoggedIn') === 'true') {
-                        const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                        const hint = localStorage.getItem('gDriveUserHint');
-                        // Only attempt silent refresh if a hint is available
-                        if (hint) {
-                            gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint });
-                            // Wait for the callback to set gDriveAccessToken
-                            const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 5000))]);
-                            if (!ok && !gDriveAccessToken) {
-                                if (!silent) showToast("Sesión de Google caducada", "warning");
-                                return false;
-                            }
-                        } else {
-                            if (!silent) showToast("Sesión de Google caducada. Requiere interacción.", "warning");
-                            return false;
-                        }
-                    } else {
-                        if (!silent) showToast("No conectado a Google Drive", "warning");
+                    showToast("Iniciando sesión en Google...", "info");
+                    const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
+                    const hint = localStorage.getItem('gDriveUserHint');
+                    gDriveTokenClient.requestAccessToken({ prompt: 'select_account', hint: hint || '' });
+                    
+                    const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 60000))]);
+                    if (!ok || !gDriveAccessToken) {
+                        showToast("Se requiere conexión para continuar", "warning");
                         return false;
                     }
                 }
@@ -6496,24 +6455,10 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarGDriveSyncExitBtn?.addEventListener('click', async () => {
             let success = await uploadDataToGDrive(false);
             
-            // If failed because of token, try SILENT first, then manual if needed
+            // If failed because of token, the call inside uploadDataToGDrive will already trigger a prompt
+            // but we add a safety check here just in case.
             if (!success && !gDriveAccessToken) {
-                const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                const hint = localStorage.getItem('gDriveUserHint');
-                gDriveTokenClient.requestAccessToken({ prompt: '', hint: hint || '' });
-                
-                let ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 3000))]);
-                
-                if (!ok && !gDriveAccessToken) {
-                    showToast("Se requiere elegir cuenta de Google", "info");
-                    const manualPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                    gDriveTokenClient.requestAccessToken({ prompt: 'select_account', hint: hint || '' });
-                    ok = await Promise.race([manualPromise, new Promise(r => setTimeout(r, 45000))]);
-                }
-                
-                if (ok || gDriveAccessToken) {
-                    success = await uploadDataToGDrive(false);
-                }
+                // Not calling anything here because uploadDataToGDrive handles prompts now.
             }
             
             if (success) {
@@ -6536,27 +6481,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Effect: Auto backup on exit (Only if token is already valid to avoid popups)
-        window.addEventListener('pagehide', () => {
-            const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
-            const isValid = gDriveAccessToken && (Date.now() < expiresAt - 60000);
-            const hasHint = localStorage.getItem('gDriveUserHint'); // Check for hint for truly silent refresh
-            
-            if (isValid && localStorage.getItem('gDriveAutoBackup') === 'true' && hasHint) {
-                uploadDataToGDrive(true);
-            }
-        });
-        
-        // Also keep visibilitychange as secondary fallback
-        document.addEventListener('visibilitychange', () => {
-            const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
-            const isValid = gDriveAccessToken && (Date.now() < expiresAt - 60000);
-            const hasHint = localStorage.getItem('gDriveUserHint'); // Check for hint for truly silent refresh
-
-            if (document.visibilityState === 'hidden' && isValid && localStorage.getItem('gDriveAutoBackup') === 'true' && hasHint) {
-                uploadDataToGDrive(true);
-            }
-        });
+        // All automatic background tasks removed to prevent PWA/TWA issues.
 
         setTimeout(gDriveInit, 1500); // Small delay to let gapi/google scripts load
 
