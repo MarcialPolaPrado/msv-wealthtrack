@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ahorroSummaryVisible = localStorage.getItem('ahorroSummaryVisible') !== 'false';
     let bolsaHighlightsVisible = localStorage.getItem('bolsaHighlightsVisible') === 'true';
     let breakdownDrawerFilter = null;
+    let breakdownContext = 'ahorro'; 
     let currentBreakdownMovements = {
         Intereses: [],
         Dividendos: [],
@@ -101,6 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPrivacyActive = localStorage.getItem('isPrivacyActive') === 'true' || false;
     let currentView = 'bolsa';
     let lastSyncTime = '-';
+    let currentTotalInvestedBolsa = 0;
+    let currentPatrimonioTotal = 0;
 
     // Global Formatters
     const fmtEUR = (num, decimals = 2) => {
@@ -584,6 +587,9 @@ document.addEventListener('DOMContentLoaded', () => {
         breakdownYearDown: document.getElementById('breakdownYearDown'),
         breakdownMonthContainer: document.getElementById('breakdownMonthContainer'),
         breakdownYearContainer: document.getElementById('breakdownYearContainer'),
+        breakdownBolsaPctContainer: document.getElementById('breakdownBolsaPctContainer'),
+        breakdownBolsaPct: document.getElementById('breakdownBolsaPct'),
+        breakdownBolsaInvested: document.getElementById('breakdownBolsaInvested'),
 
         // Global Activity Elements
         logoBtn: document.getElementById('logoBtn'),
@@ -865,6 +871,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const totalInvestedAppCalc = totalInvestedEUR; // save original for return
+        currentTotalInvestedBolsa = totalInvestedEUR;
         // ALWAYS show a total value if we have any data, don't hide it with "-" unless truly empty
         const totalCurrentValueEUR = totalCurrentValueEURValue;
 
@@ -2458,6 +2465,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const cashTotal = savingsDrawers.filter(d => d.id !== 'bolsa').reduce((s, d) => s + d.balance, 0);
             const bolsaBalance = savingsDrawers.find(d => d.id === 'bolsa')?.balance || 0;
             const patrimonyTotal = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
+            currentPatrimonioTotal = patrimonyTotal;
 
             elements.ahorroSummarySection.innerHTML = `
                 <div class="card summary-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; border-color: rgba(255,255,255,0.1);">
@@ -5485,6 +5493,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showAhorroBreakdown() {
         breakdownDrawerFilter = null;
+        breakdownContext = 'ahorro';
         const now = new Date();
         if (elements.breakdownMonthInput) {
             elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
@@ -5594,10 +5603,53 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        const totalRendimientos = totalIntereses + totalDividendos + totalEspeculacion;
         if (elements.breakdownIntereses) elements.breakdownIntereses.textContent = fmtEUR(totalIntereses, 2);
         if (elements.breakdownDividendos) elements.breakdownDividendos.textContent = fmtEUR(totalDividendos, 2);
         if (elements.breakdownEspeculacion) elements.breakdownEspeculacion.textContent = fmtEUR(totalEspeculacion, 2);
-        if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalIntereses + totalDividendos + totalEspeculacion, 2);
+        if (elements.breakdownTotal) elements.breakdownTotal.textContent = fmtEUR(totalRendimientos, 2);
+
+        // Calculate and show yield percentage vs total invested in bolsa or patrimonio total
+        if (elements.breakdownBolsaPctContainer) {
+            const isBolsa = breakdownContext === 'bolsa';
+            const inv = isBolsa ? currentTotalInvestedBolsa : currentPatrimonioTotal;
+            const labelText = isBolsa ? 'invertido' : 'patrimonio';
+            
+            if (inv > 0) {
+                let pct = 0;
+                if (filterType === 'month') {
+                    pct = ((totalRendimientos * 12) / inv) * 100;
+                } else {
+                    const now = new Date();
+                    const currentYear = now.getFullYear();
+                    const currentMonth = now.getMonth() + 1; // 1-12
+                    const selectedYear = parseInt(yearVal);
+                    
+                    let monthsPassed = 12;
+                    if (selectedYear === currentYear) {
+                        monthsPassed = currentMonth;
+                    } else if (selectedYear > currentYear) {
+                        monthsPassed = 1; 
+                    }
+                    
+                    pct = (totalRendimientos * (12 / monthsPassed) / inv) * 100;
+                }
+                
+                elements.breakdownBolsaPctContainer.classList.remove('hidden');
+                if (elements.breakdownBolsaPct) elements.breakdownBolsaPct.textContent = fmtPct(pct);
+                if (elements.breakdownBolsaInvested) {
+                    elements.breakdownBolsaInvested.parentElement.innerHTML = `
+                        <span id="breakdownBolsaPct" style="color: var(--primary); font-weight: 600;">${fmtPct(pct)}</span> 
+                        de <span id="breakdownBolsaInvested">${fmtEUR(inv)}</span> ${labelText}
+                    `;
+                    // Re-assign references because we just overwrote the parent's innerHTML
+                    elements.breakdownBolsaPct = document.getElementById('breakdownBolsaPct');
+                    elements.breakdownBolsaInvested = document.getElementById('breakdownBolsaInvested');
+                }
+            } else {
+                elements.breakdownBolsaPctContainer.classList.add('hidden');
+            }
+        }
     }
 
     function toggleDataSource() {
@@ -6958,6 +7010,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             breakdownDrawerFilter = defaultSourceId;
+            breakdownContext = 'bolsa';
             const now = new Date();
             if (elements.breakdownMonthInput) {
                 elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
