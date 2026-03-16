@@ -6232,14 +6232,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     callback: (resp) => {
                         if (resp.error !== undefined) throw resp;
                         gDriveAccessToken = resp.access_token;
+                        localStorage.setItem('gDriveIsLoggedIn', 'true');
                         updateGDriveUI(true);
                         showToast("Conectado a Google Drive", "success");
                     },
                 });
 
-                // Auto-login check (if token in memory/session is not practical, just wait for user)
+                // Auto-login check
                 const savedAuto = localStorage.getItem('gDriveAutoBackup') === 'true';
                 if (elements.gDriveAutoBackup) elements.gDriveAutoBackup.checked = savedAuto;
+                
+                const wasLoggedIn = localStorage.getItem('gDriveIsLoggedIn') === 'true';
+                if (wasLoggedIn) {
+                    // Try to get token quietly (might show a quick popup)
+                    gDriveTokenClient.requestAccessToken({ prompt: '' });
+                }
             } catch (err) {
                 console.error("error gDriveInit", err);
             }
@@ -6368,7 +6375,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.gDriveLoginBtn?.addEventListener('click', () => {
             if (!gapiInited) return;
-            gDriveTokenClient.requestAccessToken({ prompt: 'consent' });
+            gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
         });
 
         elements.gDriveManualBackup?.addEventListener('click', () => uploadDataToGDrive(false));
