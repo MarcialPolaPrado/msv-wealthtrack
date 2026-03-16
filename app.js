@@ -98,8 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
         incomeCategories.push('Traspaso');
         localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
     }
-    const GOOGLE_CLIENT_ID = '900404772870-108c7ta8vr5670edu5avva2gsbbn75pt.apps.googleusercontent.com';
-    const GOOGLE_API_KEY = 'AIzaSyAzte6NZ_OhwA15GlzxheOxk3owRYFf-4U';
+    const GOOGLE_CLIENT_ID = window.CONFIG?.GOOGLE_CLIENT_ID || '';
+    const GOOGLE_API_KEY = window.CONFIG?.GOOGLE_API_KEY || '';
     const GOOGLE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
     const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
     let gapiInited = false;
