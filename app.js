@@ -72,6 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let activityCellFilter = { column: null, value: null };
     let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'month' or 'year'
     let activitySearchQuery = '';
+    let activityPageSize = 50;
+    let activityCurrentLimit = 50;
 
     const DRAWER_COLORS = [
         { name: 'green', border: '#10b981', bg: '#064e3b', grad: 'rgba(16, 185, 129, 0.4)' },
@@ -606,6 +608,9 @@ document.addEventListener('DOMContentLoaded', () => {
         activityDateTrigger: document.getElementById('activityDateTrigger'),
         activityMonthInput: document.getElementById('activityMonthInput'),
         activitySearchInput: document.getElementById('activitySearchInput'),
+        activityLoadMoreBtn: document.getElementById('activityLoadMoreBtn'),
+        activityPaginationContainer: document.getElementById('activityPaginationContainer'),
+        activityPaginationInfo: document.getElementById('activityPaginationInfo'),
         activityStockFilters: document.getElementById('activityStockFilters'),
         // New Nav Elements
         wealthSidebar: document.getElementById('wealthSidebar'),
@@ -1522,6 +1527,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (elements.activitySearchInput) {
             elements.activitySearchInput.value = activitySearchQuery;
+        }
+        
+        // 4b. Pagination Logic
+        const totalFilteredCount = filtered.length;
+        if (activityFilterMode === 'all') {
+            elements.activityPaginationContainer?.classList.remove('hidden');
+            if (elements.activityPaginationInfo) {
+                elements.activityPaginationInfo.textContent = `Mostrando ${Math.min(activityCurrentLimit, totalFilteredCount)} de ${totalFilteredCount} movimientos`;
+            }
+            if (elements.activityLoadMoreBtn) {
+                elements.activityLoadMoreBtn.classList.toggle('hidden', activityCurrentLimit >= totalFilteredCount);
+            }
+            // Slice the data
+            filtered = filtered.slice(0, activityCurrentLimit);
+        } else {
+            elements.activityPaginationContainer?.classList.add('hidden');
         }
 
         // 5. Render Table
@@ -6075,8 +6096,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Activity Listeners
+        elements.activityLoadMoreBtn?.addEventListener('click', () => {
+            activityCurrentLimit += activityPageSize;
+            renderActivity();
+        });
+
         elements.activityFilterMode?.addEventListener('change', (e) => {
             activityFilterMode = e.target.value;
+            activityCurrentLimit = activityPageSize; // Reset limit
             localStorage.setItem('activityFilterMode', activityFilterMode);
             renderActivity();
         });
@@ -6086,6 +6113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activityFilterMode = 'month';
                 if (elements.activityFilterMode) elements.activityFilterMode.value = 'month';
             }
+            activityCurrentLimit = activityPageSize;
             if (activityFilterMode === 'month') {
                 activityListMonth = changeMonthVal(activityListMonth, 1);
             } else {
@@ -6099,6 +6127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activityFilterMode = 'month';
                 if (elements.activityFilterMode) elements.activityFilterMode.value = 'month';
             }
+            activityCurrentLimit = activityPageSize;
             if (activityFilterMode === 'month') {
                 activityListMonth = changeMonthVal(activityListMonth, -1);
             } else {
@@ -6117,6 +6146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.activitySearchInput?.addEventListener('input', (e) => {
             activitySearchQuery = e.target.value;
+            activityCurrentLimit = activityPageSize; // Reset limit on search
             renderActivity();
         });
 
@@ -6130,6 +6160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activitySortConfig.key = key;
                 activitySortConfig.direction = 'asc';
             }
+            activityCurrentLimit = activityPageSize; // Reset limit on sort
             localStorage.setItem('activitySortConfig', JSON.stringify(activitySortConfig));
             renderActivity();
         });
