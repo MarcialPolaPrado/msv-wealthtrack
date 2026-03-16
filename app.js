@@ -343,6 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
         editId: document.getElementById('editId'),
         modalTitle: document.getElementById('modalTitle'),
         submitStockBtn: document.getElementById('submitStockBtn'),
+        stockSourceInfoGroup: document.getElementById('stockSourceInfoGroup'),
+        stockSourceInfoDisplay: document.getElementById('stockSourceInfoDisplay'),
+        fundSourceGroup: document.getElementById('fundSourceGroup'),
         exportDataBtn: document.getElementById('exportDataBtn'),
         importDataBtn: document.getElementById('importDataBtn'),
         mobileAddStockBtn: document.getElementById('mobileAddStockBtn'),
@@ -445,6 +448,8 @@ document.addEventListener('DOMContentLoaded', () => {
         savingsMovementType: document.getElementById('savingsMovementType'),
         savingsMovementTypeHint: document.getElementById('savingsMovementTypeHint'),
         savingsDateInput: document.getElementById('savingsDateInput'),
+        drawerInfoGroup: document.getElementById('drawerInfoGroup'),
+        drawerInfoDisplay: document.getElementById('drawerInfoDisplay'),
 
         // Nomina Elements
         nominaSection: document.getElementById('nominaSection'),
@@ -778,6 +783,18 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.dateInput.valueAsDate = new Date();
     }
 
+    function updateFundSourceSelect() {
+        if (!elements.fundSourceSelect) return;
+        elements.fundSourceSelect.innerHTML = '<option value="">-- Sin traspaso --</option>';
+        const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
+        activeDrawers.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
+            elements.fundSourceSelect.appendChild(opt);
+        });
+    }
+
     function editStock(id) {
         const stock = stocks.find(s => s.id === id);
         if (!stock) return;
@@ -787,12 +804,39 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.marketSelect.value = stock.market;
         elements.dateInput.value = stock.date;
         elements.qtyInput.value = stock.qty;
-        // The price stored in the object is the calculated "Buy Price", 
-        // but the user enters "Total Invested". Let's show Total Invested.
         elements.priceInput.value = (stock.price * stock.qty).toFixed(2);
 
-        elements.modalTitle.textContent = "Edit Investment";
-        elements.submitStockBtn.textContent = "Save Changes";
+        updateFundSourceSelect();
+        if (stock.sourceDrawerId) {
+            const srcDrawer = savingsDrawers.find(d => d.id === stock.sourceDrawerId);
+            if (srcDrawer && elements.stockSourceInfoGroup && elements.stockSourceInfoDisplay) {
+                elements.stockSourceInfoGroup.classList.remove('hidden');
+                elements.stockSourceInfoDisplay.textContent = `${srcDrawer.icon || '📁'} ${srcDrawer.name}`;
+                elements.fundSourceGroup?.classList.add('hidden');
+            }
+        } else {
+            // Try to find if it was originally from a drawer by searching movements
+            // This is a fallback for older entries
+            let found = false;
+            savingsDrawers.forEach(d => {
+                const matchingMvmt = d.movements.find(m => m.concept === `Inversión en ${stock.name || stock.ticker}` && m.amount < 0 && m.date === stock.date);
+                if (matchingMvmt && !found) {
+                    if (elements.stockSourceInfoGroup && elements.stockSourceInfoDisplay) {
+                        elements.stockSourceInfoGroup.classList.remove('hidden');
+                        elements.stockSourceInfoDisplay.textContent = `${d.icon || '📁'} ${d.name}`;
+                        elements.fundSourceGroup?.classList.add('hidden');
+                        found = true;
+                    }
+                }
+            });
+            if (!found) {
+                elements.stockSourceInfoGroup?.classList.add('hidden');
+                elements.fundSourceGroup?.classList.remove('hidden');
+            }
+        }
+
+        elements.modalTitle.textContent = "Editar Inversión";
+        elements.submitStockBtn.textContent = "Guardar Cambios";
         toggleModal(true);
     }
 
@@ -802,32 +846,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.editId.value = ''; // Ensure it's a NEW stock
         elements.tickerInput.value = stock.ticker;
-        // Only set market if it's a valid option in the select
         const validOptions = Array.from(elements.marketSelect.options).map(o => o.value);
         elements.marketSelect.value = validOptions.includes(stock.market) ? stock.market : 'SP500';
 
-        // Robust Today's Date Default
         const today = new Date().toISOString().split('T')[0];
         if (elements.dateInput) elements.dateInput.value = today;
 
         elements.qtyInput.value = '';
         elements.priceInput.value = '';
 
-        if (elements.fundSourceSelect) {
-            elements.fundSourceSelect.innerHTML = '<option value="">-- Sin traspaso --</option>';
-            const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
-            activeDrawers.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
-                elements.fundSourceSelect.appendChild(opt);
-            });
-            const storedSource = localStorage.getItem('defaultTransferSource');
-            if (storedSource) elements.fundSourceSelect.value = storedSource;
-        }
+        updateFundSourceSelect();
+        const storedSource = localStorage.getItem('defaultTransferSource');
+        if (storedSource) elements.fundSourceSelect.value = storedSource;
 
         elements.modalTitle.textContent = `Añadir más - ${stock.name || stock.ticker}`;
-        elements.submitStockBtn.textContent = "Add Investment";
+        elements.submitStockBtn.textContent = "Añadir Inversión";
         toggleModal(true);
     }
 
@@ -1452,6 +1485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     date: m.date || new Date().toISOString().split('T')[0],
                     concept: m.description || m.concept || 'Movimiento',
                     category: m.category || drawer.name,
+                    drawerName: `${drawer.icon || '📁'} ${drawer.name}`,
                     amount: m.amount || 0,
                     type: 'ahorro',
                     drawerId: drawer.id,
@@ -1587,7 +1621,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.innerHTML = `
                     <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('date', dateStr) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="date" data-val="${dateStr}">${dateStr}</td>
                     <td style="padding: 1rem; font-size: 0.9rem; font-weight: 500; cursor: pointer; ${isFiltered('concept', m.concept) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="concept" data-val="${m.concept}">${m.concept}</td>
-                    <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('category', m.category) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="category" data-val="${m.category}"><span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">${m.category}</span></td>
+                    <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('category', m.category) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="category" data-val="${m.category}">
+                        <span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">${m.category}</span>
+                        ${m.type === 'ahorro' && m.drawerName ? `<div style="font-size: 0.7rem; opacity: 0.55; margin-top: 3px; padding-left: 2px;">${m.drawerName}</div>` : ''}
+                    </td>
                     <td style="padding: 1rem; font-size: 0.95rem; text-align: right; font-weight: 700; cursor: pointer; ${isFiltered('amount', amountStr) ? 'background: var(--primary-glow); color: white;' : ''}" class="${amountClass}" data-col="amount" data-val="${amountStr}">${amountStr}</td>
                     <td style="padding: 1rem; text-align: center;">
                         <div style="display: flex; gap: 4px; justify-content: center;">
@@ -4405,6 +4442,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (title) title.textContent = "Crear Nuevo Cajón";
 
         nameGroup?.classList.remove('hidden');
+        elements.drawerInfoGroup?.classList.add('hidden');
         if (amountInput) amountInput.placeholder = "Saldo Inicial (€)";
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
@@ -4444,6 +4482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (title) title.textContent = `Movimiento: ${drawer.name}`;
 
         nameGroup?.classList.add('hidden');
+        elements.drawerInfoGroup?.classList.add('hidden');
         if (amountInput) amountInput.placeholder = "0.00";
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
@@ -4541,6 +4580,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (drawerNameInput) drawerNameInput.value = drawer.name;
         nameGroup?.classList.remove('hidden');
+        elements.drawerInfoGroup?.classList.add('hidden');
 
         // Find initial balance movement
         const initialMvmt = drawer.movements.find(m => isProvision(m));
@@ -4961,8 +5001,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (title) title.textContent = `Editar: ${movement.description}`;
 
         nameGroup?.classList.add('hidden');
+        elements.drawerInfoGroup?.classList.add('hidden');
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
+
+        if (elements.drawerInfoGroup && elements.drawerInfoDisplay) {
+            elements.drawerInfoGroup.classList.remove('hidden');
+            elements.drawerInfoDisplay.textContent = `${drawer.icon || '📁'} ${drawer.name}`;
+        }
 
         if (elements.savingsMovementTypeContainer) {
             elements.savingsMovementTypeContainer.classList.remove('hidden');
@@ -7049,6 +7095,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const drawerId = elements.fundSourceSelect.value;
                 const drawer = savingsDrawers.find(d => d.id === drawerId);
                 if (drawer) {
+                    stockData.sourceDrawerId = drawerId;
                     drawer.balance -= totalInvested;
                     drawer.movements.push({
                         id: Date.now() + Math.random(),
@@ -7713,19 +7760,12 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.editId.value = '';
         elements.modalTitle.textContent = "Add New Investment";
         elements.submitStockBtn.textContent = "Add Investment";
+        elements.stockSourceInfoGroup?.classList.add('hidden');
+        elements.fundSourceGroup?.classList.remove('hidden');
 
-        if (elements.fundSourceSelect) {
-            elements.fundSourceSelect.innerHTML = '<option value="">-- Sin traspaso --</option>';
-            const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
-            activeDrawers.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = `${d.icon || ''} ${d.name} (${fmtEUR(d.balance)})`.trim();
-                elements.fundSourceSelect.appendChild(opt);
-            });
-            const storedSource = localStorage.getItem('defaultTransferSource');
-            if (storedSource) elements.fundSourceSelect.value = storedSource;
-        }
+        updateFundSourceSelect();
+        const storedSource = localStorage.getItem('defaultTransferSource');
+        if (storedSource && elements.fundSourceSelect) elements.fundSourceSelect.value = storedSource;
 
         // Robust Today's Date Default
         const today = new Date().toISOString().split('T')[0];
