@@ -688,6 +688,24 @@ header a {
     perspective: 1000px;
 }
 
+.drawer-group-title {
+    grid-column: 1 / -1;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 2rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.drawer-group-title::before {
+    content: '📁';
+    font-size: 1.1rem;
+}
+
 .drawer-card {
     cursor: pointer;
     transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);

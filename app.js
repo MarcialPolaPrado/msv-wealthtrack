@@ -414,6 +414,9 @@ document.addEventListener('DOMContentLoaded', () => {
         savingsActionType: document.getElementById('savingsActionType'),
         drawerNameInput: document.getElementById('drawerNameInput'),
         drawerNameGroup: document.getElementById('drawerNameGroup'),
+        drawerGroupInput: document.getElementById('drawerGroupInput'),
+        drawerGroupGroup: document.getElementById('drawerGroupGroup'),
+        existingGroupsDatalist: document.getElementById('existingGroups'),
         movementAmountInput: document.getElementById('movementAmountInput'),
         movementConceptInput: document.getElementById('movementConceptInput'),
         movementConceptGroup: document.getElementById('movementConceptGroup'),
@@ -2531,89 +2534,118 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (savingsDrawers.length === 0) return;
 
+        // Group drawers
+        const groups = new Map();
+        const noGroupKey = 'Otros'; // Header for drawers without group
+        
         savingsDrawers.forEach(drawer => {
-            const card = document.createElement('div');
-            // We force income-drawer but also apply very explicit inline styles to ensure green color
-            card.className = `card drawer-card glass-panel income-drawer ${drawer.isAuto ? 'bolsa-drawer' : ''}`;
+            const g = (drawer.group && drawer.group.trim()) ? drawer.group.trim() : (drawer.id === 'bolsa' ? 'Inversiones' : noGroupKey);
+            if (!groups.has(g)) groups.set(g, []);
+            groups.get(g).push(drawer);
+        });
 
-            const pct = total > 0 ? (drawer.balance / total * 100).toFixed(1) : 0;
+        // Get sorted group names
+        const sortedGroups = Array.from(groups.keys()).sort((a, b) => {
+            if (a === 'Inversiones') return -1;
+            if (b === 'Inversiones') return 1;
+            if (a === noGroupKey) return 1;
+            if (b === noGroupKey) return -1;
+            return a.localeCompare(b);
+        });
 
-            let theme;
-            if (drawer.id === 'bolsa') {
-                const isProfit = (drawer.pl || 0) >= 0;
-                theme = isProfit ? DRAWER_COLORS[1] : DRAWER_COLORS[4]; // Blue for profit, Red for loss
-            } else {
-                const colorIdx = drawer.colorIndex || 0;
-                theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
+        sortedGroups.forEach(groupName => {
+            const drawersInGroup = groups.get(groupName);
+            const groupTotal = drawersInGroup.reduce((sum, d) => sum + d.balance, 0);
+
+            // Add group header if there's more than one group or if the group has a name
+            if (sortedGroups.length > 1 || groupName !== noGroupKey) {
+                const header = document.createElement('div');
+                header.className = 'drawer-group-title';
+                header.innerHTML = `<span>${groupName}</span> <span style="margin-left: auto; font-size: 1rem; opacity: 0.8; font-weight: 600;">${fmtEUR(groupTotal)}</span>`;
+                elements.drawersGrid.appendChild(header);
             }
+            drawersInGroup.forEach(drawer => {
+                const card = document.createElement('div');
+                card.className = `card drawer-card glass-panel income-drawer ${drawer.isAuto ? 'bolsa-drawer' : ''}`;
 
-            // Apply theme styles
-            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
-            card.style.setProperty('background-color', theme.bg, 'important');
-            card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
-            card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
+                const pct = total > 0 ? (drawer.balance / total * 100).toFixed(1) : 0;
 
-            const targetAmount = drawer.targetAmount || 0;
-            const diff = targetAmount > 0 ? targetAmount - drawer.balance : 0;
-            const diffColor = diff <= 0 ? 'var(--success)' : 'var(--danger)';
-
-            card.innerHTML = `
-                <div class="drawer-color-btn" title="Cambiar Color" style="position: absolute; top: 0.5rem; right: 0.5rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: grayscale(1); opacity: 0.4; transition: all 0.2s;">🎨</div>
-                <div class="drawer-target-icon" title="Establecer Objetivo" style="right: 3.2rem !important; top: 0.5rem !important;">🎯</div>
-                <span class="drawer-icon">${drawer.icon}</span>
-                <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
-                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                    <div style="display: flex; flex-direction: column;">
-                        <div style="font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 2px; font-weight: 700; color: white;">${drawer.id === 'bolsa' ? 'En Bolsa' : ''}</div>
-                        <span class="drawer-amount" style="color: ${drawer.id === 'bolsa' ? 'white' : theme.border} !important; font-weight: 800; font-size: 1.2rem; display: block;">${fmtEUR(drawer.balance)}</span>
-                        ${targetAmount > 0 ? `
-                            <div class="target-info" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 4px;">
-                                <span>Obj: ${fmtEUR(targetAmount)}</span>
-                                <span style="color: ${diffColor}; font-weight: 600; margin-left: 5px;">(${diff >= 0 ? '+' : ''}${fmtEUR(diff)})</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <span style="font-size: 1.2rem; font-weight: 800; color: ${drawer.id === 'bolsa' ? 'white' : theme.border}; opacity: 0.9;">${pct}%</span>
-                </div>
-                ${!drawer.isAuto ? `
-                    <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:nowrap;">
-                        <button class="add-mvmt-btn btn-primary" title="Añadir Movimiento" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">➕</button>
-                        <button class="transfer-btn btn-secondary" title="Transferir" style="padding:0.5rem 0; font-size:1.2rem; font-weight:bold; flex:1; display:flex; justify-content:center; align-items:center;">⇆</button>
-                        <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">✏️</button>
-                    </div>` : ''}
-            `;
-
-            card.onclick = (e) => {
-                const mvmtBtn = e.target.closest('.add-mvmt-btn');
-                const transBtn = e.target.closest('.transfer-btn');
-                const editBtn = e.target.closest('.edit-drawer-btn');
-                const targetBtn = e.target.closest('.drawer-target-icon');
-                const colorBtn = e.target.closest('.drawer-color-btn');
-
-                if (targetBtn) {
-                    e.stopPropagation();
-                    setDrawerTargetAmount(drawer.id);
-                } else if (colorBtn) {
-                    e.stopPropagation();
-                    cycleDrawerColor(drawer.id);
-                } else if (mvmtBtn) {
-                    e.stopPropagation();
-                    showAddMovementModal(drawer.id);
-                } else if (transBtn) {
-                    e.stopPropagation();
-                    showTransferModal(drawer.id);
-                } else if (editBtn) {
-                    e.stopPropagation();
-                    showEditDrawerModal(drawer.id);
-                } else if (e.target.closest('.delete-drawer-btn')) {
-                    e.stopPropagation();
-                    deleteSavingsDrawer(drawer.id);
+                let theme;
+                if (drawer.id === 'bolsa') {
+                    const isProfit = (drawer.pl || 0) >= 0;
+                    theme = isProfit ? DRAWER_COLORS[1] : DRAWER_COLORS[4];
                 } else {
-                    showDrawerDetails(drawer.id);
+                    const colorIdx = drawer.colorIndex || 0;
+                    theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
                 }
-            };
 
-            elements.drawersGrid.appendChild(card);
+                card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
+                card.style.setProperty('background-color', theme.bg, 'important');
+                card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
+                card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
+
+                const targetAmount = drawer.targetAmount || 0;
+                const diff = targetAmount > 0 ? targetAmount - drawer.balance : 0;
+                const diffColor = diff <= 0 ? 'var(--success)' : 'var(--danger)';
+
+                card.innerHTML = `
+                    <div class="drawer-color-btn" title="Cambiar Color" style="position: absolute; top: 0.5rem; right: 0.5rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: grayscale(1); opacity: 0.4; transition: all 0.2s;">🎨</div>
+                    <div class="drawer-target-icon" title="Establecer Objetivo" style="right: 3.2rem !important; top: 0.5rem !important;">🎯</div>
+                    <span class="drawer-icon">${drawer.icon}</span>
+                    <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 2px; font-weight: 700; color: white;">${drawer.id === 'bolsa' ? 'En Bolsa' : ''}</div>
+                            <span class="drawer-amount" style="color: ${drawer.id === 'bolsa' ? 'white' : theme.border} !important; font-weight: 800; font-size: 1.2rem; display: block;">${fmtEUR(drawer.balance)}</span>
+                            ${targetAmount > 0 ? `
+                                <div class="target-info" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 4px;">
+                                    <span>Obj: ${fmtEUR(targetAmount)}</span>
+                                    <span style="color: ${diffColor}; font-weight: 600; margin-left: 5px;">(${diff >= 0 ? '+' : ''}${fmtEUR(diff)})</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <span style="font-size: 1.2rem; font-weight: 800; color: ${drawer.id === 'bolsa' ? 'white' : theme.border}; opacity: 0.9;">${pct}%</span>
+                    </div>
+                    ${!drawer.isAuto ? `
+                        <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:nowrap;">
+                            <button class="add-mvmt-btn btn-primary" title="Añadir Movimiento" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">➕</button>
+                            <button class="transfer-btn btn-secondary" title="Transferir" style="padding:0.5rem 0; font-size:1.2rem; font-weight:bold; flex:1; display:flex; justify-content:center; align-items:center;">⇆</button>
+                            <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">✏️</button>
+                        </div>` : ''}
+                `;
+
+                card.onclick = (e) => {
+                    const mvmtBtn = e.target.closest('.add-mvmt-btn');
+                    const transBtn = e.target.closest('.transfer-btn');
+                    const editBtn = e.target.closest('.edit-drawer-btn');
+                    const targetBtn = e.target.closest('.drawer-target-icon');
+                    const colorBtn = e.target.closest('.drawer-color-btn');
+
+                    if (targetBtn) {
+                        e.stopPropagation();
+                        setDrawerTargetAmount(drawer.id);
+                    } else if (colorBtn) {
+                        e.stopPropagation();
+                        cycleDrawerColor(drawer.id);
+                    } else if (mvmtBtn) {
+                        e.stopPropagation();
+                        showAddMovementModal(drawer.id);
+                    } else if (transBtn) {
+                        e.stopPropagation();
+                        showTransferModal(drawer.id);
+                    } else if (editBtn) {
+                        e.stopPropagation();
+                        showEditDrawerModal(drawer.id);
+                    } else if (e.target.closest('.delete-drawer-btn')) {
+                        e.stopPropagation();
+                        deleteSavingsDrawer(drawer.id);
+                    } else {
+                        showDrawerDetails(drawer.id);
+                    }
+                };
+
+                elements.drawersGrid.appendChild(card);
+            });
         });
 
         renderSavingsPieChart();
@@ -4305,6 +4337,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function updateGroupDatalist() {
+        if (!elements.existingGroupsDatalist) return;
+        const groups = new Set();
+        savingsDrawers.forEach(d => {
+            if (d.group && d.group.trim()) groups.add(d.group.trim());
+        });
+        elements.existingGroupsDatalist.innerHTML = Array.from(groups)
+            .sort()
+            .map(g => `<option value="${g}">`)
+            .join('');
+    }
+
     function showAddDrawer() {
         // Resilient fetching
         const modal = document.getElementById('savingsInputModal');
@@ -4318,6 +4362,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!modal || !form || !typeInput) return;
 
+        updateGroupDatalist();
         form.reset();
         typeInput.value = 'drawer';
         if (title) title.textContent = "Crear Nuevo Cajón";
@@ -4327,6 +4372,14 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
+
+        elements.drawerGroupGroup?.classList.remove('hidden');
+        if (elements.drawerGroupInput) elements.drawerGroupInput.value = '';
+
+        // Default to today's date for new drawer
+        if (elements.savingsDateInput) {
+            elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
+        }
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
@@ -4357,6 +4410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (amountInput) amountInput.placeholder = "0.00";
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
+        elements.drawerGroupGroup?.classList.add('hidden');
 
         // Show toggle for manual movements
         if (elements.savingsMovementTypeContainer) {
@@ -4408,6 +4462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.remove('hidden');
         if (amountInput) amountInput.placeholder = "Importe a transferir";
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
+        elements.drawerGroupGroup?.classList.add('hidden');
 
         // Populate target dropdown (exclude source and Bolsa)
         transferTargetSelect.innerHTML = savingsDrawers
@@ -4441,6 +4496,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!modal || !form || !typeInput) return;
 
+        updateGroupDatalist();
         form.reset();
         typeInput.value = 'edit-drawer';
         if (targetIdInput) targetIdInput.value = drawerId;
@@ -4456,10 +4512,21 @@ document.addEventListener('DOMContentLoaded', () => {
             amountInput.placeholder = "Saldo Inicial (€)";
         }
 
+        // Default to oldest movement's date for editing
+        let oldestDate = new Date().toISOString().split('T')[0];
+        if (drawer.movements && drawer.movements.length > 0) {
+            const sortedMovements = [...drawer.movements].sort((a,b) => new Date(a.date) - new Date(b.date));
+            oldestDate = sortedMovements[0].date;
+        }
+        if (elements.savingsDateInput) elements.savingsDateInput.value = oldestDate;
+
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
         if (elements.savingsCategoryGroup) elements.savingsCategoryGroup.classList.add('hidden');
+        
+        elements.drawerGroupGroup?.classList.remove('hidden');
+        if (elements.drawerGroupInput) elements.drawerGroupInput.value = drawer.group || '';
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
@@ -6155,6 +6222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: 'drawer_' + Date.now(),
                     name: name || 'Nuevo Cajón',
                     icon: bankIcon || '📁',
+                    group: elements.drawerGroupInput.value.trim() || '',
                     balance: amount || 0,
                     movements: amount !== 0 ? [{
                         date: new Date().toISOString().split('T')[0],
@@ -6222,6 +6290,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const newAmount = amount || 0;
 
                     drawer.name = newName || drawer.name;
+                    drawer.group = elements.drawerGroupInput.value.trim() || '';
 
                     // Find initial movement
                     let initialMvmt = drawer.movements.find(m => isProvision(m));
@@ -7812,7 +7881,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 showCustomConfirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.manualPrices ? '- Precios manuales\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`, () => {
                     stocks = data.stocks;
-                    savingsDrawers = data.savings;
+                    savingsDrawers = data.savings.map(d => ({ ...d, group: d.group || '' }));
                     nominaData = migrateNominaData(data.nomina);
                     if (data.countdowns) {
                         countdowns = data.countdowns;
