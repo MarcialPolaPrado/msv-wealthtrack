@@ -4554,25 +4554,129 @@ document.addEventListener('DOMContentLoaded', () => {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer || drawer.isAuto) return;
 
-        showCustomConfirm(`¿Consolidar historial de "${drawer.name}"? Se eliminarán todos los movimientos y el saldo inicial se ajustará al saldo actual (${fmtEUR(drawer.balance)}).`, () => {
-            // Keep/Update initial movement
-            let initialMvmt = drawer.movements.find(m => isProvision(m));
-            if (initialMvmt) {
-                initialMvmt.amount = drawer.balance;
-                initialMvmt.date = new Date().toISOString().split('T')[0];
-            } else {
-                initialMvmt = {
-                    date: new Date().toISOString().split('T')[0],
-                    amount: drawer.balance,
-                    description: 'Saldo inicial'
-                };
-            }
+        // Calculate fiscal year start
+        const now = new Date();
+        const curFM = getFiscalMonth(now);
+        const curFY = parseInt(curFM.split('-')[0]);
+        // Date where current exercise started
+        let exerciseStartDate;
+        if (fiscalDay > 1) {
+            exerciseStartDate = new Date(curFY - 1, 11, fiscalDay);
+        } else {
+            exerciseStartDate = new Date(curFY, 0, 1);
+        }
+        
+        // Date for the end of previous exercise (one day before)
+        const prevExerciseEndDate = new Date(exerciseStartDate);
+        prevExerciseEndDate.setDate(prevExerciseEndDate.getDate() - 1);
+        const endDateStr = prevExerciseEndDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
-            drawer.movements = [initialMvmt];
-            if (window.saveSavings) window.saveSavings(savingsDrawers);
-            render();
-            showDrawerDetails(drawerId); // Refresh to see consolidated state
-        });
+        const modalId = 'consolidateOptionsOverlay';
+        let overlay = document.getElementById(modalId);
+        if (overlay) overlay.remove();
+
+        overlay = document.createElement('div');
+        overlay.id = modalId;
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000;
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            padding: 1rem;
+        `;
+
+        overlay.innerHTML = `
+            <div class="glass-panel" style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 24px; padding: 2.5rem 2rem; width: min(450px, 95vw); text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+                <div style="font-size: 3rem; margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.4));">📁</div>
+                <h3 style="margin-bottom: 1rem; font-weight: 700; color: white;">Consolidar Historial</h3>
+                <p style="margin-bottom: 2rem; opacity: 0.8; color: white; line-height: 1.5;">Elige cómo quieres agrupar los movimientos de "<b>${drawer.name}</b>" para optimizar el espacio:</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <button id="consAnterior" class="btn-primary" style="padding: 1rem; border-radius: 14px; font-weight: 600; background: var(--primary); border: none; cursor: pointer;">
+                        Ejercicio Anterior (Hasta ${endDateStr})
+                        <div style="font-size: 0.7rem; opacity: 0.8; font-weight: 400; margin-top: 2px;">Mantiene movimientos del año actual</div>
+                    </button>
+                    
+                    <button id="consTodo" class="btn-primary" style="padding: 1rem; border-radius: 14px; font-weight: 600; background: #6366f1; border: none; cursor: pointer;">
+                        Todo el Historial
+                        <div style="font-size: 0.7rem; opacity: 0.8; font-weight: 400; margin-top: 2px;">Limpieza total dejando solo el saldo actual</div>
+                    </button>
+                    
+                    <button id="consCancel" class="btn-secondary" style="padding: 1rem; border-radius: 14px; margin-top: 0.5rem; cursor: pointer; opacity: 0.6;">Cancelar</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+
+        document.getElementById('consCancel').onclick = close;
+
+        const performConsolidation = (limitDate = null) => {
+            close();
+            const originalBalance = drawer.balance;
+            
+            if (!limitDate) {
+                // Consolidate everything
+                showCustomConfirm(`¿Confirmas consolidar TODO el historial de "${drawer.name}"? Solo quedará un movimiento con el saldo actual (${fmtEUR(originalBalance)}).`, () => {
+                    let initialMvmt = (drawer.movements || []).find(m => isProvision(m));
+                    if (initialMvmt) {
+                        initialMvmt.amount = originalBalance;
+                        initialMvmt.date = new Date().toISOString().split('T')[0];
+                        drawer.movements = [initialMvmt];
+                    } else {
+                        drawer.movements = [{
+                            id: Date.now() + Math.random(),
+                            date: new Date().toISOString().split('T')[0],
+                            amount: originalBalance,
+                            description: 'Saldo inicial',
+                            concept: 'Saldo inicial'
+                        }];
+                    }
+                    if (window.saveSavings) window.saveSavings(savingsDrawers);
+                    render();
+                    showDrawerDetails(drawerId);
+                });
+            } else {
+                // Consolidate up to limitDate (inclusive)
+                showCustomConfirm(`¿Confirmas consolidar todos los movimientos anteriores al ${limitDate.toLocaleDateString()}?`, () => {
+                    const toConsolidate = drawer.movements.filter(m => new Date(m.date) < limitDate);
+                    const toKeep = drawer.movements.filter(m => new Date(m.date) >= limitDate);
+                    
+                    if (toConsolidate.length === 0) {
+                        showToast("No hay movimientos anteriores para consolidar", "info");
+                        return;
+                    }
+
+                    const consolidatedSum = toConsolidate.reduce((sum, m) => sum + m.amount, 0);
+                    
+                    // Update or create initial movement for the remaining set
+                    let initialMvmt = toKeep.find(m => isProvision(m));
+                    if (initialMvmt) {
+                        initialMvmt.amount += consolidatedSum;
+                    } else {
+                        // Use the day before the limit as date for the consolidation entry
+                        const entryDate = new Date(limitDate);
+                        entryDate.setDate(entryDate.getDate() - 1);
+                        
+                        toKeep.unshift({
+                            id: Date.now() + Math.random(),
+                            date: entryDate.toISOString().split('T')[0],
+                            amount: consolidatedSum,
+                            description: 'Saldo consolidado (Ex. Anterior)',
+                            concept: 'Saldo consolidado'
+                        });
+                    }
+                    
+                    drawer.movements = toKeep;
+                    if (window.saveSavings) window.saveSavings(savingsDrawers);
+                    render();
+                    showDrawerDetails(drawerId);
+                });
+            }
+        };
+
+        document.getElementById('consTodo').onclick = () => performConsolidation(null);
+        document.getElementById('consAnterior').onclick = () => performConsolidation(exerciseStartDate);
     }
 
     function deleteSavingsDrawer(drawerId) {
