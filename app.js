@@ -6384,7 +6384,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         async function downloadDataFromGDrive() {
-            if (!gDriveAccessToken) return;
+            if (!gDriveAccessToken) {
+                showToast("Conectando con Google...", "info");
+                const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
+                gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
+                const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 30000))]);
+                if (!ok || !gDriveAccessToken) return;
+            }
             try {
                 showToast("Buscando copia reciente en Drive...", "info");
                 const response = await gapi.client.drive.files.list({
