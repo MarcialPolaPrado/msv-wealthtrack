@@ -643,7 +643,8 @@ document.addEventListener('DOMContentLoaded', () => {
         gDriveLoggedActions: document.getElementById('gDriveLoggedActions'),
         gDriveAutoBackup: document.getElementById('gDriveAutoBackup'),
         gDriveManualBackup: document.getElementById('gDriveManualBackup'),
-        gDriveRestoreBtn: document.getElementById('gDriveRestoreBtn')
+        gDriveRestoreBtn: document.getElementById('gDriveRestoreBtn'),
+        gDriveLastSync: document.getElementById('gDriveLastSync')
     };
 
     const updateNominaMovementType = (type) => {
@@ -6243,9 +6244,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.gDriveAutoBackup) elements.gDriveAutoBackup.checked = savedAuto;
                 
                 const wasLoggedIn = localStorage.getItem('gDriveIsLoggedIn') === 'true';
-                if (wasLoggedIn) {
-                    // Try to get token quietly (might show a quick popup)
+                if (wasLoggedIn && google.accounts.oauth2) {
+                    // Try silent background login
                     gDriveTokenClient.requestAccessToken({ prompt: '' });
+                }
+                
+                const lastSync = localStorage.getItem('gDriveLastSyncTime');
+                if (lastSync && elements.gDriveLastSync) {
+                    elements.gDriveLastSync.textContent = "Última copia: " + lastSync;
                 }
             } catch (err) {
                 console.error("error gDriveInit", err);
@@ -6263,7 +6269,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         async function uploadDataToGDrive(silent = false) {
-            if (!gDriveAccessToken) return;
+            // If no token but we WERE logged in, try a quick refresh first
+            if (!gDriveAccessToken && localStorage.getItem('gDriveIsLoggedIn') === 'true') {
+                try {
+                    gDriveTokenClient.requestAccessToken({ prompt: '' });
+                    // Wait a bit for the callback
+                    await new Promise(r => setTimeout(r, 1000));
+                } catch(e) { console.error("Silent refresh failed", e); }
+            }
+            if (!gDriveAccessToken) {
+                if (!silent) showToast("No conectado a Google Drive", "warning");
+                return;
+            }
             try {
                 if (!silent) showToast("Subiendo copia a Drive...", "info");
                 
@@ -6325,6 +6342,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 if (!silent) showToast("Backup guardado en Drive", "success");
+                
+                // Update Last Sync Time
+                const nowStr = new Date().toLocaleTimeString();
+                localStorage.setItem('gDriveLastSyncTime', nowStr);
+                if (elements.gDriveLastSync) {
+                    elements.gDriveLastSync.textContent = "Última copia: " + nowStr;
+                }
             } catch (err) {
                 console.error("GDrive Upload Error:", err);
                 if (!silent) showToast("Error al subir a Drive", "danger");
@@ -6384,7 +6408,14 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('gDriveAutoBackup', e.target.checked);
         });
 
-        // Effect: Auto backup on exit
+        // Effect: Auto backup on exit (Reliable for mobile)
+        window.addEventListener('pagehide', () => {
+            if (gDriveAccessToken && localStorage.getItem('gDriveAutoBackup') === 'true') {
+                uploadDataToGDrive(true);
+            }
+        });
+        
+        // Also keep visibilitychange as secondary fallback
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden' && gDriveAccessToken && localStorage.getItem('gDriveAutoBackup') === 'true') {
                 uploadDataToGDrive(true);
