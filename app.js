@@ -2632,12 +2632,43 @@ document.addEventListener('DOMContentLoaded', () => {
             const groupTotal = drawersInGroup.reduce((sum, d) => sum + d.balance, 0);
 
             // Add group header if there's more than one group or if the group has a name
-            if (sortedGroups.length > 1 || groupName !== noGroupKey) {
+            const showHeader = sortedGroups.length > 1 || groupName !== noGroupKey;
+            const storageKey = `isAhorroGroupExpanded_${groupName}`;
+            const isExpanded = localStorage.getItem(storageKey) !== 'false';
+
+            const subGrid = document.createElement('div');
+            // If showHeader, this becomes a collapsible "row" spanning all grid columns
+            if (showHeader) {
                 const header = document.createElement('div');
-                header.className = 'drawer-group-title';
-                header.innerHTML = `<span>${groupName}</span> <span style="margin-left: auto; font-size: 1rem; opacity: 0.8; font-weight: 600;">${fmtEUR(groupTotal)}</span>`;
+                header.className = 'drawer-group-title collapsible-section-head';
+                header.style.cssText = 'grid-column: 1 / -1; display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; padding: 0.5rem; border-radius: 8px; transition: background 0.2s;';
+                header.innerHTML = `
+                    <span class="section-toggle-icon ${isExpanded ? 'expanded' : ''}" style="font-size:1.1rem; transition: transform 0.3s ease; display: inline-block;">▼</span>
+                    <span>${groupName}</span> 
+                    <span style="margin-left: auto; font-size: 1rem; opacity: 0.8; font-weight: 600;">${fmtEUR(groupTotal)}</span>
+                `;
                 elements.drawersGrid.appendChild(header);
+
+                subGrid.className = `collapsible-content ${isExpanded ? 'expanded' : ''}`;
+                subGrid.style.cssText = 'grid-column: 1 / -1; display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;';
+
+                header.onclick = () => {
+                    const nowExpanded = !subGrid.classList.contains('expanded');
+                    subGrid.classList.toggle('expanded', nowExpanded);
+                    header.querySelector('.section-toggle-icon')?.classList.toggle('expanded', nowExpanded);
+                    localStorage.setItem(storageKey, nowExpanded);
+                };
+                header.onmouseenter = () => { header.style.background = 'rgba(255,255,255,0.03)'; };
+                header.onmouseleave = () => { header.style.background = 'transparent'; };
+            } else {
+                // Flat layout: use elements.drawersGrid context directly, cards will be immediate children
+                // Or keep subGrid as a fragment-like container that doesn't restrict height but doesn't have a header.
+                // For simplicity, if no header, we'll just skip subGrid and append to drawersGrid directly.
             }
+
+            const targetGrid = showHeader ? subGrid : elements.drawersGrid;
+            if (showHeader) elements.drawersGrid.appendChild(subGrid);
+
             drawersInGroup.forEach(drawer => {
                 const card = document.createElement('div');
                 card.className = `card drawer-card glass-panel income-drawer ${drawer.isAuto ? 'bolsa-drawer' : ''}`;
@@ -2718,7 +2749,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                elements.drawersGrid.appendChild(card);
+                targetGrid.appendChild(card);
             });
         });
 
