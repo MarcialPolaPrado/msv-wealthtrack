@@ -5183,14 +5183,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const formattedDate = dateObj.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
         const movementsHtml = dayMovements.map(m => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:1.2rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
                 <div style="flex-grow:1;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <div style="font-weight:600;">${m.description}</div>
                         ${m.category ? `<span style="font-size: 0.7rem; padding: 2px 6px; background: rgba(255,255,255,0.05); border-radius: 4px; opacity: 0.7;">${m.category}</span>` : ''}
                     </div>
+                    <div style="display:flex; gap:1.2rem; margin-top:0.5rem; opacity:0.6;">
+                        <button class="edit-day-mvmt-btn" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Editar">✏️ <small>Editar</small></button>
+                        <button class="copy-day-mvmt-btn" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Copiar">📋 <small>Copiar</small></button>
+                        <button class="delete-day-mvmt-btn" data-index="${m.originalIndex}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Borrar">🗑️ <small>Borrar</small></button>
+                    </div>
                 </div>
-                <div style="font-weight:700; color:${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                <div style="font-weight:700; color:${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'}; font-size:1.1rem;">
                     ${m.amount >= 0 ? '+' : ''}${fmtEUR(m.amount)}
                 </div>
             </div>
@@ -5218,10 +5223,41 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         document.body.appendChild(overlay);
 
-        const close = () => overlay.remove();
         document.getElementById('closeDayDetails').onclick = close;
         document.getElementById('backToCalendar').onclick = close;
         overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+        // Action Buttons Listeners
+        overlay.querySelectorAll('.edit-day-mvmt-btn').forEach(btn => {
+            btn.onclick = () => {
+                const index = parseInt(btn.dataset.index);
+                close(); // Close details
+                if (elements.savingsCalendarModal) elements.savingsCalendarModal.classList.add('hidden'); // Close calendar
+                showEditMovementModal(drawer.id, index);
+            };
+        });
+        overlay.querySelectorAll('.copy-day-mvmt-btn').forEach(btn => {
+            btn.onclick = () => {
+                const index = parseInt(btn.dataset.index);
+                copySavingsMovement(drawer.id, index);
+                close();
+                renderCalendar();
+                showCalendarDayDetails(drawerId, dateStr); // Refresh details
+            };
+        });
+        overlay.querySelectorAll('.delete-day-mvmt-btn').forEach(btn => {
+            btn.onclick = () => {
+                const index = parseInt(btn.dataset.index);
+                deleteSavingsMovement(drawer.id, index);
+                close();
+                renderCalendar();
+                // Re-open only if there are movements left
+                const remaining = (drawer.movements || []).filter(mv => mv.date === dateStr);
+                if (remaining.length > 0) {
+                    showCalendarDayDetails(drawerId, dateStr);
+                }
+            };
+        });
     }
 
     function showCustomConfirm(message, onConfirm, onCancel = null) {
