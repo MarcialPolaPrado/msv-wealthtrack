@@ -690,7 +690,11 @@ document.addEventListener('DOMContentLoaded', () => {
         gDriveRestoreBtn: document.getElementById('gDriveRestoreBtn'),
         gDriveLastSync: document.getElementById('gDriveLastSync'),
         googleClientIdInput: document.getElementById('googleClientIdInput'),
-        googleApiKeyInput: document.getElementById('googleApiKeyInput')
+        googleApiKeyInput: document.getElementById('googleApiKeyInput'),
+        drawerIconGroup: document.getElementById('drawerIconGroup'),
+        drawerIconInput: document.getElementById('drawerIconInput'),
+        nominaIconGroup: document.getElementById('nominaIconGroup'),
+        nominaIconInput: document.getElementById('nominaIconInput')
     };
 
     const updateNominaMovementType = (type) => {
@@ -4595,6 +4599,9 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
+        
+        if (elements.drawerIconGroup) elements.drawerIconGroup.classList.remove('hidden');
+        if (elements.drawerIconInput) elements.drawerIconInput.value = '📁';
 
         elements.drawerGroupGroup?.classList.remove('hidden');
         if (elements.drawerGroupInput) elements.drawerGroupInput.value = '';
@@ -4705,6 +4712,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSavingsMovementType('income');
         }
 
+        if (elements.drawerIconGroup) elements.drawerIconGroup.classList.add('hidden');
+        if (elements.drawerIconInput) elements.drawerIconInput.value = '📁';
+
         if (elements.savingsCategoryGroup) {
             elements.savingsCategoryGroup.classList.remove('hidden');
         }
@@ -4805,8 +4815,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (title) title.textContent = `Editar Cajón: ${drawer.name}`;
 
         if (drawerNameInput) drawerNameInput.value = drawer.name;
+        if (elements.drawerGroupInput) elements.drawerGroupInput.value = drawer.group || '';
         nameGroup?.classList.remove('hidden');
         elements.drawerInfoGroup?.classList.add('hidden');
+
+        if (elements.drawerIconGroup) elements.drawerIconGroup.classList.remove('hidden');
+        if (elements.drawerIconInput) elements.drawerIconInput.value = drawer.icon || '📁';
 
         // Find initial balance movement
         const initialMvmt = drawer.movements.find(m => isProvision(m));
@@ -6254,6 +6268,14 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.subcategoriesModal.classList.add('hidden');
         };
     }
+
+    // Emoji Selection Listeners
+    document.querySelectorAll('.emoji-opt').forEach(opt => {
+        opt.onclick = () => { if (elements.drawerIconInput) elements.drawerIconInput.value = opt.textContent; };
+    });
+    document.querySelectorAll('.emoji-opt-nomina').forEach(opt => {
+        opt.onclick = () => { if (elements.nominaIconInput) elements.nominaIconInput.value = opt.textContent; };
+    });
     if (elements.closeSubcategoriesModal) {
         elements.closeSubcategoriesModal.onclick = () => {
             elements.subcategoriesModal.classList.add('hidden');
@@ -7400,11 +7422,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (action === 'drawer') {
                 const name = elements.drawerNameInput.value.trim();
-                const bankIcon = getBankIcon(name);
+                const icon = elements.drawerIconInput.value || getBankIcon(name) || '📁';
                 const newDrawer = {
                     id: 'drawer_' + Date.now(),
                     name: name || 'Nuevo Cajón',
-                    icon: bankIcon || '📁',
+                    icon: icon,
                     group: elements.drawerGroupInput.value.trim() || '',
                     balance: amount || 0,
                     movements: amount !== 0 ? [{
@@ -7485,6 +7507,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     drawer.name = newName || drawer.name;
                     drawer.group = elements.drawerGroupInput.value.trim() || '';
+                    if (elements.drawerIconInput) drawer.icon = elements.drawerIconInput.value;
 
                     // Find initial movement
                     let initialMvmt = drawer.movements.find(m => isProvision(m));
@@ -7619,7 +7642,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (drawer) {
                     drawer.name = name;
                     drawer.type = type;
-                    drawer.icon = getNominaIcon(name, type);
+                    drawer.icon = elements.nominaIconInput.value || getNominaIcon(name, type);
                     drawer.linkedSavingsDrawerId = elements.nominaLinkedAhorroSelect ? elements.nominaLinkedAhorroSelect.value : '';
                     // Update initial movement if amount changed
                     let initialMvmt = (drawer.movements || []).find(m => isProvision(m));
@@ -7633,7 +7656,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: Date.now(),
                     name: name,
                     type: type,
-                    icon: getNominaIcon(name, type),
+                    icon: elements.nominaIconInput.value || getNominaIcon(name, type),
                     linkedSavingsDrawerId: elements.nominaLinkedAhorroSelect ? elements.nominaLinkedAhorroSelect.value : '',
                     movements: [{
                         id: Date.now() + Math.random(),
@@ -8761,6 +8784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.nominaDrawerMonthsCheckboxes) {
             elements.nominaDrawerMonthsCheckboxes.querySelectorAll('input').forEach(cb => cb.checked = true);
         }
+        if (elements.nominaIconInput) elements.nominaIconInput.value = '📁';
         toggleNominaModal(true);
     }
 
@@ -8780,6 +8804,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cb.checked = active.includes(parseInt(cb.value));
             });
         }
+        if (elements.nominaIconInput) elements.nominaIconInput.value = drawer.icon || '📁';
         toggleNominaModal(true);
     }
 

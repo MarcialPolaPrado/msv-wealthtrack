@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603171853">
+    <link rel="stylesheet" href="styles.css?v=202603171903">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -937,6 +937,28 @@
                     <datalist id="existingGroups"></datalist>
                 </div>
 
+                <div class="form-group hidden" id="drawerIconGroup">
+                    <label>Icono del Cajón</label>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <input type="text" id="drawerIconInput" value="📁" style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
+                        <div id="quickEmojiList" style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; justify-content: center;">
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">📁</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🏦</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">💰</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">💳</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🏠</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🚗</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🍕</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">✈️</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🎁</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🎓</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🏥</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🛒</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">💡</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group" id="movementAmountGroup">
                     <div id="savingsMovementTypeContainer" class="hidden"
                         style="display: flex; gap: 10px; margin-bottom: 0.8rem;">
@@ -1044,6 +1066,28 @@
                         <option value="saving">🏦 Ahorro (Añadir a ahorro)</option>
                         <option value="expense">📉 Gasto (Añadir a gastos)</option>
                     </select>
+                </div>
+
+                <div class="form-group" id="nominaIconGroup">
+                    <label>Icono</label>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <input type="text" id="nominaIconInput" value="📁" style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
+                        <div id="quickEmojiListNomina" style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; justify-content: center;">
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">📁</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🏦</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">💰</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">💳</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🏠</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🚗</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🍕</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">✈️</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🎁</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🎓</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🏥</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🛒</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">💡</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label for="nominaLinkedAhorroSelect">Vincular a Cajón de Ahorro destino (Opcional)</label>
@@ -1360,7 +1404,7 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603161637"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603171853"></script>
+    <script src="app.js?v=202603171903"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1505,7 +1549,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603171853';
+        const APP_VERSION = '202603171903';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
