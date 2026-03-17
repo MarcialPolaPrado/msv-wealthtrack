@@ -6040,13 +6040,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            let changesMade = false;
+
+            // Cascading updates for Income
+            if (incomeCategories.length === finalInc.length) {
+                incomeCategories.forEach((oldCat, idx) => {
+                    const newCat = finalInc[idx];
+                    if (oldCat !== newCat) {
+                        savingsDrawers.forEach(drawer => {
+                            drawer.movements.forEach(m => {
+                                if (m.amount >= 0 && m.category) {
+                                    const parts = m.category.split(':');
+                                    if (parts[0] === oldCat) {
+                                        parts[0] = newCat;
+                                        m.category = parts.join(':');
+                                        changesMade = true;
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+
+            // Cascading updates for Expense
+            if (expenseCategories.length === finalExp.length) {
+                expenseCategories.forEach((oldCat, idx) => {
+                    const newCat = finalExp[idx];
+                    if (oldCat !== newCat) {
+                        savingsDrawers.forEach(drawer => {
+                            drawer.movements.forEach(m => {
+                                if (m.amount < 0 && m.category) {
+                                    const parts = m.category.split(':');
+                                    if (parts[0] === oldCat) {
+                                        parts[0] = newCat;
+                                        m.category = parts.join(':');
+                                        changesMade = true;
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+
             incomeCategories = finalInc;
             expenseCategories = finalExp;
             
             localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
             localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
             
-            showToast("Categorías guardadas correctamente.");
+            if (changesMade && window.saveSavings) {
+                window.saveSavings(savingsDrawers);
+            }
+
+            showToast("Categorías guardadas correctamente" + (changesMade ? " y movimientos actualizados." : "."));
             elements.categoriesModal.classList.add('hidden');
             
             // Sync current lists if necessary
@@ -6148,13 +6196,61 @@ document.addEventListener('DOMContentLoaded', () => {
             const finalInc = tempIncomeSubcategories.map(s => s.trim()).filter(s => s);
             const finalExp = tempExpenseSubcategories.map(s => s.trim()).filter(s => s);
 
+            let changesMade = false;
+
+            // Cascading updates for Income Subcategories
+            if (incomeSubcategories.length === finalInc.length) {
+                incomeSubcategories.forEach((oldSub, idx) => {
+                    const newSub = finalInc[idx];
+                    if (oldSub !== newSub) {
+                        savingsDrawers.forEach(drawer => {
+                            drawer.movements.forEach(m => {
+                                if (m.amount >= 0 && m.category) {
+                                    const parts = m.category.split(':');
+                                    if (parts.length > 1 && parts[1] === oldSub) {
+                                        parts[1] = newSub;
+                                        m.category = parts.join(':');
+                                        changesMade = true;
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+
+            // Cascading updates for Expense Subcategories
+            if (expenseSubcategories.length === finalExp.length) {
+                expenseSubcategories.forEach((oldSub, idx) => {
+                    const newSub = finalExp[idx];
+                    if (oldSub !== newSub) {
+                        savingsDrawers.forEach(drawer => {
+                            drawer.movements.forEach(m => {
+                                if (m.amount < 0 && m.category) {
+                                    const parts = m.category.split(':');
+                                    if (parts.length > 1 && parts[1] === oldSub) {
+                                        parts[1] = newSub;
+                                        m.category = parts.join(':');
+                                        changesMade = true;
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+
             incomeSubcategories = finalInc;
             expenseSubcategories = finalExp;
             
             localStorage.setItem('incomeSubcategories', JSON.stringify(incomeSubcategories));
             localStorage.setItem('expenseSubcategories', JSON.stringify(expenseSubcategories));
             
-            showToast("Subcategorías guardadas correctamente.");
+            if (changesMade && window.saveSavings) {
+                window.saveSavings(savingsDrawers);
+            }
+
+            showToast("Subcategorías guardadas correctamente" + (changesMade ? " y movimientos actualizados." : "."));
             elements.subcategoriesModal.classList.add('hidden');
         };
     }
