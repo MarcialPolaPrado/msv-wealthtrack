@@ -76,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let activityPageSize = 50;
     let activityCurrentLimit = 50;
 
+    let calendarDrawerId = null;
+    let calendarViewDate = new Date(); // Month/Year currently shown in the calendar modal
+
     const DRAWER_COLORS = [
         { name: 'green', border: '#10b981', bg: '#064e3b', grad: 'rgba(16, 185, 129, 0.4)' },
         { name: 'blue', border: '#3b82f6', bg: '#1e3a8a', grad: 'rgba(59, 130, 246, 0.4)' },
@@ -442,6 +445,15 @@ document.addEventListener('DOMContentLoaded', () => {
         privacyToggleBtn: document.getElementById('privacyToggleBtn'),
         mobilePrivacyToggleBtn: document.getElementById('mobilePrivacyToggleBtn'),
         savingsInputForm: document.getElementById('savingsInputForm'),
+
+        // Savings Calendar Elements
+        savingsCalendarModal: document.getElementById('savingsCalendarModal'),
+        closeCalendarModal: document.getElementById('closeCalendarModal'),
+        calendarGrid: document.getElementById('calendarGrid'),
+        calendarCurrentMonth: document.getElementById('calendarCurrentMonth'),
+        prevCalendarMonth: document.getElementById('prevCalendarMonth'),
+        nextCalendarMonth: document.getElementById('nextCalendarMonth'),
+        calendarModalTitle: document.getElementById('calendarModalTitle'),
         savingsMovementIndex: document.getElementById('savingsMovementIndex'),
         savingsMovementTypeContainer: document.getElementById('savingsMovementTypeContainer'),
         savingsMovementIncomeToggle: document.getElementById('savingsMovementIncomeToggle'),
@@ -2511,6 +2523,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button class="transfer-list-btn btn-secondary" title="Transferir">⇆</button>
                                 <button class="edit-drawer-list-btn btn-secondary" title="Editar Cajón">✏️</button>
                                 <button class="delete-drawer-list-btn btn-danger" title="Borrar Cajón">🗑️</button>
+                                <button class="calendar-list-btn btn-secondary" title="Ver Calendario">📅</button>
                             </div>
                         ` : ''}
                     </div>
@@ -2524,6 +2537,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headerTr.querySelector('.transfer-list-btn').onclick = (e) => { e.stopPropagation(); showTransferModal(drawer.id); };
                 headerTr.querySelector('.edit-drawer-list-btn').onclick = (e) => { e.stopPropagation(); showEditDrawerModal(drawer.id); };
                 headerTr.querySelector('.delete-drawer-list-btn').onclick = (e) => { e.stopPropagation(); deleteSavingsDrawer(drawer.id); };
+                headerTr.querySelector('.calendar-list-btn').onclick = (e) => { e.stopPropagation(); showSavingsCalendar(drawer.id); };
             }
 
             // Click on drawer name to expand/collapse all movements of this drawer
@@ -2767,6 +2781,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button class="add-mvmt-btn btn-primary" title="Añadir Movimiento" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">➕</button>
                             <button class="transfer-btn btn-secondary" title="Transferir" style="padding:0.5rem 0; font-size:1.2rem; font-weight:bold; flex:1; display:flex; justify-content:center; align-items:center;">⇆</button>
                             <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">✏️</button>
+                            <button class="calendar-drawer-btn btn-secondary" title="Ver Calendario" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">📅</button>
                         </div>` : ''}
                 `;
 
@@ -2792,6 +2807,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (editBtn) {
                         e.stopPropagation();
                         showEditDrawerModal(drawer.id);
+                    } else if (e.target.closest('.calendar-drawer-btn')) {
+                        e.stopPropagation();
+                        showSavingsCalendar(drawer.id);
                     } else if (e.target.closest('.delete-drawer-btn')) {
                         e.stopPropagation();
                         deleteSavingsDrawer(drawer.id);
@@ -5050,6 +5068,93 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    }
+
+    function showSavingsCalendar(drawerId) {
+        calendarDrawerId = drawerId;
+        calendarViewDate = new Date(); // Start with current month
+        renderCalendar();
+        if (elements.savingsCalendarModal) {
+            elements.savingsCalendarModal.classList.remove('hidden');
+            elements.savingsCalendarModal.style.display = 'flex';
+        }
+    }
+
+    function renderCalendar() {
+        if (!elements.calendarGrid || !calendarDrawerId) return;
+        const drawer = savingsDrawers.find(d => d.id === calendarDrawerId);
+        if (!drawer) return;
+
+        const year = calendarViewDate.getFullYear();
+        const month = calendarViewDate.getMonth();
+
+        // Update title
+        if (elements.calendarModalTitle) {
+            elements.calendarModalTitle.textContent = `${drawer.icon} ${drawer.name}`;
+        }
+        if (elements.calendarCurrentMonth) {
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            elements.calendarCurrentMonth.textContent = `${monthNames[month]} ${year}`;
+        }
+
+        // Clear previous grid (except headers)
+        const heads = elements.calendarGrid.querySelectorAll('.calendar-day-head');
+        elements.calendarGrid.innerHTML = '';
+        heads.forEach(h => elements.calendarGrid.appendChild(h));
+
+        // Get first day of month (1 = Mon, ... 0 = Sun in my grid logic)
+        // JS getDay() is 0=Sun, 1=Mon...
+        const firstDay = new Date(year, month, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Adjust to Mon-start
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        // Previous month days
+        for (let i = startOffset - 1; i >= 0; i--) {
+            const d = daysInPrevMonth - i;
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell other-month';
+            cell.innerHTML = `<span class="calendar-cell-date">${d}</span>`;
+            elements.calendarGrid.appendChild(cell);
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isToday = dateStr === todayStr;
+
+            const mvmts = (drawer.movements || []).filter(m => m.date === dateStr);
+            const totalOnDay = mvmts.reduce((sum, m) => sum + m.amount, 0);
+
+            const cell = document.createElement('div');
+            cell.className = `calendar-cell ${isToday ? 'today' : ''}`;
+            
+            let amountHtml = '';
+            if (totalOnDay !== 0) {
+                const colorClass = totalOnDay > 0 ? 'income' : 'expense';
+                amountHtml = `<div class="calendar-cell-amount ${colorClass}">${fmtEUR(totalOnDay)}</div>`;
+            }
+
+            cell.innerHTML = `
+                <span class="calendar-cell-date">${d}</span>
+                ${amountHtml}
+            `;
+            elements.calendarGrid.appendChild(cell);
+        }
+
+        // Next month days (fill until 42 cells or end of row)
+        const totalCells = elements.calendarGrid.querySelectorAll('.calendar-cell').length;
+        const remaining = (7 - (totalCells % 7)) % 7;
+        for (let d = 1; d <= remaining; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell other-month';
+            cell.innerHTML = `<span class="calendar-cell-date">${d}</span>`;
+            elements.calendarGrid.appendChild(cell);
+        }
     }
 
     function showCustomConfirm(message, onConfirm, onCancel = null) {
@@ -9085,5 +9190,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setupDraggableBottomNav();
+
+    // Calendar Listeners
+    if (elements.closeCalendarModal) {
+        elements.closeCalendarModal.addEventListener('click', () => {
+            elements.savingsCalendarModal.classList.add('hidden');
+        });
+    }
+    if (elements.prevCalendarMonth) {
+        elements.prevCalendarMonth.addEventListener('click', () => {
+            calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
+            renderCalendar();
+        });
+    }
+    if (elements.nextCalendarMonth) {
+        elements.nextCalendarMonth.addEventListener('click', () => {
+            calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
+            renderCalendar();
+        });
+    }
+    if (elements.savingsCalendarModal) {
+        elements.savingsCalendarModal.addEventListener('click', (e) => {
+            if (e.target === elements.savingsCalendarModal) {
+                elements.savingsCalendarModal.classList.add('hidden');
+            }
+        });
+    }
+
     showApp();
 });

@@ -2827,6 +2827,88 @@ button,
   height: 0;
 }
 
+/* Savings Calendar Styles */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.calendar-day-head {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    opacity: 0.5;
+    padding: 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.calendar-cell {
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    position: relative;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    min-height: 50px;
+}
+
+.calendar-cell.other-month {
+    opacity: 0.2;
+}
+
+.calendar-cell.today {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.calendar-cell-date {
+    font-weight: 700;
+    opacity: 0.8;
+}
+
+.calendar-cell-amount {
+    font-weight: 800;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.1;
+    width: 100%;
+}
+
+.calendar-cell-amount.income {
+    color: var(--success);
+}
+
+.calendar-cell-amount.expense {
+    color: var(--danger);
+}
+
+@media (max-width: 480px) {
+    .calendar-grid {
+        gap: 2px;
+        padding: 5px;
+    }
+    .calendar-cell {
+        padding: 4px;
+        min-height: 45px;
+    }
+    .calendar-cell-amount {
+        font-size: 0.6rem;
+    }
+}
+
 .gdrive-sync-container .slider {
   position: absolute;
   cursor: pointer;
