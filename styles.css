@@ -2342,23 +2342,58 @@ select:focus {
 
 .ahorro-list-row {
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ahorro-list-row:hover {
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .ahorro-list-row td {
     padding: 0.6rem 1rem;
     font-size: 0.8rem;
+    vertical-align: top;
 }
 
 .ahorro-list-row .date {
     padding-left: 2rem;
+    opacity: 0.6;
+    font-size: 0.75rem;
+}
+
+.ahorro-list-row .concept {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ahorro-list-row .category-tag {
+    font-weight: 500;
+}
+
+.ahorro-list-row .detail-text {
+    font-size: 0.7rem;
+    opacity: 0.5;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.ahorro-list-row.expanded .detail-text {
+    max-height: 100px;
+    margin-top: 4px;
     opacity: 0.8;
 }
 
-
 .ahorro-list-row .amount {
     text-align: right;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 0.85rem;
+}
+
+.ahorro-list-row.expanded {
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .ahorro-list-empty-row td {

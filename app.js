@@ -2526,6 +2526,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 headerTr.querySelector('.delete-drawer-list-btn').onclick = (e) => { e.stopPropagation(); deleteSavingsDrawer(drawer.id); };
             }
 
+            // Click on drawer name to expand/collapse all movements of this drawer
+            const drawerTitleSpan = headerTr.querySelector('.header-content span');
+            if (drawerTitleSpan) {
+                drawerTitleSpan.style.cursor = 'pointer';
+                drawerTitleSpan.title = 'Expandir/Contraer todos los movimientos';
+                drawerTitleSpan.onclick = (e) => {
+                    e.stopPropagation();
+                    const drawerRows = elements.ahorroTableBody.querySelectorAll(`.mvmt-drawer-${drawer.id}`);
+                    const anyCollapsed = Array.from(drawerRows).some(row => !row.classList.contains('expanded'));
+                    drawerRows.forEach(row => {
+                        if (anyCollapsed) row.classList.add('expanded');
+                        else row.classList.remove('expanded');
+                    });
+                };
+            }
+
             elements.ahorroTableBody.appendChild(headerTr);
 
             // Sort by date descending
@@ -2534,17 +2550,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ahorroListFilterMode !== 'totals') {
                 drawerMovements.forEach(m => {
                     const tr = document.createElement('tr');
-                    tr.className = 'ahorro-list-row';
+                    tr.className = `ahorro-list-row mvmt-drawer-${drawer.id}`;
 
                     const isIncome = m.amount > 0;
                     const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
                     const category = m.category || '-';
+                    const concept = m.concept || m.description || '';
 
                     tr.innerHTML = `
                         <td class="date">${new Date(m.date).toLocaleDateString('es-ES')}</td>
-                        <td class="concept">${category}</td>
+                        <td class="concept">
+                            <div class="category-tag">${category}</div>
+                            ${concept && concept !== category ? `<div class="detail-text">${concept}</div>` : ''}
+                        </td>
                         <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
                     `;
+                    
+                    tr.onclick = () => {
+                        tr.classList.toggle('expanded');
+                    };
+                    
                     elements.ahorroTableBody.appendChild(tr);
                 });
             }
