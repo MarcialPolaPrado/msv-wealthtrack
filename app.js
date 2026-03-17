@@ -5223,6 +5223,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         document.body.appendChild(overlay);
 
+        const close = () => overlay.remove();
         document.getElementById('closeDayDetails').onclick = close;
         document.getElementById('backToCalendar').onclick = close;
         overlay.onclick = (e) => { if (e.target === overlay) close(); };
@@ -5239,10 +5240,9 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.querySelectorAll('.copy-day-mvmt-btn').forEach(btn => {
             btn.onclick = () => {
                 const index = parseInt(btn.dataset.index);
-                copySavingsMovement(drawer.id, index);
                 close();
-                renderCalendar();
-                showCalendarDayDetails(drawerId, dateStr); // Refresh details
+                if (elements.savingsCalendarModal) elements.savingsCalendarModal.classList.add('hidden');
+                copySavingsMovement(drawer.id, index);
             };
         });
         overlay.querySelectorAll('.delete-day-mvmt-btn').forEach(btn => {
