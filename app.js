@@ -4414,8 +4414,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     iconSpan.textContent = '✨';
                     elements.mobileMenuBtn.title = 'Añadir Inversión';
                 } else if (view === 'ahorro') {
-                    iconSpan.textContent = '📂';
-                    elements.mobileMenuBtn.title = 'Crear Cajón';
+                    iconSpan.textContent = '💶';
+                    elements.mobileMenuBtn.title = 'Nuevo Movimiento';
                 } else if (view === 'nomina') {
                     iconSpan.textContent = '➕';
                     elements.mobileMenuBtn.title = 'Añadir Concepto';
@@ -4510,8 +4510,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.drawerGroupGroup?.classList.remove('hidden');
         if (elements.drawerGroupInput) elements.drawerGroupInput.value = '';
+        
+        const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
+        targetDrawerSelectGroup?.classList.add('hidden');
 
         // Default to today's date for new drawer
+        if (elements.savingsDateInput) {
+            elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+
+    function showGlobalAddMovementModal() {
+        const modal = document.getElementById('savingsInputModal');
+        const form = document.getElementById('savingsInputForm');
+        const typeInput = document.getElementById('savingsActionType');
+        const targetIdInput = document.getElementById('savingsTargetId');
+        const title = document.getElementById('savingsModalTitle');
+        const nameGroup = document.getElementById('drawerNameGroup');
+        const amountInput = document.getElementById('movementAmountInput');
+        const conceptGroup = document.getElementById('movementConceptGroup');
+        const transferTargetGroup = document.getElementById('transferTargetGroup');
+        const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
+        const targetDrawerSelect = document.getElementById('targetDrawerSelect');
+
+        if (!modal || !form || !typeInput) return;
+
+        form.reset();
+        typeInput.value = 'global-movement';
+        if (targetIdInput) targetIdInput.value = '';
+        if (title) title.textContent = 'Nuevo Movimiento';
+
+        nameGroup?.classList.add('hidden');
+        elements.drawerInfoGroup?.classList.add('hidden');
+        if (amountInput) amountInput.placeholder = "0.00";
+        conceptGroup?.classList.remove('hidden');
+        transferTargetGroup?.classList.add('hidden');
+        elements.drawerGroupGroup?.classList.add('hidden');
+        
+        targetDrawerSelectGroup?.classList.remove('hidden');
+        if (targetDrawerSelect) {
+            targetDrawerSelect.innerHTML = savingsDrawers
+                .filter(d => !d.isAuto)
+                .map(d => `<option value="${d.id}">${d.name} (${fmtEUR(d.balance)})</option>`)
+                .join('');
+            if (targetDrawerSelect.options.length === 0) {
+                alert("Necesitas crear un cajón primero.");
+                return;
+            }
+        }
+
+        // Show toggle for manual movements
+        if (elements.savingsMovementTypeContainer) {
+            elements.savingsMovementTypeContainer.classList.remove('hidden');
+            updateSavingsMovementType('income');
+        }
+
+        if (elements.savingsCategoryGroup) {
+            elements.savingsCategoryGroup.classList.remove('hidden');
+        }
+
+        // Default to today's date
         if (elements.savingsDateInput) {
             elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
         }
@@ -4547,6 +4608,8 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
+        const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
+        targetDrawerSelectGroup?.classList.add('hidden');
 
         // Show toggle for manual movements
         if (elements.savingsMovementTypeContainer) {
@@ -4599,6 +4662,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (amountInput) amountInput.placeholder = "Importe a transferir";
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
+        const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
+        targetDrawerSelectGroup?.classList.add('hidden');
 
         // Populate target dropdown (exclude source and Bolsa)
         transferTargetSelect.innerHTML = savingsDrawers
@@ -4664,6 +4729,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         elements.drawerGroupGroup?.classList.remove('hidden');
         if (elements.drawerGroupInput) elements.drawerGroupInput.value = drawer.group || '';
+
+        const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
+        targetDrawerSelectGroup?.classList.add('hidden');
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
@@ -5064,6 +5132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.drawerInfoGroup?.classList.add('hidden');
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
+        const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
+        targetDrawerSelectGroup?.classList.add('hidden');
 
         if (elements.drawerInfoGroup && elements.drawerInfoDisplay) {
             elements.drawerInfoGroup.classList.remove('hidden');
@@ -6122,10 +6192,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (effectiveView === 'ahorro') {
                 const modal = document.getElementById('savingsInputModal');
+                const actionType = document.getElementById('savingsActionType');
                 if (modal && !modal.classList.contains('hidden')) {
-                    toggleSavingsModal(false);
+                    if (actionType && actionType.value === 'global-movement') {
+                        showAddDrawer();
+                    } else {
+                        toggleSavingsModal(false);
+                    }
                 } else {
-                    showAddDrawer();
+                    showGlobalAddMovementModal();
                 }
             } else if (effectiveView === 'nomina') {
                 const nModal = elements.nominaModal;
@@ -6279,6 +6354,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('addDrawerBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             showAddDrawer();
+        });
+        document.getElementById('addGlobalMovementBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showGlobalAddMovementModal();
         });
 
         document.getElementById('addNominaBtn2')?.addEventListener('click', (e) => {
@@ -6773,8 +6852,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     isAuto: false
                 };
                 savingsDrawers.push(newDrawer);
-            } else if (action === 'movement') {
-                const drawerId = elements.savingsTargetId.value;
+            } else if (action === 'movement' || action === 'global-movement') {
+                let drawerId = elements.savingsTargetId.value;
+                if (action === 'global-movement') {
+                    const targetDrawerSelect = document.getElementById('targetDrawerSelect');
+                    if (targetDrawerSelect) drawerId = targetDrawerSelect.value;
+                }
                 const drawer = savingsDrawers.find(d => d.id === drawerId);
                 if (drawer) {
                     const concept = elements.movementConceptInput.value.trim() || 'Ajuste manual';
