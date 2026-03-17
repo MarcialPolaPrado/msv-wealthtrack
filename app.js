@@ -96,11 +96,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let incomeCategories = JSON.parse(localStorage.getItem('incomeCategories')) || ['Ahorro', 'Intereses', 'Dividendos', 'Especulación', 'Traspaso'];
     let expenseCategories = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto', 'Traspaso'];
 
-    // Migration: Ensure 'Traspaso' exists in categories if not present
     if (!incomeCategories.includes('Traspaso')) {
         incomeCategories.push('Traspaso');
         localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
     }
+
+    let incomeSubcategories = JSON.parse(localStorage.getItem('incomeSubcategories')) || [];
+    let expenseSubcategories = JSON.parse(localStorage.getItem('expenseSubcategories')) || [];
     const GOOGLE_CLIENT_ID = atob('OTAwNDA0NzcyODcwLTEwOGM3dGE4dnI1NjcwZWR1NWF2dmEyZ3NiYm43NXB0LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29t');
     const GOOGLE_API_KEY = atob('QUl6YVN5QXp0ZTZOWl9PaHdBMTVHbHp4aGVPeGszb3dSWUZmLTRV');
     const GOOGLE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
@@ -566,6 +568,8 @@ document.addEventListener('DOMContentLoaded', () => {
         stockTable: document.getElementById('stockTable'),
         savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
         savingsCategorySelect: document.getElementById('savingsCategorySelect'),
+        savingsSubcategoryGroup: document.getElementById('savingsSubcategoryGroup'),
+        savingsSubcategorySelect: document.getElementById('savingsSubcategorySelect'),
         ahorroFilterMode: document.getElementById('ahorroFilterMode'),
         ahorroListFilterMode: document.getElementById('ahorroListFilterMode'),
 
@@ -578,10 +582,18 @@ document.addEventListener('DOMContentLoaded', () => {
         closeSettingsModal: document.getElementById('closeSettingsModal'),
         settingsForm: document.getElementById('settingsForm'),
         fiscalDayInput: document.getElementById('fiscalDayInput'),
-        incomeCategoriesInput: document.getElementById('incomeCategoriesInput'),
-        expenseCategoriesInput: document.getElementById('expenseCategoriesInput'),
         defaultTransferSourceSelect: document.getElementById('defaultTransferSourceSelect'),
         forceUpdateBtn: document.getElementById('forceUpdateBtn'),
+        
+        // Categories Modal Elements
+        sidebarCategoriesBtn: document.getElementById('sidebarCategoriesBtn'),
+        categoriesModal: document.getElementById('categoriesModal'),
+        closeCategoriesModal: document.getElementById('closeCategoriesModal'),
+        incomeCategoriesContainer: document.getElementById('incomeCategoriesContainer'),
+        expenseCategoriesContainer: document.getElementById('expenseCategoriesContainer'),
+        addIncomeCategoryBtn: document.getElementById('addIncomeCategoryBtn'),
+        addExpenseCategoryBtn: document.getElementById('addExpenseCategoryBtn'),
+        saveCategoriesBtn: document.getElementById('saveCategoriesBtn'),
         transferToAhorroModal: document.getElementById('transferToAhorroModal'),
         closeTransferModal: document.getElementById('closeTransferModal'),
         transferToAhorroForm: document.getElementById('transferToAhorroForm'),
@@ -590,7 +602,18 @@ document.addEventListener('DOMContentLoaded', () => {
         transferTargetDrawerName: document.getElementById('transferTargetDrawerName'),
         transferAmountInput: document.getElementById('transferAmountInput'),
         transferCategorySelect: document.getElementById('transferCategorySelect'),
+        transferSubcategorySelect: document.getElementById('transferSubcategorySelect'),
         cancelTransferBtn: document.getElementById('cancelTransferBtn'),
+
+        // Subcategories Modal Elements
+        sidebarSubcategoriesBtn: document.getElementById('sidebarSubcategoriesBtn'),
+        subcategoriesModal: document.getElementById('subcategoriesModal'),
+        closeSubcategoriesModal: document.getElementById('closeSubcategoriesModal'),
+        incomeSubcategoriesContainer: document.getElementById('incomeSubcategoriesContainer'),
+        expenseSubcategoriesContainer: document.getElementById('expenseSubcategoriesContainer'),
+        addIncomeSubcategoryBtn: document.getElementById('addIncomeSubcategoryBtn'),
+        addExpenseSubcategoryBtn: document.getElementById('addExpenseSubcategoryBtn'),
+        saveSubcategoriesBtn: document.getElementById('saveSubcategoriesBtn'),
 
         // Goal Modal
         goalModal: document.getElementById('goalModal'),
@@ -711,8 +734,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.savingsCategorySelect) {
             // Use dynamic categories defined in settings
             const cats = isIncome ? incomeCategories : expenseCategories;
+            const subcats = isIncome ? incomeSubcategories : expenseSubcategories;
 
             elements.savingsCategorySelect.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            if (elements.savingsSubcategoryGroup) {
+                elements.savingsSubcategoryGroup.classList.remove('hidden');
+            }
+            if (elements.savingsSubcategorySelect) {
+                elements.savingsSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' + 
+                    subcats.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
         }
     };
 
@@ -1806,12 +1838,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.savingsDateInput) elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
         
         // Call updateSavingsMovementType FIRST because it rebuilds category options
+        // Pre-fill categories and subcategories
+        const catParts = (m.category || '').split(':');
+        const mainCat = catParts[0];
+        const subCat = catParts[1] || '';
+
         updateSavingsMovementType(m.amount >= 0 ? 'income' : 'expense');
         
-        // Now set the category value
-        if (elements.savingsCategorySelect) {
-            elements.savingsCategorySelect.value = m.category || drawer.name || '';
-        }
+        if (elements.savingsCategorySelect) elements.savingsCategorySelect.value = mainCat;
+        if (elements.savingsSubcategorySelect) elements.savingsSubcategorySelect.value = subCat;
         
         const title = document.getElementById('savingsModalTitle');
         if (title) title.textContent = `Copiar: ${drawer.name}`;
@@ -4673,6 +4708,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.savingsCategoryGroup) {
             elements.savingsCategoryGroup.classList.remove('hidden');
         }
+        if (elements.savingsSubcategoryGroup) {
+            elements.savingsSubcategoryGroup.classList.remove('hidden');
+        }
 
         // Default to today's date
         if (elements.savingsDateInput) {
@@ -4723,6 +4761,16 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(d => !d.isAuto && d.id !== drawerId)
             .map(d => `<option value="${d.id}">${d.name} (${fmtEUR(d.balance)})</option>`)
             .join('');
+
+        if (elements.transferCategorySelect) {
+            elements.transferCategorySelect.innerHTML = expenseCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+            elements.transferCategorySelect.value = 'Traspaso';
+        }
+        if (elements.transferSubcategorySelect) {
+            elements.transferSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' + 
+                expenseSubcategories.map(s => `<option value="${s}">${s}</option>`).join('');
+            elements.transferSubcategorySelect.value = '';
+        }
 
         if (transferTargetSelect.options.length === 0) {
             alert("Necesitas al menos otro cajón manual para realizar una transferencia.");
@@ -5375,19 +5423,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (elements.savingsMovementTypeContainer) {
             elements.savingsMovementTypeContainer.classList.remove('hidden');
+            const catParts = (movement.category || '').split(':');
+            const mainCat = catParts[0];
+            const subCat = catParts[1] || '';
+
             updateSavingsMovementType(movement.amount >= 0 ? 'income' : 'expense');
-        }
+            if (elements.savingsCategorySelect) elements.savingsCategorySelect.value = mainCat;
+            if (elements.savingsSubcategorySelect) elements.savingsSubcategorySelect.value = subCat;
 
-        if (elements.savingsCategoryGroup) {
-            elements.savingsCategoryGroup.classList.remove('hidden');
-        }
-
-        // Delay setting the value slightly to ensure options are generated
-        setTimeout(() => {
-            if (elements.savingsCategorySelect && movement.category) {
-                elements.savingsCategorySelect.value = movement.category;
+            if (elements.savingsCategoryGroup) {
+                elements.savingsCategoryGroup.classList.remove('hidden');
             }
-        }, 10);
+            if (elements.savingsSubcategoryGroup) {
+                elements.savingsSubcategoryGroup.classList.remove('hidden');
+            }
+        }
 
         if (amountInput) amountInput.value = Math.abs(movement.amount);
         if (conceptInput) conceptInput.value = movement.description;
@@ -5864,14 +5914,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openSettingsModal() {
         if (elements.fiscalDayInput) elements.fiscalDayInput.value = parseInt(localStorage.getItem('fiscalDay')) || 25;
-        if (elements.incomeCategoriesInput) {
-            const incCats = JSON.parse(localStorage.getItem('incomeCategories')) || ['Ahorro', 'Intereses', 'Dividendos', 'Especulación', 'Traspaso'];
-            elements.incomeCategoriesInput.value = incCats.join(', ');
-        }
-        if (elements.expenseCategoriesInput) {
-            const expCats = JSON.parse(localStorage.getItem('expenseCategories')) || ['Inversión', 'Gasto', 'Traspaso'];
-            elements.expenseCategoriesInput.value = expCats.join(', ');
-        }
         if (elements.defaultTransferSourceSelect) {
             elements.defaultTransferSourceSelect.innerHTML = '<option value="">-- Sin traspaso por omisión --</option>';
             const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
@@ -5896,21 +5938,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNaN(newFiscalDay) || newFiscalDay < 1 || newFiscalDay > 31) newFiscalDay = 25;
         localStorage.setItem('fiscalDay', newFiscalDay);
 
-        // Income Categories
-        const newIncCats = elements.incomeCategoriesInput?.value.split(',').map(s => s.trim()).filter(s => s);
-        if (newIncCats && newIncCats.length > 0) {
-            localStorage.setItem('incomeCategories', JSON.stringify(newIncCats));
-        } else {
-            localStorage.setItem('incomeCategories', JSON.stringify(['Ahorro', 'Intereses', 'Dividendos', 'Especulación', 'Traspaso']));
-        }
-
-        // Expense Categories
-        const newExpCats = elements.expenseCategoriesInput?.value.split(',').map(s => s.trim()).filter(s => s);
-        if (newExpCats && newExpCats.length > 0) {
-            localStorage.setItem('expenseCategories', JSON.stringify(newExpCats));
-        } else {
-            localStorage.setItem('expenseCategories', JSON.stringify(['Inversión', 'Gasto', 'Traspaso']));
-        }
+        // Default Transfer Source
 
         // Default Transfer Source
         if (elements.defaultTransferSourceSelect) {
@@ -5925,6 +5953,222 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Reload page so variables such as fiscalDay load properly across the code
         setTimeout(() => location.reload(), 1000);
+    }
+
+    // --- Categories Management ---
+    let tempIncomeCategories = [];
+    let tempExpenseCategories = [];
+
+    function openCategoriesModal() {
+        tempIncomeCategories = [...incomeCategories];
+        tempExpenseCategories = [...expenseCategories];
+        renderCategoriesList();
+        if (elements.categoriesModal) {
+            elements.categoriesModal.classList.remove('hidden');
+            elements.categoriesModal.style.display = 'flex';
+        }
+    }
+
+    function renderCategoriesList() {
+        if (!elements.incomeCategoriesContainer || !elements.expenseCategoriesContainer) return;
+
+        // Render Income
+        elements.incomeCategoriesContainer.innerHTML = tempIncomeCategories.map((cat, idx) => `
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" value="${cat}" class="income-cat-input" data-index="${idx}" style="flex:1; padding:0.5rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">
+                <button class="remove-income-cat" data-index="${idx}" style="background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.6;">❌</button>
+            </div>
+        `).join('');
+
+        // Render Expense
+        elements.expenseCategoriesContainer.innerHTML = tempExpenseCategories.map((cat, idx) => `
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" value="${cat}" class="expense-cat-input" data-index="${idx}" style="flex:1; padding:0.5rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">
+                <button class="remove-expense-cat" data-index="${idx}" style="background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.6;">❌</button>
+            </div>
+        `).join('');
+
+        // Attach listeners
+        elements.incomeCategoriesContainer.querySelectorAll('.income-cat-input').forEach(input => {
+            input.onchange = (e) => { tempIncomeCategories[parseInt(input.dataset.index)] = e.target.value.trim(); };
+        });
+        elements.expenseCategoriesContainer.querySelectorAll('.expense-cat-input').forEach(input => {
+            input.onchange = (e) => { tempExpenseCategories[parseInt(input.dataset.index)] = e.target.value.trim(); };
+        });
+        elements.incomeCategoriesContainer.querySelectorAll('.remove-income-cat').forEach(btn => {
+            btn.onclick = () => {
+                tempIncomeCategories.splice(parseInt(btn.dataset.index), 1);
+                renderCategoriesList();
+            };
+        });
+        elements.expenseCategoriesContainer.querySelectorAll('.remove-expense-cat').forEach(btn => {
+            btn.onclick = () => {
+                tempExpenseCategories.splice(parseInt(btn.dataset.index), 1);
+                renderCategoriesList();
+            };
+        });
+    }
+
+    if (elements.addIncomeCategoryBtn) {
+        elements.addIncomeCategoryBtn.onclick = () => {
+            tempIncomeCategories.push('');
+            renderCategoriesList();
+            // Focus new input
+            setTimeout(() => {
+                const inputs = elements.incomeCategoriesContainer.querySelectorAll('.income-cat-input');
+                inputs[inputs.length - 1]?.focus();
+            }, 50);
+        };
+    }
+    if (elements.addExpenseCategoryBtn) {
+        elements.addExpenseCategoryBtn.onclick = () => {
+            tempExpenseCategories.push('');
+            renderCategoriesList();
+            setTimeout(() => {
+                const inputs = elements.expenseCategoriesContainer.querySelectorAll('.expense-cat-input');
+                inputs[inputs.length - 1]?.focus();
+            }, 50);
+        };
+    }
+    if (elements.saveCategoriesBtn) {
+        elements.saveCategoriesBtn.onclick = () => {
+            const finalInc = tempIncomeCategories.map(s => s.trim()).filter(s => s);
+            const finalExp = tempExpenseCategories.map(s => s.trim()).filter(s => s);
+
+            if (finalInc.length === 0 || finalExp.length === 0) {
+                showToast("Debes tener al menos una categoría en cada sección.", "danger");
+                return;
+            }
+
+            incomeCategories = finalInc;
+            expenseCategories = finalExp;
+            
+            localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
+            localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
+            
+            showToast("Categorías guardadas correctamente.");
+            elements.categoriesModal.classList.add('hidden');
+            
+            // Sync current lists if necessary
+            if (activeView === 'ahorro') {
+                renderSavingsList();
+                renderSavings();
+            }
+        };
+    }
+    if (elements.closeCategoriesModal) {
+        elements.closeCategoriesModal.onclick = () => {
+            elements.categoriesModal.classList.add('hidden');
+        };
+    }
+    if (elements.categoriesModal) {
+        elements.categoriesModal.onclick = (e) => {
+            if (e.target === elements.categoriesModal) {
+                elements.categoriesModal.classList.add('hidden');
+            }
+        };
+    }
+
+    // --- Subcategories Management ---
+    let tempIncomeSubcategories = [];
+    let tempExpenseSubcategories = [];
+
+    function openSubcategoriesModal() {
+        tempIncomeSubcategories = [...incomeSubcategories];
+        tempExpenseSubcategories = [...expenseSubcategories];
+        renderSubcategoriesList();
+        if (elements.subcategoriesModal) {
+            elements.subcategoriesModal.classList.remove('hidden');
+            elements.subcategoriesModal.style.display = 'flex';
+        }
+    }
+
+    function renderSubcategoriesList() {
+        if (!elements.incomeSubcategoriesContainer || !elements.expenseSubcategoriesContainer) return;
+
+        // Render Income
+        elements.incomeSubcategoriesContainer.innerHTML = tempIncomeSubcategories.map((cat, idx) => `
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" value="${cat}" class="income-subcat-input" data-index="${idx}" style="flex:1; padding:0.5rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">
+                <button class="remove-income-subcat" data-index="${idx}" style="background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.6;">❌</button>
+            </div>
+        `).join('');
+
+        // Render Expense
+        elements.expenseSubcategoriesContainer.innerHTML = tempExpenseSubcategories.map((cat, idx) => `
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" value="${cat}" class="expense-subcat-input" data-index="${idx}" style="flex:1; padding:0.5rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">
+                <button class="remove-expense-subcat" data-index="${idx}" style="background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.6;">❌</button>
+            </div>
+        `).join('');
+
+        // Attach listeners
+        elements.incomeSubcategoriesContainer.querySelectorAll('.income-subcat-input').forEach(input => {
+            input.onchange = (e) => { tempIncomeSubcategories[parseInt(input.dataset.index)] = e.target.value.trim(); };
+        });
+        elements.expenseSubcategoriesContainer.querySelectorAll('.expense-subcat-input').forEach(input => {
+            input.onchange = (e) => { tempExpenseSubcategories[parseInt(input.dataset.index)] = e.target.value.trim(); };
+        });
+        elements.incomeSubcategoriesContainer.querySelectorAll('.remove-income-subcat').forEach(btn => {
+            btn.onclick = () => {
+                tempIncomeSubcategories.splice(parseInt(btn.dataset.index), 1);
+                renderSubcategoriesList();
+            };
+        });
+        elements.expenseSubcategoriesContainer.querySelectorAll('.remove-expense-subcat').forEach(btn => {
+            btn.onclick = () => {
+                tempExpenseSubcategories.splice(parseInt(btn.dataset.index), 1);
+                renderSubcategoriesList();
+            };
+        });
+    }
+
+    if (elements.addIncomeSubcategoryBtn) {
+        elements.addIncomeSubcategoryBtn.onclick = () => {
+            tempIncomeSubcategories.push('');
+            renderSubcategoriesList();
+            setTimeout(() => {
+                const inputs = elements.incomeSubcategoriesContainer.querySelectorAll('.income-subcat-input');
+                inputs[inputs.length - 1]?.focus();
+            }, 50);
+        };
+    }
+    if (elements.addExpenseSubcategoryBtn) {
+        elements.addExpenseSubcategoryBtn.onclick = () => {
+            tempExpenseSubcategories.push('');
+            renderSubcategoriesList();
+            setTimeout(() => {
+                const inputs = elements.expenseSubcategoriesContainer.querySelectorAll('.expense-subcat-input');
+                inputs[inputs.length - 1]?.focus();
+            }, 50);
+        };
+    }
+    if (elements.saveSubcategoriesBtn) {
+        elements.saveSubcategoriesBtn.onclick = () => {
+            const finalInc = tempIncomeSubcategories.map(s => s.trim()).filter(s => s);
+            const finalExp = tempExpenseSubcategories.map(s => s.trim()).filter(s => s);
+
+            incomeSubcategories = finalInc;
+            expenseSubcategories = finalExp;
+            
+            localStorage.setItem('incomeSubcategories', JSON.stringify(incomeSubcategories));
+            localStorage.setItem('expenseSubcategories', JSON.stringify(expenseSubcategories));
+            
+            showToast("Subcategorías guardadas correctamente.");
+            elements.subcategoriesModal.classList.add('hidden');
+        };
+    }
+    if (elements.closeSubcategoriesModal) {
+        elements.closeSubcategoriesModal.onclick = () => {
+            elements.subcategoriesModal.classList.add('hidden');
+        };
+    }
+    if (elements.subcategoriesModal) {
+        elements.subcategoriesModal.onclick = (e) => {
+            if (e.target === elements.subcategoriesModal) {
+                elements.subcategoriesModal.classList.add('hidden');
+            }
+        };
     }
 
     function panicReset() {
@@ -6459,6 +6703,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         elements.sidebarPrivacyToggleBtn?.addEventListener('click', togglePrivacy);
         elements.sidebarSettingsBtn?.addEventListener('click', openSettingsModal);
+        elements.sidebarCategoriesBtn?.addEventListener('click', openCategoriesModal);
+        elements.sidebarSubcategoriesBtn?.addEventListener('click', openSubcategoriesModal);
         elements.sidebarExportBtn?.addEventListener('click', () => exportGlobalJSON());
         elements.sidebarImportBtn?.addEventListener('click', () => elements.globalJsonInput?.click());
         elements.sidebarClockBtn?.addEventListener('click', () => {
@@ -6754,12 +7000,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const timePart = now.getHours().toString().padStart(2, '0') + "-" + now.getMinutes().toString().padStart(2, '0');
                 const filename = `msv_wealth_backup_${datePart}_${timePart}.json`;
 
-                const data = {
-                    stocks: stocks,
-                    savingsDrawers: savingsDrawers,
-                    timestamp: now.toISOString(),
-                    version: APP_VERSION
-                };
+                const data = getGlobalDataObject();
                 const content = JSON.stringify(data);
                 
                 const metadata = {
@@ -6842,18 +7083,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const json = await fileData.json();
                 
-                showCustomConfirm("Se ha encontrado un backup con fecha " + new Date(json.timestamp).toLocaleString() + ". ¿Deseas restaurarlo? Esto sobrescribirá tus datos actuales.", () => {
-                    if (json.stocks) stocks = json.stocks;
-                    if (json.savingsDrawers) {
-                        savingsDrawers = json.savingsDrawers.map(d => ({
-                            group: '', 
-                            ...d
-                        }));
-                    }
-                    if (window.saveStocks) window.saveStocks(stocks);
-                    if (window.saveSavings) window.saveSavings(savingsDrawers);
-                    showToast("Datos restaurados correctamente", "success");
-                    render();
+                showCustomConfirm("Se ha encontrado un backup con fecha " + new Date(json.exportDate || json.timestamp).toLocaleString() + ". ¿Deseas restaurarlo? Esto sobrescribirá tus datos actuales.", () => {
+                    // Use a temporary file-like object to trigger the main importGlobalJSON logic
+                    const blob = new Blob([JSON.stringify(json)], {type: 'application/json'});
+                    const file = new File([blob], fileName, {type: 'application/json'});
+                    importGlobalJSON(file);
                 });
             } catch (err) {
                 console.error("GDrive Download Error:", err);
@@ -7096,7 +7330,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const concept = elements.movementConceptInput.value.trim() || 'Ajuste manual';
                     const type = elements.savingsMovementType.value;
                     const finalAmount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
-                    const category = elements.savingsCategorySelect.value;
+                    let category = elements.savingsCategorySelect.value;
+                    const subcategory = elements.savingsSubcategorySelect?.value || '';
+                    if (subcategory) category = `${category}:${subcategory}`;
+                    
                     const date = elements.savingsDateInput.value || new Date().toISOString().split('T')[0];
 
                     drawer.balance += finalAmount;
@@ -7118,13 +7355,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetConcept = `Transferencia desde ${fromDrawer.name}`;
                     const today = new Date().toISOString().split('T')[0];
 
+                    let category = elements.transferCategorySelect?.value || 'Traspaso';
+                    const subcategory = elements.transferSubcategorySelect?.value || '';
+                    if (subcategory) category = `${category}:${subcategory}`;
+
                     // Subtract from source
                     fromDrawer.balance -= amount;
                     fromDrawer.movements.push({
                         date: today,
                         amount: -amount,
                         description: concept,
-                        category: 'Traspaso'
+                        category: category
                     });
 
                     // Add to target
@@ -7133,7 +7374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         date: today,
                         amount: amount,
                         description: targetConcept,
-                        category: 'Traspaso'
+                        category: category
                     });
                 } else if (amount <= 0) {
                     alert("El importe de la transferencia debe ser mayor que cero.");
@@ -7173,7 +7414,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const movement = drawer.movements[mIndex];
                     const concept = elements.movementConceptInput.value.trim() || movement.description;
                     const oldAmount = movement.amount;
-                    const category = elements.savingsCategorySelect.value;
+                    let category = elements.savingsCategorySelect.value;
+                    const subcategory = elements.savingsSubcategorySelect?.value || '';
+                    if (subcategory) category = `${category}:${subcategory}`;
+                    
                     const date = elements.savingsDateInput.value || movement.date;
 
                     const type = elements.savingsMovementType.value;
@@ -8693,8 +8937,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Global JSON Backup/Restore ---
 
-    function exportGlobalJSON() {
-        const globalData = {
+    function getGlobalDataObject() {
+        return {
             stocks: stocks,
             savings: savingsDrawers,
             nomina: nominaData,
@@ -8709,16 +8953,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 fiscalDay: fiscalDay,
                 incomeCategories: incomeCategories,
                 expenseCategories: expenseCategories,
+                incomeSubcategories: incomeSubcategories,
+                expenseSubcategories: expenseSubcategories,
                 defaultTransferSource: localStorage.getItem('defaultTransferSource')
             },
             exportDate: new Date().toISOString(),
             version: "1.3"
         };
+    }
+
+    function exportGlobalJSON() {
+        const globalData = getGlobalDataObject();
         const blob = new Blob([JSON.stringify(globalData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const fileName = getFormattedDateWithTime() + '.json';
-
-
+        
         triggerDownload(url, fileName, blob);
     }
 
@@ -8768,6 +9017,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (data.settings.expenseCategories) {
                             expenseCategories = data.settings.expenseCategories;
                             localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
+                        }
+                        if (data.settings.incomeSubcategories) {
+                            incomeSubcategories = data.settings.incomeSubcategories;
+                            localStorage.setItem('incomeSubcategories', JSON.stringify(incomeSubcategories));
+                        }
+                        if (data.settings.expenseSubcategories) {
+                            expenseSubcategories = data.settings.expenseSubcategories;
+                            localStorage.setItem('expenseSubcategories', JSON.stringify(expenseSubcategories));
                         }
                         if (data.settings.defaultTransferSource !== undefined) {
                             localStorage.setItem('defaultTransferSource', data.settings.defaultTransferSource || "");
