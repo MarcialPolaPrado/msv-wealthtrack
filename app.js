@@ -2516,14 +2516,16 @@ document.addEventListener('DOMContentLoaded', () => {
             headerTr.innerHTML = `
                 <td colspan="2">
                     <div class="header-content">
-                        <span>${drawer.icon} ${drawer.name}</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="drawer-title-txt" style="cursor:pointer;" title="Expandir/Contraer todos">${drawer.icon} ${drawer.name}</span>
+                            <span class="calendar-header-icon" style="cursor:pointer; font-size:0.9rem; opacity:0.8;" title="Ver Calendario">📅</span>
+                        </div>
                         ${(!drawer.isAuto && ahorroListFilterMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-mvmt-list-btn btn-primary" title="Añadir Movimiento">➕</button>
                                 <button class="transfer-list-btn btn-secondary" title="Transferir">⇆</button>
                                 <button class="edit-drawer-list-btn btn-secondary" title="Editar Cajón">✏️</button>
                                 <button class="delete-drawer-list-btn btn-danger" title="Borrar Cajón">🗑️</button>
-                                <button class="calendar-list-btn btn-secondary" title="Ver Calendario">📅</button>
                             </div>
                         ` : ''}
                     </div>
@@ -2537,11 +2539,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 headerTr.querySelector('.transfer-list-btn').onclick = (e) => { e.stopPropagation(); showTransferModal(drawer.id); };
                 headerTr.querySelector('.edit-drawer-list-btn').onclick = (e) => { e.stopPropagation(); showEditDrawerModal(drawer.id); };
                 headerTr.querySelector('.delete-drawer-list-btn').onclick = (e) => { e.stopPropagation(); deleteSavingsDrawer(drawer.id); };
-                headerTr.querySelector('.calendar-list-btn').onclick = (e) => { e.stopPropagation(); showSavingsCalendar(drawer.id); };
+            }
+
+            // Calendar icon listener
+            const calIcon = headerTr.querySelector('.calendar-header-icon');
+            if (calIcon) {
+                calIcon.onclick = (e) => {
+                    e.stopPropagation();
+                    showSavingsCalendar(drawer.id);
+                };
             }
 
             // Click on drawer name to expand/collapse all movements of this drawer
-            const drawerTitleSpan = headerTr.querySelector('.header-content span');
+            const drawerTitleSpan = headerTr.querySelector('.drawer-title-txt');
             if (drawerTitleSpan) {
                 drawerTitleSpan.style.cursor = 'pointer';
                 drawerTitleSpan.title = 'Expandir/Contraer todos los movimientos';
@@ -2760,7 +2770,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 card.innerHTML = `
                     <div class="drawer-color-btn" title="Cambiar Color" style="position: absolute; top: 0.5rem; right: 0.5rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: grayscale(1); opacity: 0.4; transition: all 0.2s;">🎨</div>
-                    <div class="drawer-target-icon" title="Establecer Objetivo" style="right: 3.2rem !important; top: 0.5rem !important;">🎯</div>
+                    <div class="drawer-target-icon" title="Establecer Objetivo" style="right: 3rem !important; top: 0.5rem !important;">🎯</div>
+                    <div class="drawer-calendar-icon" title="Ver Calendario" style="position: absolute; right: 5.5rem; top: 0.5rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.4; transition: all 0.2s; filter: grayscale(1);">📅</div>
                     <span class="drawer-icon">${drawer.icon}</span>
                     <span class="drawer-name" style="color: white !important; font-weight: 700;">${drawer.name}</span>
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
@@ -2778,10 +2789,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${!drawer.isAuto ? `
                         <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:nowrap;">
-                            <button class="add-mvmt-btn btn-primary" title="Añadir Movimiento" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">➕</button>
+                             <button class="add-mvmt-btn btn-primary" title="Añadir Movimiento" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">➕</button>
                             <button class="transfer-btn btn-secondary" title="Transferir" style="padding:0.5rem 0; font-size:1.2rem; font-weight:bold; flex:1; display:flex; justify-content:center; align-items:center;">⇆</button>
                             <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">✏️</button>
-                            <button class="calendar-drawer-btn btn-secondary" title="Ver Calendario" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">📅</button>
                         </div>` : ''}
                 `;
 
@@ -2807,7 +2817,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (editBtn) {
                         e.stopPropagation();
                         showEditDrawerModal(drawer.id);
-                    } else if (e.target.closest('.calendar-drawer-btn')) {
+                    } else if (e.target.closest('.drawer-calendar-icon')) {
                         e.stopPropagation();
                         showSavingsCalendar(drawer.id);
                     } else if (e.target.closest('.delete-drawer-btn')) {
