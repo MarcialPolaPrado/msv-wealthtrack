@@ -5137,6 +5137,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (totalOnDay !== 0) {
                 const colorClass = totalOnDay > 0 ? 'income' : 'expense';
                 amountHtml = `<div class="calendar-cell-amount ${colorClass}">${fmtEUR(totalOnDay)}</div>`;
+                cell.style.cursor = 'pointer';
+                cell.onclick = () => showCalendarDayDetails(calendarDrawerId, dateStr);
             }
 
             cell.innerHTML = `
@@ -5155,6 +5157,61 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.innerHTML = `<span class="calendar-cell-date">${d}</span>`;
             elements.calendarGrid.appendChild(cell);
         }
+    }
+
+    function showCalendarDayDetails(drawerId, dateStr) {
+        const drawer = savingsDrawers.find(d => d.id === drawerId);
+        if (!drawer) return;
+
+        const dayMovements = (drawer.movements || [])
+            .map((m, idx) => ({ ...m, originalIndex: idx }))
+            .filter(m => m.date === dateStr);
+
+        if (dayMovements.length === 0) return;
+
+        const dateObj = new Date(dateStr);
+        const formattedDate = dateObj.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        const movementsHtml = dayMovements.map(m => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="flex-grow:1;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="font-weight:600;">${m.description}</div>
+                        ${m.category ? `<span style="font-size: 0.7rem; padding: 2px 6px; background: rgba(255,255,255,0.05); border-radius: 4px; opacity: 0.7;">${m.category}</span>` : ''}
+                    </div>
+                </div>
+                <div style="font-weight:700; color:${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                    ${m.amount >= 0 ? '+' : ''}${fmtEUR(m.amount)}
+                </div>
+            </div>
+        `).join('');
+
+        const overlay = document.createElement('div');
+        overlay.id = 'dayDetailsOverlay';
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10001;
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            padding: 1rem;
+        `;
+        overlay.innerHTML = `
+            <div class="glass-panel" style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; width: min(450px, 95vw); max-height: 80vh; overflow-y: auto;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem;">
+                    <div>
+                        <h3 style="margin:0; opacity:0.6; font-size:0.8rem; text-transform:uppercase;">${drawer.icon} ${drawer.name}</h3>
+                        <h2 style="margin:0.2rem 0 0 0; text-transform:capitalize; font-size:1.1rem;">${formattedDate}</h2>
+                    </div>
+                    <button id="closeDayDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.5rem;" title="Cerrar">✕</button>
+                </div>
+                <div>${movementsHtml}</div>
+                <button id="backToCalendar" class="btn-secondary" style="width:100%; margin-top:1.5rem; padding:0.8rem; border-radius:12px; font-weight:600;">Volver al Calendario</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+        document.getElementById('closeDayDetails').onclick = close;
+        document.getElementById('backToCalendar').onclick = close;
+        overlay.onclick = (e) => { if (e.target === overlay) close(); };
     }
 
     function showCustomConfirm(message, onConfirm, onCancel = null) {
