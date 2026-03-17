@@ -2532,6 +2532,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        let globalFilteredTotal = 0;
         sortedDrawers.forEach(drawer => {
             // Filter movements for this drawer and selected mode
             let drawerMovements = [];
@@ -2548,6 +2549,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Calculate balance from filtered movements only
             const filteredBalance = drawerMovements.reduce((sum, m) => sum + m.amount, 0);
+            globalFilteredTotal += filteredBalance;
 
             // Drawer Header Row
             const headerTr = document.createElement('tr');
@@ -2637,6 +2639,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+
+        // Add summary row if in totals mode
+        if (ahorroListFilterMode === 'totals' && sortedDrawers.length > 0 && globalFilteredTotal !== 0) {
+            const totalTr = document.createElement('tr');
+            totalTr.className = 'ahorro-list-header';
+            totalTr.style.borderTop = '2px solid var(--primary)';
+            totalTr.innerHTML = `
+                <td colspan="2" style="font-weight: 800; text-align: right; padding: 1rem;">TOTAL:</td>
+                <td class="balance" style="font-weight: 800; color: var(--primary); padding: 1rem;">${fmtEUR(globalFilteredTotal)}</td>
+            `;
+            elements.ahorroTableBody.appendChild(totalTr);
+        }
 
         if (elements.ahorroTableBody.innerHTML === '') {
             elements.ahorroTableBody.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; opacity:0.5;">No hay movimientos en este periodo</td></tr>';
