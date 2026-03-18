@@ -765,9 +765,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const conceptsMap = new Map();
         // Traverse all drawers and their movements
         savingsDrawers.forEach(drawer => {
+            // Ignore Bolsa drawer
+            if (drawer.id === 'bolsa') return;
+
             (drawer.movements || []).forEach(m => {
                 const desc = (m.description || m.concept || '').trim();
-                if (desc && m.category) {
+                const category = m.category || '';
+                // Skip movements with Bolsa in category
+                if (category.toLowerCase().includes('bolsa')) return;
+
+                if (desc && category) {
                     conceptsMap.set(desc.toLowerCase(), {
                         original: desc,
                         category: m.category,
@@ -7601,7 +7608,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180654");
+            console.log("MSV WealthTrack Booting... Version: 202603180708");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
