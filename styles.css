@@ -3038,21 +3038,87 @@ button,
 
 /* Compactar filas en móvil */
 @media (max-width: 768px) {
-    #activityTable td {
-        padding: 0.2rem 0.5rem !important;
-        font-size: 0.82rem !important;
+    /* El contenedor no scrollea horizontalmente — la tabla se adapta */
+    #activityTableContainer {
+        overflow-x: hidden !important;
     }
 
+    #activityTable {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    /* Ancho fijo de cada columna para que el total sea 100% */
+    #activityTable th:nth-child(1),
+    #activityTable td:nth-child(1) { width: 20%; }   /* Fecha */
+
+    #activityTable th:nth-child(2),
+    #activityTable td:nth-child(2) { width: 28%; }   /* Concepto */
+
+    #activityTable th:nth-child(3),
+    #activityTable td:nth-child(3) { width: 22%; }   /* Categoría */
+
+    #activityTable th:nth-child(4),
+    #activityTable td:nth-child(4) { width: 18%; }   /* Importe */
+
+    #activityTable th:nth-child(5),
+    #activityTable td:nth-child(5) { width: 12%; }   /* Acción */
+
+    #activityTable td,
     #activityTable th {
-        padding: 0.4rem 0.5rem !important;
-        font-size: 0.8rem !important;
+        padding: 0.2rem 0.4rem !important;
+        font-size: 0.78rem !important;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
-    /* En móvil, abreviar la columna concepto */
+    /* Truncar concepto con "..." */
     #activityTable .concept-cell {
-        max-width: 90px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        max-width: 0; /* necesario junto con table-layout: fixed */
+    }
+
+    /* Ocultar el nombre del cajón en la celda de categoría */
+    #activityTable .activity-category-cell .drawer-label {
+        display: none;
+    }
+
+    /* Badge de categoría más compacto */
+    #activityTable .activity-category-cell .category-badge {
+        padding: 1px 5px;
+        font-size: 0.72rem;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    /* Botones de acción: solo mostrar uno (editar) o reducirlos */
+    #activityTable .activity-actions-cell {
+        padding: 0.1rem 0.2rem !important;
+    }
+
+    #activityTable .activity-actions-cell .actions-wrap {
+        gap: 1px;
+    }
+
+    /* Reducir tamaño de los emojis de botón */
+    #activityTable .btn-icon {
+        padding: 1px 3px !important;
+        font-size: 0.85rem;
+    }
+
+    /* Fecha en formato corto */
+    #activityTable td:nth-child(1) {
+        font-size: 0.72rem !important;
+    }
+
+    /* Importe alineado a la derecha y compacto */
+    #activityTable td:nth-child(4) {
+        font-size: 0.8rem !important;
+        text-align: right;
     }
 }
