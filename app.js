@@ -842,10 +842,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    elements.addNewCategoryBtn?.addEventListener('click', () => {
+    elements.addNewCategoryBtn?.addEventListener('click', async () => {
         const type = elements.savingsMovementType?.value || 'income';
         const label = type === 'income' ? 'Nueva Categoría de Ingresos' : 'Nueva Categoría de Gastos';
-        const newCat = prompt(`${label}:`, '');
+        const newCat = await showCustomPrompt(label, 'Escribe el nombre...');
         
         if (newCat && newCat.trim()) {
             const name = newCat.trim();
@@ -863,10 +863,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    elements.addNewSubcategoryBtn?.addEventListener('click', () => {
+    elements.addNewSubcategoryBtn?.addEventListener('click', async () => {
         const type = elements.savingsMovementType?.value || 'income';
         const label = type === 'income' ? 'Nueva Subcategoría de Ingresos' : 'Nueva Subcategoría de Gastos';
-        const newSub = prompt(`${label}:`, '');
+        const newSub = await showCustomPrompt(label, 'Escribe el nombre...');
         
         if (newSub && newSub.trim()) {
             const name = newSub.trim();
@@ -5558,6 +5558,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.showCustomConfirm = showCustomConfirm;
 
+    async function showCustomPrompt(title, placeholder = "") {
+        return new Promise((resolve) => {
+            const oldOverlay = document.getElementById('customPromptOverlay');
+            if (oldOverlay) oldOverlay.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'customPromptOverlay';
+            overlay.style.cssText = `
+                position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 22000;
+                display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+                padding: 1rem;
+            `;
+            overlay.innerHTML = `
+                <div class="glass-panel" style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 24px; padding: 2.5rem 2rem; width: min(400px, 90vw); text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">✍️</div>
+                    <h3 style="margin-bottom: 1.5rem; line-height: 1.5; font-weight: 700; color: white;">${title}</h3>
+                    <input type="text" id="customPromptInput" placeholder="${placeholder}" 
+                        style="width: 100%; padding: 1rem; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; margin-bottom: 2rem; outline: none; transition: border 0.3s;"
+                    >
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button id="promptCancel" class="btn-secondary" style="flex: 1; padding: 0.9rem; border-radius: 14px; font-weight: 600; font-size: 0.95rem; cursor: pointer;">Cancelar</button>
+                        <button id="promptOk" class="btn-primary" style="flex: 1; padding: 0.9rem; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; background: var(--primary);">Aceptar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const input = document.getElementById('customPromptInput');
+            const okBtn = document.getElementById('promptOk');
+            const cancelBtn = document.getElementById('promptCancel');
+
+            setTimeout(() => input.focus(), 50);
+
+            const close = (val) => {
+                overlay.style.opacity = '0';
+                overlay.style.transition = 'opacity 0.2s';
+                setTimeout(() => {
+                    overlay.remove();
+                    resolve(val);
+                }, 200);
+            };
+
+            okBtn.onclick = () => close(input.value);
+            cancelBtn.onclick = () => close(null);
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') close(input.value);
+                if (e.key === 'Escape') close(null);
+            };
+            overlay.onclick = (e) => {
+                if (e.target === overlay) close(null);
+            };
+        });
+    }
+    window.showCustomPrompt = showCustomPrompt;
+
     function cycleDrawerColor(drawerId) {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer) return;
@@ -7542,7 +7597,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180625");
+            console.log("MSV WealthTrack Booting... Version: 202603180630");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
