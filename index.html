@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603180627">
+    <link rel="stylesheet" href="styles.css?v=202603180632">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -65,7 +65,7 @@
                     <span class="logo-icon">✨</span>
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
-                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603180630</p>
+                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603180631</p>
                     </div>
                 </div>
             </div>
@@ -86,7 +86,7 @@
                     <p class="nav-group-title">Portfolio</p>
                     <div class="nav-item-container" id="bolsaNavContainer">
                         <div class="nav-item-header">
-                            <button class="wealth-nav-item active" data-view="bolsa">
+                            <button class="wealth-nav-item" data-view="bolsa">
                                 <span class="nav-icon">📈</span>
                                 <span class="nav-text">Bolsa</span>
                             </button>
@@ -108,7 +108,7 @@
 
                     <div class="nav-item-container" id="ahorroNavContainer">
                         <div class="nav-item-header">
-                            <button class="wealth-nav-item" data-view="ahorro">
+                            <button class="wealth-nav-item active" data-view="ahorro">
                                 <span class="nav-icon">💰</span>
                                 <span class="nav-text">Ahorro</span>
                             </button>
@@ -224,11 +224,11 @@
                 <div class="drag-indicator"></div>
                 <div class="move-icon" title="Arrastrar">✥</div>
             </div>
-            <button class="bottom-nav-item active" data-view="bolsa">
+            <button class="bottom-nav-item" data-view="bolsa">
                 <span class="bottom-nav-icon">📈</span>
                 <span class="bottom-nav-text">Bolsa</span>
             </button>
-            <button class="bottom-nav-item" data-view="ahorro">
+            <button class="bottom-nav-item active" data-view="ahorro">
                 <span class="bottom-nav-icon">💰</span>
                 <span class="bottom-nav-text">Ahorro</span>
             </button>
@@ -247,7 +247,7 @@
 
         <main id="appMain">
             <!-- Bolsa Section -->
-            <div id="bolsaSection" class="view-section">
+            <div id="bolsaSection" class="view-section hidden">
                 <!-- Stock List Actions -->
                 <div class="savings-container">
                     <div id="bolsaHeaderActions"
@@ -380,7 +380,7 @@
             </div><!-- End Bolsa Section -->
 
             <!-- Ahorro Section -->
-            <div id="ahorroSection" class="view-section hidden">
+            <div id="ahorroSection" class="view-section">
                 <div class="savings-container" style="margin-top: 1rem;">
                     <div id="ahorroHeaderActions"
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -1425,7 +1425,7 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603180627"></script>
+    <script src="app.js?v=202603180632"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1570,7 +1570,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603180627';
+        const APP_VERSION = '202603180632';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

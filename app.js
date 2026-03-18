@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
     }
     let isPrivacyActive = localStorage.getItem('isPrivacyActive') === 'true' || false;
-    let currentView = 'bolsa';
+    let currentView = 'ahorro';
     let lastSyncTime = '-';
     let currentTotalInvestedBolsa = 0;
     let currentPatrimonioTotal = 0;
@@ -7597,7 +7597,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180630");
+            console.log("MSV WealthTrack Booting... Version: 202603180631");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
