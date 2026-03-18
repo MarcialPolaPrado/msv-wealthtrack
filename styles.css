@@ -277,7 +277,8 @@ header a {
 
 .wealth-sidebar.collapsed .logo-text,
 .wealth-sidebar.collapsed .nav-text,
-.wealth-sidebar.collapsed .nav-group-title {
+.wealth-sidebar.collapsed .nav-group-title,
+.wealth-sidebar.collapsed .sidebar-storage {
     display: none;
 }
 

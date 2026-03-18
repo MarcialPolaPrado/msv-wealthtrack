@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603180556">
+    <link rel="stylesheet" href="styles.css?v=202603180606">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -65,8 +65,19 @@
                     <span class="logo-icon">✨</span>
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
-                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603141659</p>
+                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603180610</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Storage status bar -->
+            <div class="sidebar-storage" id="sidebarStorageIndicator" style="padding: 0 1.25rem; margin-bottom: 2rem; width: 100%;">
+                <div style="display:flex; justify-content: space-between; font-size: 0.65rem; opacity: 0.7; margin-bottom: 6px; font-family: 'Outfit', sans-serif;">
+                    <span>Almacenamiento Local</span>
+                    <span id="storageUsageText" style="font-weight: 600;">0%</span>
+                </div>
+                <div style="width:100%; height: 5px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow:hidden; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="storageUsageBar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px var(--primary-glow);"></div>
                 </div>
             </div>
 
@@ -1406,9 +1417,9 @@
     <button id="clockMenuBtn" class="hidden"></button>
 
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
-    <script src="storage.js?v=202603161637"></script>
+    <script src="storage.js?v=202603180610"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603180556"></script>
+    <script src="app.js?v=202603180606"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1553,7 +1564,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603180556';
+        const APP_VERSION = '202603180606';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -696,7 +696,9 @@ document.addEventListener('DOMContentLoaded', () => {
         nominaIconGroup: document.getElementById('nominaIconGroup'),
         nominaIconInput: document.getElementById('nominaIconInput'),
         smartConceptToggle: document.getElementById('smartConceptToggle'),
-        historicConceptsDatalist: document.getElementById('historicConcepts')
+        historicConceptsDatalist: document.getElementById('historicConcepts'),
+        storageUsageBar: document.getElementById('storageUsageBar'),
+        storageUsageText: document.getElementById('storageUsageText')
     };
 
     const updateNominaMovementType = (type) => {
@@ -825,6 +827,32 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.savingsMovementExpenseToggle = document.getElementById('savingsMovementExpenseToggle');
     elements.savingsMovementIncomeToggle = document.getElementById('savingsMovementIncomeToggle');
 
+    const updateStorageStatus = () => {
+        if (!elements.storageUsageBar || !elements.storageUsageText) return;
+        try {
+            const data = getGlobalDataObject(); 
+            const jsonString = JSON.stringify(data);
+            const sizeBytes = new Blob([jsonString]).size;
+            
+            // Theoretical LocalStorage limit 5MB
+            const limitBytes = 5 * 1024 * 1024;
+            const percentage = Math.min((sizeBytes / limitBytes) * 100, 100);
+            const sizeDisplay = sizeBytes > 1024 * 1024 
+                ? (sizeBytes / (1024 * 1024)).toFixed(2) + ' MB'
+                : (sizeBytes / 1024).toFixed(1) + ' KB';
+            
+            elements.storageUsageBar.style.width = percentage + '%';
+            elements.storageUsageText.textContent = `${percentage.toFixed(1)}% (${sizeDisplay})`;
+            
+            if (percentage > 90) elements.storageUsageBar.style.background = 'var(--danger)';
+            else if (percentage > 70) elements.storageUsageBar.style.background = 'var(--warning)';
+            else elements.storageUsageBar.style.background = 'var(--primary)';
+        } catch (e) {
+            console.warn("Storage update skipped:", e);
+        }
+    };
+    window.updateStorageStatus = updateStorageStatus;
+
     // Authentication removed as requested
     function showApp() {
         elements.loginOverlay.classList.add('hidden');
@@ -902,6 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.editId.value = '';
         elements.searchResults.classList.add('hidden');
         elements.dateInput.valueAsDate = new Date();
+        updateStorageStatus();
     }
 
     function updateFundSourceSelect() {
@@ -994,6 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
             expandedTickers.add(stock.ticker);
         }
         render();
+        updateStorageStatus();
     }
 
     // --- Rendering ---
@@ -7451,7 +7481,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180555");
+            console.log("MSV WealthTrack Booting... Version: 202603180610");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
@@ -9355,6 +9385,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start
     const initApp = function () {
+        updateStorageStatus();
         if (elements.bolsaDataSourceToggleBtn) {
             elements.bolsaDataSourceToggleBtn.addEventListener('click', toggleDataSource);
         }
