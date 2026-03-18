@@ -6456,6 +6456,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // Apply visual updates and notify user
+        if (typeof updateStorageStatus === 'function') updateStorageStatus();
         toggleSettingsModal(false);
         showToast('Ajustes guardados correctamente.');
 
@@ -6603,6 +6604,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showToast("Categorías guardadas correctamente" + (changesMade ? " y movimientos actualizados." : "."));
+            if (typeof updateStorageStatus === 'function') updateStorageStatus();
             elements.categoriesModal.classList.add('hidden');
 
             // Sync current lists if necessary
@@ -6759,6 +6761,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showToast("Subcategorías guardadas correctamente" + (changesMade ? " y movimientos actualizados." : "."));
+            if (typeof updateStorageStatus === 'function') updateStorageStatus();
             elements.subcategoriesModal.classList.add('hidden');
         };
     }
