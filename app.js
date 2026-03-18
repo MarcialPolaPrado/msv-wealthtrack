@@ -5660,6 +5660,9 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.drawerInfoGroup?.classList.add('hidden');
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
+        elements.drawerGroupGroup?.classList.add('hidden');
+        if (elements.drawerIconGroup) elements.drawerIconGroup.classList.add('hidden');
+
         const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
         targetDrawerSelectGroup?.classList.add('hidden');
 
@@ -7597,7 +7600,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180631");
+            console.log("MSV WealthTrack Booting... Version: 202603180644");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
