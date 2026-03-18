@@ -3036,6 +3036,99 @@ button,
     background: rgba(255, 255, 255, 0.025);
 }
 
+/* ── Botón ⋮ (menú móvil) ── */
+.activity-menu-btn {
+    display: none; /* oculto en desktop */
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    border-radius: 6px;
+    padding: 2px 9px;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 1.4;
+    transition: background 0.15s;
+}
+
+.activity-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* ── Action Sheet flotante ── */
+.activity-action-sheet {
+    position: fixed;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    min-width: 178px;
+    background: rgba(15, 23, 42, 0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 0.4rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.04);
+    transform-origin: top right;
+    animation: sheetIn 0.14s ease-out;
+}
+
+.activity-action-sheet.visible {
+    display: flex;
+}
+
+@keyframes sheetIn {
+    from { opacity: 0; transform: scale(0.9) translateY(-4px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.sheet-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    padding: 0.4rem 0.85rem 0.3rem;
+    opacity: 0.6;
+}
+
+.sheet-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0.25rem 0.5rem;
+}
+
+.activity-sheet-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: var(--text-main);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: left;
+    width: 100%;
+    transition: background 0.12s;
+}
+
+.activity-sheet-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.activity-sheet-item.danger {
+    color: var(--danger);
+}
+
+.activity-sheet-item.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
 /* Compactar filas en móvil */
 @media (max-width: 768px) {
     /* El contenedor no scrollea horizontalmente — la tabla se adapta */
@@ -3096,19 +3189,22 @@ button,
         white-space: nowrap;
     }
 
-    /* Botones de acción: solo mostrar uno (editar) o reducirlos */
+    /* ── Columna Acción: ocultar botones, mostrar ⋮ ── */
     #activityTable .activity-actions-cell {
-        padding: 0.1rem 0.2rem !important;
+        padding: 0.1rem 0.3rem !important;
+        text-align: center;
     }
 
+    /* Ocultar los 3 botones individuales */
     #activityTable .activity-actions-cell .actions-wrap {
-        gap: 1px;
+        display: none !important;
     }
 
-    /* Reducir tamaño de los emojis de botón */
-    #activityTable .btn-icon {
-        padding: 1px 3px !important;
-        font-size: 0.85rem;
+    /* Mostrar el botón ⋮ */
+    .activity-menu-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     /* Fecha en formato corto */

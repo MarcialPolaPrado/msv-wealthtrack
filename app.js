@@ -1863,6 +1863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button class="btn-icon activity-copy-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Copiar" style="padding: 2px 6px;">📑</button>
                             <button class="btn-icon activity-delete-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Eliminar" style="padding: 2px 6px; filter: contrast(0.5) opacity(0.8);">🗑️</button>
                         </div>
+                        <button class="activity-menu-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Acciones">⋮</button>
                     </td>
                 `;
                 elements.activityTableBody.appendChild(tr);
@@ -1963,6 +1964,80 @@ document.addEventListener('DOMContentLoaded', () => {
                     deleteSavingsMovement(drawer, parseInt(index));
                     setTimeout(() => renderActivity(), 100);
                 }
+            };
+        });
+
+        // ── Action Sheet (móvil) ──────────────────────────────────────────
+        // Crear el panel flotante una sola vez en el DOM
+        let activityActionSheet = document.getElementById('activityActionSheet');
+        if (!activityActionSheet) {
+            activityActionSheet = document.createElement('div');
+            activityActionSheet.id = 'activityActionSheet';
+            activityActionSheet.className = 'activity-action-sheet';
+            activityActionSheet.innerHTML = `
+                <div class="sheet-header">Acciones</div>
+                <button class="activity-sheet-item" id="sheetEditBtn">✏️ <span>Editar</span></button>
+                <button class="activity-sheet-item" id="sheetCopyBtn">📑 <span>Copiar</span></button>
+                <div class="sheet-divider"></div>
+                <button class="activity-sheet-item danger" id="sheetDeleteBtn">🗑️ <span>Eliminar</span></button>
+            `;
+            document.body.appendChild(activityActionSheet);
+
+            // Cerrar al tocar fuera
+            document.addEventListener('click', (e) => {
+                if (!activityActionSheet.contains(e.target) && !e.target.classList.contains('activity-menu-btn')) {
+                    activityActionSheet.classList.remove('visible');
+                }
+            }, { capture: true });
+        }
+
+        // Wire up each ⋮ button
+        elements.activityTableBody.querySelectorAll('.activity-menu-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const { type, id, drawer, index } = btn.dataset;
+                const sheet = document.getElementById('activityActionSheet');
+
+                // Posicionar el sheet cerca del botón
+                const rect = btn.getBoundingClientRect();
+                const sheetW = 180;
+                let top = rect.bottom + 6;
+                let left = rect.right - sheetW;
+                if (left < 8) left = 8;
+                // Si no cabe abajo, mostrar encima
+                if (top + 160 > window.innerHeight) top = rect.top - 166;
+
+                sheet.style.top  = top + 'px';
+                sheet.style.left = left + 'px';
+                sheet.style.right = 'auto';
+                sheet.classList.add('visible');
+
+                // Reasignar acciones cada vez
+                document.getElementById('sheetEditBtn').onclick = (ev) => {
+                    ev.stopPropagation();
+                    sheet.classList.remove('visible');
+                    if (type === 'bolsa') editStock(id);
+                    else showEditMovementModal(drawer, parseInt(index));
+                };
+                document.getElementById('sheetCopyBtn').onclick = (ev) => {
+                    ev.stopPropagation();
+                    sheet.classList.remove('visible');
+                    if (type === 'bolsa') copyStock(id);
+                    else copySavingsMovement(drawer, parseInt(index));
+                };
+                document.getElementById('sheetDeleteBtn').onclick = (ev) => {
+                    ev.stopPropagation();
+                    sheet.classList.remove('visible');
+                    if (type === 'bolsa') {
+                        showCustomConfirm('¿Eliminar esta inversión?', () => {
+                            removeStock(id);
+                            renderActivity();
+                        });
+                    } else {
+                        deleteSavingsMovement(drawer, parseInt(index));
+                        setTimeout(() => renderActivity(), 100);
+                    }
+                };
             };
         });
     }
