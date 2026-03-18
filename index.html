@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603180715">
+    <link rel="stylesheet" href="styles.css?v=202603180804">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -65,7 +65,7 @@
                     <span class="logo-icon">✨</span>
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
-                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603180718</p>
+                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603180802</p>
                     </div>
                 </div>
             </div>
@@ -1026,7 +1026,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <label for="savingsSubcategorySelect" style="margin-bottom: 0;">Subcategoría (Opcional)</label>
                         <button type="button" id="addNewSubcategoryBtn" class="btn-sm" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size: 0.75rem;">+ Añadir</button>
-                    </div>
+                    </div >
                     <select id="savingsSubcategorySelect">
                         <!-- Options filled by JS based on type -->
                     </select>
@@ -1425,7 +1425,7 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603180715"></script>
+    <script src="app.js?v=202603180804"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1570,7 +1570,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603180715';
+        const APP_VERSION = '202603180804';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

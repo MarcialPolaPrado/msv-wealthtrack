@@ -2648,34 +2648,44 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply Sorting to Drawers
         const sortedDrawers = [...savingsDrawers].sort((a, b) => {
             let valA, valB;
+            
+            const getMvmts = (d) => {
+                if (d.id === 'bolsa') {
+                    const fx = window.FX_RATE || 1;
+                    return stocks.map(s => ({
+                        date: s.date || new Date().toISOString().split('T')[0],
+                        category: `Bolsa: ${s.market || 'Acción'}`,
+                        concept: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker} (${s.qty || 0} uds)`,
+                        amount: (s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1)
+                    }));
+                }
+                return d.movements || [];
+            };
+
             if (ahorroSortConfig.key === 'name') {
                 valA = a.name.toLowerCase();
                 valB = b.name.toLowerCase();
             } else if (ahorroSortConfig.key === 'balance') {
                 const getFilteredBalance = (d) => {
-                    let mvmts;
+                    let mvmts = getMvmts(d);
                     if (ahorroFilterMode === 'month') {
-                        mvmts = (d.movements || []).filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+                        mvmts = mvmts.filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
                     } else if (ahorroFilterMode === 'year') {
                         const year = ahorroListMonth.split('-')[0];
-                        mvmts = (d.movements || []).filter(m => m.date && m.date.startsWith(year));
-                    } else {
-                        mvmts = d.movements || [];
+                        mvmts = mvmts.filter(m => m.date && m.date.startsWith(year));
                     }
                     return mvmts.reduce((s, m) => s + m.amount, 0);
                 };
                 valA = getFilteredBalance(a);
                 valB = getFilteredBalance(b);
             } else if (ahorroSortConfig.key === 'concept') {
-                // Determine "leading" category for this month
                 const getLeadCategory = (drawer) => {
-                    const mvmts = (drawer.movements || []).filter(m => {
+                    let mvmts = getMvmts(drawer).filter(m => {
                         if (ahorroFilterMode === 'month') return m.date && getFiscalMonth(m.date) === ahorroListMonth;
                         if (ahorroFilterMode === 'year') return m.date && m.date.startsWith(ahorroListMonth.split('-')[0]);
                         return true;
                     });
                     if (mvmts.length === 0) return '';
-                    // Use most recent movement for sorting
                     const sortedMvmts = [...mvmts].sort((m1, m2) => new Date(m2.date) - new Date(m1.date));
                     return (sortedMvmts[0].category || '').toLowerCase();
                 };
@@ -2706,13 +2716,23 @@ document.addEventListener('DOMContentLoaded', () => {
         sortedDrawers.forEach(drawer => {
             // Filter movements for this drawer and selected mode
             let drawerMovements = [];
-            if (ahorroFilterMode === 'month') {
-                drawerMovements = (drawer.movements || []).filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
-            } else if (ahorroFilterMode === 'year') {
-                const year = ahorroListMonth.split('-')[0];
-                drawerMovements = (drawer.movements || []).filter(m => m.date && m.date.startsWith(year));
+            if (drawer.id === 'bolsa') {
+                const fx = window.FX_RATE || 1;
+                drawerMovements = stocks.map(s => ({
+                    date: s.date || new Date().toISOString().split('T')[0],
+                    concept: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker} (${s.qty || 0} uds)`,
+                    category: `Bolsa: ${s.market || 'Acción'}`,
+                    amount: (s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1)
+                }));
             } else {
                 drawerMovements = (drawer.movements || []);
+            }
+
+            if (ahorroFilterMode === 'month') {
+                drawerMovements = drawerMovements.filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+            } else if (ahorroFilterMode === 'year') {
+                const year = ahorroListMonth.split('-')[0];
+                drawerMovements = drawerMovements.filter(m => m.date && m.date.startsWith(year));
             }
 
             if (drawerMovements.length === 0) return; // Don't show drawer if no movements in this view
@@ -7610,7 +7630,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180718");
+            console.log("MSV WealthTrack Booting... Version: 202603180802");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
