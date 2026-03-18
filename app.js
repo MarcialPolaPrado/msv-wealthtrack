@@ -895,15 +895,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const jsonString = JSON.stringify(data);
             const sizeBytes = new Blob([jsonString]).size;
             
-            // Theoretical LocalStorage limit 5MB
             const limitBytes = 5 * 1024 * 1024;
+            const limitDisplay = '5 MB';
             const percentage = Math.min((sizeBytes / limitBytes) * 100, 100);
             const sizeDisplay = sizeBytes > 1024 * 1024 
                 ? (sizeBytes / (1024 * 1024)).toFixed(2) + ' MB'
                 : (sizeBytes / 1024).toFixed(1) + ' KB';
             
             elements.storageUsageBar.style.width = percentage + '%';
-            elements.storageUsageText.textContent = `${percentage.toFixed(1)}% (${sizeDisplay})`;
+            elements.storageUsageText.textContent = `${sizeDisplay} / ${limitDisplay}`;
+            elements.storageUsageText.title = `Estás usando ${sizeDisplay} del límite de ${limitDisplay} (${percentage.toFixed(2)}%)`;
             
             if (percentage > 90) elements.storageUsageBar.style.background = 'var(--danger)';
             else if (percentage > 70) elements.storageUsageBar.style.background = 'var(--warning)';
@@ -7600,7 +7601,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180644");
+            console.log("MSV WealthTrack Booting... Version: 202603180654");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
