@@ -7775,6 +7775,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('sidebarGDriveRestoreBtn')?.addEventListener('click', () => downloadDataFromGDrive());
 
+        // ── Nextcloud sidebar buttons ──
+        document.getElementById('sidebarNcBackupBtn')?.addEventListener('click', () => ncBackupData());
+        document.getElementById('sidebarNcRestoreBtn')?.addEventListener('click', () => ncRestoreData());
+
         // All automatic background tasks removed to prevent PWA/TWA issues.
 
         setTimeout(gDriveInit, 1500); // Small delay to let gapi/google scripts load
