@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603181746">
+    <link rel="stylesheet" href="styles.css?v=202603181831">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -63,19 +63,34 @@
                     <span class="logo-icon">✨</span>
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
-                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603180820</p>
+                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
+                            id="logoVersion">v202603180820</p>
                     </div>
                 </div>
             </div>
 
+            <!-- Last Sync Time -->
+            <div id="sidebarSyncInfo"
+                style="padding: 0 1.25rem; margin-bottom: 1.25rem; font-size: 0.65rem; font-family: 'Outfit', sans-serif; display: flex; flex-direction: column; gap: 4px; display: none;">
+                <span style="opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;">Última
+                    Sincronización</span>
+                <span id="lastSyncTime"
+                    style="color: var(--success); font-weight: 600; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2);">--:--</span>
+            </div>
+
             <!-- Storage status bar -->
-            <div class="sidebar-storage" id="sidebarStorageIndicator" style="padding: 0 1.25rem; margin-bottom: 2rem; width: 100%;">
-                <div style="display:flex; justify-content: space-between; font-size: 0.65rem; opacity: 0.7; margin-bottom: 6px; font-family: 'Outfit', sans-serif;">
+            <div class="sidebar-storage" id="sidebarStorageIndicator"
+                style="padding: 0 1.25rem; margin-bottom: 2rem; width: 100%;">
+                <div
+                    style="display:flex; justify-content: space-between; font-size: 0.65rem; opacity: 0.7; margin-bottom: 6px; font-family: 'Outfit', sans-serif;">
                     <span>Almacenamiento Local</span>
                     <span id="storageUsageText" style="font-weight: 600;">0%</span>
                 </div>
-                <div style="width:100%; height: 5px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow:hidden; border: 1px solid rgba(255,255,255,0.05);">
-                    <div id="storageUsageBar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px var(--primary-glow);"></div>
+                <div
+                    style="width:100%; height: 5px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow:hidden; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="storageUsageBar"
+                        style="width: 0%; height: 100%; background: var(--primary); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px var(--primary-glow);">
+                    </div>
                 </div>
             </div>
 
@@ -91,16 +106,23 @@
                             <span class="nav-item-chevron">▼</span>
                         </div>
                         <div class="sidebar-submenu">
-                            <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir Inversión</button>
+                            <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir
+                                Inversión</button>
                             <button id="bolsaRefreshBtn2" class="submenu-item"><span>🔄</span> Actualizar Datos</button>
                             <button id="bolsaBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
-                            <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen Datos</button>
-                            <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios Manuales</button>
-                            <button id="bolsaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
+                            <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen
+                                Datos</button>
+                            <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios
+                                Manuales</button>
+                            <button id="bolsaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista
+                                Tarjetas/Lista</button>
                             <button id="exportDataBtn2" class="submenu-item"><span>💾</span> Exportar CSV</button>
-                            <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
-                            <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
-                            <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Acción</button>
+                            <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span>
+                                Highlights</button>
+                            <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar
+                                Totales</button>
+                            <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por
+                                Acción</button>
                             <button id="bolsaCalendarBtn2" class="submenu-item"><span>📅</span> Calendario</button>
                         </div>
                     </div>
@@ -114,12 +136,16 @@
                             <span class="nav-item-chevron">▼</span>
                         </div>
                         <div class="sidebar-submenu">
-                            <button id="ahorroViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
+                            <button id="ahorroViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista
+                                Tarjetas/Lista</button>
                             <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
                             <button id="addDrawerBtn2" class="submenu-item"><span>📁</span> Añadir Cajón</button>
-                            <button id="ahorroSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
-                            <button id="ahorroTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Cajón</button>
-                            <button id="addGlobalMovementBtn2" class="submenu-item"><span>💶</span> Nuevo Movimiento</button>
+                            <button id="ahorroSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar
+                                Totales</button>
+                            <button id="ahorroTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por
+                                Cajón</button>
+                            <button id="addGlobalMovementBtn2" class="submenu-item"><span>💶</span> Nuevo
+                                Movimiento</button>
                         </div>
                     </div>
 
@@ -133,9 +159,12 @@
                         </div>
                         <div class="sidebar-submenu">
                             <button id="addNominaBtn2" class="submenu-item"><span>➕</span> Añadir Concepto</button>
-                            <button id="nominaAnalisisViewBtn2" class="submenu-item"><span>📈</span> Análisis Anual</button>
-                            <button id="nominaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista Tarjetas/Lista</button>
-                            <button id="fiscalCountdownBtn2" class="submenu-item"><span>⏳</span> Días Mes Fiscal: <span id="fiscalDaysLeft2">--</span></button>
+                            <button id="nominaAnalisisViewBtn2" class="submenu-item"><span>📈</span> Análisis
+                                Anual</button>
+                            <button id="nominaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista
+                                Tarjetas/Lista</button>
+                            <button id="fiscalCountdownBtn2" class="submenu-item"><span>⏳</span> Días Mes Fiscal: <span
+                                    id="fiscalDaysLeft2">--</span></button>
                         </div>
                     </div>
                     <div class="nav-item-container" id="activityNavContainer">
@@ -151,7 +180,8 @@
                             <button id="sidebarFilterDivBtn" class="submenu-item"><span>💰</span> Div.</button>
                             <button id="sidebarFilterIntBtn" class="submenu-item"><span>🏦</span> Int.</button>
                             <button id="sidebarFilterEspBtn" class="submenu-item"><span>🚀</span> Esp.</button>
-                            <button id="sidebarFilterRendBtn" class="submenu-item"><span>📊</span> Rend. (D+I+E)</button>
+                            <button id="sidebarFilterRendBtn" class="submenu-item"><span>📊</span> Rend.
+                                (D+I+E)</button>
                             <button id="sidebarFilterStocksBtn" class="submenu-item"><span>📈</span> Acciones</button>
                             <button id="sidebarFilterAllBtn" class="submenu-item"><span>🔄</span> Todo</button>
                         </div>
@@ -166,11 +196,15 @@
                         </div>
                         <div class="sidebar-submenu">
                             <button id="sidebarCategoriesBtn" class="submenu-item"><span>🏷️</span> Categorías</button>
-                            <button id="sidebarSubcategoriesBtn" class="submenu-item"><span>🖇️</span> Subcategorías</button>
-                            <button id="sidebarPrivacyToggleBtn" class="submenu-item"><span>👁️</span> Privacidad</button>
+                            <button id="sidebarSubcategoriesBtn" class="submenu-item"><span>🖇️</span>
+                                Subcategorías</button>
+                            <button id="sidebarPrivacyToggleBtn" class="submenu-item"><span>👁️</span>
+                                Privacidad</button>
                             <button id="sidebarSettingsBtn" class="submenu-item"><span>⚙️</span> Ajustes</button>
-                            <button id="sidebarDeleteAllBtn" class="submenu-item" style="color: var(--danger);"><span>🗑️</span> Borrar todo</button>
-                            <button id="sidebarResetBtn" class="submenu-item" style="color: var(--danger);"><span>🔄</span> Hard Reset</button>
+                            <button id="sidebarDeleteAllBtn" class="submenu-item"
+                                style="color: var(--danger);"><span>🗑️</span> Borrar todo</button>
+                            <button id="sidebarResetBtn" class="submenu-item"
+                                style="color: var(--danger);"><span>🔄</span> Hard Reset</button>
                         </div>
                     </div>
 
@@ -186,8 +220,12 @@
                             <button id="sidebarExportBtn" class="submenu-item"><span>💾</span> Exportar JSON</button>
                             <button id="sidebarImportBtn" class="submenu-item"><span>📂</span> Importar JSON</button>
                             <button id="sidebarClockBtn" class="submenu-item"><span>⏱️</span> Cuenta Atrás</button>
-                            <button id="sidebarNcBackupBtn" class="submenu-item" style="color: var(--success); background: rgba(16, 185, 129, 0.05);"><span>📤</span> Guardar Nextcloud</button>
-                            <button id="sidebarNcRestoreBtn" class="submenu-item" style="color: var(--accent); background: rgba(59, 130, 246, 0.05);"><span>📥</span> Restaurar Nextcloud</button>
+                            <button id="sidebarNcBackupBtn" class="submenu-item"
+                                style="color: var(--success); background: rgba(16, 185, 129, 0.05);"><span>📤</span>
+                                Guardar Nextcloud</button>
+                            <button id="sidebarNcRestoreBtn" class="submenu-item"
+                                style="color: var(--accent); background: rgba(59, 130, 246, 0.05);"><span>📥</span>
+                                Restaurar Nextcloud</button>
                         </div>
                     </div>
                 </div>
@@ -235,7 +273,8 @@
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
                         <div style="display:flex; align-items:center; gap:1rem;">
                             <h2 style="margin:0" id="bolsaMobileTitle">Mis Acciones</h2>
-                            <button id="bolsaHighlightsToggleBtn" class="btn-sm" title="Mostrar/Ocultar Highlights Animados"
+                            <button id="bolsaHighlightsToggleBtn" class="btn-sm"
+                                title="Mostrar/Ocultar Highlights Animados"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🚀</button>
                             <button id="bolsaSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Totales"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
@@ -250,7 +289,8 @@
                             </button>
                             <button id="bolsaManualPriceBtn" class="btn-secondary" title="Ajuste Manual de Precios"
                                 style="padding: 0.5rem 0.75rem; font-size: 1.1rem; position: relative; border-color: rgba(245, 158, 11, 0.4);">
-                                ⚙️<span id="manualPriceBadge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: #f59e0b; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid #0f172a;">!</span>
+                                ⚙️<span id="manualPriceBadge" class="hidden"
+                                    style="position: absolute; top: -5px; right: -5px; background: #f59e0b; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid #0f172a;">!</span>
                             </button>
                             <button id="exportDataBtn" class="btn-secondary" title="Exportar CSV"
                                 style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
@@ -258,7 +298,7 @@
                                 title="Añadir Inversión">✨</button>
                         </div>
                     </div>
-                    
+
                     <!-- Bolsa Highlights (Animated Summary) -->
                     <div id="bolsaHighlights" class="hidden" style="margin-bottom: 2rem;"></div>
                 </div>
@@ -367,13 +407,14 @@
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <div style="display:flex; align-items:center; gap:1rem;">
                             <h2 id="misCajonesTitle" style="margin:0">Mis Cajones</h2>
-                                <button id="ahorroViewToggleBtn" class="btn-sm" title="Cambiar Vista"
-                                    style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
+                            <button id="ahorroViewToggleBtn" class="btn-sm" title="Cambiar Vista"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
                         </div>
                         <div style="display:flex; gap: 0.8rem;">
                             <button id="ahorroSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Totales"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
-                            <button id="ahorroBreakdownBtn" class="btn-secondary" style="padding: 0.5rem 1rem;" title="Rendimientos">📈</button>
+                            <button id="ahorroBreakdownBtn" class="btn-secondary" style="padding: 0.5rem 1rem;"
+                                title="Rendimientos">📈</button>
                             <button id="addDrawerBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
                                 title="Añadir Cajón">📁</button>
                         </div>
@@ -411,8 +452,10 @@
                             <div
                                 style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; width: 100%;">
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <button id="nextAhorroMonthBtn" class="btn-icon" style="padding: 2px 8px; font-size: 0.8rem;">🔼</button>
-                                    <button id="prevAhorroMonthBtn" class="btn-icon" style="padding: 2px 8px; font-size: 0.8rem;">🔽</button>
+                                    <button id="nextAhorroMonthBtn" class="btn-icon"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">🔼</button>
+                                    <button id="prevAhorroMonthBtn" class="btn-icon"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">🔽</button>
                                 </div>
                                 <h3 id="ahorroCurrentMonthLabel"
                                     style="margin:0; min-width:120px; text-align:center; font-family:var(--font-main); font-size: 1rem;">
@@ -444,7 +487,7 @@
                         <div id="ahorroSummaryDrawer" style="margin-top: 2rem;">
                             <!-- Category distribution will be rendered here -->
                         </div>
-    
+
                         <!-- Pie Chart Section -->
                         <div style="margin-top: 2rem;">
                             <div id="savingsPieChartContainer" class="glass-panel"
@@ -464,8 +507,9 @@
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <h2 style="margin:0">Actividad Global</h2>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
-                            <input type="text" id="activitySearchInput" placeholder="Buscar..." 
+                        <div
+                            style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                            <input type="text" id="activitySearchInput" placeholder="Buscar..."
                                 style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; outline: none; width: 100px; height: 30px; box-sizing: border-box;">
                             <select id="activityFilterMode"
                                 style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; cursor: pointer; outline: none; width: 100px; height: 30px; box-sizing: border-box;">
@@ -478,8 +522,10 @@
                                 <option value="all">📁 Todos los Cajones</option>
                             </select>
                             <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
-                                <button id="activityMonthUp" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
-                                <button id="activityMonthDown" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                                <button id="activityMonthUp" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="activityMonthDown" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
                             </div>
                             <h3 id="activityMonthLabel"
                                 style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">
@@ -501,13 +547,18 @@
                             </colgroup>
                             <thead>
                                 <tr style="border-bottom: 2px solid var(--primary); user-select: none;">
-                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;" data-sort="date">Fecha
-                                        <span class="sort-icon"></span></th>
-                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;" data-sort="concept">
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;"
+                                        data-sort="date">Fecha
+                                        <span class="sort-icon"></span>
+                                    </th>
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;"
+                                        data-sort="concept">
                                         Concepto <span class="sort-icon"></span></th>
-                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;" data-sort="category">
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;"
+                                        data-sort="category">
                                         Categoría <span class="sort-icon"></span></th>
-                                    <th style="padding: 0.5rem 1rem; text-align: right; cursor: pointer;" data-sort="amount">
+                                    <th style="padding: 0.5rem 1rem; text-align: right; cursor: pointer;"
+                                        data-sort="amount">
                                         Importe <span class="sort-icon"></span></th>
                                     <th style="padding: 0.5rem 1rem; text-align: center;">Acción</th>
                                 </tr>
@@ -516,9 +567,12 @@
                                 <!-- Rows injected here -->
                             </tbody>
                         </table>
-                        <div id="activityPaginationContainer" class="hidden" style="padding: 1rem; text-align: center; border-top: 1px solid var(--glass-border);">
-                            <button id="activityLoadMoreBtn" class="btn-secondary" style="padding: 0.5rem 2rem;">Cargar más movimientos</button>
-                            <p id="activityPaginationInfo" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;"></p>
+                        <div id="activityPaginationContainer" class="hidden"
+                            style="padding: 1rem; text-align: center; border-top: 1px solid var(--glass-border);">
+                            <button id="activityLoadMoreBtn" class="btn-secondary" style="padding: 0.5rem 2rem;">Cargar
+                                más movimientos</button>
+                            <p id="activityPaginationInfo"
+                                style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;"></p>
                         </div>
                     </div>
                 </div>
@@ -570,8 +624,10 @@
                         </button>
                         <div style="display:flex; align-items:center; gap:0.5rem;">
                             <div style="display: flex; flex-direction: column; gap: 4px;">
-                                <button id="nextNominaMonthBtn" class="btn-icon" style="padding: 2px 8px; font-size: 0.8rem;">🔼</button>
-                                <button id="prevNominaMonthBtn" class="btn-icon" style="padding: 2px 8px; font-size: 0.8rem;">🔽</button>
+                                <button id="nextNominaMonthBtn" class="btn-icon"
+                                    style="padding: 2px 8px; font-size: 0.8rem;">🔼</button>
+                                <button id="prevNominaMonthBtn" class="btn-icon"
+                                    style="padding: 2px 8px; font-size: 0.8rem;">🔽</button>
                             </div>
                             <h3 id="nominaCurrentMonthLabel"
                                 style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
@@ -694,8 +750,10 @@
                         añadir una nueva inversión.</small>
                 </div>
 
-                <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <div class="form-group"
+                    style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
                         <label style="font-weight: 700; color: white;">☁️ Sincronización Nextcloud</label>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 0.7rem; opacity: 0.6;">Autoguardado</span>
@@ -705,32 +763,39 @@
                             </label>
                         </div>
                     </div>
-                    
-                    <div id="ncStatus" style="font-size: 0.8rem; margin-bottom: 1rem; padding: 0.5rem; border-radius: 8px; background: rgba(255,255,255,0.05); text-align: center;">
+
+                    <div id="ncStatus"
+                        style="font-size: 0.8rem; margin-bottom: 1rem; padding: 0.5rem; border-radius: 8px; background: rgba(255,255,255,0.05); text-align: center;">
                         <div id="ncStatusText" style="opacity: 0.6;">No configurado</div>
                         <div id="ncLastSync" style="font-size: 0.7rem; opacity: 0.4; margin-top: 0.2rem;"></div>
                         <div id="ncDeviceInfo" style="font-size: 0.65rem; opacity: 0.35; margin-top: 0.2rem;"></div>
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
-                        <input type="url" id="ncUrlInput" placeholder="https://tu-nextcloud.com" 
+                        <input type="url" id="ncUrlInput" placeholder="https://tu-nextcloud.com"
                             style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
                         <input type="text" id="ncUserInput" placeholder="Usuario" autocomplete="username"
                             style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
-                        <input type="password" id="ncPasswordInput" placeholder="App Password" autocomplete="current-password"
+                        <input type="password" id="ncPasswordInput" placeholder="App Password"
+                            autocomplete="current-password"
                             style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
                         <input type="url" id="ncProxyInput" placeholder="URL del Proxy CORS (Cloudflare Worker)"
                             style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
-                        <small style="opacity: 0.5; font-size: 0.7rem;">App Password: Nextcloud → Ajustes → Seguridad. Proxy: necesario si CORS bloqueado.</small>
+                        <small style="opacity: 0.5; font-size: 0.7rem;">App Password: Nextcloud → Ajustes → Seguridad.
+                            Proxy: necesario si CORS bloqueado.</small>
                     </div>
 
-                    <button type="button" id="ncTestBtn" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button type="button" id="ncTestBtn" class="btn-secondary"
+                        style="width: 100%; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
                         🔗 Probar Conexión
                     </button>
 
                     <div id="ncConnectedActions" class="hidden">
-                        <button type="button" id="ncBackupBtn" class="btn-primary" style="width: 100%; margin-bottom: 0.5rem; background: var(--success); border: none;">📤 Guardar en Nextcloud</button>
-                        <button type="button" id="ncRestoreBtn" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">📥 Cargar desde Nextcloud</button>
+                        <button type="button" id="ncBackupBtn" class="btn-primary"
+                            style="width: 100%; margin-bottom: 0.5rem; background: var(--success); border: none;">📤
+                            Guardar en Nextcloud</button>
+                        <button type="button" id="ncRestoreBtn" class="btn-secondary"
+                            style="width: 100%; margin-bottom: 0.5rem;">📥 Cargar desde Nextcloud</button>
                     </div>
                 </div>
 
@@ -794,7 +859,9 @@
                 </div>
                 <div class="form-group hidden" id="stockSourceInfoGroup">
                     <label>Cajón de Origen</label>
-                    <div id="stockSourceInfoDisplay" style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-weight: 600; color: var(--primary); border: 1px solid var(--border-color);">--</div>
+                    <div id="stockSourceInfoDisplay"
+                        style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-weight: 600; color: var(--primary); border: 1px solid var(--border-color);">
+                        --</div>
                 </div>
 
                 <div class="form-group" id="fundSourceGroup">
@@ -936,7 +1003,9 @@
 
                 <div class="form-group hidden" id="drawerInfoGroup">
                     <label>Cajón</label>
-                    <div id="drawerInfoDisplay" style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-weight: 600; color: var(--primary); border: 1px solid var(--border-color);">--</div>
+                    <div id="drawerInfoDisplay"
+                        style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-weight: 600; color: var(--primary); border: 1px solid var(--border-color);">
+                        --</div>
                 </div>
 
                 <div class="form-group" id="drawerNameGroup">
@@ -953,15 +1022,18 @@
 
                 <div class="form-group" id="drawerGroupGroup">
                     <label for="drawerGroupInput">Grupo (Opcional)</label>
-                    <input type="text" id="drawerGroupInput" list="existingGroups" placeholder="Ej: Vivienda, Inversiones, Emergencia">
+                    <input type="text" id="drawerGroupInput" list="existingGroups"
+                        placeholder="Ej: Vivienda, Inversiones, Emergencia">
                     <datalist id="existingGroups"></datalist>
                 </div>
 
                 <div class="form-group hidden" id="drawerIconGroup">
                     <label>Icono del Cajón</label>
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                        <input type="text" id="drawerIconInput" value="📁" style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
-                        <div id="quickEmojiList" style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; justify-content: center;">
+                        <input type="text" id="drawerIconInput" value="📁"
+                            style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
+                        <div id="quickEmojiList"
+                            style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; justify-content: center;">
                             <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">📁</span>
                             <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🏦</span>
                             <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">💰</span>
@@ -1013,18 +1085,24 @@
                 </div>
 
                 <div class="form-group" id="movementConceptGroup">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <label for="movementConceptInput" style="margin-bottom: 0;">Concepto (Opcional)</label>
-                        <span id="smartConceptToggle" style="cursor: pointer; font-size: 1.2rem; filter: grayscale(1); opacity: 0.5; transition: all 0.2s;" title="Activar Concepto Inteligente (Sugiere categoría y subcategoría según historial)">💡</span>
+                        <span id="smartConceptToggle"
+                            style="cursor: pointer; font-size: 1.2rem; filter: grayscale(1); opacity: 0.5; transition: all 0.2s;"
+                            title="Activar Concepto Inteligente (Sugiere categoría y subcategoría según historial)">💡</span>
                     </div>
-                    <input type="text" id="movementConceptInput" list="historicConcepts" placeholder="Ej: Ingreso nómina, Compra letra">
+                    <input type="text" id="movementConceptInput" list="historicConcepts"
+                        placeholder="Ej: Ingreso nómina, Compra letra">
                     <datalist id="historicConcepts"></datalist>
                 </div>
 
                 <div class="form-group hidden" id="savingsCategoryGroup">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <label for="savingsCategorySelect" style="margin-bottom: 0;">Categoría</label>
-                        <button type="button" id="addNewCategoryBtn" class="btn-sm" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size: 0.75rem;">+ Añadir</button>
+                        <button type="button" id="addNewCategoryBtn" class="btn-sm"
+                            style="background:none; border:none; color:var(--primary); cursor:pointer; font-size: 0.75rem;">+
+                            Añadir</button>
                     </div>
                     <select id="savingsCategorySelect">
                         <!-- Options filled by JS based on type -->
@@ -1034,8 +1112,10 @@
                 <div class="form-group hidden" id="savingsSubcategoryGroup">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <label for="savingsSubcategorySelect" style="margin-bottom: 0;">Subcategoría (Opcional)</label>
-                        <button type="button" id="addNewSubcategoryBtn" class="btn-sm" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size: 0.75rem;">+ Añadir</button>
-                    </div >
+                        <button type="button" id="addNewSubcategoryBtn" class="btn-sm"
+                            style="background:none; border:none; color:var(--primary); cursor:pointer; font-size: 0.75rem;">+
+                            Añadir</button>
+                    </div>
                     <select id="savingsSubcategorySelect">
                         <!-- Options filled by JS based on type -->
                     </select>
@@ -1101,8 +1181,10 @@
                 <div class="form-group" id="nominaIconGroup">
                     <label>Icono</label>
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                        <input type="text" id="nominaIconInput" value="📁" style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
-                        <div id="quickEmojiListNomina" style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; justify-content: center;">
+                        <input type="text" id="nominaIconInput" value="📁"
+                            style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
+                        <div id="quickEmojiListNomina"
+                            style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; justify-content: center;">
                             <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">📁</span>
                             <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🏦</span>
                             <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">💰</span>
@@ -1192,55 +1274,78 @@
             </div>
             <div style="margin: 1.5rem 0;">
                 <div style="display: flex; gap: 10px; margin-bottom: 1.5rem; align-items: center;">
-                    <select id="breakdownFilterType" style="flex: 1; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                    <select id="breakdownFilterType"
+                        style="flex: 1; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
                         <option value="month">Mensual</option>
                         <option value="year">Anual</option>
                     </select>
-                    
+
                     <div id="breakdownMonthContainer" style="flex: 2; display: flex; align-items: center; gap: 8px;">
-                        <input type="month" id="breakdownMonthInput" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                        <input type="month" id="breakdownMonthInput"
+                            style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
                         <div style="display: flex; flex-direction: column; gap: 2px;">
-                            <button id="breakdownMonthUp" class="btn-icon" style="padding: 1px 6px; font-size: 0.6rem;">🔼</button>
-                            <button id="breakdownMonthDown" class="btn-icon" style="padding: 1px 6px; font-size: 0.6rem;">🔽</button>
+                            <button id="breakdownMonthUp" class="btn-icon"
+                                style="padding: 1px 6px; font-size: 0.6rem;">🔼</button>
+                            <button id="breakdownMonthDown" class="btn-icon"
+                                style="padding: 1px 6px; font-size: 0.6rem;">🔽</button>
                         </div>
                     </div>
 
-                    <div id="breakdownYearContainer" class="hidden" style="flex: 2; display: flex; align-items: center; gap: 8px;">
-                        <input type="number" id="breakdownYearInput" min="2000" max="2100" oninput="this.value = Math.abs(this.value)" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                    <div id="breakdownYearContainer" class="hidden"
+                        style="flex: 2; display: flex; align-items: center; gap: 8px;">
+                        <input type="number" id="breakdownYearInput" min="2000" max="2100"
+                            oninput="this.value = Math.abs(this.value)"
+                            style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
                         <div style="display: flex; flex-direction: column; gap: 2px;">
-                            <button id="breakdownYearUp" class="btn-icon" style="padding: 1px 6px; font-size: 0.6rem;">🔼</button>
-                            <button id="breakdownYearDown" class="btn-icon" style="padding: 1px 6px; font-size: 0.6rem;">🔽</button>
+                            <button id="breakdownYearUp" class="btn-icon"
+                                style="padding: 1px 6px; font-size: 0.6rem;">🔼</button>
+                            <button id="breakdownYearDown" class="btn-icon"
+                                style="padding: 1px 6px; font-size: 0.6rem;">🔽</button>
                         </div>
                     </div>
                 </div>
-                
-                <div class="breakdown-results glass-panel" style="padding: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px;">
-                    <div class="breakdown-row" data-category="Intereses" style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
+
+                <div class="breakdown-results glass-panel"
+                    style="padding: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px;">
+                    <div class="breakdown-row" data-category="Intereses"
+                        style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
                         <span style="opacity: 0.8;">Intereses:</span>
-                        <span id="breakdownIntereses" style="font-weight: 600; color: var(--primary); font-size: 1.1rem;">€ 0,00</span>
+                        <span id="breakdownIntereses"
+                            style="font-weight: 600; color: var(--primary); font-size: 1.1rem;">€ 0,00</span>
                     </div>
-                    <div class="breakdown-row" data-category="Dividendos" style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
+                    <div class="breakdown-row" data-category="Dividendos"
+                        style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
                         <span style="opacity: 0.8;">Dividendos:</span>
-                        <span id="breakdownDividendos" style="font-weight: 600; color: var(--success); font-size: 1.1rem;">€ 0,00</span>
+                        <span id="breakdownDividendos"
+                            style="font-weight: 600; color: var(--success); font-size: 1.1rem;">€ 0,00</span>
                     </div>
-                    <div class="breakdown-row" data-category="Especulación" style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
+                    <div class="breakdown-row" data-category="Especulación"
+                        style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
                         <span style="opacity: 0.8;">Especulación:</span>
-                        <span id="breakdownEspeculacion" style="font-weight: 600; color: #f59e0b; font-size: 1.1rem;">€ 0,00</span>
+                        <span id="breakdownEspeculacion" style="font-weight: 600; color: #f59e0b; font-size: 1.1rem;">€
+                            0,00</span>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; padding-top: 1.2rem; border-top: 1px solid var(--border-color); font-size: 1.4rem; font-weight: 700;">
+                    <div
+                        style="display: flex; justify-content: space-between; padding-top: 1.2rem; border-top: 1px solid var(--border-color); font-size: 1.4rem; font-weight: 700;">
                         <span>Total:</span>
                         <span id="breakdownTotal" class="highlight">€ 0,00</span>
                     </div>
-                    <div id="breakdownBolsaPctContainer" class="hidden" style="margin-top: 0.5rem; text-align: right; font-size: 0.85rem; opacity: 0.7;">
-                        <span id="breakdownBolsaPct" style="color: var(--primary); font-weight: 600;">0,00%</span> de <span id="breakdownBolsaInvested">0,00 €</span> invertido
+                    <div id="breakdownBolsaPctContainer" class="hidden"
+                        style="margin-top: 0.5rem; text-align: right; font-size: 0.85rem; opacity: 0.7;">
+                        <span id="breakdownBolsaPct" style="color: var(--primary); font-weight: 600;">0,00%</span> de
+                        <span id="breakdownBolsaInvested">0,00 €</span> invertido
                     </div>
                 </div>
 
                 <!-- Detail Section -->
-                <div id="breakdownDetailContainer" class="hidden" style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                    <h3 id="breakdownDetailTitle" style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-muted);">Detalle de Movimientos</h3>
-                    <div id="breakdownDetailList" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                <div id="breakdownDetailContainer" class="hidden"
+                    style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <h3 id="breakdownDetailTitle"
+                        style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-muted);">Detalle de Movimientos
+                    </h3>
+                    <div id="breakdownDetailList"
+                        style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
                         <!-- Details injected here -->
                     </div>
                 </div>
@@ -1378,27 +1483,38 @@
             <div class="modal-header">
                 <h2 style="margin: 0; display:flex; align-items:center; gap:12px; width: 100%;">
                     <span id="currentDateDisplay" style="font-size: 1.1rem; opacity: 0.7;">12/03/2026</span>
-                    <span id="currentTimeDisplay" style="font-family: monospace; font-size: 1.5rem; color: var(--primary); margin-left: auto;">00:00:00</span>
+                    <span id="currentTimeDisplay"
+                        style="font-family: monospace; font-size: 1.5rem; color: var(--primary); margin-left: auto;">00:00:00</span>
                 </h2>
                 <span id="closeClockModal" class="close-modal">&times;</span>
             </div>
             <div style="margin-top: 1rem;">
-                <form id="addCountdownForm" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 1.5rem; align-items: stretch;">
+                <form id="addCountdownForm"
+                    style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 1.5rem; align-items: stretch;">
                     <input type="hidden" id="countdownEditId">
                     <div style="flex: 1 1 120px; display:flex; flex-direction:column; min-width: 0;">
-                        <input type="text" id="countdownConceptInput" placeholder="Concepto..." autocomplete="off" required style="width: 100%; box-sizing:border-box; min-width: 0;">
+                        <input type="text" id="countdownConceptInput" placeholder="Concepto..." autocomplete="off"
+                            required style="width: 100%; box-sizing:border-box; min-width: 0;">
                     </div>
                     <div style="flex: 0 1 135px; display:flex; flex-direction:column; min-width: 0;">
-                        <input type="date" id="countdownDateInput" required style="width: 100%; box-sizing:border-box; padding-left: 0.5rem; padding-right: 0.5rem; min-width: 0;">
+                        <input type="date" id="countdownDateInput" required
+                            style="width: 100%; box-sizing:border-box; padding-left: 0.5rem; padding-right: 0.5rem; min-width: 0;">
                     </div>
                     <div style="display:flex; gap: 6px; flex: 0 0 auto;">
-                        <button type="submit" id="submitCountdownBtn" class="btn-primary" style="padding: 0 1rem; display:flex; align-items:center; justify-content:center;" title="Guardar">➕</button>
-                        <button type="button" id="cancelEditCountdownBtn" class="btn-secondary hidden" style="padding: 0 0.8rem; display:flex; align-items:center; justify-content:center; opacity: 0.8;" title="Cancelar">✕</button>
+                        <button type="submit" id="submitCountdownBtn" class="btn-primary"
+                            style="padding: 0 1rem; display:flex; align-items:center; justify-content:center;"
+                            title="Guardar">➕</button>
+                        <button type="button" id="cancelEditCountdownBtn" class="btn-secondary hidden"
+                            style="padding: 0 0.8rem; display:flex; align-items:center; justify-content:center; opacity: 0.8;"
+                            title="Cancelar">✕</button>
                     </div>
                 </form>
-                
-                <h3 style="font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Cuentas Atrás</h3>
-                <div id="countdownsList" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+
+                <h3
+                    style="font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                    Cuentas Atrás</h3>
+                <div id="countdownsList"
+                    style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
                     <!-- Countdowns will be injected here -->
                 </div>
             </div>
@@ -1411,12 +1527,14 @@
             <div class="modal-header">
                 <div style="display: flex; flex-direction: column;">
                     <h2 style="margin: 0;">Ajuste de Precios</h2>
-                    <span style="font-size: 0.7rem; opacity: 0.7; color: var(--warning);">Actualiza manualmente los valores que no tienen datos en vivo</span>
+                    <span style="font-size: 0.7rem; opacity: 0.7; color: var(--warning);">Actualiza manualmente los
+                        valores que no tienen datos en vivo</span>
                 </div>
                 <span id="closeManualPriceModal" class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
-                <div id="manualPriceList" style="display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                <div id="manualPriceList"
+                    style="display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto; padding-right: 5px;">
                     <!-- Items will be injected here -->
                 </div>
             </div>
@@ -1435,7 +1553,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603181746"></script>
+    <script src="app.js?v=202603181831"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1492,29 +1610,36 @@
                 <h2>Gestión de Categorías</h2>
                 <button class="close-btn" id="closeCategoriesModal">&times;</button>
             </div>
-            
+
             <div style="margin-bottom: 2rem;">
-                <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--success); display: flex; justify-content: space-between; align-items: center;">
+                <h3
+                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--success); display: flex; justify-content: space-between; align-items: center;">
                     Ingresos
-                    <button id="addIncomeCategoryBtn" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Categoría</button>
+                    <button id="addIncomeCategoryBtn" class="btn-secondary"
+                        style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Categoría</button>
                 </h3>
-                <div id="incomeCategoriesContainer" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                <div id="incomeCategoriesContainer"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
                     <!-- Filled by JS -->
                 </div>
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--danger); display: flex; justify-content: space-between; align-items: center;">
+                <h3
+                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--danger); display: flex; justify-content: space-between; align-items: center;">
                     Gastos
-                    <button id="addExpenseCategoryBtn" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Categoría</button>
+                    <button id="addExpenseCategoryBtn" class="btn-secondary"
+                        style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Categoría</button>
                 </h3>
-                <div id="expenseCategoriesContainer" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                <div id="expenseCategoriesContainer"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
                     <!-- Filled by JS -->
                 </div>
             </div>
-            
+
             <div class="modal-actions" style="margin-top: 2rem;">
-                <button id="saveCategoriesBtn" class="btn-primary" style="width: 100%; font-weight: 700; padding: 1rem;">Guardar Cambios</button>
+                <button id="saveCategoriesBtn" class="btn-primary"
+                    style="width: 100%; font-weight: 700; padding: 1rem;">Guardar Cambios</button>
             </div>
         </div>
     </div>
@@ -1526,29 +1651,36 @@
                 <h2>Gestión de Subcategorías</h2>
                 <button class="close-btn" id="closeSubcategoriesModal">&times;</button>
             </div>
-            
+
             <div style="margin-bottom: 2rem;">
-                <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--success); display: flex; justify-content: space-between; align-items: center;">
+                <h3
+                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--success); display: flex; justify-content: space-between; align-items: center;">
                     Ingresos
-                    <button id="addIncomeSubcategoryBtn" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Subcategoría</button>
+                    <button id="addIncomeSubcategoryBtn" class="btn-secondary"
+                        style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Subcategoría</button>
                 </h3>
-                <div id="incomeSubcategoriesContainer" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                <div id="incomeSubcategoriesContainer"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
                     <!-- Filled by JS -->
                 </div>
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--danger); display: flex; justify-content: space-between; align-items: center;">
+                <h3
+                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--danger); display: flex; justify-content: space-between; align-items: center;">
                     Gastos
-                    <button id="addExpenseSubcategoryBtn" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Subcategoría</button>
+                    <button id="addExpenseSubcategoryBtn" class="btn-secondary"
+                        style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Subcategoría</button>
                 </h3>
-                <div id="expenseSubcategoriesContainer" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                <div id="expenseSubcategoriesContainer"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
                     <!-- Filled by JS -->
                 </div>
             </div>
-            
+
             <div class="modal-actions" style="margin-top: 2rem;">
-                <button id="saveSubcategoriesBtn" class="btn-primary" style="width: 100%; font-weight: 700; padding: 1rem;">Guardar Cambios</button>
+                <button id="saveSubcategoriesBtn" class="btn-primary"
+                    style="width: 100%; font-weight: 700; padding: 1rem;">Guardar Cambios</button>
             </div>
         </div>
     </div>
@@ -1561,7 +1693,8 @@
                 <h2 id="bolsaCalendarTitle">📈 Calendario de Bolsa</h2>
                 <button class="close-btn" id="closeBolsaCalendarModal">&times;</button>
             </div>
-            <div class="calendar-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div class="calendar-controls"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <button id="prevBolsaCalendarMonth" class="btn-icon">◀</button>
                 <span id="bolsaCalendarCurrentMonth" style="font-weight: 700; font-size: 1.1rem;">Mes Año</span>
                 <button id="nextBolsaCalendarMonth" class="btn-icon">▶</button>
@@ -1586,7 +1719,8 @@
                 <h2 id="calendarModalTitle">Calendario de Movimientos</h2>
                 <button class="close-btn" id="closeCalendarModal">&times;</button>
             </div>
-            <div class="calendar-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div class="calendar-controls"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <button id="prevCalendarMonth" class="btn-icon">◀</button>
                 <span id="calendarCurrentMonth" style="font-weight: 700; font-size: 1.1rem;">Mes Año</span>
                 <button id="nextCalendarMonth" class="btn-icon">▶</button>
@@ -1606,7 +1740,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603181746';
+        const APP_VERSION = '202603181831';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

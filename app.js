@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     let isPrivacyActive = localStorage.getItem('isPrivacyActive') === 'true' || false;
     let currentView = 'ahorro';
-    let lastSyncTime = '-';
+    let lastSyncTimestamp = null;
     let currentTotalInvestedBolsa = 0;
     let currentPatrimonioTotal = 0;
 
@@ -372,6 +372,9 @@ document.addEventListener('DOMContentLoaded', () => {
         timeTabs: document.querySelectorAll('.time-tab'),
 
         // Auth Elements
+        sidebarSyncInfo: document.getElementById('sidebarSyncInfo'),
+        lastSyncTime: document.getElementById('lastSyncTime'),
+
         loginOverlay: document.getElementById('loginOverlay'),
         mainApp: document.getElementById('appMain'),
         loginForm: document.getElementById('loginForm'),
@@ -9662,6 +9665,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSyncingFromServer = false; // Prevents loop: download -> apply -> render -> upload
     let ncLastServerModified = null; // Track server state to detect conflicts
 
+    const updateSyncTimestampUI = (isoDate) => {
+        if (!elements.sidebarSyncInfo || !elements.lastSyncTime) return;
+        if (!isoDate) {
+            elements.sidebarSyncInfo.style.display = 'none';
+            return;
+        }
+
+        try {
+            const date = new Date(isoDate);
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+
+            let displayStr = '';
+            if (isToday) {
+                displayStr = `Hoy, ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+            } else {
+                displayStr = date.toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            elements.lastSyncTime.textContent = displayStr;
+            elements.sidebarSyncInfo.style.display = 'flex';
+        } catch (e) {
+            console.warn("Failed to update sync UI:", e);
+        }
+    };
+
     // Called on app startup — checks if server has newer data
     async function ncSyncOnLoad() {
         const config = NextcloudSync.loadConfig();
@@ -9675,9 +9709,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!result.ok) {
                 if (result.notFound) {
-                    console.log('[NC Sync] No data on server, uploading current data...');
                     const appData = getGlobalDataObject();
-                    await NextcloudSync.uploadData(config, appData);
+                    const uploadResult = await NextcloudSync.uploadData(config, appData);
+                    if (uploadResult.ok) {
+                        updateSyncTimestampUI(uploadResult.timestamp);
+                    }
                     showToast('📤 Datos sincronizados con Nextcloud', 'success');
                 }
                 isInitialLoad = false;
@@ -9702,6 +9738,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     applyGlobalData(result.data);
                     isSyncingFromServer = false;
                     NextcloudSync.setLocalModified(result.lastModified);
+                    updateSyncTimestampUI(result.lastModified);
                     showToast('🔄 Datos actualizados desde Nextcloud', 'success');
                 } else {
                     // Different device — ask the user
@@ -9717,6 +9754,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             applyGlobalData(result.data);
                             isSyncingFromServer = false;
                             NextcloudSync.setLocalModified(result.lastModified);
+                            updateSyncTimestampUI(result.lastModified);
                             showToast('✅ Datos cargados desde Nextcloud', 'success');
                         },
                         () => {
@@ -9727,6 +9765,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 console.log('[NC Sync] Local data is up to date');
+                updateSyncTimestampUI(NextcloudSync.getLocalModified());
             }
         } catch (err) {
             console.error('[NC Sync] Error on load:', err);
@@ -9831,9 +9870,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await NextcloudSync.uploadData(config, appData);
         if (result.ok) {
             ncLastServerModified = result.timestamp;
-            const lastSync = document.getElementById('ncLastSync');
-            if (lastSync) lastSync.textContent = `Última sync: ${new Date(result.timestamp).toLocaleString()}`;
-            localStorage.setItem('nc_last_sync', result.timestamp);
+            updateSyncTimestampUI(result.timestamp);
             console.log('[NC Sync] Auto-upload OK:', result.timestamp);
         }
     }
@@ -9933,6 +9970,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start
     const initApp = function () {
         updateStorageStatus();
+        const initialSync = NextcloudSync.getLocalModified();
+        updateSyncTimestampUI(initialSync);
         if (elements.bolsaDataSourceToggleBtn) {
             elements.bolsaDataSourceToggleBtn.addEventListener('click', toggleDataSource);
         }
