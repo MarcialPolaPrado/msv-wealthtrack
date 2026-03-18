@@ -816,6 +816,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Sync Drawer if match exists
             if (match.drawerId && elements.savingsTargetId) {
                 elements.savingsTargetId.value = match.drawerId;
+                
+                // Update visible dropdown if present (global movement mode)
+                const targetSelect = document.getElementById('targetDrawerSelect');
+                if (targetSelect) {
+                    targetSelect.value = match.drawerId;
+                }
+
                 if (elements.savingsModalTitle) {
                     elements.savingsModalTitle.textContent = `Movimiento: ${match.drawerName}`;
                 }
@@ -7491,7 +7498,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180611");
+            console.log("MSV WealthTrack Booting... Version: 202603180616");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
