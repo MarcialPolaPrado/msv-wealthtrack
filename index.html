@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603181454">
+    <link rel="stylesheet" href="styles.css?v=202603181509">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -103,6 +103,7 @@
                             <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
                             <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar Totales</button>
                             <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por Acción</button>
+                            <button id="bolsaCalendarBtn2" class="submenu-item"><span>📅</span> Calendario</button>
                         </div>
                     </div>
 
@@ -1414,7 +1415,7 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603181454"></script>
+    <script src="app.js?v=202603181509"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1533,6 +1534,32 @@
     </div>
 
     <!-- Savings Calendar Modal -->
+    <!-- Bolsa Calendar Modal -->
+    <div id="bolsaCalendarModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 600px; width: 95%;">
+            <div class="modal-header">
+                <h2 id="bolsaCalendarTitle">📈 Calendario de Bolsa</h2>
+                <button class="close-btn" id="closeBolsaCalendarModal">&times;</button>
+            </div>
+            <div class="calendar-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <button id="prevBolsaCalendarMonth" class="btn-icon">◀</button>
+                <span id="bolsaCalendarCurrentMonth" style="font-weight: 700; font-size: 1.1rem;">Mes Año</span>
+                <button id="nextBolsaCalendarMonth" class="btn-icon">▶</button>
+            </div>
+            <div class="calendar-grid" id="bolsaCalendarGrid">
+                <!-- Days of week -->
+                <div class="calendar-day-head">Lun</div>
+                <div class="calendar-day-head">Mar</div>
+                <div class="calendar-day-head">Mié</div>
+                <div class="calendar-day-head">Jue</div>
+                <div class="calendar-day-head">Vie</div>
+                <div class="calendar-day-head">Sáb</div>
+                <div class="calendar-day-head">Dom</div>
+                <!-- Calendar cells filled by JS -->
+            </div>
+        </div>
+    </div>
+
     <div id="savingsCalendarModal" class="modal hidden">
         <div class="modal-content glass-panel" style="max-width: 600px; width: 95%;">
             <div class="modal-header">
@@ -1559,7 +1586,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603181454';
+        const APP_VERSION = '202603181509';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

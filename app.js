@@ -700,7 +700,16 @@ document.addEventListener('DOMContentLoaded', () => {
         storageUsageBar: document.getElementById('storageUsageBar'),
         storageUsageText: document.getElementById('storageUsageText'),
         addNewCategoryBtn: document.getElementById('addNewCategoryBtn'),
-        addNewSubcategoryBtn: document.getElementById('addNewSubcategoryBtn')
+        addNewSubcategoryBtn: document.getElementById('addNewSubcategoryBtn'),
+
+        // Bolsa Calendar Elements
+        bolsaCalendarBtn2: document.getElementById('bolsaCalendarBtn2'),
+        bolsaCalendarModal: document.getElementById('bolsaCalendarModal'),
+        closeBolsaCalendarModal: document.getElementById('closeBolsaCalendarModal'),
+        bolsaCalendarGrid: document.getElementById('bolsaCalendarGrid'),
+        bolsaCalendarCurrentMonth: document.getElementById('bolsaCalendarCurrentMonth'),
+        prevBolsaCalendarMonth: document.getElementById('prevBolsaCalendarMonth'),
+        nextBolsaCalendarMonth: document.getElementById('nextBolsaCalendarMonth')
     };
 
     const updateNominaMovementType = (type) => {
@@ -5608,6 +5617,156 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ── Bolsa Calendar ─────────────────────────────────────────────
+    let bolsaCalendarViewDate = new Date();
+
+    function showBolsaCalendar() {
+        bolsaCalendarViewDate = new Date();
+        renderBolsaCalendar();
+        if (elements.bolsaCalendarModal) {
+            elements.bolsaCalendarModal.classList.remove('hidden');
+            elements.bolsaCalendarModal.style.display = 'flex';
+        }
+    }
+
+    function renderBolsaCalendar() {
+        const grid = elements.bolsaCalendarGrid;
+        if (!grid) return;
+
+        const year = bolsaCalendarViewDate.getFullYear();
+        const month = bolsaCalendarViewDate.getMonth();
+
+        // Update month label
+        if (elements.bolsaCalendarCurrentMonth) {
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            elements.bolsaCalendarCurrentMonth.textContent = `${monthNames[month]} ${year}`;
+        }
+
+        // Clear grid (keep day headers)
+        const heads = grid.querySelectorAll('.calendar-day-head');
+        grid.innerHTML = '';
+        heads.forEach(h => grid.appendChild(h));
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        // Previous month days
+        for (let i = startOffset - 1; i >= 0; i--) {
+            const d = daysInPrevMonth - i;
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell other-month';
+            cell.innerHTML = `<span class="calendar-cell-date">${d}</span>`;
+            grid.appendChild(cell);
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isToday = dateStr === todayStr;
+
+            // Filter stocks by this date
+            const dayStocks = stocks.filter(s => s.date === dateStr);
+            const totalOnDay = dayStocks.reduce((sum, s) => sum + -((s.qty || 0) * (s.price || 0)), 0);
+
+            const cell = document.createElement('div');
+            cell.className = `calendar-cell ${isToday ? 'today' : ''}`;
+
+            let amountHtml = '';
+            if (dayStocks.length > 0) {
+                const colorClass = totalOnDay > 0 ? 'income' : 'expense';
+                amountHtml = `<div class="calendar-cell-amount ${colorClass}">${fmtEUR(totalOnDay)}</div>`;
+                if (dayStocks.length > 1) {
+                    amountHtml += `<div style="font-size:0.55rem; opacity:0.5; text-align:center;">${dayStocks.length} ops</div>`;
+                }
+                cell.style.cursor = 'pointer';
+                cell.onclick = () => showBolsaCalendarDayDetails(dateStr);
+            }
+
+            cell.innerHTML = `
+                <span class="calendar-cell-date">${d}</span>
+                ${amountHtml}
+            `;
+            grid.appendChild(cell);
+        }
+
+        // Fill remaining cells to complete the row
+        const totalCells = grid.querySelectorAll('.calendar-cell').length;
+        const remaining = (7 - (totalCells % 7)) % 7;
+        for (let d = 1; d <= remaining; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell other-month';
+            cell.innerHTML = `<span class="calendar-cell-date">${d}</span>`;
+            grid.appendChild(cell);
+        }
+    }
+
+    function showBolsaCalendarDayDetails(dateStr) {
+        const dayStocks = stocks.filter(s => s.date === dateStr);
+        if (dayStocks.length === 0) return;
+
+        const dateObj = new Date(dateStr);
+        const formattedDate = dateObj.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        const movementsHtml = dayStocks.map(s => {
+            const invested = (s.qty || 0) * (s.price || 0);
+            const isBuy = s.qty >= 0;
+            return `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="flex-grow:1;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="font-weight:700; font-size:1rem;">${isBuy ? '🟢' : '🔴'} ${s.ticker}</div>
+                        <span style="font-size: 0.7rem; padding: 2px 6px; background: rgba(255,255,255,0.05); border-radius: 4px; opacity: 0.7;">${s.market || 'Mercado'}</span>
+                    </div>
+                    <div style="font-size:0.78rem; opacity:0.6; margin-top:4px;">
+                        ${isBuy ? 'Compra' : 'Venta'} · ${fmtNum(Math.abs(s.qty), 6)} uds · ${fmtEUR(s.price)}/ud
+                    </div>
+                </div>
+                <div style="font-weight:700; color:${isBuy ? 'var(--danger)' : 'var(--success)'}; font-size:1.05rem; text-align:right; min-width: 80px;">
+                    ${isBuy ? '-' : '+'}${fmtEUR(invested)}
+                </div>
+            </div>
+        `;
+        }).join('');
+
+        const totalInvested = dayStocks.reduce((sum, s) => sum + -((s.qty || 0) * (s.price || 0)), 0);
+
+        const overlay = document.createElement('div');
+        overlay.id = 'bolsaDayDetailsOverlay';
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10001;
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            padding: 1rem;
+        `;
+        overlay.innerHTML = `
+            <div class="glass-panel" style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; width: min(450px, 95vw); max-height: 80vh; overflow-y: auto;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem;">
+                    <div>
+                        <h3 style="margin:0; opacity:0.6; font-size:0.8rem; text-transform:uppercase;">📈 Operaciones de Bolsa</h3>
+                        <h2 style="margin:0.2rem 0 0 0; text-transform:capitalize; font-size:1.1rem;">${formattedDate}</h2>
+                    </div>
+                    <button id="closeBolsaDayDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.5rem;" title="Cerrar">✕</button>
+                </div>
+                <div>${movementsHtml}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem 0 0.5rem; border-top:2px solid rgba(255,255,255,0.1); margin-top:0.5rem;">
+                    <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted);">Total del día</span>
+                    <span style="font-weight:700; font-size:1.15rem;" class="${totalInvested >= 0 ? 'profit' : 'loss'}">${fmtEUR(totalInvested)}</span>
+                </div>
+                <button id="backToBolsaCalendar" class="btn-secondary" style="width:100%; margin-top:1rem; padding:0.8rem; border-radius:12px; font-weight:600;">Volver al Calendario</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+        document.getElementById('closeBolsaDayDetails').onclick = close;
+        document.getElementById('backToBolsaCalendar').onclick = close;
+        overlay.onclick = (e) => { if (e.target === overlay) close(); };
+    }
+
     function showCustomConfirm(message, onConfirm, onCancel = null) {
         // Remove existing overlay if any (failsafe)
         const oldOverlay = document.getElementById('customConfirmOverlay');
@@ -8671,6 +8830,28 @@ document.addEventListener('DOMContentLoaded', () => {
             openDefaultBreakdown();
         });
 
+        // ── Bolsa Calendar Event Listeners ──
+        document.getElementById('bolsaCalendarBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showBolsaCalendar();
+        });
+
+        elements.closeBolsaCalendarModal?.addEventListener('click', () => {
+            if (elements.bolsaCalendarModal) {
+                elements.bolsaCalendarModal.classList.add('hidden');
+                elements.bolsaCalendarModal.style.display = '';
+            }
+        });
+
+        elements.prevBolsaCalendarMonth?.addEventListener('click', () => {
+            bolsaCalendarViewDate.setMonth(bolsaCalendarViewDate.getMonth() - 1);
+            renderBolsaCalendar();
+        });
+
+        elements.nextBolsaCalendarMonth?.addEventListener('click', () => {
+            bolsaCalendarViewDate.setMonth(bolsaCalendarViewDate.getMonth() + 1);
+            renderBolsaCalendar();
+        });
 
 
         if (elements.closeBreakdownModal) {
