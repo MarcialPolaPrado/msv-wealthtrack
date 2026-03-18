@@ -6964,10 +6964,15 @@ document.addEventListener('DOMContentLoaded', () => {
         allNavs.forEach(nav => {
             nav.addEventListener('click', (e) => {
                 const view = nav.dataset.view;
-                if (!view) return;
-
                 const isSidebar = nav.classList.contains('wealth-nav-item');
                 const container = nav.closest('.nav-item-container');
+
+                if (!view) {
+                    if (isSidebar && container) {
+                        container.classList.toggle('open');
+                    }
+                    return;
+                }
 
                 if (currentView === view) {
                     if (view === 'bolsa') toggleBolsaView();
@@ -7630,7 +7635,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180802");
+            console.log("MSV WealthTrack Booting... Version: 202603180817");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;

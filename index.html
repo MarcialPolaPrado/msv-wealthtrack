@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603180804">
+    <link rel="stylesheet" href="styles.css?v=202603180818">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -65,7 +65,7 @@
                     <span class="logo-icon">✨</span>
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
-                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603180802</p>
+                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;" id="logoVersion">v202603180817</p>
                     </div>
                 </div>
             </div>
@@ -160,55 +160,42 @@
                 </div>
 
                 <div class="nav-group">
-                    <h3 class="nav-group-title">Herramientas</h3>
-                    <button class="wealth-nav-item" id="sidebarCategoriesBtn">
-                        <span class="nav-icon">🏷️</span>
-                        <span class="nav-text">Categorías</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarSubcategoriesBtn">
-                        <span class="nav-icon">🖇️</span>
-                        <span class="nav-text">Subcategorías</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarPrivacyToggleBtn">
-                        <span class="nav-icon">👁️</span>
-                        <span class="nav-text">Privacidad</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarSettingsBtn">
-                        <span class="nav-icon">⚙️</span>
-                        <span class="nav-text">Ajustes</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarDeleteAllBtn" style="color: var(--danger);">
-                        <span class="nav-icon">🗑️</span>
-                        <span class="nav-text">Borrar todo</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarResetBtn" style="color: var(--danger);">
-                        <span class="nav-icon">🔄</span>
-                        <span class="nav-text">Hard Reset</span>
-                    </button>
+                    <div class="nav-item-container" id="herramientasNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item">
+                                <span class="nav-icon">🛠️</span>
+                                <span class="nav-text">Herramientas</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="sidebarCategoriesBtn" class="submenu-item"><span>🏷️</span> Categorías</button>
+                            <button id="sidebarSubcategoriesBtn" class="submenu-item"><span>🖇️</span> Subcategorías</button>
+                            <button id="sidebarPrivacyToggleBtn" class="submenu-item"><span>👁️</span> Privacidad</button>
+                            <button id="sidebarSettingsBtn" class="submenu-item"><span>⚙️</span> Ajustes</button>
+                            <button id="sidebarDeleteAllBtn" class="submenu-item" style="color: var(--danger);"><span>🗑️</span> Borrar todo</button>
+                            <button id="sidebarResetBtn" class="submenu-item" style="color: var(--danger);"><span>🔄</span> Hard Reset</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="nav-group">
-                    <h3 class="nav-group-title">Datos</h3>
-                    <button class="wealth-nav-item" id="sidebarExportBtn">
-                        <span class="nav-icon">💾</span>
-                        <span class="nav-text">Exportar JSON</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarImportBtn">
-                        <span class="nav-icon">📂</span>
-                        <span class="nav-text">Importar JSON</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarClockBtn">
-                        <span class="nav-icon">⏱️</span>
-                        <span class="nav-text">Cuenta Atrás</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarGDriveSyncExitBtn" style="color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); margin-top: 0.5rem;">
-                        <span class="nav-icon">☁️</span>
-                        <span class="nav-text" style="font-weight: 700;">Backup y Salir</span>
-                    </button>
-                    <button class="wealth-nav-item" id="sidebarGDriveRestoreBtn" style="color: var(--accent); border: 1px solid rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.05); margin-top: 0.5rem;">
-                        <span class="nav-icon">📥</span>
-                        <span class="nav-text" style="font-weight: 700;">Restaurar de la Nube</span>
-                    </button>
+                    <div class="nav-item-container" id="datosNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item">
+                                <span class="nav-icon">📊</span>
+                                <span class="nav-text">Datos</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="sidebarExportBtn" class="submenu-item"><span>💾</span> Exportar JSON</button>
+                            <button id="sidebarImportBtn" class="submenu-item"><span>📂</span> Importar JSON</button>
+                            <button id="sidebarClockBtn" class="submenu-item"><span>⏱️</span> Cuenta Atrás</button>
+                            <button id="sidebarGDriveSyncExitBtn" class="submenu-item" style="color: var(--success); background: rgba(16, 185, 129, 0.05);"><span>☁️</span> Backup y Salir</button>
+                            <button id="sidebarGDriveRestoreBtn" class="submenu-item" style="color: var(--accent); background: rgba(59, 130, 246, 0.05);"><span>📥</span> Restaurar Nube</button>
+                        </div>
+                    </div>
                 </div>
             </nav>
 
@@ -1425,7 +1412,7 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603180804"></script>
+    <script src="app.js?v=202603180818"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1570,7 +1557,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603180804';
+        const APP_VERSION = '202603180818';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
