@@ -1879,8 +1879,8 @@ document.addEventListener('DOMContentLoaded', () => {
             totalTr.style.fontWeight = '700';
             totalTr.style.borderTop = '2px solid rgba(255,255,255,0.1)';
             totalTr.innerHTML = `
-                <td colspan="3" style="padding: 0.5rem 1rem; text-align: right; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Balance Total</td>
-                <td style="padding: 0.5rem 1rem; font-size: 1.05rem; text-align: right;" class="${totalAmount >= 0 ? 'profit' : 'loss'}">${fmtEUR(totalAmount, 2)}</td>
+                <td colspan="2" style="padding: 0.5rem 1rem; text-align: right; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Balance Total</td>
+                <td colspan="2" style="padding: 0.5rem 1rem; font-size: 1.05rem; text-align: right;" class="${totalAmount >= 0 ? 'profit' : 'loss'}">${fmtEUR(totalAmount, 2)}</td>
                 <td></td>
             `;
             elements.activityTableBody.appendChild(totalTr);
