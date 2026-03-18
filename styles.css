@@ -3141,21 +3141,12 @@ button,
         width: 100%;
     }
 
-    /* Ancho fijo de cada columna para que el total sea 100% */
-    #activityTable th:nth-child(1),
-    #activityTable td:nth-child(1) { width: 20%; }   /* Fecha */
-
-    #activityTable th:nth-child(2),
-    #activityTable td:nth-child(2) { width: 28%; }   /* Concepto */
-
-    #activityTable th:nth-child(3),
-    #activityTable td:nth-child(3) { width: 22%; }   /* Categoría */
-
-    #activityTable th:nth-child(4),
-    #activityTable td:nth-child(4) { width: 18%; }   /* Importe */
-
-    #activityTable th:nth-child(5),
-    #activityTable td:nth-child(5) { width: 12%; }   /* Acción */
+    /* Sobrescribir anchos del colgroup para móvil */
+    #activityTable col:nth-child(1) { width: 18% !important; }  /* Fecha */
+    #activityTable col:nth-child(2) { width: 28% !important; }  /* Concepto */
+    #activityTable col:nth-child(3) { width: 22% !important; }  /* Categoría */
+    #activityTable col:nth-child(4) { width: 22% !important; }  /* Importe */
+    #activityTable col:nth-child(5) { width: 10% !important; }  /* Acción */
 
     #activityTable td,
     #activityTable th {

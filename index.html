@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603181448">
+    <link rel="stylesheet" href="styles.css?v=202603181454">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -493,6 +493,13 @@
                     <div id="activityTableContainer" class="table-container glass-panel"
                         style="margin-bottom: 2rem; overflow-x: auto;">
                         <table id="activityTable" style="width: 100%; border-collapse: collapse;">
+                            <colgroup>
+                                <col style="width: 15%"><!-- Fecha -->
+                                <col style="width: 30%"><!-- Concepto -->
+                                <col style="width: 22%"><!-- Categoría -->
+                                <col style="width: 23%"><!-- Importe -->
+                                <col style="width: 10%"><!-- Acción -->
+                            </colgroup>
                             <thead>
                                 <tr style="border-bottom: 2px solid var(--primary); user-select: none;">
                                     <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;" data-sort="date">Fecha
@@ -1407,7 +1414,7 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603181448"></script>
+    <script src="app.js?v=202603181454"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1552,7 +1559,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603181448';
+        const APP_VERSION = '202603181454';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
