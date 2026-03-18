@@ -5495,9 +5495,12 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.className = `calendar-cell ${isToday ? 'today' : ''}`;
 
             let amountHtml = '';
-            if (totalOnDay !== 0) {
-                const colorClass = totalOnDay > 0 ? 'income' : 'expense';
+            if (mvmts.length > 0) {
+                const colorClass = totalOnDay > 0 ? 'income' : totalOnDay < 0 ? 'expense' : '';
                 amountHtml = `<div class="calendar-cell-amount ${colorClass}">${fmtEUR(totalOnDay)}</div>`;
+                if (mvmts.length > 1) {
+                    amountHtml += `<div style="font-size:0.55rem; opacity:0.5; text-align:center;">${mvmts.length} ops</div>`;
+                }
                 cell.style.cursor = 'pointer';
                 cell.onclick = () => showCalendarDayDetails(calendarDrawerId, dateStr);
             }
