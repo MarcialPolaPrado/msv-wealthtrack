@@ -1,8 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Nextcloud Initialization State
+    let isInitialLoad = true;
+    const startupLocalModified = NextcloudSync.getLocalModified();
+
     // State
     let stocks = (window.loadStocks) ? window.loadStocks() : [];
-    
+
     // Migration: Normalize .ES tickers to .MC for API and Master Data compatibility
     let needsMigrationSave = false;
     stocks = stocks.map(s => {
@@ -48,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ahorroSummaryVisible = localStorage.getItem('ahorroSummaryVisible') !== 'false';
     let bolsaHighlightsVisible = localStorage.getItem('bolsaHighlightsVisible') === 'true';
     let breakdownDrawerFilter = null;
-    let breakdownContext = 'ahorro'; 
+    let breakdownContext = 'ahorro';
     let currentBreakdownMovements = {
         Intereses: [],
         Dividendos: [],
@@ -118,12 +122,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const fmtEUR = (num, decimals = 2) => {
         if (isPrivacyActive) return '€ ****';
         if (num === null || num === undefined) return '-';
-        return new Intl.NumberFormat('es-ES', { 
-            style: 'currency', 
-            currency: 'EUR', 
-            useGrouping: true, 
-            minimumFractionDigits: decimals, 
-            maximumFractionDigits: decimals 
+        return new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: 'EUR',
+            useGrouping: true,
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
         }).format(Number(num));
     };
     const fmtNum = (num, decimals = 2) => {
@@ -575,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fiscalDayInput: document.getElementById('fiscalDayInput'),
         defaultTransferSourceSelect: document.getElementById('defaultTransferSourceSelect'),
         forceUpdateBtn: document.getElementById('forceUpdateBtn'),
-        
+
         // Categories Modal Elements
         sidebarCategoriesBtn: document.getElementById('sidebarCategoriesBtn'),
         categoriesModal: document.getElementById('categoriesModal'),
@@ -737,12 +741,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const subcats = isIncome ? incomeSubcategories : expenseSubcategories;
 
             elements.savingsCategorySelect.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
-            
+
             if (elements.savingsSubcategoryGroup) {
                 elements.savingsSubcategoryGroup.classList.remove('hidden');
             }
             if (elements.savingsSubcategorySelect) {
-                elements.savingsSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' + 
+                elements.savingsSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' +
                     subcats.map(s => `<option value="${s}">${s}</option>`).join('');
             }
         }
@@ -817,7 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Sync Drawer if match exists
             if (match.drawerId && elements.savingsTargetId) {
                 elements.savingsTargetId.value = match.drawerId;
-                
+
                 // Update visible dropdown if present (global movement mode)
                 const targetSelect = document.getElementById('targetDrawerSelect');
                 if (targetSelect) {
@@ -845,7 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const type = elements.savingsMovementType?.value || 'income';
         const label = type === 'income' ? 'Nueva Categoría de Ingresos' : 'Nueva Categoría de Gastos';
         const newCat = await showCustomPrompt(label, 'Escribe el nombre...');
-        
+
         if (newCat && newCat.trim()) {
             const name = newCat.trim();
             const cats = type === 'income' ? incomeCategories : expenseCategories;
@@ -866,7 +870,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const type = elements.savingsMovementType?.value || 'income';
         const label = type === 'income' ? 'Nueva Subcategoría de Ingresos' : 'Nueva Subcategoría de Gastos';
         const newSub = await showCustomPrompt(label, 'Escribe el nombre...');
-        
+
         if (newSub && newSub.trim()) {
             const name = newSub.trim();
             const subcats = type === 'income' ? incomeSubcategories : expenseSubcategories;
@@ -889,22 +893,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateStorageStatus = () => {
         if (!elements.storageUsageBar || !elements.storageUsageText) return;
+
+        // Trigger Nextcloud auto-upload if not in initial load
+        if (!isInitialLoad && typeof ncScheduleAutoUpload === 'function') {
+            ncScheduleAutoUpload();
+        }
+
         try {
-            const data = getGlobalDataObject(); 
+            const data = getGlobalDataObject();
             const jsonString = JSON.stringify(data);
             const sizeBytes = new Blob([jsonString]).size;
-            
+
             const limitBytes = 5 * 1024 * 1024;
             const limitDisplay = '5 MB';
             const percentage = Math.min((sizeBytes / limitBytes) * 100, 100);
-            const sizeDisplay = sizeBytes > 1024 * 1024 
+            const sizeDisplay = sizeBytes > 1024 * 1024
                 ? (sizeBytes / (1024 * 1024)).toFixed(2) + ' MB'
                 : (sizeBytes / 1024).toFixed(1) + ' KB';
-            
+
             elements.storageUsageBar.style.width = percentage + '%';
             elements.storageUsageText.textContent = `${sizeDisplay} / ${limitDisplay}`;
             elements.storageUsageText.title = `Estás usando ${sizeDisplay} del límite de ${limitDisplay} (${percentage.toFixed(2)}%)`;
-            
+
             if (percentage > 90) elements.storageUsageBar.style.background = 'var(--danger)';
             else if (percentage > 70) elements.storageUsageBar.style.background = 'var(--warning)';
             else elements.storageUsageBar.style.background = 'var(--primary)';
@@ -1091,7 +1101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let isFirstUpdateDone = false;
 
     function render() {
-        ncScheduleAutoUpload(); // Auto-sync with Nextcloud
         updateSidebarTogglesUI();
         // Toggle Bolsa Summary Visibility
         if (elements.bolsaSummarySection) {
@@ -1239,15 +1248,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Sync Sidebar View Toggle
         const sidebarViewBtn = document.getElementById('bolsaViewToggleBtn2');
         if (sidebarViewBtn) {
-            sidebarViewBtn.innerHTML = bolsaViewMode === 'cards' 
-                ? '<span>📄</span> Vista Lista' 
+            sidebarViewBtn.innerHTML = bolsaViewMode === 'cards'
+                ? '<span>📄</span> Vista Lista'
                 : '<span>🗂️</span> Vista Tarjetas';
         }
-        
+
         if (elements.bolsaTotalesToggle) {
             elements.bolsaTotalesToggle.classList.toggle('hidden', bolsaViewMode === 'cards');
             elements.bolsaTotalesToggle.style.background = bolsaTotalsMode ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
-            
+
             // Sync with Sidebar
             const sidebarTotalsBtn = document.getElementById('bolsaTotalesToggle2');
             if (sidebarTotalsBtn) {
@@ -1449,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const sourceLabel = info.source === 'yahoo' ? 'YF' : (info.source === 'manual' ? 'Manual' : 'Live');
                     const badgeClass = info.isLive ? 'badge-live' : 'badge-simulated';
-                    
+
                     // Distinct Blue style for Yahoo Finance
                     const yahooStyle = info.source === 'yahoo' ? 'background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(96, 165, 250, 0.3);' : '';
                     const sourceTitle = info.source === 'yahoo' ? 'Fuente: Yahoo Finance' : (info.source === 'finnhub' ? 'Fuente: Finnhub API' : 'Ajuste Manual');
@@ -1682,7 +1691,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 date: s.date || new Date().toISOString().split('T')[0],
                 concept: `${s.qty < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
                 category: `Bolsa: ${s.market || 'Mercado'}`,
-                amount: -( (s.qty || 0) * (s.price || 0) ), 
+                amount: -((s.qty || 0) * (s.price || 0)),
                 type: 'bolsa',
                 drawerId: 'bolsa',
                 id: s.id,
@@ -1725,7 +1734,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activityDrawerFilter !== 'all') {
             filtered = filtered.filter(m => m.drawerId === activityDrawerFilter);
         }
-        
+
         // Show navigation arrows unless mode is 'all'
         elements.activityMonthUp?.classList.toggle('hidden', activityFilterMode === 'all');
         elements.activityMonthDown?.classList.toggle('hidden', activityFilterMode === 'all');
@@ -1736,7 +1745,7 @@ document.addEventListener('DOMContentLoaded', () => {
             filtered = filtered.filter(m => {
                 const dateStr = m.date ? new Date(m.date).toLocaleDateString() : '---';
                 const amountStr = fmtEUR(m.amount, 2);
-                
+
                 if (activityCellFilter.column === 'date') return dateStr === activityCellFilter.value;
                 if (activityCellFilter.column === 'amount') return amountStr === activityCellFilter.value;
                 if (activityCellFilter.column === 'category' && activityCellFilter.value.startsWith('Bolsa')) {
@@ -1754,7 +1763,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const concept = (m.concept || '').toLowerCase();
                 const category = (m.category || '').toLowerCase();
                 const text = concept + " " + category;
-                
+
                 // Return true if ANY of the OR groups match
                 return orGroups.some(group => {
                     const andTerms = group.split('+').map(t => t.trim()).filter(t => t);
@@ -1793,14 +1802,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.activityMonthLabel.textContent = 'Historial Completo';
             }
         }
-        
+
         if (elements.activityFilterMode) {
             elements.activityFilterMode.value = activityFilterMode;
         }
         if (elements.activitySearchInput) {
             elements.activitySearchInput.value = activitySearchQuery;
         }
-        
+
         // 4b. Pagination Logic
         const totalFilteredCount = filtered.length;
         if (activityFilterMode === 'all') {
@@ -1824,7 +1833,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 totalAmount += m.amount;
                 const tr = document.createElement('tr');
-                
+
                 const amountClass = m.amount >= 0 ? 'profit' : 'loss';
                 const dateStr = m.date ? new Date(m.date).toLocaleDateString() : '---';
                 const amountStr = fmtEUR(m.amount, 2);
@@ -1879,7 +1888,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add sorting icons & styles
         if (elements.activityTable) {
-             elements.activityTable.querySelectorAll('th[data-sort]').forEach(th => {
+            elements.activityTable.querySelectorAll('th[data-sort]').forEach(th => {
                 let icon = th.querySelector('.sort-icon');
                 if (!icon) {
                     icon = document.createElement('span');
@@ -1998,7 +2007,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Si no cabe abajo, mostrar encima
                 if (top + 160 > window.innerHeight) top = rect.top - 166;
 
-                sheet.style.top  = top + 'px';
+                sheet.style.top = top + 'px';
                 sheet.style.left = left + 'px';
                 sheet.style.right = 'auto';
                 sheet.classList.add('visible');
@@ -2070,16 +2079,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!drawer || !drawer.movements[mvmtIndex]) return;
 
         const m = drawer.movements[mvmtIndex];
-        
+
         showAddMovementModal(drawerId);
-        
+
         const conceptInput = document.getElementById('movementConceptInput');
         const amountInput = document.getElementById('movementAmountInput');
 
         if (conceptInput) conceptInput.value = m.concept || m.description || '';
         if (amountInput) amountInput.value = Math.abs(m.amount).toFixed(2);
         if (elements.savingsDateInput) elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
-        
+
         // Call updateSavingsMovementType FIRST because it rebuilds category options
         // Pre-fill categories and subcategories
         const catParts = (m.category || '').split(':');
@@ -2087,10 +2096,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const subCat = catParts[1] || '';
 
         updateSavingsMovementType(m.amount >= 0 ? 'income' : 'expense');
-        
+
         if (elements.savingsCategorySelect) elements.savingsCategorySelect.value = mainCat;
         if (elements.savingsSubcategorySelect) elements.savingsSubcategorySelect.value = subCat;
-        
+
         const title = document.getElementById('savingsModalTitle');
         if (title) title.textContent = `Copiar: ${drawer.name}`;
     }
@@ -2717,7 +2726,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply Sorting to Drawers
         const sortedDrawers = [...savingsDrawers].sort((a, b) => {
             let valA, valB;
-            
+
             const getMvmts = (d) => {
                 if (d.id === 'bolsa') {
                     const fx = window.FX_RATE || 1;
@@ -2889,11 +2898,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         </td>
                         <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
                     `;
-                    
+
                     tr.onclick = () => {
                         tr.classList.toggle('expanded');
                     };
-                    
+
                     elements.ahorroTableBody.appendChild(tr);
                 });
             }
@@ -2918,10 +2927,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderSavings() {
         if (!elements.drawersGrid) return;
-        
+
         if (elements.ahorroSummarySection) {
             elements.ahorroSummarySection.classList.toggle('hidden', !ahorroSummaryVisible);
-            
+
             if (elements.ahorroSummaryToggleBtn) {
                 elements.ahorroSummaryToggleBtn.style.background = ahorroSummaryVisible ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
             }
@@ -2971,7 +2980,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.ahorroViewToggleBtn.innerHTML = '<span>🗂️</span>';
                 elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Cajones';
             }
-            
+
             // Sync with Sidebar
             const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
             if (sidebarBtn) sidebarBtn.innerHTML = '<span>🗂️</span> Vista Cajones';
@@ -2985,7 +2994,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.ahorroViewToggleBtn.innerHTML = '<span>📄</span>';
                 elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Listado';
             }
-            
+
             // Sync with Sidebar
             const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
             if (sidebarBtn) sidebarBtn.innerHTML = '<span>📄</span> Vista Listado';
@@ -2998,7 +3007,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Group drawers
         const groups = new Map();
         const noGroupKey = 'Otros'; // Header for drawers without group
-        
+
         savingsDrawers.forEach(drawer => {
             const g = (drawer.group && drawer.group.trim()) ? drawer.group.trim() : (drawer.id === 'bolsa' ? 'Inversiones' : noGroupKey);
             if (!groups.has(g)) groups.set(g, []);
@@ -3190,42 +3199,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 const info = group.liveInfo || { currentPriceEUR: null };
                 const plGroup = (group.totalCurrentVal !== null) ? (group.totalCurrentVal - group.totalInvested) : 0;
                 const plPercentGroup = (group.totalInvested > 0 && group.totalCurrentVal !== null) ? (plGroup / group.totalInvested) * 100 : 0;
-            const isExpanded = expandedTickers.has(group.ticker);
+                const isExpanded = expandedTickers.has(group.ticker);
 
-            const card = document.createElement('div');
-            const isProfit = plGroup >= 0;
-            const theme = isProfit ? DRAWER_COLORS[1] : DRAWER_COLORS[4]; // Blue for profit, Red for loss
-            const glowClass = isProfit ? 'profit-glow' : 'loss-glow';
+                const card = document.createElement('div');
+                const isProfit = plGroup >= 0;
+                const theme = isProfit ? DRAWER_COLORS[1] : DRAWER_COLORS[4]; // Blue for profit, Red for loss
+                const glowClass = isProfit ? 'profit-glow' : 'loss-glow';
 
-            // Apply theme styles
-            card.className = `card drawer-card glass-panel bolsa-drawer ${glowClass}`;
-            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
-            card.style.setProperty('background-color', theme.bg, 'important');
-            card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
-            card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
+                // Apply theme styles
+                card.className = `card drawer-card glass-panel bolsa-drawer ${glowClass}`;
+                card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
+                card.style.setProperty('background-color', theme.bg, 'important');
+                card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
+                card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
 
-            // Calculate Signals for the card
-            let signalsHtml = '';
-            const tickerKey = (group.ticker || '').toUpperCase();
-            const mockInfo = (window.MOCK_DATA && tickerKey) ? window.MOCK_DATA[tickerKey] : null;
+                // Calculate Signals for the card
+                let signalsHtml = '';
+                const tickerKey = (group.ticker || '').toUpperCase();
+                const mockInfo = (window.MOCK_DATA && tickerKey) ? window.MOCK_DATA[tickerKey] : null;
 
-            if (mockInfo && mockInfo.historical && mockInfo.historical['D']) {
-                try {
-                    const fx = mockInfo.currency === 'USD' ? (window.FX_RATE || 0.92) : 1;
-                    const analysis = (typeof calculateTechnicalAnalysis === 'function') ? calculateTechnicalAnalysis(group.ticker, mockInfo.historical['D'], fx) : null;
-                    if (analysis && analysis.patterns && analysis.patterns.length > 0) {
-                        signalsHtml = analysis.patterns.map(p => {
-                            const icon = p.includes('Hammer') ? '🔨' : (p.includes('Doji') ? '⚖️' : (p.includes('Envolvente') ? '🔥' : '✨'));
-                            return `<span title="${p}" style="cursor:help; font-size: 0.9rem; filter: drop-shadow(0 0 5px white);">${icon}</span>`;
-                        }).join(' ');
-                    }
-                } catch (e) { console.warn("Signal err", e); }
-            }
+                if (mockInfo && mockInfo.historical && mockInfo.historical['D']) {
+                    try {
+                        const fx = mockInfo.currency === 'USD' ? (window.FX_RATE || 0.92) : 1;
+                        const analysis = (typeof calculateTechnicalAnalysis === 'function') ? calculateTechnicalAnalysis(group.ticker, mockInfo.historical['D'], fx) : null;
+                        if (analysis && analysis.patterns && analysis.patterns.length > 0) {
+                            signalsHtml = analysis.patterns.map(p => {
+                                const icon = p.includes('Hammer') ? '🔨' : (p.includes('Doji') ? '⚖️' : (p.includes('Envolvente') ? '🔥' : '✨'));
+                                return `<span title="${p}" style="cursor:help; font-size: 0.9rem; filter: drop-shadow(0 0 5px white);">${icon}</span>`;
+                            }).join(' ');
+                        }
+                    } catch (e) { console.warn("Signal err", e); }
+                }
 
-            const performanceClass = (plPercentGroup === null) ? 'neutral' : (plPercentGroup < 0 ? 'loss' : 'profit');
-            const displayName = (group.name || group.ticker).length > 16 ? (group.name || group.ticker).substring(0, 14) + '..' : (group.name || group.ticker);
+                const performanceClass = (plPercentGroup === null) ? 'neutral' : (plPercentGroup < 0 ? 'loss' : 'profit');
+                const displayName = (group.name || group.ticker).length > 16 ? (group.name || group.ticker).substring(0, 14) + '..' : (group.name || group.ticker);
 
-            card.innerHTML = `
+                card.innerHTML = `
                 <div class="card-main-content">
                     <div class="shimmer-card" style="position: absolute; inset: 0; pointer-events: none; opacity: 0.3; border-radius: inherit;"></div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; position: relative; z-index: 1;">
@@ -3280,9 +3289,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div id="history-${group.ticker.replace(/[^a-zA-Z0-9]/g, '_')}" class="hidden" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                         ${group.items.sort((a, b) => new Date(b.date) - new Date(a.date)).map(item => {
-                const itemPL = item.liveInfo ? item.liveInfo.stockPL : 0;
-                const isSale = item.qty < 0;
-                return `
+                    const itemPL = item.liveInfo ? item.liveInfo.stockPL : 0;
+                    const isSale = item.qty < 0;
+                    return `
                                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.8rem;">
                                     <div>
                                         <div style="font-weight: 600; color: ${isSale ? 'var(--danger)' : 'var(--success)'}">${isSale ? '🔴 Venta' : '🟢 Compra'}</div>
@@ -3298,7 +3307,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                 </div>
                             `;
-            }).join('')}
+                }).join('')}
                     </div>
                 </div>
             </div>
@@ -3316,62 +3325,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            card.addEventListener('click', (e) => {
-                const ticker = group.ticker;
-                const mainView = card.querySelector('.card-main-content');
-                const webView = card.querySelector('.card-web-view');
+                card.addEventListener('click', (e) => {
+                    const ticker = group.ticker;
+                    const mainView = card.querySelector('.card-main-content');
+                    const webView = card.querySelector('.card-web-view');
 
-                if (e.target.closest('.stock-web-link')) {
-                    if (mainView && webView) {
-                        card.classList.add('web-view-active');
-                        mainView.classList.add('hidden');
-                        webView.classList.remove('hidden');
-                        const body = webView.querySelector('.web-view-body');
-                        
-                        // Robust Ticker formatting for TradingView
-                        let tvTicker = (group.ticker || '').toUpperCase();
-                        
-                        // Mapping Yahoo/Common formats to TradingView Exchanges
-                        const tickerMap = {
-                            'SAN.MC': 'BME:SAN', 'BBVA.MC': 'BME:BBVA', 'TEF.MC': 'BME:TEF',
-                            'ITX.MC': 'BME:ITX', 'IBE.MC': 'BME:IBE', 'REP.MC': 'BME:REP',
-                            'CABK.MC': 'BME:CABK', 'SAB.MC': 'BME:SAB', 'ACS.MC': 'BME:ACS',
-                            'FER.MC': 'BME:FER', 'AMS.MC': 'BME:AMS', 'MTS.MC': 'BME:MTS',
-                            'AGNC': 'NASDAQ:AGNC', 'MAIN': 'NYSE:MAIN'
-                        };
+                    if (e.target.closest('.stock-web-link')) {
+                        if (mainView && webView) {
+                            card.classList.add('web-view-active');
+                            mainView.classList.add('hidden');
+                            webView.classList.remove('hidden');
+                            const body = webView.querySelector('.web-view-body');
 
-                        if (tickerMap[tvTicker]) {
-                            tvTicker = tickerMap[tvTicker];
-                        } else if (tvTicker.includes('.')) {
-                            // Generic conversion: TKR.MC -> BME:TKR
-                            const parts = tvTicker.split('.');
-                            const suffix = parts[1];
-                            let exchange = suffix;
-                            if (suffix === 'MC') exchange = 'BME';
-                            else if (suffix === 'L') exchange = 'LSE';
-                            else if (suffix === 'DE') exchange = 'XETR';
-                            else if (suffix === 'PA') exchange = 'EURONEXT';
-                            else if (suffix === 'MI') exchange = 'MIL';
-                            
-                            tvTicker = `${exchange}:${parts[0]}`;
-                        } else {
-                            // US Stocks normalization
-                            let market = (group.market || '').toUpperCase();
-                            let exchange = '';
-                            
-                            if (market.includes('NASDAQ') || market.includes('NAS')) exchange = 'NASDAQ';
-                            else if (market.includes('NYSE') || market.includes('NY')) exchange = 'NYSE';
-                            else if (market.includes('AMEX')) exchange = 'AMEX';
-                            
-                            if (exchange) {
-                                tvTicker = `${exchange}:${tvTicker}`;
+                            // Robust Ticker formatting for TradingView
+                            let tvTicker = (group.ticker || '').toUpperCase();
+
+                            // Mapping Yahoo/Common formats to TradingView Exchanges
+                            const tickerMap = {
+                                'SAN.MC': 'BME:SAN', 'BBVA.MC': 'BME:BBVA', 'TEF.MC': 'BME:TEF',
+                                'ITX.MC': 'BME:ITX', 'IBE.MC': 'BME:IBE', 'REP.MC': 'BME:REP',
+                                'CABK.MC': 'BME:CABK', 'SAB.MC': 'BME:SAB', 'ACS.MC': 'BME:ACS',
+                                'FER.MC': 'BME:FER', 'AMS.MC': 'BME:AMS', 'MTS.MC': 'BME:MTS',
+                                'AGNC': 'NASDAQ:AGNC', 'MAIN': 'NYSE:MAIN'
+                            };
+
+                            if (tickerMap[tvTicker]) {
+                                tvTicker = tickerMap[tvTicker];
+                            } else if (tvTicker.includes('.')) {
+                                // Generic conversion: TKR.MC -> BME:TKR
+                                const parts = tvTicker.split('.');
+                                const suffix = parts[1];
+                                let exchange = suffix;
+                                if (suffix === 'MC') exchange = 'BME';
+                                else if (suffix === 'L') exchange = 'LSE';
+                                else if (suffix === 'DE') exchange = 'XETR';
+                                else if (suffix === 'PA') exchange = 'EURONEXT';
+                                else if (suffix === 'MI') exchange = 'MIL';
+
+                                tvTicker = `${exchange}:${parts[0]}`;
                             } else {
-                                // Default fallback for bare tickers (usually works for US)
-                                tvTicker = tvTicker;
+                                // US Stocks normalization
+                                let market = (group.market || '').toUpperCase();
+                                let exchange = '';
+
+                                if (market.includes('NASDAQ') || market.includes('NAS')) exchange = 'NASDAQ';
+                                else if (market.includes('NYSE') || market.includes('NY')) exchange = 'NYSE';
+                                else if (market.includes('AMEX')) exchange = 'AMEX';
+
+                                if (exchange) {
+                                    tvTicker = `${exchange}:${tvTicker}`;
+                                } else {
+                                    // Default fallback for bare tickers (usually works for US)
+                                    tvTicker = tvTicker;
+                                }
                             }
-                        }
-                        
-                        body.innerHTML = `
+
+                            body.innerHTML = `
                             <div style="height:100%; width:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; font-size:0.8rem; padding: 20px; text-align: center;">
                                 <div class="spinner" style="margin-bottom:15px;"></div>
                                 <div style="margin-bottom: 15px; font-weight: 600;">Cargando gráfico técnico...</div>
@@ -3379,8 +3388,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <a href="https://finance.yahoo.com/quote/${group.ticker}" target="_blank" style="color: #3b82f6; text-decoration: underline; font-size: 0.75rem;" onclick="event.stopPropagation()">¿Problemas? Abre Yahoo Finance aquí</a>
                             </div>`;
 
-                        setTimeout(() => {
-                            body.innerHTML = `
+                            setTimeout(() => {
+                                body.innerHTML = `
                                 <div class="tradingview-widget-container" style="height:100%;width:100%;position:relative;">
                                     <iframe scrolling="no" allowtransparency="true" frameborder="0" 
                                         src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=es&symbol=${tvTicker}&interval=D&width=100%25&height=100%25&gridLineColor=rgba(42,46,57,0)&fontColor=rgba(255,255,255,1)&underLineColor=rgba(33,150,243,0.3)&underLineBottomColor=rgba(33,150,243,0)&trendLineColor=rgba(33,150,243,1)&colorTheme=dark" 
@@ -3389,32 +3398,32 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <a href="https://es.tradingview.com/symbols/${tvTicker}" target="_blank" style="pointer-events:auto; color:rgba(255,255,255,0.3); font-size:0.5rem; text-decoration:none;">TradingView</a>
                                     </div>
                                 </div>`;
-                        }, 100);
+                            }, 100);
+                        }
+                    } else if (e.target.closest('.close-web-view')) {
+                        if (mainView && webView) {
+                            card.classList.remove('web-view-active');
+                            webView.classList.add('hidden');
+                            mainView.classList.remove('hidden');
+                            webView.querySelector('.web-view-body').innerHTML = '';
+                        }
+                    } else if (e.target.closest('.add-mvmt-btn')) {
+                        addMoreFromStockByTicker(ticker);
+                    } else if (e.target.closest('.history-btn')) {
+                        const historyDiv = card.querySelector(`#history-${ticker.replace(/[^a-zA-Z0-9]/g, '_')}`);
+                        if (historyDiv) historyDiv.classList.toggle('hidden');
+                    } else if (e.target.closest('.details-btn')) {
+                        showFinancialDetails(ticker);
+                    } else if (e.target.closest('.edit-btn-small')) {
+                        editStock(e.target.closest('.edit-btn-small').dataset.id);
+                    } else if (e.target.closest('.delete-btn-small')) {
+                        showCustomConfirm('¿Borrar esta operación?', () => {
+                            removeStock(e.target.closest('.delete-btn-small').dataset.id);
+                        });
                     }
-                } else if (e.target.closest('.close-web-view')) {
-                    if (mainView && webView) {
-                        card.classList.remove('web-view-active');
-                        webView.classList.add('hidden');
-                        mainView.classList.remove('hidden');
-                        webView.querySelector('.web-view-body').innerHTML = '';
-                    }
-                } else if (e.target.closest('.add-mvmt-btn')) {
-                    addMoreFromStockByTicker(ticker);
-                } else if (e.target.closest('.history-btn')) {
-                    const historyDiv = card.querySelector(`#history-${ticker.replace(/[^a-zA-Z0-9]/g, '_')}`);
-                    if (historyDiv) historyDiv.classList.toggle('hidden');
-                } else if (e.target.closest('.details-btn')) {
-                    showFinancialDetails(ticker);
-                } else if (e.target.closest('.edit-btn-small')) {
-                    editStock(e.target.closest('.edit-btn-small').dataset.id);
-                } else if (e.target.closest('.delete-btn-small')) {
-                    showCustomConfirm('¿Borrar esta operación?', () => {
-                        removeStock(e.target.closest('.delete-btn-small').dataset.id);
-                    });
-                }
-            });
+                });
 
-            elements.bolsaGrid.appendChild(card);
+                elements.bolsaGrid.appendChild(card);
             } catch (err) {
                 console.error("Card render error:", err);
             }
@@ -3435,9 +3444,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const best = [...validStocks].sort((a,b) => (b.liveInfo.stockPLPercent || 0) - (a.liveInfo.stockPLPercent || 0))[0];
-        const worst = [...validStocks].sort((a,b) => (a.liveInfo.stockPLPercent || 0) - (b.liveInfo.stockPLPercent || 0))[0];
-        
+        const best = [...validStocks].sort((a, b) => (b.liveInfo.stockPLPercent || 0) - (a.liveInfo.stockPLPercent || 0))[0];
+        const worst = [...validStocks].sort((a, b) => (a.liveInfo.stockPLPercent || 0) - (b.liveInfo.stockPLPercent || 0))[0];
+
         const totalInvested = validStocks.reduce((sum, s) => sum + s.liveInfo.stockInvested, 0);
         const totalValue = validStocks.reduce((sum, s) => sum + (s.liveInfo.stockCurrentVal || 0), 0);
         const totalPL = totalValue - totalInvested;
@@ -3972,10 +3981,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (concept.isAutomatic) return;
                 const monthlyMovements = (concept.movements || []).filter(m => (m.activeMonths || []).map(Number).includes(currentMonthNum));
                 const isSavings = concept.type === 'saving';
-                const provision = isSavings 
+                const provision = isSavings
                     ? monthlyMovements.filter(m => m.amount > 0).reduce((sum, m) => sum + m.amount, 0)
                     : (monthlyMovements.find(m => isProvision(m))?.amount || 0);
-                
+
                 if (!egresosMap.has(concept.name)) {
                     egresosMap.set(concept.name, {
                         name: concept.name,
@@ -4303,12 +4312,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const card = document.createElement('div');
             card.className = `card drawer-card glass-panel ${isIncome ? 'income-drawer' : ''} ${isSavings ? 'savings-drawer' : ''} ${concept.isAutomatic ? 'undestined-drawer' : ''}`;
-            
+
             // Apply themes
             const colorIdx = concept.colorIndex !== undefined ? concept.colorIndex : (isIncome ? 0 : (isSavings ? 5 : 2));
             const theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
-            
-            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1,3), 16)}, ${parseInt(theme.border.slice(3,5), 16)}, ${parseInt(theme.border.slice(5,7), 16)}, 0.25)`, 'important');
+
+            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
             card.style.setProperty('background-color', theme.bg, 'important');
             card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
             card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
@@ -4448,10 +4457,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (concept.isAutomatic) return;
                 const monthlyMovements = (concept.movements || []).filter(m => (m.activeMonths || []).includes(currentMonthNum));
                 const isSavings = concept.type === 'saving';
-                const provision = isSavings 
+                const provision = isSavings
                     ? monthlyMovements.filter(m => m.amount > 0).reduce((sum, m) => sum + m.amount, 0)
                     : (monthlyMovements.find(m => isProvision(m))?.amount || 0);
-                
+
                 if (!egresosMap.has(concept.name)) {
                     egresosMap.set(concept.name, {
                         name: concept.name,
@@ -4472,11 +4481,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const card = document.createElement('div');
             card.className = 'card drawer-card glass-panel egreso-drawer';
-            
+
             const colorIdx = egreso.colorIndex !== undefined ? egreso.colorIndex : 2;
             const theme = DRAWER_COLORS[colorIdx % DRAWER_COLORS.length];
-            
-            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1,3), 16)}, ${parseInt(theme.border.slice(3,5), 16)}, ${parseInt(theme.border.slice(5,7), 16)}, 0.25)`, 'important');
+
+            card.style.setProperty('background', `rgba(${parseInt(theme.border.slice(1, 3), 16)}, ${parseInt(theme.border.slice(3, 5), 16)}, ${parseInt(theme.border.slice(5, 7), 16)}, 0.25)`, 'important');
             card.style.setProperty('background-color', theme.bg, 'important');
             card.style.setProperty('background-image', `linear-gradient(135deg, ${theme.grad} 0%, rgba(15, 23, 42, 0.8) 100%)`, 'important');
             card.style.setProperty('border', `2px solid ${theme.border}`, 'important');
@@ -4760,12 +4769,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function switchView(view) {
         currentView = view;
-        
+
         // Sync Sidebar Items
         elements.wealthNavItems?.forEach(item => {
             item.classList.toggle('active', item.dataset.view === view);
         });
-        
+
         // Sync Bottom Bar Items
         elements.bottomNavItems?.forEach(item => {
             item.classList.toggle('active', item.dataset.view === view);
@@ -4816,10 +4825,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebar = elements.wealthSidebar;
         const btn = document.getElementById('sidebarCollapseBtn');
         if (!sidebar) return;
-        
+
         const isCollapsed = sidebar.classList.toggle('collapsed');
         localStorage.setItem('sidebarCollapsed', isCollapsed);
-        
+
         // Update main content padding
         const appMain = document.getElementById('appMain');
         if (appMain) {
@@ -4872,13 +4881,13 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
-        
+
         if (elements.drawerIconGroup) elements.drawerIconGroup.classList.remove('hidden');
         if (elements.drawerIconInput) elements.drawerIconInput.value = '📁';
 
         elements.drawerGroupGroup?.classList.remove('hidden');
         if (elements.drawerGroupInput) elements.drawerGroupInput.value = '';
-        
+
         const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
         targetDrawerSelectGroup?.classList.add('hidden');
 
@@ -4917,7 +4926,7 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
-        
+
         targetDrawerSelectGroup?.classList.remove('hidden');
         if (targetDrawerSelect) {
             targetDrawerSelect.innerHTML = savingsDrawers
@@ -5054,7 +5063,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.transferCategorySelect.value = 'Traspaso';
         }
         if (elements.transferSubcategorySelect) {
-            elements.transferSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' + 
+            elements.transferSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' +
                 expenseSubcategories.map(s => `<option value="${s}">${s}</option>`).join('');
             elements.transferSubcategorySelect.value = '';
         }
@@ -5109,7 +5118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Default to oldest movement's date for editing
         let oldestDate = new Date().toISOString().split('T')[0];
         if (drawer.movements && drawer.movements.length > 0) {
-            const sortedMovements = [...drawer.movements].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const sortedMovements = [...drawer.movements].sort((a, b) => new Date(a.date) - new Date(b.date));
             oldestDate = sortedMovements[0].date;
         }
         if (elements.savingsDateInput) elements.savingsDateInput.value = oldestDate;
@@ -5118,7 +5127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         transferTargetGroup?.classList.add('hidden');
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
         if (elements.savingsCategoryGroup) elements.savingsCategoryGroup.classList.add('hidden');
-        
+
         elements.drawerGroupGroup?.classList.remove('hidden');
         if (elements.drawerGroupInput) elements.drawerGroupInput.value = drawer.group || '';
 
@@ -5144,7 +5153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             exerciseStartDate = new Date(curFY, 0, 1);
         }
-        
+
         // Date for the end of previous exercise (one day before)
         const prevExerciseEndDate = new Date(exerciseStartDate);
         prevExerciseEndDate.setDate(prevExerciseEndDate.getDate() - 1);
@@ -5193,7 +5202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const performConsolidation = (limitDate = null) => {
             close();
             const originalBalance = drawer.balance;
-            
+
             if (!limitDate) {
                 // Consolidate everything
                 showCustomConfirm(`¿Confirmas consolidar TODO el historial de "${drawer.name}"? Solo quedará un movimiento con el saldo actual (${fmtEUR(originalBalance)}).`, () => {
@@ -5220,14 +5229,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCustomConfirm(`¿Confirmas consolidar todos los movimientos anteriores al ${limitDate.toLocaleDateString()}?`, () => {
                     const toConsolidate = drawer.movements.filter(m => new Date(m.date) < limitDate);
                     const toKeep = drawer.movements.filter(m => new Date(m.date) >= limitDate);
-                    
+
                     if (toConsolidate.length === 0) {
                         showToast("No hay movimientos anteriores para consolidar", "info");
                         return;
                     }
 
                     const consolidatedSum = toConsolidate.reduce((sum, m) => sum + m.amount, 0);
-                    
+
                     // Update or create initial movement for the remaining set
                     let initialMvmt = toKeep.find(m => isProvision(m));
                     if (initialMvmt) {
@@ -5236,7 +5245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Use the day before the limit as date for the consolidation entry
                         const entryDate = new Date(limitDate);
                         entryDate.setDate(entryDate.getDate() - 1);
-                        
+
                         toKeep.unshift({
                             id: Date.now() + Math.random(),
                             date: entryDate.toISOString().split('T')[0],
@@ -5245,7 +5254,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             concept: 'Saldo consolidado'
                         });
                     }
-                    
+
                     drawer.movements = toKeep;
                     if (window.saveSavings) window.saveSavings(savingsDrawers);
                     render();
@@ -5295,16 +5304,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Remove existing detail overlay if any
         const existingOverlay = document.getElementById('drawerDetailsOverlay');
         if (existingOverlay) existingOverlay.remove();
-        
+
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer) return;
 
         const currentFiscal = getFiscalMonth(new Date());
-        
+
         // Filter movements based on drawerDetailFilterMode
         // We map to maintain the original index for editing/deleting
         const filteredMovementsWithIndex = (drawer.movements || []).map((m, idx) => ({ ...m, originalIndex: idx }));
-        
+
         const displayedMovements = (!drawer.isAuto && drawerDetailFilterMode === 'month')
             ? filteredMovementsWithIndex.filter(m => getFiscalMonth(m.date) === currentFiscal)
             : filteredMovementsWithIndex;
@@ -5371,7 +5380,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         document.body.appendChild(overlay);
         document.getElementById('closeDetails').onclick = () => overlay.remove();
-        
+
         const filterBtn = document.getElementById('filterDrawerMvmtsBtn');
         if (filterBtn) {
             filterBtn.onclick = () => {
@@ -5481,7 +5490,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const cell = document.createElement('div');
             cell.className = `calendar-cell ${isToday ? 'today' : ''}`;
-            
+
             let amountHtml = '';
             if (totalOnDay !== 0) {
                 const colorClass = totalOnDay > 0 ? 'income' : 'expense';
@@ -5865,7 +5874,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function cycleDrawerColor(drawerId) {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer) return;
-        
+
         drawer.colorIndex = ((drawer.colorIndex || 0) + 1) % DRAWER_COLORS.length;
         if (window.saveSavings) window.saveSavings(savingsDrawers);
         renderSavings();
@@ -5874,7 +5883,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function cycleNominaDrawerColor(drawerId) {
         const drawer = nominaData.find(d => d.id == drawerId);
         if (!drawer) return;
-        
+
         drawer.colorIndex = ((drawer.colorIndex || 0) + 1) % DRAWER_COLORS.length;
         if (window.saveNomina) window.saveNomina(nominaData);
         renderNomina();
@@ -6011,7 +6020,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Scale values for display (relative to H/L)
         const range = totalHigh - totalLow || 1;
-       const scale = (val) => height - padding - ((val - totalLow) / range) * (height - 2 * padding);
+        const scale = (val) => height - padding - ((val - totalLow) / range) * (height - 2 * padding);
 
         const yHigh = scale(totalHigh);
         const yLow = scale(totalLow);
@@ -6585,17 +6594,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             incomeCategories = finalInc;
             expenseCategories = finalExp;
-            
+
             localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
             localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
-            
+
             if (changesMade && window.saveSavings) {
                 window.saveSavings(savingsDrawers);
             }
 
             showToast("Categorías guardadas correctamente" + (changesMade ? " y movimientos actualizados." : "."));
             elements.categoriesModal.classList.add('hidden');
-            
+
             // Sync current lists if necessary
             if (activeView === 'ahorro') {
                 renderSavingsList();
@@ -6741,10 +6750,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             incomeSubcategories = finalInc;
             expenseSubcategories = finalExp;
-            
+
             localStorage.setItem('incomeSubcategories', JSON.stringify(incomeSubcategories));
             localStorage.setItem('expenseSubcategories', JSON.stringify(expenseSubcategories));
-            
+
             if (changesMade && window.saveSavings) {
                 window.saveSavings(savingsDrawers);
             }
@@ -6829,7 +6838,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 }
                 ];
                 countdowns = [];
-                
+
                 // Persist clear state via storage.js
                 if (window.saveStocks) window.saveStocks(stocks);
                 if (window.saveSavings) window.saveSavings(savingsDrawers);
@@ -6840,14 +6849,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 activityCellFilter = { column: null, value: null };
                 activitySearchQuery = '';
                 if (window.saveNomina) window.saveNomina(nominaData);
-                
+
                 // Clear extra system keys
                 localStorage.removeItem('msv_fx_rate_v1');
                 localStorage.removeItem('msv_fx_date_v1');
                 localStorage.removeItem('msv_live_prices_v1');
-                
+
                 showToast('Todos los datos han sido borrados', 'info');
-                render(); 
+                render();
 
                 // Ask for demo data
                 setTimeout(() => {
@@ -6877,19 +6886,25 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'demo_5', ticker: 'SAN.MC', qty: 500, price: 4.15, currency: 'EUR', name: 'Banco Santander', date: pastStr, market: 'IBEX35' },
             { id: 'demo_6', ticker: 'ITX.MC', qty: 25, price: 51.10, currency: 'EUR', name: 'Inditex', date: currentStr, market: 'IBEX35' }
         ];
-        
+
         savingsDrawers = [
             { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 },
-            { id: 'emergency_demo', name: 'Fondo de Emergencia', icon: '🛡️', balance: 3500, movements: [
-                { id: Date.now() + 1, date: pastStr, amount: 3500, category: 'Ahorro', concept: 'Aportación inicial (Ahorros acumulados)', type: 'income' }
-            ], isAuto: false, targetAmount: 5000 },
-            { id: 'travel_demo', name: 'Hucha Viajes', icon: '✈️', balance: 1350, movements: [
-                { id: Date.now() + 2, date: pastStr, amount: 1500, category: 'Ahorro', concept: 'Venta material segunda mano', type: 'income' },
-                { id: Date.now() + 3, date: currentStr, amount: 150, category: 'Gasto', concept: 'Reserva hotel Venecia', type: 'expense' }
-            ], isAuto: false, targetAmount: 2500 },
-            { id: 'car_demo', name: 'Coche Nuevo', icon: '🚗', balance: 500, movements: [
-                { id: Date.now() + 6, date: currentStr, amount: 500, category: 'Ahorro', concept: 'Primera aportación coche', type: 'income' }
-            ], isAuto: false, targetAmount: 20000 }
+            {
+                id: 'emergency_demo', name: 'Fondo de Emergencia', icon: '🛡️', balance: 3500, movements: [
+                    { id: Date.now() + 1, date: pastStr, amount: 3500, category: 'Ahorro', concept: 'Aportación inicial (Ahorros acumulados)', type: 'income' }
+                ], isAuto: false, targetAmount: 5000
+            },
+            {
+                id: 'travel_demo', name: 'Hucha Viajes', icon: '✈️', balance: 1350, movements: [
+                    { id: Date.now() + 2, date: pastStr, amount: 1500, category: 'Ahorro', concept: 'Venta material segunda mano', type: 'income' },
+                    { id: Date.now() + 3, date: currentStr, amount: 150, category: 'Gasto', concept: 'Reserva hotel Venecia', type: 'expense' }
+                ], isAuto: false, targetAmount: 2500
+            },
+            {
+                id: 'car_demo', name: 'Coche Nuevo', icon: '🚗', balance: 500, movements: [
+                    { id: Date.now() + 6, date: currentStr, amount: 500, category: 'Ahorro', concept: 'Primera aportación coche', type: 'income' }
+                ], isAuto: false, targetAmount: 20000
+            }
         ];
 
         countdowns = [
@@ -6903,7 +6918,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 icon: '💼',
                 type: 'income',
                 movements: [
-                    { id: 'demo_mov_1', date: currentStr, amount: 2500, category: 'Ahorro', concept: 'Nómina Mensual', type: 'income', activeMonths: [1,2,3,4,5,6,7,8,9,10,11,12], paid: true }
+                    { id: 'demo_mov_1', date: currentStr, amount: 2500, category: 'Ahorro', concept: 'Nómina Mensual', type: 'income', activeMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], paid: true }
                 ]
             },
             {
@@ -6912,7 +6927,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 icon: '🏠',
                 type: 'expense',
                 movements: [
-                    { id: 'demo_mov_2', date: currentStr, amount: 850, category: 'Gasto', concept: 'Recibo Mensual', type: 'expense', activeMonths: [1,2,3,4,5,6,7,8,9,10,11,12], paid: true }
+                    { id: 'demo_mov_2', date: currentStr, amount: 850, category: 'Gasto', concept: 'Recibo Mensual', type: 'expense', activeMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], paid: true }
                 ]
             },
             {
@@ -6922,19 +6937,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'saving',
                 linkedSavingsDrawerId: 'car_demo',
                 movements: [
-                    { id: 'demo_mov_3', date: currentStr, amount: 500, category: 'Ahorro', concept: 'Aportación Hucha', type: 'income', activeMonths: [1,2,3,4,5,6,7,8,9,10,11,12], paid: true }
+                    { id: 'demo_mov_3', date: currentStr, amount: 500, category: 'Ahorro', concept: 'Aportación Hucha', type: 'income', activeMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], paid: true }
                 ]
             }
         ];
 
         nominaData = demoNomina;
-        isFirstUpdateDone = true; 
+        isFirstUpdateDone = true;
 
         if (window.saveStocks) window.saveStocks(stocks);
         if (window.saveSavings) window.saveSavings(savingsDrawers);
         if (window.saveCountdowns) window.saveCountdowns(countdowns);
         if (window.saveNomina) window.saveNomina(nominaData);
-        
+
         showToast('¡Datos de demostración enriquecidos cargados!', 'success');
         render();
     }
@@ -6976,7 +6991,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showBreakdownDetail(category) {
         if (!elements.breakdownDetailContainer || !elements.breakdownDetailList) return;
-        
+
         // Toggle: If same category is clicked while visible, hide it
         if (currentActiveBreakdownCategory === category && !elements.breakdownDetailContainer.classList.contains('hidden')) {
             elements.breakdownDetailContainer.classList.add('hidden');
@@ -7027,7 +7042,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Especulación: []
         };
 
-        const filteredDrawers = breakdownDrawerFilter 
+        const filteredDrawers = breakdownDrawerFilter
             ? savingsDrawers.filter(d => d.id === breakdownDrawerFilter)
             : savingsDrawers;
 
@@ -7045,7 +7060,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const movDate = new Date(mov.date);
                 const movYear = movDate.getFullYear();
                 const movMonthStr = movDate.toISOString().slice(0, 7);
-                
+
                 let match = false;
                 if (filterType === 'month') {
                     match = movMonthStr === monthVal;
@@ -7081,7 +7096,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isBolsa = breakdownContext === 'bolsa';
             const inv = isBolsa ? currentTotalInvestedBolsa : currentPatrimonioTotal;
             const labelText = isBolsa ? 'invertido' : 'patrimonio';
-            
+
             if (inv > 0) {
                 let pct = 0;
                 if (filterType === 'month') {
@@ -7091,17 +7106,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const currentYear = now.getFullYear();
                     const currentMonth = now.getMonth() + 1; // 1-12
                     const selectedYear = parseInt(yearVal);
-                    
+
                     let monthsPassed = 12;
                     if (selectedYear === currentYear) {
                         monthsPassed = currentMonth;
                     } else if (selectedYear > currentYear) {
-                        monthsPassed = 1; 
+                        monthsPassed = 1;
                     }
-                    
+
                     pct = (totalRendimientos * (12 / monthsPassed) / inv) * 100;
                 }
-                
+
                 elements.breakdownBolsaPctContainer.classList.remove('hidden');
                 if (elements.breakdownBolsaPct) elements.breakdownBolsaPct.textContent = fmtPct(pct);
                 if (elements.breakdownBolsaInvested) {
@@ -7124,7 +7139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.DATA_SOURCE_MODE = newMode;
         if (window.saveDataSourceMode) window.saveDataSourceMode(newMode);
         updateDataSourceUI();
-        
+
         // Trigger a refresh of prices with the new mode
         const uniqueTickers = [...new Set(stocks.map(s => s.ticker))];
         if (window.refreshLivePrices) {
@@ -7197,7 +7212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (view === 'bolsa') toggleBolsaView();
                     else if (view === 'ahorro') toggleAhorroView();
                     else if (view === 'nomina') toggleNominaView();
-                    
+
                     if (isSidebar && container) {
                         container.classList.toggle('open');
                     }
@@ -7241,7 +7256,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Sidebar Collapse Toggle
         document.getElementById('sidebarCollapseBtn')?.addEventListener('click', toggleSidebarCollapse);
-        
+
         // Restore Sidebar State
         const sidebarIsCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         if (sidebarIsCollapsed) {
@@ -7261,13 +7276,13 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.mobileMenuBtn?.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const activeNav = document.querySelector('.bottom-nav-item.active');
             const viewContext = activeNav ? activeNav.dataset.view : currentView;
             const effectiveView = viewContext || currentView;
-            
+
             console.log("[FAB] Toggle. Context:", effectiveView);
-            
+
             if (effectiveView === 'bolsa') {
                 const modal = elements.addStockModal;
                 if (modal && !modal.classList.contains('hidden')) {
@@ -7292,7 +7307,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const nmModal = elements.nominaMovementModal;
                 const nOpen = nModal && !nModal.classList.contains('hidden');
                 const nmOpen = nmModal && !nmModal.classList.contains('hidden');
-                
+
                 if (nOpen || nmOpen) {
                     if (nOpen) toggleNominaModal(false);
                     if (nmOpen) toggleNominaMovementModal(false);
@@ -7316,8 +7331,8 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.sidebarExportBtn?.addEventListener('click', () => exportGlobalJSON());
         elements.sidebarImportBtn?.addEventListener('click', () => elements.globalJsonInput?.click());
         elements.sidebarClockBtn?.addEventListener('click', () => {
-             // Simulate old clockMenuBtn trigger
-             document.getElementById('clockMenuBtn')?.click();
+            // Simulate old clockMenuBtn trigger
+            document.getElementById('clockMenuBtn')?.click();
         });
         elements.sidebarResetBtn?.addEventListener('click', () => forceAppUpdate());
         elements.sidebarDeleteAllBtn?.addEventListener('click', () => deleteAllData());
@@ -7355,7 +7370,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             bolsaTotalsMode = !bolsaTotalsMode;
             localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
-            
+
             // If turning on totals, force list view to see the effect
             if (bolsaTotalsMode) {
                 bolsaViewMode = 'list';
@@ -7378,11 +7393,11 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             ahorroListFilterMode = (ahorroListFilterMode === 'totals' ? 'detail' : 'totals');
             localStorage.setItem('ahorroListFilterMode', ahorroListFilterMode);
-            
+
             // Force list view
             ahorroViewMode = 'list';
             localStorage.setItem('ahorroViewMode', 'list');
-            
+
             render();
         });
 
@@ -7433,7 +7448,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activityCellFilter = { column: null, value: null };
             setActivitySearch('');
         });
-        
+
         document.getElementById('ahorroBreakdownBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             showAhorroBreakdown();
@@ -7472,15 +7487,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.nav-item-chevron').forEach(chevron => {
             chevron.classList.add('clickable'); // Visual hint
             chevron.style.cursor = 'pointer';
-            chevron.style.pointerEvents = 'auto'; 
-            
+            chevron.style.pointerEvents = 'auto';
+
             chevron.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 const container = chevron.closest('.nav-item-container');
                 if (container) {
                     container.classList.toggle('open');
-                    
+
                     // Also trigger navigation for that item
                     const navBtn = container.querySelector('.wealth-nav-item');
                     if (navBtn) {
@@ -7497,7 +7512,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('ncTestBtn')?.addEventListener('click', () => ncTestConnection());
         document.getElementById('ncBackupBtn')?.addEventListener('click', () => ncBackupData());
         document.getElementById('ncRestoreBtn')?.addEventListener('click', () => ncRestoreData());
-        
+
         // Initialize Nextcloud UI on load
         initNextcloudUI();
 
@@ -7506,8 +7521,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target.checked) ncScheduleAutoUpload();
         });
 
-        // Start Nextcloud auto-sync check on load (delay for data to be ready)
-        setTimeout(ncSyncOnLoad, 2000);
+        // Start Nextcloud auto-sync check on load (short delay to ensure core variables are ready)
+        setTimeout(ncSyncOnLoad, 500);
 
         // ── Nextcloud sidebar buttons ──
         document.getElementById('sidebarNcBackupBtn')?.addEventListener('click', () => ncBackupData());
@@ -7701,7 +7716,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let category = elements.savingsCategorySelect.value;
                     const subcategory = elements.savingsSubcategorySelect?.value || '';
                     if (subcategory) category = `${category}:${subcategory}`;
-                    
+
                     const date = elements.savingsDateInput.value || new Date().toISOString().split('T')[0];
 
                     drawer.balance += finalAmount;
@@ -7786,7 +7801,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let category = elements.savingsCategorySelect.value;
                     const subcategory = elements.savingsSubcategorySelect?.value || '';
                     if (subcategory) category = `${category}:${subcategory}`;
-                    
+
                     const date = elements.savingsDateInput.value || movement.date;
 
                     const type = elements.savingsMovementType.value;
@@ -8071,7 +8086,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const calculatedPrice = totalInvested / qty;
 
             let tickerInput = elements.tickerInput.value.trim().toUpperCase();
-            
+
             // Normalize .ES to .MC for API compatibility
             if (tickerInput.endsWith('.ES')) {
                 tickerInput = tickerInput.replace('.ES', '.MC');
@@ -8316,10 +8331,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn1 = elements.manualRefreshBtn;
             const btn2 = document.getElementById('bolsaRefreshBtn2');
             const btn2Icon = btn2?.querySelector('span');
-            
+
             const originalContent1 = btn1 ? btn1.textContent : '';
             const originalContent2 = btn2Icon ? btn2Icon.textContent : '';
-            
+
             if (btn1) {
                 btn1.classList.add('spin-animation');
                 btn1.style.color = '#f59e0b';
@@ -8427,7 +8442,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.bolsaTotalesToggle.addEventListener('click', () => {
                 bolsaTotalsMode = !bolsaTotalsMode;
                 localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
-                
+
                 // If turning on totals, force list view to see the effect
                 if (bolsaTotalsMode) {
                     bolsaViewMode = 'list';
@@ -8992,7 +9007,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ].join(','));
             });
         });
-        
+
         let csvContent = headers.join(',') + '\n' + rows.join('\n');
         let fileName = 'nomina_' + getFormattedDateWithTime() + '.csv';
         let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -9360,7 +9375,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const blob = new Blob([JSON.stringify(globalData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const fileName = getFormattedDateWithTime() + '.json';
-        
+
         triggerDownload(url, fileName, blob);
     }
 
@@ -9394,7 +9409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const dateObj = new Date(data.exportDate);
                             lastSyncTime = dateObj.toLocaleTimeString();
-                        } catch(e) { lastSyncTime = '-'; }
+                        } catch (e) { lastSyncTime = '-'; }
                     }
 
                     // Restore settings if present
@@ -9487,7 +9502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const user = document.getElementById('ncUserInput')?.value?.trim();
         const password = document.getElementById('ncPasswordInput')?.value;
         const proxy = document.getElementById('ncProxyInput')?.value?.trim() || '';
-        
+
         if (!url || !user || !password) {
             showToast('Rellena URL, usuario y App Password', 'warning');
             return null;
@@ -9503,7 +9518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statusText) statusText.textContent = '⏳ Probando conexión...';
 
         const result = await NextcloudSync.testConnection(cfg);
-        
+
         if (result.ok) {
             NextcloudSync.saveConfig(cfg.url, cfg.user, cfg.password, cfg.proxy);
             if (statusText) statusText.textContent = '✅ Conectado correctamente';
@@ -9562,8 +9577,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const sourceDate = result.lastModified ? new Date(result.lastModified).toLocaleString() : '?';
         const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
 
-        const deviceWarning = isSameDevice 
-            ? '' 
+        const deviceWarning = isSameDevice
+            ? ''
             : `\n\n⚠️ Estos datos fueron guardados desde OTRO dispositivo:\n📱 ${sourceDevice}`;
 
         showCustomConfirm(
@@ -9647,24 +9662,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // Called on app startup — checks if server has newer data
     async function ncSyncOnLoad() {
         const config = NextcloudSync.loadConfig();
-        if (!config) return; // Not configured
+        if (!config) {
+            isInitialLoad = false; // Not configured, ready for future changes
+            return;
+        }
 
         try {
             const result = await NextcloudSync.downloadData(config);
-            
+
             if (!result.ok) {
                 if (result.notFound) {
-                    // No data on server yet — upload current data
                     console.log('[NC Sync] No data on server, uploading current data...');
                     const appData = getGlobalDataObject();
                     await NextcloudSync.uploadData(config, appData);
                     showToast('📤 Datos sincronizados con Nextcloud', 'success');
                 }
+                isInitialLoad = false;
                 return;
             }
 
             ncLastServerModified = result.lastModified;
-            const localModified = NextcloudSync.getLocalModified();
+
+            // USE STARTUP TIMESTAMP for comparison to avoid race condition with initial renders
+            const localModified = startupLocalModified;
+
             const serverDate = new Date(result.lastModified);
             const localDate = localModified ? new Date(localModified) : new Date(0);
             const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
@@ -9706,6 +9727,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             console.error('[NC Sync] Error on load:', err);
+        } finally {
+            isInitialLoad = false;
         }
     }
 
@@ -9720,8 +9743,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const autoUpload = localStorage.getItem('ncAutoUpload') !== 'false';
         if (!autoUpload) return;
 
-        // Mark local data as modified
-        NextcloudSync.setLocalModified(new Date().toISOString());
+        // Mark local data as modified (ONLY if we are not in the initial load phase)
+        if (!isInitialLoad) {
+            NextcloudSync.setLocalModified(new Date().toISOString());
+        }
 
         // Debounce: wait 10 seconds of inactivity before uploading
         if (ncAutoSyncTimer) clearTimeout(ncAutoSyncTimer);
@@ -9735,7 +9760,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!config) return;
 
         ncSyncInProgress = true;
-        
+
         const updateTimer = document.getElementById('updateTimer');
         if (updateTimer) {
             updateTimer.textContent = '☁️ Sincronizando...';
@@ -9883,21 +9908,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!elements.dataSourceIcon || !elements.dataSourceLabel) return;
         const mode = window.DATA_SOURCE_MODE;
         const isYahoo = mode === 'yahoo';
-        
+
         elements.dataSourceIcon.textContent = isYahoo ? '📊' : '⚡';
         elements.dataSourceLabel.textContent = isYahoo ? 'Yahoo' : 'Híbrido';
-        
+
         if (elements.bolsaDataSourceToggleBtn) {
             elements.bolsaDataSourceToggleBtn.style.borderColor = isYahoo ? 'rgba(59, 130, 246, 0.8)' : 'rgba(59, 130, 246, 0.4)';
-            elements.bolsaDataSourceToggleBtn.title = isYahoo 
-                ? 'Modo: Solo Yahoo Finance (Pulsa para Híbrido)' 
+            elements.bolsaDataSourceToggleBtn.title = isYahoo
+                ? 'Modo: Solo Yahoo Finance (Pulsa para Híbrido)'
                 : 'Modo: Finnhub + Yahoo Fallback (Pulsa para Solo Yahoo)';
         }
         // Update sidebar button text
         const sidebarSourceBtn = document.getElementById('bolsaDataSourceToggleBtn2');
         if (sidebarSourceBtn) {
-            sidebarSourceBtn.innerHTML = mode === 'yahoo' 
-                ? '<span>📊</span> Origen: Yahoo' 
+            sidebarSourceBtn.innerHTML = mode === 'yahoo'
+                ? '<span>📊</span> Origen: Yahoo'
                 : '<span>⚡</span> Origen: Híbrido';
         }
     }
@@ -9947,7 +9972,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         // Automatic update cycle removed. Now manual via refresh button.
         // Simplified sync for first load REMOVED as per request to use persistent/cached data.
-        
+
         console.log("initApp completed");
     }
     function setupClockCountdown() {
@@ -9964,7 +9989,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitCountdownBtn = document.getElementById('submitCountdownBtn');
         const cancelEditCountdownBtn = document.getElementById('cancelEditCountdownBtn');
 
-        
+
         let clockInterval;
 
         function updateClock() {
@@ -9980,12 +10005,12 @@ document.addEventListener('DOMContentLoaded', () => {
         function renderCountdowns() {
             if (!countdownsList) return;
             countdownsList.innerHTML = '';
-            
+
             // Sort by closest date
             countdowns.sort((a, b) => new Date(a.date) - new Date(b.date));
 
             const now = new Date();
-            now.setHours(0,0,0,0);
+            now.setHours(0, 0, 0, 0);
 
             if (countdowns.length === 0) {
                 countdownsList.innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size: 0.9rem;">No hay cuentas atrás configuradas.</p>';
@@ -9994,17 +10019,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             countdowns.forEach(item => {
                 const targetDate = new Date(item.date);
-                targetDate.setHours(0,0,0,0);
-                
+                targetDate.setHours(0, 0, 0, 0);
+
                 const diffTime = targetDate - now;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 let daysText = diffDays > 0 ? `Faltan ${diffDays} días` : (diffDays === 0 ? '¡Es hoy!' : `Hace ${Math.abs(diffDays)} días`);
                 let colorClass = diffDays > 0 ? 'var(--primary)' : (diffDays === 0 ? 'var(--success)' : 'var(--danger)');
 
                 const div = document.createElement('div');
                 div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);';
-                
+
                 div.innerHTML = `
                     <div style="display:flex; flex-direction:column; gap:4px; max-width: 65%;">
                         <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${item.concept}">${item.concept}</strong>
@@ -10027,7 +10052,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         countdownEditId.value = targetCountdown.id;
                         countdownConceptInput.value = targetCountdown.concept;
                         countdownDateInput.value = targetCountdown.date;
-                        
+
                         submitCountdownBtn.textContent = '💾';
                         submitCountdownBtn.title = 'Guardar Cambios';
                         cancelEditCountdownBtn.classList.remove('hidden');
@@ -10041,11 +10066,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const id = e.target.closest('.btn-delete-countdown').getAttribute('data-id');
                     countdowns = countdowns.filter(c => c.id !== id);
                     if (window.saveCountdowns) window.saveCountdowns(countdowns);
-                    
+
                     if (countdownEditId && countdownEditId.value === id) {
                         resetCountdownForm();
                     }
-                    
+
                     renderCountdowns();
                 });
             });
@@ -10075,7 +10100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clockModal.classList.add('hidden');
                 if (clockInterval) clearInterval(clockInterval);
             });
-            
+
             // Close on outside click
             clockModal.addEventListener('click', (e) => {
                 if (e.target === clockModal) {
@@ -10083,7 +10108,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (clockInterval) clearInterval(clockInterval);
                 }
             });
-            
+
             if (cancelEditCountdownBtn) {
                 cancelEditCountdownBtn.addEventListener('click', resetCountdownForm);
             }
@@ -10097,7 +10122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const editId = countdownEditId ? countdownEditId.value : '';
 
                 if (!concept || !date) return;
-                
+
                 if (editId) {
                     const index = countdowns.findIndex(c => c.id === editId);
                     if (index !== -1) {
@@ -10147,7 +10172,7 @@ document.addEventListener('DOMContentLoaded', () => {
             signBtn.style.flex = '0 0 auto';
             signBtn.style.borderRadius = 'var(--radius)';
             signBtn.style.cursor = 'pointer';
-            
+
             const updateBtnState = () => {
                 const val = parseFloat(input.value);
                 const isNeg = (!isNaN(val) && val < 0) || (isNaN(val) && pendingNegative);
@@ -10196,7 +10221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 updateBtnState();
             });
-            
+
             input.addEventListener('change', updateBtnState);
         });
     }
@@ -10221,15 +10246,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // If it's the DRAG HANDLE itself, we DO want to drag even if it's inside/covered
                 if (!e.target.closest('.drag-handle')) return;
             }
-            
+
             isDragging = true;
             startY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-            
+
             const style = window.getComputedStyle(nav);
             startBottom = parseInt(style.bottom) || 0;
-            
+
             nav.style.transition = 'none';
-            
+
             // Add global listeners to handle fast movement or leaving element
             document.addEventListener('pointermove', onMove, { passive: false });
             document.addEventListener('pointerup', onEnd);
@@ -10238,17 +10263,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const onMove = (e) => {
             if (!isDragging) return;
-            
+
             const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
             const dy = startY - clientY;
             let newBottom = startBottom + dy;
-            
+
             // Constraints
-            const maxB = window.innerHeight - 80; 
+            const maxB = window.innerHeight - 80;
             newBottom = Math.max(10, Math.min(newBottom, maxB));
-            
+
             nav.style.bottom = `${newBottom}px`;
-            
+
             // Prevent event from bubbling or causing scroll
             if (e.cancelable) e.preventDefault();
         };
@@ -10256,13 +10281,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const onEnd = () => {
             if (!isDragging) return;
             isDragging = false;
-            
+
             const currentB = parseInt(nav.style.bottom) || 0;
             updateMinimizedState(currentB < -10);
 
             nav.style.transition = 'bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
             localStorage.setItem('bottomNavPos', nav.style.bottom);
-            
+
             // Clean up global listeners
             document.removeEventListener('pointermove', onMove);
             document.removeEventListener('pointerup', onEnd);
@@ -10282,15 +10307,15 @@ document.addEventListener('DOMContentLoaded', () => {
             minimizeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const currentB = parseInt(nav.style.bottom) || 0;
-                
+
                 // If it's above -10px, it's "open", so we minimize it to -45px
                 const currentlyOpen = currentB > -10;
                 const targetB = currentlyOpen ? -45 : 24;
-                
+
                 nav.style.transition = 'bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
                 nav.style.bottom = `${targetB}px`;
                 updateMinimizedState(!currentlyOpen);
-                
+
                 localStorage.setItem('bottomNavPos', nav.style.bottom);
             });
         }
