@@ -2988,3 +2988,71 @@ button,
 .gdrive-sync-container input:checked + .slider:before {
   transform: translateX(20px);
 }
+
+/* ── Tabla de Actividad Global ── */
+#activityTable th {
+    padding: 0.5rem 1rem !important;
+}
+
+#activityTable td {
+    padding: 0.25rem 1rem !important;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
+#activityTable .activity-category-cell {
+    padding: 0.2rem 1rem !important;
+}
+
+#activityTable .activity-category-cell .category-badge {
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    display: inline-block;
+    line-height: 1.4;
+}
+
+#activityTable .activity-category-cell .drawer-label {
+    font-size: 0.7rem;
+    opacity: 0.55;
+    margin-top: 1px;
+    padding-left: 2px;
+    line-height: 1.2;
+}
+
+#activityTable .activity-actions-cell {
+    padding: 0.15rem 0.5rem !important;
+    text-align: center;
+}
+
+#activityTable .activity-actions-cell .actions-wrap {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+}
+
+#activityTable tr:hover td {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+/* Compactar filas en móvil */
+@media (max-width: 768px) {
+    #activityTable td {
+        padding: 0.2rem 0.5rem !important;
+        font-size: 0.82rem !important;
+    }
+
+    #activityTable th {
+        padding: 0.4rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* En móvil, abreviar la columna concepto */
+    #activityTable .concept-cell {
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

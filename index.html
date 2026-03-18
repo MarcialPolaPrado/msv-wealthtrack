@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603180821">
+    <link rel="stylesheet" href="styles.css?v=202603181428">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -495,15 +495,15 @@
                         <table id="activityTable" style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="border-bottom: 2px solid var(--primary); user-select: none;">
-                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="date">Fecha
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;" data-sort="date">Fecha
                                         <span class="sort-icon"></span></th>
-                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="concept">
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;" data-sort="concept">
                                         Concepto <span class="sort-icon"></span></th>
-                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="category">
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;" data-sort="category">
                                         Categoría <span class="sort-icon"></span></th>
-                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="amount">
+                                    <th style="padding: 0.5rem 1rem; text-align: right; cursor: pointer;" data-sort="amount">
                                         Importe <span class="sort-icon"></span></th>
-                                    <th style="padding: 1rem; text-align: center;">Acción</th>
+                                    <th style="padding: 0.5rem 1rem; text-align: center;">Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="activityTableBody">
@@ -1407,7 +1407,7 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603180821"></script>
+    <script src="app.js?v=202603181428"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1552,7 +1552,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603180821';
+        const APP_VERSION = '202603181428';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

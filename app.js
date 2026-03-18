@@ -1833,8 +1833,6 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 totalAmount += m.amount;
                 const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid var(--glass-border)';
-                tr.style.background = 'rgba(255,255,255,0.02)';
                 
                 const amountClass = m.amount >= 0 ? 'profit' : 'loss';
                 const dateStr = m.date ? new Date(m.date).toLocaleDateString() : '---';
@@ -1846,19 +1844,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     return activityCellFilter.value === val;
                 };
 
+                const filteredDateStyle = isFiltered('date', dateStr) ? 'background: var(--primary-glow); color: white;' : '';
+                const filteredConceptStyle = isFiltered('concept', m.concept) ? 'background: var(--primary-glow); color: white;' : '';
+                const filteredCategoryStyle = isFiltered('category', m.category) ? 'background: var(--primary-glow); color: white;' : '';
+                const filteredAmountStyle = isFiltered('amount', amountStr) ? 'background: var(--primary-glow); color: white;' : '';
+
                 tr.innerHTML = `
-                    <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('date', dateStr) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="date" data-val="${dateStr}">${dateStr}</td>
-                    <td style="padding: 1rem; font-size: 0.9rem; font-weight: 500; cursor: pointer; ${isFiltered('concept', m.concept) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="concept" data-val="${m.concept}">${m.concept}</td>
-                    <td style="padding: 1rem; font-size: 0.9rem; cursor: pointer; ${isFiltered('category', m.category) ? 'background: var(--primary-glow); color: white;' : ''}" data-col="category" data-val="${m.category}">
-                        <span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">${m.category}</span>
-                        ${m.type === 'ahorro' && m.drawerName ? `<div style="font-size: 0.7rem; opacity: 0.55; margin-top: 3px; padding-left: 2px;">${m.drawerName}</div>` : ''}
+                    <td style="cursor: pointer; font-size: 0.88rem; ${filteredDateStyle}" data-col="date" data-val="${dateStr}">${dateStr}</td>
+                    <td class="concept-cell" style="cursor: pointer; font-size: 0.88rem; font-weight: 500; ${filteredConceptStyle}" data-col="concept" data-val="${m.concept}">${m.concept}</td>
+                    <td class="activity-category-cell" style="cursor: pointer; ${filteredCategoryStyle}" data-col="category" data-val="${m.category}">
+                        <span class="category-badge">${m.category}</span>
+                        ${m.type === 'ahorro' && m.drawerName ? `<div class="drawer-label">${m.drawerName}</div>` : ''}
                     </td>
-                    <td style="padding: 1rem; font-size: 0.95rem; text-align: right; font-weight: 700; cursor: pointer; ${isFiltered('amount', amountStr) ? 'background: var(--primary-glow); color: white;' : ''}" class="${amountClass}" data-col="amount" data-val="${amountStr}">${amountStr}</td>
-                    <td style="padding: 1rem; text-align: center;">
-                        <div style="display: flex; gap: 4px; justify-content: center;">
-                            <button class="btn-icon activity-edit-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Editar" style="padding: 4px 8px;">✏️</button>
-                            <button class="btn-icon activity-copy-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Copiar" style="padding: 4px 8px;">📑</button>
-                            <button class="btn-icon activity-delete-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Eliminar" style="padding: 4px 8px; filter: contrast(0.5) opacity(0.8);">🗑️</button>
+                    <td style="text-align: right; font-size: 0.92rem; font-weight: 700; cursor: pointer; ${filteredAmountStyle}" class="${amountClass}" data-col="amount" data-val="${amountStr}">${amountStr}</td>
+                    <td class="activity-actions-cell">
+                        <div class="actions-wrap">
+                            <button class="btn-icon activity-edit-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Editar" style="padding: 2px 6px;">✏️</button>
+                            <button class="btn-icon activity-copy-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Copiar" style="padding: 2px 6px;">📑</button>
+                            <button class="btn-icon activity-delete-btn" data-type="${m.type}" data-id="${m.id}" data-drawer="${m.drawerId || ''}" data-index="${m.mvmtIndex !== undefined ? m.mvmtIndex : ''}" title="Eliminar" style="padding: 2px 6px; filter: contrast(0.5) opacity(0.8);">🗑️</button>
                         </div>
                     </td>
                 `;
@@ -1875,8 +1878,8 @@ document.addEventListener('DOMContentLoaded', () => {
             totalTr.style.fontWeight = '700';
             totalTr.style.borderTop = '2px solid rgba(255,255,255,0.1)';
             totalTr.innerHTML = `
-                <td colspan="3" style="padding: 1rem; text-align: right; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Balance Total</td>
-                <td style="padding: 1rem; font-size: 1.1rem; text-align: right;" class="${totalAmount >= 0 ? 'profit' : 'loss'}">${fmtEUR(totalAmount, 2)}</td>
+                <td colspan="3" style="padding: 0.5rem 1rem; text-align: right; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Balance Total</td>
+                <td style="padding: 0.5rem 1rem; font-size: 1.05rem; text-align: right;" class="${totalAmount >= 0 ? 'profit' : 'loss'}">${fmtEUR(totalAmount, 2)}</td>
                 <td></td>
             `;
             elements.activityTableBody.appendChild(totalTr);
