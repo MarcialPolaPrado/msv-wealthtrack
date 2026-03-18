@@ -2919,9 +2919,11 @@ button,
 }
 
 @media (max-width: 480px) {
-    #savingsCalendarModal .modal-content {
+    #savingsCalendarModal .modal-content,
+    #bolsaCalendarModal .modal-content {
         padding: 1.25rem 0.75rem;
         width: 98%;
+        max-width: 100%;
     }
     .calendar-grid {
         gap: 2px;
@@ -2932,12 +2934,13 @@ button,
         padding: 6px 0;
     }
     .calendar-cell {
+        aspect-ratio: auto;
         padding: 3px;
-        min-height: 40px;
+        min-height: 38px;
         border-radius: 4px;
     }
     .calendar-cell-amount {
-        font-size: 0.55rem;
+        font-size: 0.5rem;
     }
     .calendar-cell-date {
         font-size: 0.65rem;
@@ -2946,14 +2949,20 @@ button,
 
 /* Ultra-narrow mobile fixes */
 @media (max-width: 360px) {
-    #savingsCalendarModal .modal-content {
-        padding: 1rem 0.5rem;
+    #savingsCalendarModal .modal-content,
+    #bolsaCalendarModal .modal-content {
+        padding: 0.75rem 0.4rem;
+        width: 100%;
     }
     .calendar-cell {
-        min-height: 35px;
+        min-height: 32px;
+        padding: 2px;
     }
     .calendar-cell-amount {
-        font-size: 0.5rem;
+        font-size: 0.45rem;
+    }
+    .calendar-cell-date {
+        font-size: 0.6rem;
     }
 }
 
