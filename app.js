@@ -769,7 +769,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     conceptsMap.set(desc.toLowerCase(), {
                         original: desc,
                         category: m.category,
-                        amount: m.amount || 0
+                        amount: m.amount || 0,
+                        drawerId: drawer.id,
+                        drawerName: drawer.name
                     });
                 }
             });
@@ -809,6 +811,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Switch type if needed
             if (elements.savingsMovementType.value !== type) {
                 updateSavingsMovementType(type);
+            }
+
+            // Sync Drawer if match exists
+            if (match.drawerId && elements.savingsTargetId) {
+                elements.savingsTargetId.value = match.drawerId;
+                if (elements.savingsModalTitle) {
+                    elements.savingsModalTitle.textContent = `Movimiento: ${match.drawerName}`;
+                }
             }
 
             // Sync values with a tiny delay to allow Category populate
@@ -7481,7 +7491,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180610");
+            console.log("MSV WealthTrack Booting... Version: 202603180611");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
