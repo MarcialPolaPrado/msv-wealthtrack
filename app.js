@@ -103,15 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let incomeSubcategories = JSON.parse(localStorage.getItem('incomeSubcategories')) || [];
     let expenseSubcategories = JSON.parse(localStorage.getItem('expenseSubcategories')) || [];
-    const GOOGLE_CLIENT_ID = atob('OTAwNDA0NzcyODcwLTEwOGM3dGE4dnI1NjcwZWR1NWF2dmEyZ3NiYm43NXB0LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29t');
-    const GOOGLE_API_KEY = atob('QUl6YVN5QXp0ZTZOWl9PaHdBMTVHbHp4aGVPeGszb3dSWUZmLTRV');
-    const GOOGLE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
-    let gapiInited = false;
-    let gDriveTokenClient;
-    let gDriveAccessToken = null;
-    let gDriveIsUploading = false; 
-    let gDriveLastBackupTime = 0; // Prevent redundant copies within seconds
 
     if (!expenseCategories.includes('Traspaso')) {
         expenseCategories.push('Traspaso');
@@ -680,17 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarActivityBtn: document.getElementById('sidebarActivityBtn'),
         wealthNavItems: document.querySelectorAll('.wealth-nav-item'),
         bottomNavItems: document.querySelectorAll('.bottom-nav-item'),
-        
-        // Google Drive Elements
-        gDriveStatusText: document.getElementById('gDriveStatusText'),
-        gDriveLoginBtn: document.getElementById('gDriveLoginBtn'),
-        gDriveLoggedActions: document.getElementById('gDriveLoggedActions'),
-        gDriveAutoBackup: document.getElementById('gDriveAutoBackup'),
-        gDriveManualBackup: document.getElementById('gDriveManualBackup'),
-        gDriveRestoreBtn: document.getElementById('gDriveRestoreBtn'),
-        gDriveLastSync: document.getElementById('gDriveLastSync'),
-        googleClientIdInput: document.getElementById('googleClientIdInput'),
-        googleApiKeyInput: document.getElementById('googleApiKeyInput'),
+        // Google Drive Elements (removed)
         drawerIconGroup: document.getElementById('drawerIconGroup'),
         drawerIconInput: document.getElementById('drawerIconInput'),
         nominaIconGroup: document.getElementById('nominaIconGroup'),
@@ -1110,6 +1091,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isFirstUpdateDone = false;
 
     function render() {
+        ncScheduleAutoUpload(); // Auto-sync with Nextcloud
         updateSidebarTogglesUI();
         // Toggle Bolsa Summary Visibility
         if (elements.bolsaSummarySection) {
@@ -7511,230 +7493,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-
-        // Google Drive Integration Logic
-        async function gDriveInit() {
-            try {
-                await new Promise((resolve) => gapi.load('client', resolve));
-                await gapi.client.init({
-                    apiKey: GOOGLE_API_KEY,
-                    discoveryDocs: GOOGLE_DISCOVERY_DOCS,
-                });
-                gapiInited = true;
-                
-                gDriveTokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: GOOGLE_SCOPES,
-                    callback: async (resp) => {
-                        if (resp.error !== undefined) {
-                             console.error("GIS Error:", resp);
-                             if (window._resolveToken) {
-                                 window._resolveToken(false);
-                                 delete window._resolveToken;
-                             }
-                             return;
-                        }
-                        gDriveAccessToken = resp.access_token;
-                        gapi.client.setToken({ access_token: gDriveAccessToken });
-                        
-                        // Store expiration
-                        const expiresAt = Date.now() + (resp.expires_in * 1000);
-                        localStorage.setItem('gDriveExpiresAt', expiresAt);
-                        localStorage.setItem('gDriveIsLoggedIn', 'true');
-                        
-                        // NEW: Fetch and store user email to use as hint for multiple accounts
-                        try {
-                            const uiResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                                headers: { Authorization: `Bearer ${gDriveAccessToken}` }
-                            });
-                            const userData = await uiResp.json();
-                            if (userData.email) {
-                                localStorage.setItem('gDriveUserHint', userData.email);
-                            }
-                        } catch (e) { console.error("Error fetching userinfo", e); }
-
-                        updateGDriveUI(true);
-                        
-                        if (window._resolveToken) {
-                            window._resolveToken(true);
-                            delete window._resolveToken;
-                        }
-                    },
-                });
-
-                // Removed all auto-login and background refresh logic.
-                updateGDriveUI(false);
-                
-                const lastSync = localStorage.getItem('gDriveLastSyncTime');
-                if (lastSync && elements.gDriveLastSync) {
-                    elements.gDriveLastSync.textContent = "Última copia: " + lastSync;
-                }
-            } catch (err) {
-                console.error("error gDriveInit", err);
-            }
-        }
-
-        function updateGDriveUI(connected) {
-            const hasToken = !!gDriveAccessToken;
-            
-            if (elements.gDriveStatusText) {
-                if (hasToken) {
-                    elements.gDriveStatusText.textContent = '✅ Conectado';
-                    elements.gDriveStatusText.style.color = 'var(--success)';
-                    elements.gDriveStatusText.style.opacity = '1';
-                } else {
-                    elements.gDriveStatusText.textContent = '❌ No conectado';
-                    elements.gDriveStatusText.style.color = 'inherit';
-                    elements.gDriveStatusText.style.opacity = '0.6';
-                }
-            }
-            
-            elements.gDriveLoginBtn?.classList.toggle('hidden', hasToken);
-            elements.gDriveLoggedActions?.classList.toggle('hidden', !hasToken);
-        }
-
-        async function uploadDataToGDrive(silent = false) {
-            // Check both the lock and a 10-second cooldown
-            if (gDriveIsUploading) return false;
-            const nowTime = Date.now();
-            if (silent && (nowTime - gDriveLastBackupTime < 10000)) return false; 
-            
-            gDriveIsUploading = true;
-            
-            try {
-                // Check if token expired
-                const expiresAt = parseInt(localStorage.getItem('gDriveExpiresAt') || '0');
-                const isExpired = Date.now() > expiresAt - 60000; // 1 minute buffer
-
-                if (!gDriveAccessToken || isExpired) {
-                    showToast("Iniciando sesión en Google...", "info");
-                    const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                    const hint = localStorage.getItem('gDriveUserHint');
-                    gDriveTokenClient.requestAccessToken({ prompt: 'select_account', hint: hint || '' });
-                    
-                    const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 60000))]);
-                    if (!ok || !gDriveAccessToken) {
-                        showToast("Se requiere conexión para continuar", "warning");
-                        return false;
-                    }
-                }
-            
-                if (!silent) showToast("Subiendo copia a Drive...", "info");
-                
-                const now = new Date();
-                const datePart = now.toISOString().split('T')[0];
-                const timePart = now.getHours().toString().padStart(2, '0') + "-" + now.getMinutes().toString().padStart(2, '0');
-                const filename = `msv_wealth_backup_${datePart}_${timePart}.json`;
-
-                const data = getGlobalDataObject();
-                const content = JSON.stringify(data);
-                
-                const metadata = {
-                    name: filename,
-                    mimeType: 'application/json'
-                };
-
-                const boundary = '-------314159265358979323846';
-                const delimiter = "\r\n--" + boundary + "\r\n";
-                const close_delim = "\r\n--" + boundary + "--";
-
-                let body = delimiter +
-                    'Content-Type: application/json\r\n\r\n' +
-                    JSON.stringify(metadata) +
-                    delimiter +
-                    'Content-Type: application/json\r\n\r\n' +
-                    content +
-                    close_delim;
-
-                // Always create new to keep history with timestamps
-                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    keepalive: true,
-                    headers: new Headers({
-                        'Authorization': 'Bearer ' + gDriveAccessToken,
-                        'Content-Type': 'multipart/related; boundary=' + boundary
-                    }),
-                    body: body
-                });
-                
-                if (!silent) showToast("Backup guardado en Drive", "success");
-                
-                // Update Last Sync Time (Date + Time)
-                const timestampStr = now.toLocaleDateString() + " " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                localStorage.setItem('gDriveLastSyncTime', timestampStr);
-                if (elements.gDriveLastSync) {
-                    elements.gDriveLastSync.textContent = "Última copia: " + timestampStr;
-                }
-                gDriveLastBackupTime = Date.now();
-                return true;
-            } catch (err) {
-                console.error("GDrive Upload Error:", err);
-                if (!silent) showToast("Error al subir a Drive", "danger");
-                return false;
-            } finally {
-                gDriveIsUploading = false;
-            }
-        }
-
-        async function downloadDataFromGDrive() {
-            if (!gDriveAccessToken) {
-                showToast("Conectando con Google...", "info");
-                const waitPromise = new Promise(resolve => { window._resolveToken = resolve; });
-                gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
-                const ok = await Promise.race([waitPromise, new Promise(r => setTimeout(r, 30000))]);
-                if (!ok || !gDriveAccessToken) return;
-            }
-            try {
-                showToast("Buscando copia reciente en Drive...", "info");
-                const response = await gapi.client.drive.files.list({
-                    q: "name contains 'msv_wealth_backup' and trashed = false",
-                    orderBy: 'createdTime desc',
-                    fields: 'files(id, name, createdTime)',
-                    spaces: 'drive'
-                });
-                
-                const files = response.result.files;
-                if (!files || files.length === 0) {
-                    showToast("No se encontró ningún backup", "warning");
-                    return;
-                }
-
-                // Pick the first one (most recent due to orderBy)
-                const fileId = files[0].id;
-                const fileName = files[0].name;
-                
-                const fileData = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                    headers: new Headers({ 'Authorization': 'Bearer ' + gDriveAccessToken })
-                });
-                
-                const json = await fileData.json();
-                
-                showCustomConfirm("Se ha encontrado un backup con fecha " + new Date(json.exportDate || json.timestamp).toLocaleString() + ". ¿Deseas restaurarlo? Esto sobrescribirá tus datos actuales.", () => {
-                    // Use a temporary file-like object to trigger the main importGlobalJSON logic
-                    const blob = new Blob([JSON.stringify(json)], {type: 'application/json'});
-                    const file = new File([blob], fileName, {type: 'application/json'});
-                    importGlobalJSON(file);
-                });
-            } catch (err) {
-                console.error("GDrive Download Error:", err);
-                showToast("Error al descargar de Drive", "danger");
-            }
-        }
-
-        elements.gDriveLoginBtn?.addEventListener('click', () => {
-            if (!gapiInited) {
-                showToast("⚠️ Inicializando Google API... inténtalo de nuevo en 1 segundo.", "warning");
-                return;
-            }
-            gDriveTokenClient.requestAccessToken({ prompt: 'select_account' });
-        });
-
-        elements.gDriveManualBackup?.addEventListener('click', () => uploadDataToGDrive(false));
-        elements.gDriveRestoreBtn?.addEventListener('click', () => downloadDataFromGDrive());
-        elements.gDriveAutoBackup?.addEventListener('change', (e) => {
-            localStorage.setItem('gDriveAutoBackup', e.target.checked);
-        });
-
         // ── Nextcloud buttons ──
         document.getElementById('ncTestBtn')?.addEventListener('click', () => ncTestConnection());
         document.getElementById('ncBackupBtn')?.addEventListener('click', () => ncBackupData());
@@ -7743,45 +7501,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize Nextcloud UI on load
         initNextcloudUI();
 
-        const sidebarGDriveSyncExitBtn = document.getElementById('sidebarGDriveSyncExitBtn');
-        sidebarGDriveSyncExitBtn?.addEventListener('click', async () => {
-            let success = await uploadDataToGDrive(false);
-            
-            // If failed because of token, the call inside uploadDataToGDrive will already trigger a prompt
-            // but we add a safety check here just in case.
-            if (!success && !gDriveAccessToken) {
-                // Not calling anything here because uploadDataToGDrive handles prompts now.
-            }
-            
-            if (success) {
-                const now = new Date();
-                const finalTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const finalDate = now.toLocaleDateString();
-
-                document.body.innerHTML = `
-                    <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f172a; color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 2rem;">
-                        <div style="font-size: 4rem; margin-bottom: 1.5rem;">✅</div>
-                        <h1 style="font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sincronización Completada</h1>
-                        <p style="font-size: 1.1rem; margin-bottom: 1.5rem; color: #10b981; font-weight: 600;">${finalDate} - ${finalTime}</p>
-                        <p style="opacity: 0.7; max-width: 450px; line-height: 1.6; margin-bottom: 2rem;">Tus datos están a salvo en la nube. Puedes cerrar la aplicación tranquilamente.</p>
-                        <div style="display: flex; gap: 1rem;">
-                            <button onclick="location.reload()" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; cursor: pointer; font-weight: 600; font-family: inherit;">🔄 Volver a entrar</button>
-                            <button onclick="window.close();" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600; font-family: inherit;">🔒 Cerrar ahora</button>
-                        </div>
-                    </div>
-                `;
-            }
+        document.getElementById('ncAutoUpload')?.addEventListener('change', (e) => {
+            localStorage.setItem('ncAutoUpload', e.target.checked);
+            if (e.target.checked) ncScheduleAutoUpload();
         });
 
-        document.getElementById('sidebarGDriveRestoreBtn')?.addEventListener('click', () => downloadDataFromGDrive());
+        // Start Nextcloud auto-sync check on load (delay for data to be ready)
+        setTimeout(ncSyncOnLoad, 2000);
 
         // ── Nextcloud sidebar buttons ──
         document.getElementById('sidebarNcBackupBtn')?.addEventListener('click', () => ncBackupData());
         document.getElementById('sidebarNcRestoreBtn')?.addEventListener('click', () => ncRestoreData());
-
-        // All automatic background tasks removed to prevent PWA/TWA issues.
-
-        setTimeout(gDriveInit, 1500); // Small delay to let gapi/google scripts load
 
         // Activity Listeners
         elements.activityLoadMoreBtn?.addEventListener('click', () => {
@@ -9723,6 +9453,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const userInput = document.getElementById('ncUserInput');
         const passInput = document.getElementById('ncPasswordInput');
         const proxyInput = document.getElementById('ncProxyInput');
+        const autoUploadInput = document.getElementById('ncAutoUpload');
         const statusText = document.getElementById('ncStatusText');
         const deviceInfo = document.getElementById('ncDeviceInfo');
         const lastSync = document.getElementById('ncLastSync');
@@ -9735,6 +9466,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (proxyInput) proxyInput.value = config.proxy || '';
             if (statusText) statusText.textContent = '✅ Configurado';
             if (connectedActions) connectedActions.classList.remove('hidden');
+        }
+
+        if (autoUploadInput) {
+            autoUploadInput.checked = localStorage.getItem('ncAutoUpload') !== 'false';
         }
 
         if (deviceInfo) {
@@ -9901,6 +9636,178 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.saveFXDate) window.saveFXDate(window.FX_DATE);
         render();
         if (currentView === 'nomina') renderNomina();
+    }
+
+    // ── Nextcloud Auto-Sync ────────────────────────────────────────
+    let ncAutoSyncTimer = null;
+    let ncSyncInProgress = false;
+    let isSyncingFromServer = false; // Prevents loop: download -> apply -> render -> upload
+    let ncLastServerModified = null; // Track server state to detect conflicts
+
+    // Called on app startup — checks if server has newer data
+    async function ncSyncOnLoad() {
+        const config = NextcloudSync.loadConfig();
+        if (!config) return; // Not configured
+
+        try {
+            const result = await NextcloudSync.downloadData(config);
+            
+            if (!result.ok) {
+                if (result.notFound) {
+                    // No data on server yet — upload current data
+                    console.log('[NC Sync] No data on server, uploading current data...');
+                    const appData = getGlobalDataObject();
+                    await NextcloudSync.uploadData(config, appData);
+                    showToast('📤 Datos sincronizados con Nextcloud', 'success');
+                }
+                return;
+            }
+
+            ncLastServerModified = result.lastModified;
+            const localModified = NextcloudSync.getLocalModified();
+            const serverDate = new Date(result.lastModified);
+            const localDate = localModified ? new Date(localModified) : new Date(0);
+            const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
+
+            if (serverDate > localDate) {
+                // Server has newer data
+                if (isSameDevice) {
+                    // Same device — auto-load silently
+                    console.log('[NC Sync] Loading newer data from same device');
+                    isSyncingFromServer = true;
+                    applyGlobalData(result.data);
+                    isSyncingFromServer = false;
+                    NextcloudSync.setLocalModified(result.lastModified);
+                    showToast('🔄 Datos actualizados desde Nextcloud', 'success');
+                } else {
+                    // Different device — ask the user
+                    const sourceDevice = result.deviceName || 'Desconocido';
+                    const sourceDate = serverDate.toLocaleString();
+                    showCustomConfirm(
+                        `📱 Hay datos más recientes en Nextcloud:\n\n` +
+                        `Dispositivo: ${sourceDevice}\n` +
+                        `Guardado: ${sourceDate}\n\n` +
+                        `¿Cargar esos datos? (Si no, se mantendrán los locales)`,
+                        () => {
+                            isSyncingFromServer = true;
+                            applyGlobalData(result.data);
+                            isSyncingFromServer = false;
+                            NextcloudSync.setLocalModified(result.lastModified);
+                            showToast('✅ Datos cargados desde Nextcloud', 'success');
+                        },
+                        () => {
+                            // User chose to keep local — upload local data
+                            ncSafeUpload(true);
+                        }
+                    );
+                }
+            } else {
+                console.log('[NC Sync] Local data is up to date');
+            }
+        } catch (err) {
+            console.error('[NC Sync] Error on load:', err);
+        }
+    }
+
+    // Debounced auto-upload — called after data changes
+    function ncScheduleAutoUpload() {
+        if (isSyncingFromServer) return; // Don't upload while applying server data
+
+        const config = NextcloudSync.loadConfig();
+        if (!config) return;
+
+        // Check if auto-upload is enabled
+        const autoUpload = localStorage.getItem('ncAutoUpload') !== 'false';
+        if (!autoUpload) return;
+
+        // Mark local data as modified
+        NextcloudSync.setLocalModified(new Date().toISOString());
+
+        // Debounce: wait 10 seconds of inactivity before uploading
+        if (ncAutoSyncTimer) clearTimeout(ncAutoSyncTimer);
+        ncAutoSyncTimer = setTimeout(() => ncSafeUpload(false), 10000);
+    }
+
+    // Upload with conflict detection
+    async function ncSafeUpload(force = false) {
+        if (ncSyncInProgress) return;
+        const config = NextcloudSync.loadConfig();
+        if (!config) return;
+
+        ncSyncInProgress = true;
+        
+        const updateTimer = document.getElementById('updateTimer');
+        if (updateTimer) {
+            updateTimer.textContent = '☁️ Sincronizando...';
+            updateTimer.classList.remove('hidden');
+        }
+
+        try {
+            if (!force) {
+                // Check server for conflicts
+                const serverResult = await NextcloudSync.downloadData(config);
+                if (serverResult.ok) {
+                    const serverDate = new Date(serverResult.lastModified);
+                    const lastKnown = ncLastServerModified ? new Date(ncLastServerModified) : new Date(0);
+                    const isSameDevice = serverResult.deviceId === NextcloudSync.getDeviceId();
+
+                    if (serverDate > lastKnown && !isSameDevice) {
+                        // Another device has uploaded newer data since we last checked
+                        const sourceDevice = serverResult.deviceName || 'Desconocido';
+                        showCustomConfirm(
+                            `⚠️ Otro dispositivo (${sourceDevice}) ha guardado datos más recientes.\n\n` +
+                            `¿Sobrescribir con tus datos locales?`,
+                            () => {
+                                // User confirms overwrite
+                                ncDoUpload(config);
+                            },
+                            () => {
+                                // User cancels — optionally load server data
+                                showCustomConfirm(
+                                    `¿Quieres cargar los datos del servidor en su lugar?`,
+                                    () => {
+                                        isSyncingFromServer = true;
+                                        applyGlobalData(serverResult.data);
+                                        isSyncingFromServer = false;
+                                        NextcloudSync.setLocalModified(serverResult.lastModified);
+                                        ncLastServerModified = serverResult.lastModified;
+                                        showToast('✅ Datos cargados desde Nextcloud', 'success');
+                                    }
+                                );
+                            }
+                        );
+                        return;
+                    }
+                }
+            }
+
+            await ncDoUpload(config);
+        } catch (err) {
+            console.error('[NC Sync] Auto-upload error:', err);
+        } finally {
+            ncSyncInProgress = false;
+            const updateTimer = document.getElementById('updateTimer');
+            if (updateTimer) {
+                // If it was the success message, it'll be hidden by its own timeout elsewhere, 
+                // but let's make sure it hides or stays showing success for a bit.
+                if (updateTimer.textContent.includes('Sincronizando')) {
+                    updateTimer.textContent = '✅ Sincronizado';
+                    setTimeout(() => updateTimer.classList.add('hidden'), 2000);
+                }
+            }
+        }
+    }
+
+    async function ncDoUpload(config) {
+        const appData = getGlobalDataObject();
+        const result = await NextcloudSync.uploadData(config, appData);
+        if (result.ok) {
+            ncLastServerModified = result.timestamp;
+            const lastSync = document.getElementById('ncLastSync');
+            if (lastSync) lastSync.textContent = `Última sync: ${new Date(result.timestamp).toLocaleString()}`;
+            localStorage.setItem('nc_last_sync', result.timestamp);
+            console.log('[NC Sync] Auto-upload OK:', result.timestamp);
+        }
     }
 
     function showToast(message, type = 'success', duration = 3000) {

@@ -5,6 +5,7 @@
 const NextcloudSync = (() => {
     const STORAGE_KEY = 'nc_config';
     const DEVICE_KEY = 'nc_device_id';
+    const LOCAL_MODIFIED_KEY = 'nc_local_modified';
     const NC_FOLDER = 'MSV';
     const NC_FILE = 'msv-data.json';
     
@@ -58,6 +59,15 @@ const NextcloudSync = (() => {
         localStorage.removeItem(STORAGE_KEY);
     }
 
+    // ── Local modification tracking ────────────────────────
+    function getLocalModified() {
+        return localStorage.getItem(LOCAL_MODIFIED_KEY) || null;
+    }
+
+    function setLocalModified(isoDate) {
+        localStorage.setItem(LOCAL_MODIFIED_KEY, isoDate || new Date().toISOString());
+    }
+
     // ── WebDAV Helpers ─────────────────────────────────────
     function buildWebDavUrl(config, path) {
         return `${config.url}/remote.php/dav/files/${encodeURIComponent(config.user)}/${path}`;
@@ -69,20 +79,13 @@ const NextcloudSync = (() => {
         };
     }
 
-    // Proxied fetch: if proxy is configured, route through it
     async function proxiedFetch(config, targetUrl, options = {}) {
         if (config.proxy) {
-            // Route through Cloudflare Worker proxy
             const proxyUrl = config.proxy;
             const headers = new Headers(options.headers || {});
             headers.set('X-Target-URL', targetUrl);
-            
-            return fetch(proxyUrl, {
-                ...options,
-                headers
-            });
+            return fetch(proxyUrl, { ...options, headers });
         } else {
-            // Direct request (only works if CORS is allowed)
             return fetch(targetUrl, options);
         }
     }
@@ -128,9 +131,10 @@ const NextcloudSync = (() => {
     async function uploadData(config, appData) {
         await ensureFolder(config);
 
+        const now = new Date().toISOString();
         const payload = {
             version: 1,
-            lastModified: new Date().toISOString(),
+            lastModified: now,
             deviceId: getDeviceId(),
             deviceName: getDeviceName(),
             data: appData
@@ -147,7 +151,8 @@ const NextcloudSync = (() => {
         });
 
         if (resp.ok || resp.status === 201 || resp.status === 204) {
-            return { ok: true, timestamp: payload.lastModified };
+            setLocalModified(now);
+            return { ok: true, timestamp: now };
         }
         return { ok: false, error: `Error al subir: ${resp.status}` };
     }
@@ -161,7 +166,7 @@ const NextcloudSync = (() => {
         });
 
         if (resp.status === 404) {
-            return { ok: false, error: 'No se encontró archivo de datos en Nextcloud. ¿Has hecho un backup antes?' };
+            return { ok: false, notFound: true, error: 'No hay datos en Nextcloud aún.' };
         }
 
         if (!resp.ok) {
@@ -189,6 +194,8 @@ const NextcloudSync = (() => {
         saveConfig,
         loadConfig,
         clearConfig,
+        getLocalModified,
+        setLocalModified,
         testConnection,
         uploadData,
         downloadData
