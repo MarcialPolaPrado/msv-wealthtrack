@@ -694,7 +694,9 @@ document.addEventListener('DOMContentLoaded', () => {
         drawerIconGroup: document.getElementById('drawerIconGroup'),
         drawerIconInput: document.getElementById('drawerIconInput'),
         nominaIconGroup: document.getElementById('nominaIconGroup'),
-        nominaIconInput: document.getElementById('nominaIconInput')
+        nominaIconInput: document.getElementById('nominaIconInput'),
+        smartConceptToggle: document.getElementById('smartConceptToggle'),
+        historicConceptsDatalist: document.getElementById('historicConcepts')
     };
 
     const updateNominaMovementType = (type) => {
@@ -751,6 +753,73 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
+
+    let isSmartConceptActive = false;
+
+    const populateHistoricConcepts = () => {
+        if (!elements.historicConceptsDatalist) return;
+        const conceptsMap = new Map();
+        // Traverse all drawers and their movements
+        savingsDrawers.forEach(drawer => {
+            (drawer.movements || []).forEach(m => {
+                const desc = (m.description || m.concept || '').trim();
+                if (desc && m.category) {
+                    conceptsMap.set(desc.toLowerCase(), {
+                        original: desc,
+                        category: m.category,
+                        amount: m.amount || 0
+                    });
+                }
+            });
+        });
+
+        elements.historicConceptsDatalist.innerHTML = Array.from(conceptsMap.values())
+            .map(v => `<option value="${v.original}">`)
+            .join('');
+
+        window.HISTORIC_CONCEPTS_MAP = conceptsMap;
+    };
+
+    elements.smartConceptToggle?.addEventListener('click', () => {
+        isSmartConceptActive = !isSmartConceptActive;
+        if (elements.smartConceptToggle) {
+            elements.smartConceptToggle.style.filter = isSmartConceptActive ? 'none' : 'grayscale(1)';
+            elements.smartConceptToggle.style.opacity = isSmartConceptActive ? '1' : '0.5';
+            elements.smartConceptToggle.title = isSmartConceptActive ? '💡 Concepto Inteligente ACTIVADO' : 'Activar Concepto Inteligente';
+        }
+        if (isSmartConceptActive) {
+            populateHistoricConcepts();
+            showToast("Concepto Inteligente Activo: Se sugerirá Categoría y Subcategoría de otros movimientos.", "info");
+        }
+    });
+
+    elements.movementConceptInput?.addEventListener('input', (e) => {
+        if (!isSmartConceptActive) return;
+        const val = e.target.value.trim().toLowerCase();
+        const match = window.HISTORIC_CONCEPTS_MAP?.get(val);
+        if (match) {
+            const fullCategory = match.category; // e.g. "Compras:Visa"
+            const parts = fullCategory.split(':');
+            const mainCat = parts[0];
+            const subCat = parts[1] || '';
+            const type = (match.amount || 0) >= 0 ? 'income' : 'expense';
+
+            // Switch type if needed
+            if (elements.savingsMovementType.value !== type) {
+                updateSavingsMovementType(type);
+            }
+
+            // Sync values with a tiny delay to allow Category populate
+            setTimeout(() => {
+                if (elements.savingsCategorySelect) {
+                    elements.savingsCategorySelect.value = mainCat;
+                }
+                if (elements.savingsSubcategorySelect) {
+                    elements.savingsSubcategorySelect.value = subCat;
+                }
+            }, 50);
+        }
+    });
 
     // Fix the typo in elements object
     elements.savingsMovementExpenseToggle = document.getElementById('savingsMovementExpenseToggle');
@@ -4741,6 +4810,10 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
         }
 
+        if (isSmartConceptActive) {
+            populateHistoricConcepts();
+        }
+
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
     }
@@ -7378,7 +7451,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 2026030936");
+            console.log("MSV WealthTrack Booting... Version: 202603180555");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;

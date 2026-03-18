@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603172005">
+    <link rel="stylesheet" href="styles.css?v=202603180556">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -993,8 +993,12 @@
                 </div>
 
                 <div class="form-group" id="movementConceptGroup">
-                    <label for="movementConceptInput">Concepto (Opcional)</label>
-                    <input type="text" id="movementConceptInput" placeholder="Ej: Ingreso nómina, Compra letra">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <label for="movementConceptInput" style="margin-bottom: 0;">Concepto (Opcional)</label>
+                        <span id="smartConceptToggle" style="cursor: pointer; font-size: 1.2rem; filter: grayscale(1); opacity: 0.5; transition: all 0.2s;" title="Activar Concepto Inteligente (Sugiere categoría y subcategoría según historial)">💡</span>
+                    </div>
+                    <input type="text" id="movementConceptInput" list="historicConcepts" placeholder="Ej: Ingreso nómina, Compra letra">
+                    <datalist id="historicConcepts"></datalist>
                 </div>
 
                 <div class="form-group hidden" id="savingsCategoryGroup">
@@ -1404,7 +1408,7 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603161637"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603172005"></script>
+    <script src="app.js?v=202603180556"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1549,7 +1553,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603172005';
+        const APP_VERSION = '202603180556';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
