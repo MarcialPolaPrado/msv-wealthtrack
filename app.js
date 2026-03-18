@@ -698,7 +698,9 @@ document.addEventListener('DOMContentLoaded', () => {
         smartConceptToggle: document.getElementById('smartConceptToggle'),
         historicConceptsDatalist: document.getElementById('historicConcepts'),
         storageUsageBar: document.getElementById('storageUsageBar'),
-        storageUsageText: document.getElementById('storageUsageText')
+        storageUsageText: document.getElementById('storageUsageText'),
+        addNewCategoryBtn: document.getElementById('addNewCategoryBtn'),
+        addNewSubcategoryBtn: document.getElementById('addNewSubcategoryBtn')
     };
 
     const updateNominaMovementType = (type) => {
@@ -837,6 +839,48 @@ document.addEventListener('DOMContentLoaded', () => {
                     elements.savingsSubcategorySelect.value = subCat;
                 }
             }, 50);
+        }
+    });
+
+    elements.addNewCategoryBtn?.addEventListener('click', () => {
+        const type = elements.savingsMovementType?.value || 'income';
+        const label = type === 'income' ? 'Nueva Categoría de Ingresos' : 'Nueva Categoría de Gastos';
+        const newCat = prompt(`${label}:`, '');
+        
+        if (newCat && newCat.trim()) {
+            const name = newCat.trim();
+            const cats = type === 'income' ? incomeCategories : expenseCategories;
+            if (!cats.includes(name)) {
+                cats.push(name);
+                localStorage.setItem(type === 'income' ? 'incomeCategories' : 'expenseCategories', JSON.stringify(cats));
+                updateSavingsMovementType(type); // Refresh labels
+                if (elements.savingsCategorySelect) elements.savingsCategorySelect.value = name;
+                showToast(`Categoría "${name}" añadida.`, 'success');
+            } else {
+                showToast(`La categoría "${name}" ya existe.`, 'warning');
+                if (elements.savingsCategorySelect) elements.savingsCategorySelect.value = name;
+            }
+        }
+    });
+
+    elements.addNewSubcategoryBtn?.addEventListener('click', () => {
+        const type = elements.savingsMovementType?.value || 'income';
+        const label = type === 'income' ? 'Nueva Subcategoría de Ingresos' : 'Nueva Subcategoría de Gastos';
+        const newSub = prompt(`${label}:`, '');
+        
+        if (newSub && newSub.trim()) {
+            const name = newSub.trim();
+            const subcats = type === 'income' ? incomeSubcategories : expenseSubcategories;
+            if (!subcats.includes(name)) {
+                subcats.push(name);
+                localStorage.setItem(type === 'income' ? 'incomeSubcategories' : 'expenseSubcategories', JSON.stringify(subcats));
+                updateSavingsMovementType(type); // Refresh
+                if (elements.savingsSubcategorySelect) elements.savingsSubcategorySelect.value = name;
+                showToast(`Subcategoría "${name}" añadida.`, 'success');
+            } else {
+                showToast(`La subcategoría "${name}" ya existe.`, 'warning');
+                if (elements.savingsSubcategorySelect) elements.savingsSubcategorySelect.value = name;
+            }
         }
     });
 
@@ -7498,7 +7542,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Swipe Navigation for Mobile
         (function () {
-            console.log("MSV WealthTrack Booting... Version: 202603180616");
+            console.log("MSV WealthTrack Booting... Version: 202603180625");
             let touchStartX = 0;
             let touchEndX = 0;
             let touchStartY = 0;
