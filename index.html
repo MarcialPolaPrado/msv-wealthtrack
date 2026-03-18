@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603181511">
+    <link rel="stylesheet" href="styles.css?v=202603181551">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -712,6 +712,38 @@
                     <div id="gDriveLoggedActions" class="hidden">
                         <button type="button" id="gDriveManualBackup" class="btn-primary" style="width: 100%; margin-bottom: 0.5rem; background: var(--success); border: none;">📤 Guardar Backup Ahora</button>
                         <button type="button" id="gDriveRestoreBtn" class="btn-secondary" style="width: 100%; margin-bottom: 1.5rem;">📥 Cargar desde la Nube</button>
+                    </div>
+                </div>
+
+                <!-- Nextcloud Sync -->
+                <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                    <label style="font-weight: 700; color: white; display: block; margin-bottom: 0.8rem;">☁️ Sincronización Nextcloud (WebDAV)</label>
+                    
+                    <div id="ncStatus" style="font-size: 0.8rem; margin-bottom: 1rem; padding: 0.5rem; border-radius: 8px; background: rgba(255,255,255,0.05); text-align: center;">
+                        <div id="ncStatusText" style="opacity: 0.6;">No configurado</div>
+                        <div id="ncLastSync" style="font-size: 0.7rem; opacity: 0.4; margin-top: 0.2rem;"></div>
+                        <div id="ncDeviceInfo" style="font-size: 0.65rem; opacity: 0.35; margin-top: 0.2rem;"></div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                        <input type="url" id="ncUrlInput" placeholder="https://tu-nextcloud.com" 
+                            style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
+                        <input type="text" id="ncUserInput" placeholder="Usuario" autocomplete="username"
+                            style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
+                        <input type="password" id="ncPasswordInput" placeholder="App Password" autocomplete="current-password"
+                            style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
+                        <input type="url" id="ncProxyInput" placeholder="URL del Proxy CORS (Cloudflare Worker)"
+                            style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
+                        <small style="opacity: 0.5; font-size: 0.7rem;">App Password: Nextcloud → Ajustes → Seguridad. Proxy: necesario si CORS bloqueado.</small>
+                    </div>
+
+                    <button type="button" id="ncTestBtn" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        🔗 Probar Conexión
+                    </button>
+
+                    <div id="ncConnectedActions" class="hidden">
+                        <button type="button" id="ncBackupBtn" class="btn-primary" style="width: 100%; margin-bottom: 0.5rem; background: var(--success); border: none;">📤 Guardar en Nextcloud</button>
+                        <button type="button" id="ncRestoreBtn" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">📥 Cargar desde Nextcloud</button>
                     </div>
                 </div>
 
@@ -1415,7 +1447,8 @@
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
-    <script src="app.js?v=202603181511"></script>
+    <script src="nextcloud.js?v=202603181520"></script>
+    <script src="app.js?v=202603181551"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1586,7 +1619,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603181511';
+        const APP_VERSION = '202603181551';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

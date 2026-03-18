@@ -7735,6 +7735,14 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('gDriveAutoBackup', e.target.checked);
         });
 
+        // ── Nextcloud buttons ──
+        document.getElementById('ncTestBtn')?.addEventListener('click', () => ncTestConnection());
+        document.getElementById('ncBackupBtn')?.addEventListener('click', () => ncBackupData());
+        document.getElementById('ncRestoreBtn')?.addEventListener('click', () => ncRestoreData());
+        
+        // Initialize Nextcloud UI on load
+        initNextcloudUI();
+
         const sidebarGDriveSyncExitBtn = document.getElementById('sidebarGDriveSyncExitBtn');
         sidebarGDriveSyncExitBtn?.addEventListener('click', async () => {
             let success = await uploadDataToGDrive(false);
@@ -9702,6 +9710,193 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         reader.readAsText(file);
+    }
+
+    // ── Nextcloud Integration ──────────────────────────────────────
+    function initNextcloudUI() {
+        const config = NextcloudSync.loadConfig();
+        const urlInput = document.getElementById('ncUrlInput');
+        const userInput = document.getElementById('ncUserInput');
+        const passInput = document.getElementById('ncPasswordInput');
+        const proxyInput = document.getElementById('ncProxyInput');
+        const statusText = document.getElementById('ncStatusText');
+        const deviceInfo = document.getElementById('ncDeviceInfo');
+        const lastSync = document.getElementById('ncLastSync');
+        const connectedActions = document.getElementById('ncConnectedActions');
+
+        if (config) {
+            if (urlInput) urlInput.value = config.url;
+            if (userInput) userInput.value = config.user;
+            if (passInput) passInput.value = config.password;
+            if (proxyInput) proxyInput.value = config.proxy || '';
+            if (statusText) statusText.textContent = '✅ Configurado';
+            if (connectedActions) connectedActions.classList.remove('hidden');
+        }
+
+        if (deviceInfo) {
+            deviceInfo.textContent = `📱 ${NextcloudSync.getDeviceName()} · ID: ${NextcloudSync.getDeviceId().substr(-6)}`;
+        }
+
+        const savedLastSync = localStorage.getItem('nc_last_sync');
+        if (savedLastSync && lastSync) {
+            lastSync.textContent = `Última sync: ${new Date(savedLastSync).toLocaleString()}`;
+        }
+    }
+
+    function getNcConfigFromInputs() {
+        const url = document.getElementById('ncUrlInput')?.value?.trim();
+        const user = document.getElementById('ncUserInput')?.value?.trim();
+        const password = document.getElementById('ncPasswordInput')?.value;
+        const proxy = document.getElementById('ncProxyInput')?.value?.trim() || '';
+        
+        if (!url || !user || !password) {
+            showToast('Rellena URL, usuario y App Password', 'warning');
+            return null;
+        }
+        return { url, user, password, proxy };
+    }
+
+    async function ncTestConnection() {
+        const cfg = getNcConfigFromInputs();
+        if (!cfg) return;
+
+        const statusText = document.getElementById('ncStatusText');
+        if (statusText) statusText.textContent = '⏳ Probando conexión...';
+
+        const result = await NextcloudSync.testConnection(cfg);
+        
+        if (result.ok) {
+            NextcloudSync.saveConfig(cfg.url, cfg.user, cfg.password, cfg.proxy);
+            if (statusText) statusText.textContent = '✅ Conectado correctamente';
+            document.getElementById('ncConnectedActions')?.classList.remove('hidden');
+            showToast('✅ Conexión con Nextcloud OK', 'success');
+        } else {
+            if (statusText) statusText.textContent = '❌ ' + result.error;
+            showToast('❌ ' + result.error, 'error', 5000);
+        }
+    }
+
+    async function ncBackupData() {
+        const config = NextcloudSync.loadConfig();
+        if (!config) {
+            showToast('Primero configura y prueba la conexión', 'warning');
+            return;
+        }
+
+        showToast('⏳ Subiendo datos a Nextcloud...', 'info');
+        const appData = getGlobalDataObject();
+        const result = await NextcloudSync.uploadData(config, appData);
+
+        if (result.ok) {
+            localStorage.setItem('nc_last_sync', result.timestamp);
+            const lastSync = document.getElementById('ncLastSync');
+            if (lastSync) lastSync.textContent = `Última sync: ${new Date(result.timestamp).toLocaleString()}`;
+            showToast('✅ Datos guardados en Nextcloud', 'success');
+        } else {
+            showToast('❌ ' + result.error, 'error', 5000);
+        }
+    }
+
+    async function ncRestoreData() {
+        const config = NextcloudSync.loadConfig();
+        if (!config) {
+            showToast('Primero configura y prueba la conexión', 'warning');
+            return;
+        }
+
+        showToast('⏳ Descargando datos de Nextcloud...', 'info');
+        const result = await NextcloudSync.downloadData(config);
+
+        if (!result.ok) {
+            showToast('❌ ' + result.error, 'error', 5000);
+            return;
+        }
+
+        const data = result.data;
+        if (!data || !data.stocks || !data.savings || !data.nomina) {
+            showToast('❌ Los datos descargados no tienen el formato esperado', 'error');
+            return;
+        }
+
+        // Show info about source device
+        const sourceDevice = result.deviceName || 'Desconocido';
+        const sourceDate = result.lastModified ? new Date(result.lastModified).toLocaleString() : '?';
+        const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
+
+        const deviceWarning = isSameDevice 
+            ? '' 
+            : `\n\n⚠️ Estos datos fueron guardados desde OTRO dispositivo:\n📱 ${sourceDevice}`;
+
+        showCustomConfirm(
+            `Se restaurarán desde Nextcloud:\n` +
+            `- ${data.stocks.length} activos en Bolsa\n` +
+            `- ${data.savings.length} cajones de Ahorro\n` +
+            `- ${data.nomina.length} cajones de Nómina\n` +
+            `📅 Guardado: ${sourceDate}${deviceWarning}\n\n` +
+            `¿Reemplazar tus datos actuales?`,
+            () => {
+                applyGlobalData(data);
+                showToast('✅ Datos restaurados desde Nextcloud', 'success');
+            }
+        );
+    }
+
+    function applyGlobalData(data) {
+        stocks = data.stocks;
+        savingsDrawers = data.savings.map(d => ({ ...d, group: d.group || '' }));
+        nominaData = migrateNominaData(data.nomina);
+        if (data.countdowns) countdowns = data.countdowns;
+        if (data.manualPrices) window.MANUAL_PRICES = data.manualPrices;
+        if (data.livePrices) window.LIVE_PRICES = data.livePrices;
+        if (data.liveDates) window.LIVE_DATES = data.liveDates;
+        if (data.liveSources) window.LIVE_SOURCES = data.liveSources;
+        if (data.fxRate) window.FX_RATE = data.fxRate;
+        if (data.fxDate) window.FX_DATE = data.fxDate;
+
+        isFirstUpdateDone = true;
+        if (data.exportDate) {
+            try { lastSyncTime = new Date(data.exportDate).toLocaleTimeString(); }
+            catch { lastSyncTime = '-'; }
+        }
+
+        if (data.settings) {
+            if (data.settings.fiscalDay) {
+                fiscalDay = parseInt(data.settings.fiscalDay);
+                localStorage.setItem('fiscalDay', fiscalDay);
+            }
+            if (data.settings.incomeCategories) {
+                incomeCategories = data.settings.incomeCategories;
+                localStorage.setItem('incomeCategories', JSON.stringify(incomeCategories));
+            }
+            if (data.settings.expenseCategories) {
+                expenseCategories = data.settings.expenseCategories;
+                localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
+            }
+            if (data.settings.incomeSubcategories) {
+                incomeSubcategories = data.settings.incomeSubcategories;
+                localStorage.setItem('incomeSubcategories', JSON.stringify(incomeSubcategories));
+            }
+            if (data.settings.expenseSubcategories) {
+                expenseSubcategories = data.settings.expenseSubcategories;
+                localStorage.setItem('expenseSubcategories', JSON.stringify(expenseSubcategories));
+            }
+            if (data.settings.defaultTransferSource !== undefined) {
+                localStorage.setItem('defaultTransferSource', data.settings.defaultTransferSource || '');
+            }
+        }
+
+        if (window.saveStocks) window.saveStocks(stocks);
+        if (window.saveSavings) window.saveSavings(savingsDrawers);
+        if (window.saveNomina) window.saveNomina(nominaData);
+        if (window.saveCountdowns) window.saveCountdowns(countdowns);
+        if (window.saveManualPrices) window.saveManualPrices(window.MANUAL_PRICES);
+        if (window.saveLivePrices) window.saveLivePrices(window.LIVE_PRICES);
+        if (window.saveLiveDates) window.saveLiveDates(window.LIVE_DATES);
+        if (window.saveLiveSources) window.saveLiveSources(window.LIVE_SOURCES);
+        if (window.saveFXRate) window.saveFXRate(window.FX_RATE);
+        if (window.saveFXDate) window.saveFXDate(window.FX_DATE);
+        render();
+        if (currentView === 'nomina') renderNomina();
     }
 
     function showToast(message, type = 'success', duration = 3000) {
