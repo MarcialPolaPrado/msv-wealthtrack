@@ -3426,3 +3426,22 @@ button,
         backdrop-filter: none !important;
     }
 }
+/* Desktop refinement: Larger fonts and spacing for global calendar */
+@media (min-width: 1025px) {
+    .calendar-cell {
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+    .calendar-cell-amount {
+        font-size: 0.95rem !important;
+        margin-bottom: 4px;
+    }
+    .calendar-cell-concepts {
+        font-size: 0.65rem !important;
+        gap: 5px !important;
+        margin-top: 2px;
+    }
+    .calendar-cell-date {
+        font-size: 0.9rem;
+    }
+}

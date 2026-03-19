@@ -5692,27 +5692,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const mvmts = allMovements.filter(m => m.date === dateStr);
             const totalOnDay = mvmts.reduce((sum, m) => sum + m.amount, 0);
 
+            const isDesktop = window.innerWidth > 1024;
             const cell = document.createElement('div');
             cell.className = `calendar-cell ${isToday ? 'today' : ''}`;
-            cell.style.height = 'auto'; cell.style.aspectRatio = 'unset'; cell.style.minHeight = '100px';
+            cell.style.height = 'auto';
+            cell.style.aspectRatio = 'unset';
+            cell.style.minHeight = isDesktop ? '140px' : '100px';
 
             let amountHtml = '';
             if (mvmts.length > 0) {
                 const colorClass = totalOnDay > 0 ? 'income' : totalOnDay < 0 ? 'expense' : '';
                 amountHtml = `<div class="calendar-cell-amount ${colorClass}" style="margin-top:2px;">${fmtEUR(totalOnDay)}</div>`;
 
-                // Concepts (max 3)
-                const concepts = mvmts.slice(0, 3).map(m => `
+                // Concepts (max 3 on mobile, 6 on desktop)
+                const conceptLimit = isDesktop ? 6 : 3;
+                const concepts = mvmts.slice(0, conceptLimit).map(m => {
+                    const desc = m.description.length > 12 ? m.description.substring(0, 12).trim() + '...' : m.description;
+                    return `
                     <div class="calendar-cell-concepts" style="font-size:0.55rem; opacity:0.6; line-height:1.1; display:flex; align-items:center; gap:3px; overflow:hidden;">
                         <span style="flex-shrink:0;">${m.drawerIcon}</span>
-                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1; min-width:0;">${m.description}</span>
+                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1; min-width:0;">${desc}</span>
                     </div>
-                `).join('');
+                `;
+                }).join('');
 
                 amountHtml += `
                     <div style="margin-top:4px; display:flex; flex-direction:column; gap:1px; flex-grow:1; overflow:hidden; width:100%; min-width:0;">
                         ${concepts}
-                        ${mvmts.length > 3 ? `<div style="font-size:0.5rem; opacity:0.4; font-style:italic;">+ ${mvmts.length - 3} más</div>` : ''}
+                        ${mvmts.length > conceptLimit ? `<div style="font-size:0.5rem; opacity:0.4; font-style:italic;">+ ${mvmts.length - conceptLimit} más</div>` : ''}
                     </div>
                 `;
 
