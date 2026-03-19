@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let calendarDrawerId = null;
     let calendarViewDate = new Date(); // Month/Year currently shown in the calendar modal
+    let globalAhorroCalendarViewDate = new Date(); // Global savings calendar view date
 
     const DRAWER_COLORS = [
         { name: 'green', border: '#10b981', bg: '#064e3b', grad: 'rgba(16, 185, 129, 0.4)' },
@@ -463,6 +464,17 @@ document.addEventListener('DOMContentLoaded', () => {
         savingsDateInput: document.getElementById('savingsDateInput'),
         drawerInfoGroup: document.getElementById('drawerInfoGroup'),
         drawerInfoDisplay: document.getElementById('drawerInfoDisplay'),
+
+        // Global Savings Calendar Elements
+        ahorroCalendarBtn2: document.getElementById('ahorroCalendarBtn2'),
+        ahorroCalendarSection: document.getElementById('ahorroCalendarSection'),
+        ahorroGlobalCalendarMonthUp: document.getElementById('ahorroGlobalCalendarMonthUp'),
+        ahorroGlobalCalendarMonthDown: document.getElementById('ahorroGlobalCalendarMonthDown'),
+        ahorroGlobalCalendarMonthLabel: document.getElementById('ahorroGlobalCalendarMonthLabel'),
+        ahorroGlobalCalendarYearUp: document.getElementById('ahorroGlobalCalendarYearUp'),
+        ahorroGlobalCalendarYearDown: document.getElementById('ahorroGlobalCalendarYearDown'),
+        ahorroGlobalCalendarYearLabel: document.getElementById('ahorroGlobalCalendarYearLabel'),
+        ahorroGlobalCalendarGrid: document.getElementById('ahorroGlobalCalendarGrid'),
 
         // Nomina Elements
         nominaSection: document.getElementById('nominaSection'),
@@ -1655,6 +1667,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
                 if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
                 if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
+                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
                 if (elements.mobileActionBar) elements.mobileActionBar.classList.remove('hidden');
                 renderPortfolioPieChart();
             } else if (currentView === 'ahorro') {
@@ -1662,10 +1677,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.ahorroSection) elements.ahorroSection.classList.remove('hidden');
                 if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
                 if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
                 if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
                 renderSavings();
+            } else if (currentView === 'ahorroCalendar') {
+                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
+                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
+                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
+                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.remove('hidden');
+                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
+                renderGlobalAhorroCalendar();
             } else if (currentView === 'nomina') {
                 if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
+                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
+                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
                 if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
                 if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
                 if (elements.nominaSection) elements.nominaSection.classList.remove('hidden');
@@ -5614,8 +5640,200 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── Bolsa Calendar ─────────────────────────────────────────────
-    let bolsaCalendarViewDate = new Date();
+    function renderGlobalAhorroCalendar() {
+        const grid = elements.ahorroGlobalCalendarGrid;
+        if (!grid) return;
+
+        const year = globalAhorroCalendarViewDate.getFullYear();
+        const month = globalAhorroCalendarViewDate.getMonth();
+
+        // Update labels
+        if (elements.ahorroGlobalCalendarMonthLabel) {
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            elements.ahorroGlobalCalendarMonthLabel.textContent = monthNames[month];
+        }
+        if (elements.ahorroGlobalCalendarYearLabel) {
+            elements.ahorroGlobalCalendarYearLabel.textContent = year;
+        }
+
+        // Clear grid (keep day headers)
+        const heads = grid.querySelectorAll('.calendar-day-head');
+        grid.innerHTML = '';
+        heads.forEach(h => grid.appendChild(h));
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Adjust to Mon-start
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        // Previous month days
+        for (let i = startOffset - 1; i >= 0; i--) {
+            const d = daysInPrevMonth - i;
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell other-month';
+            cell.style.height = 'auto'; cell.style.aspectRatio = 'unset'; cell.style.minHeight = '100px';
+            cell.innerHTML = `<span class="calendar-cell-date">${d}</span>`;
+            grid.appendChild(cell);
+        }
+
+        // Aggregated movements
+        const allMovements = savingsDrawers.flatMap(d => (d.movements || []).map(m => ({ ...m, drawerName: d.name, drawerIcon: d.icon, drawerId: d.id })));
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isToday = dateStr === todayStr;
+
+            const mvmts = allMovements.filter(m => m.date === dateStr);
+            const totalOnDay = mvmts.reduce((sum, m) => sum + m.amount, 0);
+
+            const cell = document.createElement('div');
+            cell.className = `calendar-cell ${isToday ? 'today' : ''}`;
+            cell.style.height = 'auto'; cell.style.aspectRatio = 'unset'; cell.style.minHeight = '100px';
+
+            let amountHtml = '';
+            if (mvmts.length > 0) {
+                const colorClass = totalOnDay > 0 ? 'income' : totalOnDay < 0 ? 'expense' : '';
+                amountHtml = `<div class="calendar-cell-amount ${colorClass}" style="margin-top:2px;">${fmtEUR(totalOnDay)}</div>`;
+
+                // Concepts (max 3)
+                const concepts = mvmts.slice(0, 3).map(m => `
+                    <div style="font-size:0.55rem; opacity:0.6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1; display:flex; align-items:center; gap:3px;">
+                        <span>${m.drawerIcon}</span>
+                        <span>${m.description}</span>
+                    </div>
+                `).join('');
+
+                amountHtml += `
+                    <div style="margin-top:4px; display:flex; flex-direction:column; gap:1px; flex-grow:1; overflow:hidden;">
+                        ${concepts}
+                        ${mvmts.length > 3 ? `<div style="font-size:0.5rem; opacity:0.4; font-style:italic;">+ ${mvmts.length - 3} más</div>` : ''}
+                    </div>
+                `;
+
+                // Operation count badge
+                amountHtml += `<div style="font-size:0.55rem; opacity:0.5; text-align:right; margin-top:3px; font-weight:600;">${mvmts.length} ops</div>`;
+
+                cell.style.cursor = 'pointer';
+                cell.onclick = () => showGlobalCalendarDayDetails(dateStr);
+            }
+
+            cell.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <span class="calendar-cell-date">${d}</span>
+                </div>
+                ${amountHtml}
+            `;
+            grid.appendChild(cell);
+        }
+
+        // Fill remaining cells
+        const totalCells = grid.querySelectorAll('.calendar-cell').length;
+        const remaining = (7 - (totalCells % 7)) % 7;
+        for (let d = 1; d <= remaining; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell other-month';
+            cell.style.height = 'auto'; cell.style.aspectRatio = 'unset'; cell.style.minHeight = '100px';
+            cell.innerHTML = `<span class="calendar-cell-date">${d}</span>`;
+            grid.appendChild(cell);
+        }
+    }
+
+    function showGlobalCalendarDayDetails(dateStr) {
+        const year = globalAhorroCalendarViewDate.getFullYear();
+        const month = globalAhorroCalendarViewDate.getMonth();
+
+        const allMovements = savingsDrawers.flatMap(d => (d.movements || []).map((m, idx) => ({
+            ...m,
+            drawerName: d.name,
+            drawerIcon: d.icon,
+            drawerId: d.id,
+            originalIndex: idx
+        })));
+
+        const dayMovements = allMovements.filter(m => m.date === dateStr);
+        if (dayMovements.length === 0) return;
+
+        const dateObj = new Date(dateStr);
+        const formattedDate = dateObj.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        const movementsHtml = dayMovements.map(m => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:1.2rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="flex-grow:1;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2rem;">${m.drawerIcon}</span>
+                        <div style="font-weight:600;">${m.description}</div>
+                        ${m.category ? `<span style="font-size: 0.7rem; padding: 2px 6px; background: rgba(255,255,255,0.05); border-radius: 4px; opacity: 0.7;">${m.drawerName} • ${m.category}</span>` : ''}
+                    </div>
+                    <div style="display:flex; gap:1.2rem; margin-top:0.5rem; opacity:0.6;">
+                        <button class="edit-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Editar">✏️ <small>Editar</small></button>
+                        <button class="copy-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Copiar">📋 <small>Copiar</small></button>
+                        <button class="delete-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Borrar">🗑️ <small>Borrar</small></button>
+                    </div>
+                </div>
+                <div style="font-weight:700; color:${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'}; font-size:1.1rem;">
+                    ${m.amount >= 0 ? '+' : ''}${fmtEUR(m.amount)}
+                </div>
+            </div>
+        `).join('');
+
+        const overlay = document.createElement('div');
+        overlay.id = 'dayDetailsOverlay';
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10001;
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            padding: 1rem;
+        `;
+        overlay.innerHTML = `
+            <div class="glass-panel" style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; width: min(450px, 95vw); max-height: 80vh; overflow-y: auto;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem;">
+                    <div>
+                        <h3 style="margin:0; opacity:0.6; font-size:0.8rem; text-transform:uppercase;">Movimientos de Ahorro</h3>
+                        <h2 style="margin:0.2rem 0 0 0; text-transform:capitalize; font-size:1.1rem;">${formattedDate}</h2>
+                    </div>
+                    <button id="closeDayDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.5rem;" title="Cerrar">✕</button>
+                </div>
+                <div>${movementsHtml}</div>
+                <button id="backToCalendar" class="btn-secondary" style="width:100%; margin-top:1.5rem; padding:0.8rem; border-radius:12px; font-weight:600;">Volver al Calendario</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+        document.getElementById('closeDayDetails').onclick = close;
+        document.getElementById('backToCalendar').onclick = close;
+        overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+        // Action Buttons Listeners
+        overlay.querySelectorAll('.edit-day-mvmt-btn').forEach(btn => {
+            btn.onclick = () => {
+                const drawerId = btn.dataset.drawer;
+                const index = parseInt(btn.dataset.index);
+                close();
+                showEditMovementModal(drawerId, index);
+            };
+        });
+        overlay.querySelectorAll('.copy-day-mvmt-btn').forEach(btn => {
+            btn.onclick = () => {
+                const drawerId = btn.dataset.drawer;
+                const index = parseInt(btn.dataset.index);
+                close();
+                copySavingsMovement(drawerId, index);
+            };
+        });
+        overlay.querySelectorAll('.delete-day-mvmt-btn').forEach(btn => {
+            btn.onclick = () => {
+                const drawerId = btn.dataset.drawer;
+                const index = parseInt(btn.dataset.index);
+                deleteSavingsMovement(drawerId, index);
+                close();
+                renderGlobalAhorroCalendar();
+            };
+        });
+    }
 
     function showBolsaCalendar() {
         bolsaCalendarViewDate = new Date();
@@ -7239,6 +7457,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
                 if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove('visible');
             });
+        });
+
+        // Global Ahorro Calendar Listeners
+        elements.ahorroCalendarBtn2?.addEventListener('click', () => switchView('ahorroCalendar'));
+        elements.ahorroGlobalCalendarMonthUp?.addEventListener('click', () => {
+            globalAhorroCalendarViewDate.setMonth(globalAhorroCalendarViewDate.getMonth() + 1);
+            renderGlobalAhorroCalendar();
+        });
+        elements.ahorroGlobalCalendarMonthDown?.addEventListener('click', () => {
+            globalAhorroCalendarViewDate.setMonth(globalAhorroCalendarViewDate.getMonth() - 1);
+            renderGlobalAhorroCalendar();
+        });
+        elements.ahorroGlobalCalendarYearUp?.addEventListener('click', () => {
+            globalAhorroCalendarViewDate.setFullYear(globalAhorroCalendarViewDate.getFullYear() + 1);
+            renderGlobalAhorroCalendar();
+        });
+        elements.ahorroGlobalCalendarYearDown?.addEventListener('click', () => {
+            globalAhorroCalendarViewDate.setFullYear(globalAhorroCalendarViewDate.getFullYear() - 1);
+            renderGlobalAhorroCalendar();
         });
 
         // Mobile "More" Menu

@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603181933">
+    <link rel="stylesheet" href="styles.css?v=202603190643">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -138,6 +138,8 @@
                         <div class="sidebar-submenu">
                             <button id="ahorroViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista
                                 Tarjetas/Lista</button>
+                            <button id="ahorroCalendarBtn2" class="submenu-item"><span>📅</span> Vista
+                                Calendario</button>
                             <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
                             <button id="addDrawerBtn2" class="submenu-item"><span>📁</span> Añadir Cajón</button>
                             <button id="ahorroSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar
@@ -494,6 +496,53 @@
                                 style="padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;">
                                 <div id="savingsPieChart" style="width: 100%; display: block;"></div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Ahorro Calendar Section -->
+            <div id="ahorroCalendarSection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header"
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h2 style="margin:0">Calendario de Ahorro Global</h2>
+                        </div>
+                        <div
+                            style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                            <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
+                                <button id="ahorroGlobalCalendarMonthUp" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="ahorroGlobalCalendarMonthDown" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="ahorroGlobalCalendarMonthLabel"
+                                style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700; min-width: 120px;">
+                                --</h3>
+
+                            <div class="navigation-arrows"
+                                style="display: flex; flex-direction: column; gap: 2px; margin-left: 10px;">
+                                <button id="ahorroGlobalCalendarYearUp" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="ahorroGlobalCalendarYearDown" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="ahorroGlobalCalendarYearLabel"
+                                style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">
+                                --</h3>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="padding: 1rem; margin-bottom: 2rem;">
+                        <div id="ahorroGlobalCalendarGrid" class="calendar-grid">
+                            <div class="calendar-day-head">Lun</div>
+                            <div class="calendar-day-head">Mar</div>
+                            <div class="calendar-day-head">Mié</div>
+                            <div class="calendar-day-head">Jue</div>
+                            <div class="calendar-day-head">Vie</div>
+                            <div class="calendar-day-head">Sáb</div>
+                            <div class="calendar-day-head">Dom</div>
                         </div>
                     </div>
                 </div>
@@ -1553,7 +1602,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603181933"></script>
+    <script src="app.js?v=202603190643"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1740,7 +1789,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603181933';
+        const APP_VERSION = '202603190643';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
