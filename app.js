@@ -5703,9 +5703,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Concepts (max 3)
                 const concepts = mvmts.slice(0, 3).map(m => `
-                    <div class="calendar-cell-concepts" style="font-size:0.55rem; opacity:0.6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1; display:flex; align-items:center; gap:3px;">
-                        <span>${m.drawerIcon}</span>
-                        <span>${m.description}</span>
+                    <div class="calendar-cell-concepts" style="font-size:0.55rem; opacity:0.6; line-height:1.1; display:flex; align-items:center; gap:3px; overflow:hidden;">
+                        <span style="flex-shrink:0;">${m.drawerIcon}</span>
+                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1; min-width:0;">${m.description}</span>
                     </div>
                 `).join('');
 
