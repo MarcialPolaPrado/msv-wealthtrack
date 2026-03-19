@@ -5703,7 +5703,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Concepts (max 3)
                 const concepts = mvmts.slice(0, 3).map(m => `
-                    <div style="font-size:0.55rem; opacity:0.6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1; display:flex; align-items:center; gap:3px;">
+                    <div class="calendar-cell-concepts" style="font-size:0.55rem; opacity:0.6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1; display:flex; align-items:center; gap:3px;">
                         <span>${m.drawerIcon}</span>
                         <span>${m.description}</span>
                     </div>
@@ -7462,7 +7462,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Global Ahorro Calendar Listeners
-        elements.ahorroCalendarBtn2?.addEventListener('click', () => switchView('ahorroCalendar'));
+        elements.ahorroCalendarBtn2?.addEventListener('click', () => {
+            switchView('ahorroCalendar');
+            if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
+            if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove('visible');
+        });
         elements.ahorroGlobalCalendarMonthUp?.addEventListener('click', () => {
             globalAhorroCalendarViewDate.setMonth(globalAhorroCalendarViewDate.getMonth() + 1);
             renderGlobalAhorroCalendar();
@@ -8839,6 +8843,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('bolsaCalendarBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             showBolsaCalendar();
+            if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
+            if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove('visible');
         });
 
         elements.closeBolsaCalendarModal?.addEventListener('click', () => {

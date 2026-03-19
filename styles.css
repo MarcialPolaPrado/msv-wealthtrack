@@ -3401,3 +3401,9 @@ button,
         text-align: right;
     }
 }
+/* Mobile refinement: Hide concepts in global calendar for small screens */
+@media (max-width: 480px) {
+    .calendar-cell-concepts {
+        display: none !important;
+    }
+}
