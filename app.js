@@ -5710,7 +5710,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `).join('');
 
                 amountHtml += `
-                    <div style="margin-top:4px; display:flex; flex-direction:column; gap:1px; flex-grow:1; overflow:hidden;">
+                    <div style="margin-top:4px; display:flex; flex-direction:column; gap:1px; flex-grow:1; overflow:hidden; width:100%; min-width:0;">
                         ${concepts}
                         ${mvmts.length > 3 ? `<div style="font-size:0.5rem; opacity:0.4; font-style:italic;">+ ${mvmts.length - 3} más</div>` : ''}
                     </div>
