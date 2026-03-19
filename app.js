@@ -3008,15 +3008,22 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroTableContainer?.classList.remove('hidden');
 
             if (elements.ahorroViewToggleBtn) {
-                elements.ahorroViewToggleBtn.innerHTML = '<span>🗂️</span>';
-                elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Cajones';
+                elements.ahorroViewToggleBtn.innerHTML = '<span>📅</span>';
+                elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Calendario';
             }
 
             // Sync with Sidebar
             const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
-            if (sidebarBtn) sidebarBtn.innerHTML = '<span>🗂️</span> Vista Cajones';
+            if (sidebarBtn) sidebarBtn.innerHTML = '<span>📅</span> Vista Calendario';
 
             renderSavingsList();
+        } else if (ahorroViewMode === 'calendar') {
+            // This state is usually redirected to ahorroCalendar view via toggleAhorroView, 
+            // but we provide a fallback icon here just in case.
+            if (elements.ahorroViewToggleBtn) {
+                elements.ahorroViewToggleBtn.innerHTML = '<span>🗂️</span>';
+                elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Cajones';
+            }
         } else {
             elements.drawersGrid?.classList.remove('hidden');
             elements.ahorroTableContainer?.classList.add('hidden');
@@ -7198,7 +7205,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleAhorroView() {
-        ahorroViewMode = ahorroViewMode === 'cards' ? 'list' : 'cards';
+        if (ahorroViewMode === 'cards') {
+            ahorroViewMode = 'list';
+        } else if (ahorroViewMode === 'list') {
+            ahorroViewMode = 'calendar';
+            switchView('ahorroCalendar');
+            localStorage.setItem('ahorroViewMode', ahorroViewMode);
+            return;
+        } else {
+            ahorroViewMode = 'cards';
+        }
         localStorage.setItem('ahorroViewMode', ahorroViewMode);
         render();
     }
@@ -7452,6 +7468,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (isSidebar && container) {
                         container.classList.toggle('open');
                     }
+                    closeMobileSidebar();
                     return;
                 }
 
@@ -7462,17 +7479,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (elements.activitySearchInput) elements.activitySearchInput.value = '';
                 }
                 switchView(view);
-
-                if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
-                if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove('visible');
+                closeMobileSidebar();
             });
         });
 
         // Global Ahorro Calendar Listeners
         elements.ahorroCalendarBtn2?.addEventListener('click', () => {
             switchView('ahorroCalendar');
-            if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
-            if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove('visible');
+            closeMobileSidebar();
         });
         elements.ahorroGlobalCalendarMonthUp?.addEventListener('click', () => {
             globalAhorroCalendarViewDate.setMonth(globalAhorroCalendarViewDate.getMonth() + 1);
@@ -8850,8 +8864,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('bolsaCalendarBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             showBolsaCalendar();
-            if (elements.wealthSidebar) elements.wealthSidebar.classList.remove('mobile-open');
-            if (elements.sidebarOverlay) elements.sidebarOverlay.classList.remove('visible');
+            closeMobileSidebar();
         });
 
         elements.closeBolsaCalendarModal?.addEventListener('click', () => {
