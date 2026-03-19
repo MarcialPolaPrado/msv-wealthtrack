@@ -3426,22 +3426,74 @@ button,
         backdrop-filter: none !important;
     }
 }
+
 /* Desktop refinement: Larger fonts and spacing for global calendar */
 @media (min-width: 1025px) {
     .calendar-cell {
         font-size: 0.85rem;
         padding: 8px;
     }
+
     .calendar-cell-amount {
         font-size: 0.95rem !important;
         margin-bottom: 4px;
     }
+
     .calendar-cell-concepts {
         font-size: 0.65rem !important;
         gap: 5px !important;
         margin-top: 2px;
     }
+
     .calendar-cell-date {
         font-size: 0.9rem;
+    }
+}
+
+/* --- Secure Delete All Button --- */
+.submenu-item.locked {
+    filter: grayscale(1);
+    opacity: 0.4;
+    cursor: not-allowed !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.submenu-item.locked:active {
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.submenu-item.locked::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--danger);
+    width: var(--long-press-progress, 0%);
+    transition: width 0.1s linear;
+}
+
+.submenu-item.activated {
+    filter: none !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    background: rgba(239, 68, 68, 0.2) !important;
+    border: 1px solid var(--danger) !important;
+    animation: pulse-danger 1.5s infinite;
+}
+
+@keyframes pulse-danger {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
     }
 }

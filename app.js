@@ -5665,6 +5665,14 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroGlobalCalendarYearLabel.textContent = year;
         }
 
+        // Update toggle button icon/text for "Next view" (Cards)
+        if (elements.ahorroViewToggleBtn) {
+            elements.ahorroViewToggleBtn.innerHTML = '<span>🗂️</span>';
+            elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Cajones';
+        }
+        const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
+        if (sidebarBtn) sidebarBtn.innerHTML = '<span>🗂️</span> Vista Cajones';
+
         // Clear grid (keep day headers)
         const heads = grid.querySelectorAll('.calendar-day-head');
         grid.innerHTML = '';
@@ -7073,6 +7081,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deleteAllData() {
+        const resetBtn = () => {
+            if (elements.sidebarDeleteAllBtn) {
+                elements.sidebarDeleteAllBtn.classList.add('locked');
+                elements.sidebarDeleteAllBtn.classList.remove('activated');
+                elements.sidebarDeleteAllBtn.disabled = true;
+                elements.sidebarDeleteAllBtn.style.setProperty('--long-press-progress', '0%');
+                elements.sidebarDeleteAllBtn.innerHTML = `<span>🗑️</span> Borrar todo`;
+            }
+        };
+
         showCustomConfirm('¿Estás seguro de que quieres BORRAR TODOS los datos de la aplicación? Esta acción es irreversible.', async () => {
             try {
                 // Clear local session state
@@ -7111,6 +7129,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error deleting data:', err);
                 showToast('Error al borrar los datos', 'danger');
             }
+        }, () => {
+            resetBtn();
         });
     }
 
@@ -7484,10 +7504,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Global Ahorro Calendar Listeners
-        elements.ahorroCalendarBtn2?.addEventListener('click', () => {
-            switchView('ahorroCalendar');
-            closeMobileSidebar();
-        });
         elements.ahorroGlobalCalendarMonthUp?.addEventListener('click', () => {
             globalAhorroCalendarViewDate.setMonth(globalAhorroCalendarViewDate.getMonth() + 1);
             renderGlobalAhorroCalendar();
@@ -7608,7 +7624,65 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('clockMenuBtn')?.click();
         });
         elements.sidebarResetBtn?.addEventListener('click', () => forceAppUpdate());
-        elements.sidebarDeleteAllBtn?.addEventListener('click', () => deleteAllData());
+        // --- Secure Delete All Button Hold logic ---
+        let holdTimer = null;
+        if (elements.sidebarDeleteAllBtn) {
+            const btn = elements.sidebarDeleteAllBtn;
+
+            const startHold = (e) => {
+                if (!btn.classList.contains('locked')) return;
+                // Prevent multi-touch or multiple starts
+                if (holdTimer) clearInterval(holdTimer);
+
+                const holdStartTime = Date.now();
+                btn.style.setProperty('--long-press-progress', '0%');
+
+                holdTimer = setInterval(() => {
+                    const elapsed = Date.now() - holdStartTime;
+                    const progress = Math.min((elapsed / 5000) * 100, 100);
+                    btn.style.setProperty('--long-press-progress', `${progress}%`);
+
+                    const secondsLeft = Math.ceil((5000 - elapsed) / 1000);
+                    if (secondsLeft > 0) {
+                        btn.innerHTML = `<span>🗑️</span> Mantén ${secondsLeft}s...`;
+                    }
+
+                    if (elapsed >= 5000) {
+                        clearInterval(holdTimer);
+                        holdTimer = null;
+                        btn.classList.remove('locked');
+                        btn.disabled = false;
+                        btn.classList.add('activated');
+                        btn.innerHTML = `<span>⚠️</span> ¡BORRAR TODO!`;
+                        showToast('Botón de borrado activado', 'warning');
+                    }
+                }, 50);
+            };
+
+            const cancelHold = () => {
+                if (!btn.classList.contains('locked')) return;
+                if (holdTimer) {
+                    clearInterval(holdTimer);
+                    holdTimer = null;
+                    btn.style.setProperty('--long-press-progress', '0%');
+                    btn.innerHTML = `<span>🗑️</span> Borrar todo`;
+                }
+            };
+
+            btn.addEventListener('pointerdown', startHold);
+            // Global listeners to handle pointer leaving/up anywhere
+            window.addEventListener('pointerup', cancelHold);
+            btn.addEventListener('pointerleave', cancelHold);
+
+            btn.addEventListener('click', (e) => {
+                if (btn.classList.contains('locked')) {
+                    e.preventDefault();
+                    showToast('Mantén pulsado 5s para activar', 'info');
+                } else if (btn.classList.contains('activated')) {
+                    deleteAllData();
+                }
+            });
+        }
 
         // Submenu button listeners (Direct calls to avoid "display:none" click issues)
         document.getElementById('sidebarAddStockBtn2')?.addEventListener('click', (e) => {
