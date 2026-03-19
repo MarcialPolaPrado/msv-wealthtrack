@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let calendarDrawerId = null;
     let calendarViewDate = new Date(); // Month/Year currently shown in the calendar modal
     let globalAhorroCalendarViewDate = new Date(); // Global savings calendar view date
+    let globalAhorroCalendarDrawerFilter = localStorage.getItem('globalAhorroCalendarDrawerFilter') || 'all';
 
     const DRAWER_COLORS = [
         { name: 'green', border: '#10b981', bg: '#064e3b', grad: 'rgba(16, 185, 129, 0.4)' },
@@ -475,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ahorroGlobalCalendarYearDown: document.getElementById('ahorroGlobalCalendarYearDown'),
         ahorroGlobalCalendarYearLabel: document.getElementById('ahorroGlobalCalendarYearLabel'),
         ahorroGlobalCalendarGrid: document.getElementById('ahorroGlobalCalendarGrid'),
+        ahorroGlobalCalendarDrawerFilter: document.getElementById('ahorroGlobalCalendarDrawerFilter'),
 
         // Nomina Elements
         nominaSection: document.getElementById('nominaSection'),
@@ -5649,9 +5651,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function updateGlobalAhorroCalendarDrawerFilterOptions() {
+        if (!elements.ahorroGlobalCalendarDrawerFilter) return;
+        const currentValue = globalAhorroCalendarDrawerFilter;
+        let html = '<option value="all">📁 Todos</option>';
+        savingsDrawers.forEach(drawer => {
+            html += `<option value="${drawer.id}">${drawer.icon || '📁'} ${drawer.name}</option>`;
+        });
+        elements.ahorroGlobalCalendarDrawerFilter.innerHTML = html;
+        elements.ahorroGlobalCalendarDrawerFilter.value = currentValue;
+        if (elements.ahorroGlobalCalendarDrawerFilter.value !== currentValue) {
+            globalAhorroCalendarDrawerFilter = 'all';
+            elements.ahorroGlobalCalendarDrawerFilter.value = 'all';
+            localStorage.setItem('globalAhorroCalendarDrawerFilter', 'all');
+        }
+    }
+
     function renderGlobalAhorroCalendar() {
         const grid = elements.ahorroGlobalCalendarGrid;
         if (!grid) return;
+
+        updateGlobalAhorroCalendarDrawerFilterOptions();
 
         const year = globalAhorroCalendarViewDate.getFullYear();
         const month = globalAhorroCalendarViewDate.getMonth();
@@ -5697,7 +5717,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Aggregated movements
-        const allMovements = savingsDrawers.flatMap(d => (d.movements || []).map(m => ({ ...m, drawerName: d.name, drawerIcon: d.icon, drawerId: d.id })));
+        let allMovements = savingsDrawers.flatMap(d => (d.movements || []).map(m => ({ ...m, drawerName: d.name, drawerIcon: d.icon, drawerId: d.id })));
+
+        if (globalAhorroCalendarDrawerFilter !== 'all') {
+            allMovements = allMovements.filter(m => m.drawerId === globalAhorroCalendarDrawerFilter);
+        }
 
         // Current month days
         for (let d = 1; d <= daysInMonth; d++) {
@@ -5776,7 +5800,10 @@ document.addEventListener('DOMContentLoaded', () => {
             drawerIcon: d.icon,
             drawerId: d.id,
             originalIndex: idx
-        })));
+        }))).filter(m => {
+            if (globalAhorroCalendarDrawerFilter === 'all') return true;
+            return m.drawerId === globalAhorroCalendarDrawerFilter;
+        });
 
         const dayMovements = allMovements.filter(m => m.date === dateStr);
         if (dayMovements.length === 0) return;
@@ -7518,6 +7545,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         elements.ahorroGlobalCalendarYearDown?.addEventListener('click', () => {
             globalAhorroCalendarViewDate.setFullYear(globalAhorroCalendarViewDate.getFullYear() - 1);
+            renderGlobalAhorroCalendar();
+        });
+
+        elements.ahorroGlobalCalendarDrawerFilter?.addEventListener('change', (e) => {
+            globalAhorroCalendarDrawerFilter = e.target.value;
+            localStorage.setItem('globalAhorroCalendarDrawerFilter', globalAhorroCalendarDrawerFilter);
             renderGlobalAhorroCalendar();
         });
 
