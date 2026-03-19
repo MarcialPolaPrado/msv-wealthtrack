@@ -96,6 +96,10 @@ body {
         /* Space for bottom nav */
         width: 100%;
     }
+
+    #ahorroGlobalCalendarWrapper {
+        padding: 0.75rem;
+    }
 }
 
 /* Glassmorphism Utilities */
@@ -107,6 +111,10 @@ body {
     border: 1px solid var(--glass-border);
     border-radius: 16px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+#ahorroGlobalCalendarWrapper {
+    padding: 1.5rem;
 }
 
 .digital-timer {
@@ -3401,9 +3409,18 @@ button,
         text-align: right;
     }
 }
+
 /* Mobile refinement: Hide concepts in global calendar for small screens */
 @media (max-width: 480px) {
     .calendar-cell-concepts {
         display: none !important;
+    }
+
+    #ahorroGlobalCalendarWrapper {
+        padding: 0 !important;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
     }
 }
