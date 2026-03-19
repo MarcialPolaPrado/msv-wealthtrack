@@ -82,9 +82,11 @@ body {
     .app-container {
         flex-direction: column;
     }
+
     #appMain {
         padding: 1rem;
-        padding-bottom: 90px; /* Space for bottom nav */
+        padding-bottom: 90px;
+        /* Space for bottom nav */
     }
 }
 
@@ -234,7 +236,8 @@ header a {
     position: fixed;
     top: 32px;
     left: 32px;
-    z-index: 1200; /* Higher than sidebar */
+    z-index: 1200;
+    /* Higher than sidebar */
     width: 44px;
     height: 44px;
     border-radius: 12px;
@@ -257,7 +260,8 @@ header a {
 }
 
 .sidebar-desktop-toggle-btn.sidebar-open {
-    left: 212px; /* Close to the sidebar's edge or inside header area */
+    left: 212px;
+    /* Close to the sidebar's edge or inside header area */
 }
 
 .sidebar-header {
@@ -265,13 +269,15 @@ header a {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 3rem;
-    padding: 0 44px 0 0.5rem; /* Space for the fixed toggle button */
+    padding: 0 44px 0 0.5rem;
+    /* Space for the fixed toggle button */
     height: 48px;
 }
 
 @media (max-width: 1024px) {
     .sidebar-desktop-toggle-btn {
-        display: none; /* Only desktop */
+        display: none;
+        /* Only desktop */
     }
 }
 
@@ -397,7 +403,8 @@ header a {
 }
 
 .wealth-nav-item {
-    padding-right: 3rem !important; /* Extra space for chevron */
+    padding-right: 3rem !important;
+    /* Extra space for chevron */
 }
 
 .nav-item-container.open .nav-item-chevron {
@@ -448,13 +455,16 @@ header a {
 }
 
 /* Hide old header icons as requested */
-#bolsaHeaderActions, #ahorroHeaderActions, #nominaHeaderActions {
+#bolsaHeaderActions,
+#ahorroHeaderActions,
+#nominaHeaderActions {
     display: none !important;
 }
 
 /* Bottom Nav Hub for Mobile */
 .bottom-nav-hub {
-    display: none; /* Only mobile */
+    display: none;
+    /* Only mobile */
     position: fixed;
     bottom: 24px;
     left: 20px;
@@ -470,14 +480,17 @@ header a {
     height: 72px;
     z-index: 2000;
     padding: 0 1.25rem;
-    padding-top: 8px; /* Room for handle */
-    display: flex; /* Added to view_file was missing displaying correctly */
+    padding-top: 8px;
+    /* Room for handle */
+    display: flex;
+    /* Added to view_file was missing displaying correctly */
     justify-content: space-around;
     align-items: center;
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5), 
-                0 0 20px rgba(59, 130, 246, 0.05);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(59, 130, 246, 0.05);
     user-select: none;
-    touch-action: none; /* Crucial for dragging */
+    touch-action: none;
+    /* Crucial for dragging */
     transition: bottom 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.3s ease;
 }
 
@@ -493,7 +506,8 @@ header a {
 }
 
 .bottom-nav-hub.is-minimized {
-    background: rgba(15, 23, 42, 0.4); /* Extra glass effect when small */
+    background: rgba(15, 23, 42, 0.4);
+    /* Extra glass effect when small */
 }
 
 .drag-handle {
@@ -501,18 +515,21 @@ header a {
     top: 0;
     left: 0;
     right: 0;
-    height: 32px; /* Slightly taller for controls */
+    height: 32px;
+    /* Slightly taller for controls */
     cursor: grab;
     z-index: 10;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 16px;
-    pointer-events: none; /* Let clicks pass through to buttons under it */
+    pointer-events: none;
+    /* Let clicks pass through to buttons under it */
 }
 
-.drag-handle > * {
-    pointer-events: auto; /* Re-enable for the actual controls */
+.drag-handle>* {
+    pointer-events: auto;
+    /* Re-enable for the actual controls */
 }
 
 .drag-indicator {
@@ -544,7 +561,8 @@ header a {
 .move-icon {
     color: rgba(255, 255, 255, 0.4);
     font-size: 1.2rem;
-    pointer-events: none; /* Let the handle handle the drag */
+    pointer-events: none;
+    /* Let the handle handle the drag */
 }
 
 .drag-handle:active {
@@ -607,7 +625,8 @@ header a {
     box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
     transform: translateY(-20px);
     transition: all 0.3s ease;
-    z-index: 50; /* Above handle but within hub's context */
+    z-index: 50;
+    /* Above handle but within hub's context */
 }
 
 .floating-action-btn span {
@@ -631,43 +650,47 @@ header a {
 @media (max-width: 1024px) {
     .wealth-sidebar {
         position: fixed;
-        left: -100%; /* Hidden by default */
+        left: -100%;
+        /* Hidden by default */
         top: 0;
         bottom: 0;
         width: 280px !important;
         border-right: 1px solid var(--glass-border);
-        box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
     }
-    
+
     .wealth-sidebar.mobile-open {
         left: 0;
     }
-    
+
     .bottom-nav-hub {
         display: flex;
     }
-    
+
     .sidebar-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.5);
         backdrop-filter: blur(4px);
         z-index: 999;
         display: none;
     }
-    
+
     .sidebar-overlay.visible {
         display: block;
     }
 }
 
 /* Hide old nav/header elements when using the NEW nav */
-.main-nav, .mobile-action-bar, .glass-header {
+.main-nav,
+.mobile-action-bar,
+.glass-header {
     display: none !important;
 }
 
 #appMain {
-    margin-top: 0; /* No header spacing needed */
+    margin-top: 0;
+    /* No header spacing needed */
 }
 
 /* View Sections */
@@ -698,7 +721,8 @@ header a {
 .drawers-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 0.5rem 1.5rem; /* Reduced row gap from 1.5rem to 0.5rem */
+    gap: 0.5rem 1.5rem;
+    /* Reduced row gap from 1.5rem to 0.5rem */
     perspective: 1000px;
 }
 
@@ -707,7 +731,8 @@ header a {
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--primary);
-    margin: 0.75rem 0 0 0 !important; /* Minimal top margin */
+    margin: 0.75rem 0 0 0 !important;
+    /* Minimal top margin */
     padding: 0.5rem !important;
     border-bottom: 1px solid rgba(59, 130, 246, 0.15);
     display: flex;
@@ -814,15 +839,20 @@ header a {
 
 /* Pulsing Shimmer for Premium Feel */
 @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
 }
 
 .shimmer-card {
-    background: linear-gradient(90deg, 
-        rgba(255, 255, 255, 0) 0%, 
-        rgba(255, 255, 255, 0.03) 50%, 
-        rgba(255, 255, 255, 0) 100%);
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.03) 50%,
+            rgba(255, 255, 255, 0) 100%);
     background-size: 200% 100%;
     animation: shimmer 3s infinite linear;
 }
@@ -884,7 +914,8 @@ header a {
 }
 
 .collapsible-content:not(.expanded) {
-    display: none !important; /* Hide completely to remove grid footprints/gaps */
+    display: none !important;
+    /* Hide completely to remove grid footprints/gaps */
 }
 
 .collapsible-content.expanded {
@@ -2662,7 +2693,7 @@ button,
     display: flex;
     flex-direction: column;
     animation: fadeIn 0.3s ease;
-    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
     color: white !important;
 }
 
@@ -2680,8 +2711,13 @@ button,
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .spinner {
@@ -2694,7 +2730,9 @@ button,
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Bolsa Highlights Animated Summary */
@@ -2734,8 +2772,13 @@ button,
 }
 
 @keyframes ticker-slide {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-20%); }
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-20%);
+    }
 }
 
 .ticker-item {
@@ -2758,8 +2801,13 @@ button,
     font-weight: 800;
 }
 
-.ticker-value.profit { color: var(--success); }
-.ticker-value.loss { color: var(--danger); }
+.ticker-value.profit {
+    color: var(--success);
+}
+
+.ticker-value.loss {
+    color: var(--danger);
+}
 
 /* Animation for the container itself when appearing */
 #bolsaHighlights:not(.hidden) {
@@ -2767,8 +2815,15 @@ button,
 }
 
 @keyframes slideDownIn {
-    0% { opacity: 0; transform: translateY(-10px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Fix for long names in drawers */
@@ -2835,7 +2890,7 @@ button,
     background: var(--primary);
     border-color: var(--primary);
 }
-        
+
 /* Nextcloud Sync Toggle */
 .nc-switch {
     position: relative;
@@ -2853,7 +2908,10 @@ button,
 .nc-slider {
     position: absolute;
     cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: rgba(255, 255, 255, 0.1);
     transition: .4s;
     border-radius: 18px;
@@ -2872,12 +2930,26 @@ button,
     border-radius: 50%;
 }
 
-.nc-switch input:checked + .nc-slider {
+.nc-switch input:checked+.nc-slider {
     background-color: var(--success);
 }
 
-.nc-switch input:checked + .nc-slider:before {
+.nc-switch input:checked+.nc-slider:before {
     transform: translateX(18px);
+}
+
+.day-short {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .day-full {
+        display: none;
+    }
+
+    .day-short {
+        display: inline;
+    }
 }
 
 .calendar-grid {
@@ -2948,29 +3020,77 @@ button,
 }
 
 @media (max-width: 480px) {
+    #ahorroGlobalCalendarGrid.calendar-grid {
+        padding: 4px;
+        gap: 2px;
+    }
+
+    #ahorroGlobalCalendarGrid .calendar-cell {
+        padding: 3px;
+        min-height: 80px !important;
+        font-size: 0.6rem;
+    }
+
+    #ahorroGlobalCalendarGrid .calendar-cell-date {
+        font-size: 0.65rem;
+    }
+
+    #ahorroGlobalCalendarGrid .calendar-cell-amount {
+        font-size: 0.6rem !important;
+    }
+
+    #ahorroGlobalCalendarGrid .calendar-day-head {
+        font-size: 0.55rem;
+        padding: 5px 0;
+    }
+}
+
+@media (max-width: 380px) {
+    #ahorroGlobalCalendarGrid.calendar-grid {
+        padding: 1px;
+        gap: 1px;
+    }
+
+    #ahorroGlobalCalendarGrid .calendar-cell {
+        padding: 1px;
+        min-height: 70px !important;
+    }
+
+    #ahorroGlobalCalendarGrid .calendar-cell-amount {
+        font-size: 0.55rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+
     #savingsCalendarModal .modal-content,
     #bolsaCalendarModal .modal-content {
         padding: 1.25rem 0.75rem;
         width: 98%;
         max-width: 100%;
     }
+
     .calendar-grid {
         gap: 2px;
         padding: 4px;
     }
+
     .calendar-day-head {
         font-size: 0.6rem;
         padding: 6px 0;
     }
+
     .calendar-cell {
         aspect-ratio: auto;
         padding: 3px;
         min-height: 38px;
         border-radius: 4px;
     }
+
     .calendar-cell-amount {
         font-size: 0.5rem;
     }
+
     .calendar-cell-date {
         font-size: 0.65rem;
     }
@@ -2978,18 +3098,22 @@ button,
 
 /* Ultra-narrow mobile fixes */
 @media (max-width: 360px) {
+
     #savingsCalendarModal .modal-content,
     #bolsaCalendarModal .modal-content {
         padding: 0.75rem 0.4rem;
         width: 100%;
     }
+
     .calendar-cell {
         min-height: 32px;
         padding: 2px;
     }
+
     .calendar-cell-amount {
         font-size: 0.45rem;
     }
+
     .calendar-cell-date {
         font-size: 0.6rem;
     }
@@ -3012,7 +3136,7 @@ button,
 }
 
 #activityTable .activity-category-cell .category-badge {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     padding: 2px 8px;
     border-radius: 6px;
     font-size: 0.8rem;
@@ -3045,7 +3169,8 @@ button,
 
 /* ── Botón ⋮ (menú móvil) ── */
 .activity-menu-btn {
-    display: none; /* oculto en desktop */
+    display: none;
+    /* oculto en desktop */
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: white;
@@ -3076,7 +3201,7 @@ button,
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     padding: 0.4rem;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.04);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
     transform-origin: top right;
     animation: sheetIn 0.14s ease-out;
 }
@@ -3086,8 +3211,15 @@ button,
 }
 
 @keyframes sheetIn {
-    from { opacity: 0; transform: scale(0.9) translateY(-4px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .sheet-header {
@@ -3138,6 +3270,7 @@ button,
 
 /* Compactar filas en móvil */
 @media (max-width: 768px) {
+
     /* El contenedor no scrollea horizontalmente — la tabla se adapta */
     #activityTableContainer {
         overflow-x: hidden !important;
@@ -3149,11 +3282,31 @@ button,
     }
 
     /* Sobrescribir anchos del colgroup para móvil */
-    #activityTable col:nth-child(1) { width: 18% !important; }  /* Fecha */
-    #activityTable col:nth-child(2) { width: 28% !important; }  /* Concepto */
-    #activityTable col:nth-child(3) { width: 22% !important; }  /* Categoría */
-    #activityTable col:nth-child(4) { width: 22% !important; }  /* Importe */
-    #activityTable col:nth-child(5) { width: 10% !important; }  /* Acción */
+    #activityTable col:nth-child(1) {
+        width: 18% !important;
+    }
+
+    /* Fecha */
+    #activityTable col:nth-child(2) {
+        width: 28% !important;
+    }
+
+    /* Concepto */
+    #activityTable col:nth-child(3) {
+        width: 22% !important;
+    }
+
+    /* Categoría */
+    #activityTable col:nth-child(4) {
+        width: 22% !important;
+    }
+
+    /* Importe */
+    #activityTable col:nth-child(5) {
+        width: 10% !important;
+    }
+
+    /* Acción */
 
     #activityTable td,
     #activityTable th {
@@ -3168,7 +3321,8 @@ button,
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 0; /* necesario junto con table-layout: fixed */
+        max-width: 0;
+        /* necesario junto con table-layout: fixed */
     }
 
     /* Ocultar el nombre del cajón en la celda de categoría */
