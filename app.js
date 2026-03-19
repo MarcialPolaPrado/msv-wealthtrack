@@ -1657,6 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
             if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
             if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+            if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
             if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
             renderActivity();
         } else {
@@ -1702,6 +1703,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
                 if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
                 if (elements.analisisSection) elements.analisisSection.classList.remove('hidden');
+                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
                 if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
                 renderAnalisis();
             }

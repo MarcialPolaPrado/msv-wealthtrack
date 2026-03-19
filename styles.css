@@ -44,6 +44,8 @@ body {
     font-family: var(--font-family);
     min-height: 100vh;
     padding: 20px;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 .app-container {
@@ -51,6 +53,7 @@ body {
     margin: 0;
     display: flex;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 #appMain {
@@ -79,14 +82,19 @@ body {
 }
 
 @media (max-width: 1024px) {
+    body {
+        padding: 10px;
+    }
+
     .app-container {
         flex-direction: column;
     }
 
     #appMain {
-        padding: 1rem;
+        padding: 0.5rem;
         padding-bottom: 90px;
         /* Space for bottom nav */
+        width: 100%;
     }
 }
 
@@ -716,6 +724,12 @@ header a {
     width: 100%;
     margin: 0 auto;
     padding: 0 1rem;
+}
+
+@media (max-width: 1024px) {
+    .savings-container {
+        padding: 0 0.5rem;
+    }
 }
 
 .drawers-grid {
@@ -3046,18 +3060,35 @@ button,
 }
 
 @media (max-width: 380px) {
+    body {
+        padding: 6px;
+    }
+
+    #appMain {
+        padding: 4px;
+    }
+
+    .savings-container {
+        padding: 0 2px;
+    }
+
     #ahorroGlobalCalendarGrid.calendar-grid {
-        padding: 1px;
+        padding: 0;
         gap: 1px;
     }
 
     #ahorroGlobalCalendarGrid .calendar-cell {
         padding: 1px;
-        min-height: 70px !important;
+        min-height: 60px !important;
     }
 
     #ahorroGlobalCalendarGrid .calendar-cell-amount {
-        font-size: 0.55rem !important;
+        font-size: 0.5rem !important;
+    }
+
+    #ahorroGlobalCalendarGrid .calendar-day-head {
+        font-size: 0.5rem;
+        padding: 4px 0;
     }
 }
 
@@ -3065,34 +3096,34 @@ button,
 
     #savingsCalendarModal .modal-content,
     #bolsaCalendarModal .modal-content {
-        padding: 1.25rem 0.75rem;
-        width: 98%;
+        padding: 1.25rem 0.5rem;
+        width: 100%;
         max-width: 100%;
     }
 
     .calendar-grid {
-        gap: 2px;
-        padding: 4px;
+        gap: 1px;
+        padding: 2px;
     }
 
     .calendar-day-head {
-        font-size: 0.6rem;
-        padding: 6px 0;
+        font-size: 0.55rem;
+        padding: 4px 0;
     }
 
     .calendar-cell {
         aspect-ratio: auto;
-        padding: 3px;
+        padding: 2px;
         min-height: 38px;
         border-radius: 4px;
     }
 
     .calendar-cell-amount {
-        font-size: 0.5rem;
+        font-size: 0.45rem;
     }
 
     .calendar-cell-date {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
     }
 }
 
