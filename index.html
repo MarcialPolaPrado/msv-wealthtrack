@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603200641">
+    <link rel="stylesheet" href="styles.css?v=202603201418">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -855,6 +855,28 @@
                         <button type="button" id="ncRestoreBtn" class="btn-secondary"
                             style="width: 100%; margin-bottom: 0.5rem;">📥 Cargar desde Nextcloud</button>
                     </div>
+
+                    <!-- Backup Nextcloud Section -->
+                    <div style="margin-top: 1.5rem; border-top: 1px dashed var(--glass-border); padding-top: 1rem;">
+                        <label style="font-weight: 700; color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 0.8rem;">☁️ Backup Nextcloud (Opcional)</label>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                            <input type="url" id="ncBackupUrlInput" placeholder="https://tu-backup-nextcloud.com"
+                                style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: white; font-size: 0.8rem;">
+                            <input type="text" id="ncBackupUserInput" placeholder="Usuario Backup"
+                                style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: white; font-size: 0.8rem;">
+                            <input type="password" id="ncBackupPasswordInput" placeholder="App Password Backup"
+                                style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: white; font-size: 0.8rem;">
+                            <input type="url" id="ncBackupProxyInput" placeholder="URL Proxy Backup (Opcional)"
+                                style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: white; font-size: 0.8rem;">
+                        </div>
+
+                        <button type="button" id="ncBackupTestBtn" class="btn-secondary"
+                            style="width: 100%; font-size: 0.8rem; padding: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            🔗 Probar Conexión Backup
+                        </button>
+                        <div id="ncBackupStatus" style="font-size: 0.7rem; margin-top: 0.5rem; opacity: 0.6; text-align: center;"></div>
+                    </div>
                 </div>
 
                 <div class="form-group"
@@ -1611,7 +1633,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603200641"></script>
+    <script src="app.js?v=202603201418"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1798,7 +1820,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603200641';
+        const APP_VERSION = '202603201418';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -4,6 +4,7 @@
 
 const NextcloudSync = (() => {
     const STORAGE_KEY = 'nc_config';
+    const STORAGE_KEY_BACKUP = 'nc_config_backup';
     const DEVICE_KEY = 'nc_device_id';
     const LOCAL_MODIFIED_KEY = 'nc_local_modified';
     const NC_FOLDER = 'MSV';
@@ -38,25 +39,28 @@ const NextcloudSync = (() => {
     }
 
     // ── Config Management ──────────────────────────────────
-    function saveConfig(url, user, password, proxy) {
+    function saveConfig(url, user, password, proxy, isBackup = false) {
         url = url.replace(/\/+$/, '');
         proxy = proxy ? proxy.replace(/\/+$/, '') : '';
         const config = { url, user, password, proxy };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+        const key = isBackup ? STORAGE_KEY_BACKUP : STORAGE_KEY;
+        localStorage.setItem(key, JSON.stringify(config));
         return config;
     }
 
-    function loadConfig() {
+    function loadConfig(isBackup = false) {
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            const key = isBackup ? STORAGE_KEY_BACKUP : STORAGE_KEY;
+            const raw = localStorage.getItem(key);
             return raw ? JSON.parse(raw) : null;
         } catch {
             return null;
         }
     }
 
-    function clearConfig() {
-        localStorage.removeItem(STORAGE_KEY);
+    function clearConfig(isBackup = false) {
+        const key = isBackup ? STORAGE_KEY_BACKUP : STORAGE_KEY;
+        localStorage.removeItem(key);
     }
 
     // ── Local modification tracking ────────────────────────
