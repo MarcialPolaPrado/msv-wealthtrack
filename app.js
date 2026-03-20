@@ -4812,12 +4812,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Sync Sidebar Items
         elements.wealthNavItems?.forEach(item => {
-            item.classList.toggle('active', item.dataset.view === view);
+            const isAh = (item.dataset.view === 'ahorro' && view === 'ahorroCalendar');
+            const isNom = (item.dataset.view === 'nomina' && view === 'analisis');
+            item.classList.toggle('active', item.dataset.view === view || isAh || isNom);
         });
 
         // Sync Bottom Bar Items
         elements.bottomNavItems?.forEach(item => {
-            item.classList.toggle('active', item.dataset.view === view);
+            const isAh = (item.dataset.view === 'ahorro' && view === 'ahorroCalendar');
+            const isNom = (item.dataset.view === 'nomina' && view === 'analisis');
+            item.classList.toggle('active', item.dataset.view === view || isAh || isNom);
         });
 
         // Update Mobile FAB (mobileMenuBtn) Icon/Label based on view context
@@ -4827,10 +4831,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (view === 'bolsa') {
                     iconSpan.textContent = '✨';
                     elements.mobileMenuBtn.title = 'Añadir Inversión';
-                } else if (view === 'ahorro') {
+                } else if (view === 'ahorro' || view === 'ahorroCalendar') {
                     iconSpan.textContent = '💶';
                     elements.mobileMenuBtn.title = 'Nuevo Movimiento';
-                } else if (view === 'nomina') {
+                } else if (view === 'nomina' || view === 'analisis') {
                     iconSpan.textContent = '➕';
                     elements.mobileMenuBtn.title = 'Añadir Concepto';
                 } else {
@@ -7612,7 +7616,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     openAddStockModal();
                 }
-            } else if (effectiveView === 'ahorro') {
+            } else if (effectiveView === 'ahorro' || effectiveView === 'ahorroCalendar') {
                 const modal = document.getElementById('savingsInputModal');
                 const actionType = document.getElementById('savingsActionType');
                 if (modal && !modal.classList.contains('hidden')) {
@@ -7624,7 +7628,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     showGlobalAddMovementModal();
                 }
-            } else if (effectiveView === 'nomina') {
+            } else if (effectiveView === 'nomina' || effectiveView === 'analisis') {
                 const nModal = elements.nominaModal;
                 const nmModal = elements.nominaMovementModal;
                 const nOpen = nModal && !nModal.classList.contains('hidden');
