@@ -6737,12 +6737,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        // Nextcloud Configs
-        const ncCfg = getNcConfigFromInputs(false);
-        if (ncCfg) NextcloudSync.saveConfig(ncCfg.url, ncCfg.user, ncCfg.password, ncCfg.proxy, false);
-        
-        const ncBackupCfg = getNcConfigFromInputs(true);
-        if (ncBackupCfg) NextcloudSync.saveConfig(ncBackupCfg.url, ncBackupCfg.user, ncBackupCfg.password, ncBackupCfg.proxy, true);
+        // Nextcloud Config
+        const ncCfg = getNcConfigFromInputs();
+        if (ncCfg) NextcloudSync.saveConfig(ncCfg.url, ncCfg.user, ncCfg.password, ncCfg.proxy);
 
         // Apply visual updates and notify user
         if (typeof updateStorageStatus === 'function') updateStorageStatus();
@@ -7912,22 +7909,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // ── Nextcloud buttons ──
-        document.getElementById('ncTestBtn')?.addEventListener('click', () => ncTestConnection(false));
-        document.getElementById('ncBackupTestBtn')?.addEventListener('click', () => ncTestConnection(true));
-        document.getElementById('ncBackupClearBtn')?.addEventListener('click', () => {
-            NextcloudSync.clearConfig(true);
-            const backupUrlInput = document.getElementById('ncBackupUrlInput');
-            const backupUserInput = document.getElementById('ncBackupUserInput');
-            const backupPassInput = document.getElementById('ncBackupPasswordInput');
-            const backupProxyInput = document.getElementById('ncBackupProxyInput');
-            const backupStatus = document.getElementById('ncBackupStatus');
-            if (backupUrlInput) backupUrlInput.value = '';
-            if (backupUserInput) backupUserInput.value = '';
-            if (backupPassInput) backupPassInput.value = '';
-            if (backupProxyInput) backupProxyInput.value = '';
-            if (backupStatus) backupStatus.textContent = 'Configuración eliminada';
-            showToast('🗑️ Configuración de backup eliminada', 'success');
-        });
+        document.getElementById('ncTestBtn')?.addEventListener('click', () => ncTestConnection());
         document.getElementById('ncBackupBtn')?.addEventListener('click', () => ncBackupData());
         document.getElementById('ncRestoreBtn')?.addEventListener('click', () => ncRestoreData());
 
@@ -9882,15 +9864,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Nextcloud Integration ──────────────────────────────────────
     function initNextcloudUI() {
-        const config = NextcloudSync.loadConfig(false);
-        const backupConfig = NextcloudSync.loadConfig(true);
-
-        // Primary
+        const config = NextcloudSync.loadConfig();
         const urlInput = document.getElementById('ncUrlInput');
         const userInput = document.getElementById('ncUserInput');
         const passInput = document.getElementById('ncPasswordInput');
         const proxyInput = document.getElementById('ncProxyInput');
+        const autoUploadInput = document.getElementById('ncAutoUpload');
         const statusText = document.getElementById('ncStatusText');
+        const deviceInfo = document.getElementById('ncDeviceInfo');
+        const lastSync = document.getElementById('ncLastSync');
         const connectedActions = document.getElementById('ncConnectedActions');
 
         if (config) {
@@ -9902,70 +9884,47 @@ document.addEventListener('DOMContentLoaded', () => {
             if (connectedActions) connectedActions.classList.remove('hidden');
         }
 
-        // Backup
-        const backupUrlInput = document.getElementById('ncBackupUrlInput');
-        const backupUserInput = document.getElementById('ncBackupUserInput');
-        const backupPassInput = document.getElementById('ncBackupPasswordInput');
-        const backupProxyInput = document.getElementById('ncBackupProxyInput');
-        const backupStatus = document.getElementById('ncBackupStatus');
-
-        if (backupConfig) {
-            if (backupUrlInput) backupUrlInput.value = backupConfig.url;
-            if (backupUserInput) backupUserInput.value = backupConfig.user;
-            if (backupPassInput) backupPassInput.value = backupConfig.password;
-            if (backupProxyInput) backupProxyInput.value = backupConfig.proxy || '';
-            if (backupStatus) backupStatus.textContent = '✅ Backup Configurado';
-        }
-
-        const autoUploadInput = document.getElementById('ncAutoUpload');
         if (autoUploadInput) {
             autoUploadInput.checked = localStorage.getItem('ncAutoUpload') !== 'false';
         }
 
-        const deviceInfo = document.getElementById('ncDeviceInfo');
         if (deviceInfo) {
             deviceInfo.textContent = `📱 ${NextcloudSync.getDeviceName()} · ID: ${NextcloudSync.getDeviceId().substr(-6)}`;
         }
 
-        const lastSync = document.getElementById('ncLastSync');
         const savedLastSync = localStorage.getItem('nc_last_sync');
         if (savedLastSync && lastSync) {
             lastSync.textContent = `Última sync: ${new Date(savedLastSync).toLocaleString()}`;
         }
     }
 
-    function getNcConfigFromInputs(isBackup = false) {
-        const suffix = isBackup ? 'Backup' : '';
-        const url = document.getElementById(`nc${suffix}UrlInput`)?.value?.trim();
-        const user = document.getElementById(`nc${suffix}UserInput`)?.value?.trim();
-        const password = document.getElementById(`nc${suffix}PasswordInput`)?.value;
-        const proxy = document.getElementById(`nc${suffix}ProxyInput`)?.value?.trim() || '';
+    function getNcConfigFromInputs() {
+        const url = document.getElementById('ncUrlInput')?.value?.trim();
+        const user = document.getElementById('ncUserInput')?.value?.trim();
+        const password = document.getElementById('ncPasswordInput')?.value;
+        const proxy = document.getElementById('ncProxyInput')?.value?.trim() || '';
 
         if (!url || !user || !password) {
-            if (!isBackup) showToast('Rellena URL, usuario y App Password', 'warning');
+            showToast('Rellena URL, usuario y App Password', 'warning');
             return null;
         }
         return { url, user, password, proxy };
     }
 
-    async function ncTestConnection(isBackup = false) {
-        const cfg = getNcConfigFromInputs(isBackup);
-        if (!cfg) {
-            if (isBackup) showToast('Rellena los datos de backup para probar', 'warning');
-            return;
-        }
+    async function ncTestConnection() {
+        const cfg = getNcConfigFromInputs();
+        if (!cfg) return;
 
-        const statusElId = isBackup ? 'ncBackupStatus' : 'ncStatusText';
-        const statusText = document.getElementById(statusElId);
+        const statusText = document.getElementById('ncStatusText');
         if (statusText) statusText.textContent = '⏳ Probando conexión...';
 
         const result = await NextcloudSync.testConnection(cfg);
 
         if (result.ok) {
-            NextcloudSync.saveConfig(cfg.url, cfg.user, cfg.password, cfg.proxy, isBackup);
-            if (statusText) statusText.textContent = isBackup ? '✅ Backup conectado' : '✅ Conectado correctamente';
-            if (!isBackup) document.getElementById('ncConnectedActions')?.classList.remove('hidden');
-            showToast(`✅ Conexión ${isBackup ? 'de Backup' : ''} OK`, 'success');
+            NextcloudSync.saveConfig(cfg.url, cfg.user, cfg.password, cfg.proxy);
+            if (statusText) statusText.textContent = '✅ Conectado correctamente';
+            document.getElementById('ncConnectedActions')?.classList.remove('hidden');
+            showToast('✅ Conexión con Nextcloud OK', 'success');
         } else {
             if (statusText) statusText.textContent = '❌ ' + result.error;
             showToast('❌ ' + result.error, 'error', 5000);
@@ -9973,31 +9932,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function ncBackupData() {
-        const config = NextcloudSync.loadConfig(false);
-        const backupConfig = NextcloudSync.loadConfig(true);
-        
+        const config = NextcloudSync.loadConfig();
         if (!config) {
-            showToast('Primero configura y prueba la conexión principal', 'warning');
+            showToast('Primero configura y prueba la conexión', 'warning');
             return;
         }
 
         showToast('⏳ Subiendo datos a Nextcloud...', 'info');
         const appData = getGlobalDataObject();
-        
         const result = await NextcloudSync.uploadData(config, appData);
 
         if (result.ok) {
             localStorage.setItem('nc_last_sync', result.timestamp);
             const lastSync = document.getElementById('ncLastSync');
             if (lastSync) lastSync.textContent = `Última sync: ${new Date(result.timestamp).toLocaleString()}`;
-            
-            // Backup
-            if (backupConfig) {
-                console.log("Nextcloud: uploading to backup...");
-                await NextcloudSync.uploadData(backupConfig, appData).catch(e => console.error("Backup sync error:", e));
-            }
-            
-            showToast('✅ Datos guardados en Nextcloud' + (backupConfig ? ' (y Backup)' : ''), 'success');
+            showToast('✅ Datos guardados en Nextcloud', 'success');
         } else {
             showToast('❌ ' + result.error, 'error', 5000);
         }

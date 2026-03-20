@@ -4,7 +4,6 @@
 
 const NextcloudSync = (() => {
     const STORAGE_KEY = 'nc_config';
-    const STORAGE_KEY_BACKUP = 'nc_config_backup';
     const DEVICE_KEY = 'nc_device_id';
     const LOCAL_MODIFIED_KEY = 'nc_local_modified';
     const NC_FOLDER = 'MSV';
@@ -39,28 +38,25 @@ const NextcloudSync = (() => {
     }
 
     // ── Config Management ──────────────────────────────────
-    function saveConfig(url, user, password, proxy, isBackup = false) {
+    function saveConfig(url, user, password, proxy) {
         url = url.replace(/\/+$/, '');
         proxy = proxy ? proxy.replace(/\/+$/, '') : '';
         const config = { url, user, password, proxy };
-        const key = isBackup ? STORAGE_KEY_BACKUP : STORAGE_KEY;
-        localStorage.setItem(key, JSON.stringify(config));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
         return config;
     }
 
-    function loadConfig(isBackup = false) {
+    function loadConfig() {
         try {
-            const key = isBackup ? STORAGE_KEY_BACKUP : STORAGE_KEY;
-            const raw = localStorage.getItem(key);
+            const raw = localStorage.getItem(STORAGE_KEY);
             return raw ? JSON.parse(raw) : null;
         } catch {
             return null;
         }
     }
 
-    function clearConfig(isBackup = false) {
-        const key = isBackup ? STORAGE_KEY_BACKUP : STORAGE_KEY;
-        localStorage.removeItem(key);
+    function clearConfig() {
+        localStorage.removeItem(STORAGE_KEY);
     }
 
     // ── Local modification tracking ────────────────────────
@@ -74,12 +70,7 @@ const NextcloudSync = (() => {
 
     // ── WebDAV Helpers ─────────────────────────────────────
     function buildWebDavUrl(config, path) {
-        let baseUrl = config.url.replace(/\/+$/, '');
-        // If the user already included the WebDAV path, don't append it again
-        if (baseUrl.includes('/remote.php/dav/files/')) {
-            return `${baseUrl}/${path}`;
-        }
-        return `${baseUrl}/remote.php/dav/files/${encodeURIComponent(config.user)}/${path}`;
+        return `${config.url}/remote.php/dav/files/${encodeURIComponent(config.user)}/${path}`;
     }
 
     function authHeaders(config) {
