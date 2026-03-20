@@ -6737,6 +6737,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+        // Nextcloud Configs
+        const ncCfg = getNcConfigFromInputs(false);
+        if (ncCfg) NextcloudSync.saveConfig(ncCfg.url, ncCfg.user, ncCfg.password, ncCfg.proxy, false);
+        
+        const ncBackupCfg = getNcConfigFromInputs(true);
+        if (ncBackupCfg) NextcloudSync.saveConfig(ncBackupCfg.url, ncBackupCfg.user, ncBackupCfg.password, ncBackupCfg.proxy, true);
+
         // Apply visual updates and notify user
         if (typeof updateStorageStatus === 'function') updateStorageStatus();
         toggleSettingsModal(false);
@@ -7907,6 +7914,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Nextcloud buttons ──
         document.getElementById('ncTestBtn')?.addEventListener('click', () => ncTestConnection(false));
         document.getElementById('ncBackupTestBtn')?.addEventListener('click', () => ncTestConnection(true));
+        document.getElementById('ncBackupClearBtn')?.addEventListener('click', () => {
+            NextcloudSync.clearConfig(true);
+            const backupUrlInput = document.getElementById('ncBackupUrlInput');
+            const backupUserInput = document.getElementById('ncBackupUserInput');
+            const backupPassInput = document.getElementById('ncBackupPasswordInput');
+            const backupProxyInput = document.getElementById('ncBackupProxyInput');
+            const backupStatus = document.getElementById('ncBackupStatus');
+            if (backupUrlInput) backupUrlInput.value = '';
+            if (backupUserInput) backupUserInput.value = '';
+            if (backupPassInput) backupPassInput.value = '';
+            if (backupProxyInput) backupProxyInput.value = '';
+            if (backupStatus) backupStatus.textContent = 'Configuración eliminada';
+            showToast('🗑️ Configuración de backup eliminada', 'success');
+        });
         document.getElementById('ncBackupBtn')?.addEventListener('click', () => ncBackupData());
         document.getElementById('ncRestoreBtn')?.addEventListener('click', () => ncRestoreData());
 

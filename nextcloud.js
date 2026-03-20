@@ -74,7 +74,12 @@ const NextcloudSync = (() => {
 
     // ── WebDAV Helpers ─────────────────────────────────────
     function buildWebDavUrl(config, path) {
-        return `${config.url}/remote.php/dav/files/${encodeURIComponent(config.user)}/${path}`;
+        let baseUrl = config.url.replace(/\/+$/, '');
+        // If the user already included the WebDAV path, don't append it again
+        if (baseUrl.includes('/remote.php/dav/files/')) {
+            return `${baseUrl}/${path}`;
+        }
+        return `${baseUrl}/remote.php/dav/files/${encodeURIComponent(config.user)}/${path}`;
     }
 
     function authHeaders(config) {
