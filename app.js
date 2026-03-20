@@ -4970,6 +4970,7 @@ document.addEventListener('DOMContentLoaded', () => {
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
+        if (elements.drawerIconGroup) elements.drawerIconGroup.classList.add('hidden');
 
         targetDrawerSelectGroup?.classList.remove('hidden');
         if (targetDrawerSelect) {
@@ -5093,6 +5094,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (amountInput) amountInput.placeholder = "Importe a transferir";
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
+        if (elements.drawerIconGroup) elements.drawerIconGroup.classList.add('hidden');
+        elements.drawerInfoGroup?.classList.add('hidden');
         const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
         targetDrawerSelectGroup?.classList.add('hidden');
 
@@ -7265,12 +7268,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         } else {
             ahorroViewMode = 'cards';
+            if (currentView === 'ahorroCalendar') {
+                switchView('ahorro');
+            }
         }
         localStorage.setItem('ahorroViewMode', ahorroViewMode);
         render();
     }
 
     function toggleNominaView() {
+        if (currentView === 'analisis') {
+            switchView('nomina');
+            return;
+        }
         nominaViewMode = nominaViewMode === 'cards' ? 'list' : 'cards';
         localStorage.setItem('nominaViewMode', nominaViewMode);
         render();
@@ -7511,7 +7521,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                if (currentView === view) {
+                const isAh = (view === 'ahorro' && currentView === 'ahorroCalendar');
+                const isNom = (view === 'nomina' && currentView === 'analisis');
+                if (currentView === view || isAh || isNom) {
                     if (view === 'bolsa') toggleBolsaView();
                     else if (view === 'ahorro') toggleAhorroView();
                     else if (view === 'nomina') toggleNominaView();
