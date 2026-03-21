@@ -1689,72 +1689,37 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR);
 
         // Section Toggling logic
+        if (elements.activitySection) elements.activitySection.classList.add('hidden');
+        if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
+        if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
+        if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
+        if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+        if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
+        if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.add('hidden');
+        if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
+
         if (currentView === 'activity') {
             if (elements.activitySection) elements.activitySection.classList.remove('hidden');
-            if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
-            if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-            if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-            if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-            if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
-            if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
             renderActivity();
-        } else {
-            if (elements.activitySection) elements.activitySection.classList.add('hidden');
-
-            if (currentView === 'bolsa') {
-                if (elements.bolsaSection) elements.bolsaSection.classList.remove('hidden');
-                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
-                if (elements.mobileActionBar) elements.mobileActionBar.classList.remove('hidden');
-                renderPortfolioPieChart();
-            } else if (currentView === 'ahorro') {
-                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
-                if (elements.ahorroSection) elements.ahorroSection.classList.remove('hidden');
-                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
-                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
-                renderSavings();
-            } else if (currentView === 'ahorroCalendar') {
-                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
-                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.remove('hidden');
-                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
-                renderGlobalAhorroCalendar();
-            } else if (currentView === 'nomina') {
-                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
-                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
-                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-                if (elements.nominaSection) elements.nominaSection.classList.remove('hidden');
-                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
-                renderNomina();
-            } else if (currentView === 'analisis') {
-                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
-                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
-                if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.add('hidden');
-                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
-                renderAnalisis();
-            } else if (currentView === 'ahorroEstado') {
-                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
-                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
-                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
-                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
-                if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.remove('hidden');
-                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
-                renderAhorroEstado();
-            }
+        } else if (currentView === 'bolsa') {
+            if (elements.bolsaSection) elements.bolsaSection.classList.remove('hidden');
+            if (elements.mobileActionBar) elements.mobileActionBar.classList.remove('hidden');
+            renderPortfolioPieChart();
+        } else if (currentView === 'ahorro') {
+            if (elements.ahorroSection) elements.ahorroSection.classList.remove('hidden');
+            renderSavings();
+        } else if (currentView === 'ahorroCalendar') {
+            if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.remove('hidden');
+            renderGlobalAhorroCalendar();
+        } else if (currentView === 'nomina') {
+            if (elements.nominaSection) elements.nominaSection.classList.remove('hidden');
+            renderNomina();
+        } else if (currentView === 'analisis') {
+            if (elements.analisisSection) elements.analisisSection.classList.remove('hidden');
+            renderAnalisis();
+        } else if (currentView === 'ahorroEstado') {
+            if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.remove('hidden');
+            renderAhorroEstado();
         }
     }
 
