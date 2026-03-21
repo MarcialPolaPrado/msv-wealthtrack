@@ -2983,17 +2983,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const drawerData = {};
 
         savingsDrawers.forEach(drawer => {
-            let mvmts = [];
-            if (drawer.id === 'bolsa') {
-                const fx = window.FX_RATE || 1;
-                mvmts = stocks.map(s => ({
-                    date: s.date || new Date().toISOString().split('T')[0],
-                    amount: (s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1),
-                    category: 'Bolsa'
-                }));
-            } else {
-                mvmts = drawer.movements || [];
-            }
+            if (drawer.id === 'bolsa') return;
+            
+            let mvmts = drawer.movements || [];
 
             const filtered = mvmts.filter(m => {
                 if (!m.date) return false;
@@ -5701,7 +5693,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             const isToday = dateStr === todayStr;
 
-            const mvmts = (drawer.movements || []).filter(m => m.date === dateStr);
+            let mvmts = [];
+            if (calendarDrawerId === 'bolsa') {
+                const fx = window.FX_RATE || 1;
+                mvmts = stocks.filter(s => s.date === dateStr).map(s => ({
+                    date: s.date,
+                    concept: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
+                    category: `Bolsa: ${s.market || 'Acción'}`,
+                    amount: -((s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1))
+                }));
+            } else {
+                mvmts = (drawer.movements || []).filter(m => m.date === dateStr);
+            }
             const totalOnDay = mvmts.reduce((sum, m) => sum + m.amount, 0);
 
             const cell = document.createElement('div');
@@ -5740,9 +5743,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer) return;
 
-        const dayMovements = (drawer.movements || [])
-            .map((m, idx) => ({ ...m, originalIndex: idx }))
-            .filter(m => m.date === dateStr);
+        let dayMovements = [];
+        if (drawerId === 'bolsa') {
+            const fx = window.FX_RATE || 1;
+            dayMovements = stocks.filter(s => s.date === dateStr).map(s => ({
+                date: s.date,
+                description: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
+                category: `Bolsa: ${s.market || 'Acción'}`,
+                amount: -((s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1))
+            }));
+        } else {
+            dayMovements = (drawer.movements || [])
+                .map((m, idx) => ({ ...m, originalIndex: idx }))
+                .filter(m => m.date === dateStr);
+        }
 
         if (dayMovements.length === 0) return;
 
@@ -7444,6 +7458,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleAhorroView() {
+        if (currentView === 'ahorroEstado') {
+            switchView('ahorro');
+            return;
+        }
         if (ahorroViewMode === 'cards') {
             ahorroViewMode = 'list';
         } else if (ahorroViewMode === 'list') {
