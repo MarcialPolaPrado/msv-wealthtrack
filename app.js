@@ -5968,7 +5968,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Aggregated movements
-        let allMovements = savingsDrawers.flatMap(d => (d.movements || []).map(m => ({ ...m, drawerName: d.name, drawerIcon: d.icon, drawerId: d.id })));
+        const fx = window.FX_RATE || 1;
+        let allMovements = [];
+        savingsDrawers.forEach(d => {
+            let mvmts = [...(d.movements || [])];
+            if (d.id === 'bolsa' && typeof stocks !== 'undefined') {
+                const stockMvmts = stocks.map(s => ({
+                    date: s.date,
+                    amount: -((s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1)),
+                    description: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
+                    category: `Bolsa: ${s.market || 'Acción'}`
+                }));
+                mvmts = [...mvmts, ...stockMvmts];
+            }
+            allMovements.push(...mvmts.map(m => ({ ...m, drawerName: d.name, drawerIcon: d.icon, drawerId: d.id })));
+        });
 
         if (globalAhorroCalendarDrawerFilter !== 'all') {
             allMovements = allMovements.filter(m => m.drawerId === globalAhorroCalendarDrawerFilter);
@@ -6045,18 +6059,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const year = globalAhorroCalendarViewDate.getFullYear();
         const month = globalAhorroCalendarViewDate.getMonth();
 
-        const allMovements = savingsDrawers.flatMap(d => (d.movements || []).map((m, idx) => ({
-            ...m,
-            drawerName: d.name,
-            drawerIcon: d.icon,
-            drawerId: d.id,
-            originalIndex: idx
-        }))).filter(m => {
+        const fx = window.FX_RATE || 1;
+        let allMovements = [];
+        savingsDrawers.forEach(d => {
+            let mvmts = [...(d.movements || [])];
+            if (d.id === 'bolsa' && typeof stocks !== 'undefined') {
+                const stockMvmts = stocks.map((s, sIdx) => ({
+                    date: s.date,
+                    amount: -((s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1)),
+                    description: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
+                    category: `Bolsa: ${s.market || 'Acción'}`,
+                    isStock: true,
+                    stockIndex: sIdx
+                }));
+                mvmts = [...mvmts, ...stockMvmts];
+            }
+            allMovements.push(...mvmts.map((m, idx) => ({
+                ...m,
+                drawerName: d.name,
+                drawerIcon: d.icon,
+                drawerId: d.id,
+                originalIndex: idx
+            })));
+        });
+
+        const filteredMovements = allMovements.filter(m => {
             if (globalAhorroCalendarDrawerFilter === 'all') return true;
             return m.drawerId === globalAhorroCalendarDrawerFilter;
         });
 
-        const dayMovements = allMovements.filter(m => m.date === dateStr);
+        const dayMovements = filteredMovements.filter(m => m.date === dateStr);
         if (dayMovements.length === 0) return;
 
         const dateObj = new Date(dateStr);
@@ -6071,9 +6103,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${m.category ? `<span style="font-size: 0.7rem; padding: 2px 6px; background: rgba(255,255,255,0.05); border-radius: 4px; opacity: 0.7;">${m.drawerName} • ${m.category}</span>` : ''}
                     </div>
                     <div style="display:flex; gap:1.2rem; margin-top:0.5rem; opacity:0.6;">
-                        <button class="edit-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Editar">✏️ <small>Editar</small></button>
-                        <button class="copy-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Copiar">📋 <small>Copiar</small></button>
-                        <button class="delete-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Borrar">🗑️ <small>Borrar</small></button>
+                        ${m.isStock ? '<small style="opacity:0.5; font-style:italic;">(Inversión en Bolsa)</small>' : `
+                            <button class="edit-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Editar">✏️ <small>Editar</small></button>
+                            <button class="copy-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:inherit; cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Copiar">📋 <small>Copiar</small></button>
+                            <button class="delete-day-mvmt-btn" data-drawer="${m.drawerId}" data-index="${m.originalIndex}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.9rem; padding:0; display:flex; align-items:center; gap:4px;" title="Borrar">🗑️ <small>Borrar</small></button>
+                        `}
                     </div>
                 </div>
                 <div style="font-weight:700; color:${m.amount >= 0 ? 'var(--success)' : 'var(--danger)'}; font-size:1.1rem;">
