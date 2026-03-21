@@ -2997,6 +2997,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const filtered = mvmts.filter(m => {
                 if (!m.date) return false;
+                if (m.category === 'Traspaso' || m.category?.startsWith('Traspaso:')) return false;
                 return getFiscalMonth(m.date) === targetFiscalMonth;
             });
 
