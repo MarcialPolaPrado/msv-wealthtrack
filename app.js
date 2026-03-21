@@ -116,6 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     let isPrivacyActive = localStorage.getItem('isPrivacyActive') === 'true' || false;
     let currentView = 'ahorro';
+    let ahorroEstadoMonth = _initialDate.getMonth() + 1;
+    let ahorroEstadoYear = _initialDate.getFullYear();
+    let ahorroEstadoType = 'income'; // 'income' or 'expense'
     let lastSyncTimestamp = null;
     let currentTotalInvestedBolsa = 0;
     let currentPatrimonioTotal = 0;
@@ -448,6 +451,22 @@ document.addEventListener('DOMContentLoaded', () => {
         mobilePrivacyToggleBtn: document.getElementById('mobilePrivacyToggleBtn'),
         savingsInputForm: document.getElementById('savingsInputForm'),
 
+        // Ahorro Estado Elements
+        ahorroEstadoSection: document.getElementById('ahorroEstadoSection'),
+        ahorroEstadoMonthUp: document.getElementById('ahorroEstadoMonthUp'),
+        ahorroEstadoMonthDown: document.getElementById('ahorroEstadoMonthDown'),
+        ahorroEstadoMonthLabel: document.getElementById('ahorroEstadoMonthLabel'),
+        ahorroEstadoYearUp: document.getElementById('ahorroEstadoYearUp'),
+        ahorroEstadoYearDown: document.getElementById('ahorroEstadoYearDown'),
+        ahorroEstadoYearLabel: document.getElementById('ahorroEstadoYearLabel'),
+        ahorroEstadoTotalIncome: document.getElementById('ahorroEstadoTotalIncome'),
+        ahorroEstadoTotalExpense: document.getElementById('ahorroEstadoTotalExpense'),
+        ahorroEstadoShowIncome: document.getElementById('ahorroEstadoShowIncome'),
+        ahorroEstadoShowExpenses: document.getElementById('ahorroEstadoShowExpenses'),
+        ahorroEstadoPieChart: document.getElementById('ahorroEstadoPieChart'),
+        ahorroEstadoTableBody: document.getElementById('ahorroEstadoTableBody'),
+        ahorroEstadoChartTitle: document.getElementById('ahorroEstadoChartTitle'),
+
         // Savings Calendar Elements
         savingsCalendarModal: document.getElementById('savingsCalendarModal'),
         closeCalendarModal: document.getElementById('closeCalendarModal'),
@@ -691,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarResetBtn: document.getElementById('sidebarResetBtn'),
         sidebarDeleteAllBtn: document.getElementById('sidebarDeleteAllBtn'),
         sidebarActivityBtn: document.getElementById('sidebarActivityBtn'),
-        wealthNavItems: document.querySelectorAll('.wealth-nav-item'),
+        wealthNavItems: document.querySelectorAll('.wealth-nav-item, .submenu-item'),
         bottomNavItems: document.querySelectorAll('.bottom-nav-item'),
         // Google Drive Elements (removed)
         drawerIconGroup: document.getElementById('drawerIconGroup'),
@@ -712,7 +731,23 @@ document.addEventListener('DOMContentLoaded', () => {
         bolsaCalendarGrid: document.getElementById('bolsaCalendarGrid'),
         bolsaCalendarCurrentMonth: document.getElementById('bolsaCalendarCurrentMonth'),
         prevBolsaCalendarMonth: document.getElementById('prevBolsaCalendarMonth'),
-        nextBolsaCalendarMonth: document.getElementById('nextBolsaCalendarMonth')
+        nextBolsaCalendarMonth: document.getElementById('nextBolsaCalendarMonth'),
+
+        // Ahorro Estado Elements
+        ahorroEstadoSection: document.getElementById('ahorroEstadoSection'),
+        ahorroEstadoMonthUp: document.getElementById('ahorroEstadoMonthUp'),
+        ahorroEstadoMonthDown: document.getElementById('ahorroEstadoMonthDown'),
+        ahorroEstadoYearUp: document.getElementById('ahorroEstadoYearUp'),
+        ahorroEstadoYearDown: document.getElementById('ahorroEstadoYearDown'),
+        ahorroEstadoMonthLabel: document.getElementById('ahorroEstadoMonthLabel'),
+        ahorroEstadoYearLabel: document.getElementById('ahorroEstadoYearLabel'),
+        ahorroEstadoTotalIncome: document.getElementById('ahorroEstadoTotalIncome'),
+        ahorroEstadoTotalExpense: document.getElementById('ahorroEstadoTotalExpense'),
+        ahorroEstadoShowIncome: document.getElementById('ahorroEstadoShowIncome'),
+        ahorroEstadoShowExpenses: document.getElementById('ahorroEstadoShowExpenses'),
+        ahorroEstadoChartTitle: document.getElementById('ahorroEstadoChartTitle'),
+        ahorroEstadoPieChart: document.getElementById('ahorroEstadoPieChart'),
+        ahorroEstadoTableBody: document.getElementById('ahorroEstadoTableBody')
     };
 
     const updateNominaMovementType = (type) => {
@@ -1705,10 +1740,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
                 if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
                 if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
-                if (elements.analisisSection) elements.analisisSection.classList.remove('hidden');
+                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
                 if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
+                if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.add('hidden');
                 if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
                 renderAnalisis();
+            } else if (currentView === 'ahorroEstado') {
+                if (elements.bolsaSection) elements.bolsaSection.classList.add('hidden');
+                if (elements.ahorroSection) elements.ahorroSection.classList.add('hidden');
+                if (elements.nominaSection) elements.nominaSection.classList.add('hidden');
+                if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
+                if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
+                if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.remove('hidden');
+                if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
+                renderAhorroEstado();
             }
         }
     }
@@ -2957,6 +3002,153 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.ahorroTableBody.innerHTML === '') {
             elements.ahorroTableBody.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; opacity:0.5;">No hay movimientos en este periodo</td></tr>';
         }
+    }
+
+    function renderAhorroEstado() {
+        if (!elements.ahorroEstadoMonthLabel || !elements.ahorroEstadoYearLabel) return;
+
+        const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        elements.ahorroEstadoMonthLabel.textContent = months[ahorroEstadoMonth - 1];
+        elements.ahorroEstadoYearLabel.textContent = ahorroEstadoYear;
+
+        const targetFiscalMonth = `${ahorroEstadoYear}-${String(ahorroEstadoMonth).padStart(2, '0')}`;
+
+        let totalIncome = 0;
+        let totalExpense = 0;
+        const drawerData = {};
+
+        savingsDrawers.forEach(drawer => {
+            let mvmts = [];
+            if (drawer.id === 'bolsa') {
+                const fx = window.FX_RATE || 1;
+                mvmts = stocks.map(s => ({
+                    date: s.date || new Date().toISOString().split('T')[0],
+                    amount: (s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1),
+                    category: 'Bolsa'
+                }));
+            } else {
+                mvmts = drawer.movements || [];
+            }
+
+            const filtered = mvmts.filter(m => {
+                if (!m.date) return false;
+                return getFiscalMonth(m.date) === targetFiscalMonth;
+            });
+
+            filtered.forEach(m => {
+                const amount = Number(m.amount) || 0;
+                if (amount > 0) totalIncome += amount;
+                else if (amount < 0) totalExpense += Math.abs(amount);
+            });
+
+            const relevantMvmts = filtered.filter(m => ahorroEstadoType === 'income' ? m.amount > 0 : m.amount < 0);
+            const sum = relevantMvmts.reduce((s, m) => s + Math.abs(m.amount), 0);
+            
+            if (sum > 0) {
+                drawerData[drawer.id] = {
+                    name: drawer.name,
+                    icon: drawer.icon,
+                    amount: sum
+                };
+            }
+        });
+
+        if (elements.ahorroEstadoTotalIncome) elements.ahorroEstadoTotalIncome.textContent = fmtEUR(totalIncome);
+        if (elements.ahorroEstadoTotalExpense) elements.ahorroEstadoTotalExpense.textContent = fmtEUR(totalExpense);
+
+        if (elements.ahorroEstadoShowIncome) elements.ahorroEstadoShowIncome.style.opacity = ahorroEstadoType === 'income' ? '1' : '0.6';
+        if (elements.ahorroEstadoShowExpenses) elements.ahorroEstadoShowExpenses.style.opacity = ahorroEstadoType === 'expense' ? '1' : '0.6';
+        if (elements.ahorroEstadoChartTitle) elements.ahorroEstadoChartTitle.textContent = `Distribución de ${ahorroEstadoType === 'income' ? 'Ingresos' : 'Gastos'} por Cajón`;
+
+        const chartData = Object.values(drawerData).sort((a, b) => b.amount - a.amount);
+        renderAhorroEstadoPieChart(chartData);
+
+        if (elements.ahorroEstadoTableBody) {
+            elements.ahorroEstadoTableBody.innerHTML = '';
+            const totalForType = chartData.reduce((s, d) => s + d.amount, 0);
+
+            if (chartData.length === 0) {
+                elements.ahorroEstadoTableBody.innerHTML = `<tr><td colspan="3" style="padding:2rem; text-align:center; opacity:0.5;">No hay ${ahorroEstadoType === 'income' ? 'ingresos' : 'gastos'} en este periodo</td></tr>`;
+            } else {
+                chartData.forEach(d => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    const pct = totalForType > 0 ? (d.amount / totalForType) * 100 : 0;
+                    tr.innerHTML = `
+                        <td style="padding: 0.75rem; text-align: left;">${d.icon} ${d.name}</td>
+                        <td style="padding: 0.75rem; text-align: center; color: var(--text-muted);">${fmtNum(pct)}%</td>
+                        <td style="padding: 0.75rem; text-align: right; font-weight: 600;">${fmtEUR(d.amount)}</td>
+                    `;
+                    elements.ahorroEstadoTableBody.appendChild(tr);
+                });
+            }
+        }
+    }
+
+    function renderAhorroEstadoPieChart(data) {
+        const container = elements.ahorroEstadoPieChart;
+        if (!container) return;
+
+        if (data.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const total = data.reduce((s, d) => s + d.amount, 0);
+        const COLORS = [
+            '#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899',
+            '#14b8a6', '#f97316', '#8b5cf6', '#22c55e', '#06b6d4',
+            '#e11d48', '#a855f7'
+        ];
+
+        const cx = 150;
+        const cy = 150;
+        const r = 120;
+        const toRad = deg => (deg * Math.PI) / 180;
+
+        let startAngle = -90;
+        const slices = data.map((d, i) => {
+            const pct = d.amount / total;
+            const sweep = pct * 360;
+            const sa = startAngle;
+            startAngle += sweep;
+            return { ...d, pct, sweep, sa, color: COLORS[i % COLORS.length] };
+        });
+
+        function arcPath(cx, cy, r, startDeg, endDeg) {
+            const s = { x: cx + r * Math.cos(toRad(startDeg)), y: cy + r * Math.sin(toRad(startDeg)) };
+            const e = { x: cx + r * Math.cos(toRad(endDeg)), y: cy + r * Math.sin(toRad(endDeg)) };
+            const large = (endDeg - startDeg) > 180 ? 1 : 0;
+            return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y} Z`;
+        }
+
+        const slicePaths = slices.map((s) => {
+            const path = arcPath(cx, cy, r, s.sa, s.sa + s.sweep);
+            const amtStr = fmtEUR(s.amount);
+            const pctStr = (s.pct * 100).toFixed(1) + '%';
+            return `<path d="${path}" fill="${s.color}" opacity="0.85" 
+                        stroke="var(--bg-dark)" stroke-width="2"
+                        style="transition: all 0.2s ease;">
+                        <title>${s.icon} ${s.name}\n${amtStr} (${pctStr})</title>
+                    </path>`;
+        }).join('');
+
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+                <svg viewBox="0 0 300 300" style="width: 100%; max-width: 250px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.3));">
+                    ${slicePaths}
+                </svg>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; width: 100%;">
+                    ${slices.map(s => `
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem;">
+                            <div style="width: 8px; height: 8px; border-radius: 2px; background: ${s.color}; flex-shrink: 0;"></div>
+                            <span style="opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px;">${s.name}</span>
+                            <span style="margin-left: auto; font-weight: 600; opacity: 0.9;">${(s.pct * 100).toFixed(0)}%</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
     }
 
     function renderSavings() {
@@ -4813,14 +5005,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Sync Sidebar Items
         elements.wealthNavItems?.forEach(item => {
-            const isAh = (item.dataset.view === 'ahorro' && view === 'ahorroCalendar');
+            const isAh = (item.dataset.view === 'ahorro' && (view === 'ahorroCalendar' || view === 'ahorroEstado'));
             const isNom = (item.dataset.view === 'nomina' && view === 'analisis');
             item.classList.toggle('active', item.dataset.view === view || isAh || isNom);
         });
 
         // Sync Bottom Bar Items
         elements.bottomNavItems?.forEach(item => {
-            const isAh = (item.dataset.view === 'ahorro' && view === 'ahorroCalendar');
+            const isAh = (item.dataset.view === 'ahorro' && (view === 'ahorroCalendar' || view === 'ahorroEstado'));
             const isNom = (item.dataset.view === 'nomina' && view === 'analisis');
             item.classList.toggle('active', item.dataset.view === view || isAh || isNom);
         });
@@ -4832,7 +5024,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (view === 'bolsa') {
                     iconSpan.textContent = '✨';
                     elements.mobileMenuBtn.title = 'Añadir Inversión';
-                } else if (view === 'ahorro' || view === 'ahorroCalendar') {
+                } else if (view === 'ahorro' || view === 'ahorroCalendar' || view === 'ahorroEstado') {
                     iconSpan.textContent = '💶';
                     elements.mobileMenuBtn.title = 'Nuevo Movimiento';
                 } else if (view === 'nomina' || view === 'analisis') {
@@ -4849,7 +5041,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // ONLY force open if we are switching TO that specific view. 
         // If we are switching to something like "activity", we don't necessarily want to close others if they were manually opened.
         document.querySelectorAll('.nav-item-container').forEach(container => {
-            const isTarget = container.id === `${view}NavContainer`;
+            const isAh = (view.startsWith('ahorro') && container.id === 'ahorroNavContainer');
+            const isNom = ((view === 'nomina' || view === 'analisis') && container.id === 'nominaNavContainer');
+            const isBolsa = (view === 'bolsa' && container.id === 'bolsaNavContainer');
+            const isTarget = container.id === `${view}NavContainer` || isAh || isNom || isBolsa;
+
             if (isTarget) {
                 container.classList.add('open');
             } else if (view !== 'activity' && view !== 'analisis' && view !== 'settings') {
@@ -7494,6 +7690,41 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
 
     function setupEventListeners() {
+        // Ahorro Estado Listeners
+        elements.ahorroEstadoMonthUp?.addEventListener('click', () => {
+            ahorroEstadoMonth++;
+            if (ahorroEstadoMonth > 12) {
+                ahorroEstadoMonth = 1;
+                ahorroEstadoYear++;
+            }
+            renderAhorroEstado();
+        });
+        elements.ahorroEstadoMonthDown?.addEventListener('click', () => {
+            ahorroEstadoMonth--;
+            if (ahorroEstadoMonth < 1) {
+                ahorroEstadoMonth = 12;
+                ahorroEstadoYear--;
+            }
+            renderAhorroEstado();
+        });
+        elements.ahorroEstadoYearUp?.addEventListener('click', () => {
+            ahorroEstadoYear++;
+            renderAhorroEstado();
+        });
+        elements.ahorroEstadoYearDown?.addEventListener('click', () => {
+            ahorroEstadoYear--;
+            renderAhorroEstado();
+        });
+        elements.ahorroEstadoShowIncome?.addEventListener('click', () => {
+            ahorroEstadoType = 'income';
+            renderAhorroEstado();
+        });
+        elements.ahorroEstadoShowExpenses?.addEventListener('click', () => {
+            ahorroEstadoType = 'expense';
+            renderAhorroEstado();
+        });
+
+
         // Global Date Picker Trigger: open calendar on field click
         document.addEventListener('click', (e) => {
             const dateInput = e.target.closest('input[type="date"]');
@@ -7654,7 +7885,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     openAddStockModal();
                 }
-            } else if (effectiveView === 'ahorro' || effectiveView === 'ahorroCalendar') {
+            } else if (effectiveView === 'ahorro' || effectiveView === 'ahorroCalendar' || effectiveView === 'ahorroEstado') {
                 const modal = document.getElementById('savingsInputModal');
                 const actionType = document.getElementById('savingsActionType');
                 if (modal && !modal.classList.contains('hidden')) {

@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603210604">
+    <link rel="stylesheet" href="styles.css?v=202603210822">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -139,6 +139,7 @@
                             <button id="ahorroViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista
                                 Tarjetas/Lista</button>
                             <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
+                            <button class="submenu-item" data-view="ahorroEstado"><span>📈</span> Estado</button>
                             <button id="addDrawerBtn2" class="submenu-item"><span>📁</span> Añadir Cajón</button>
                             <button id="ahorroSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar
                                 Totales</button>
@@ -556,6 +557,67 @@
                             <div class="calendar-day-head"><span class="day-full">Dom</span><span
                                     class="day-short">D</span></div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ahorro Estado Section -->
+            <div id="ahorroEstadoSection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h2 style="margin:0">Estado de Ahorro</h2>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                            <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
+                                <button id="ahorroEstadoMonthUp" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="ahorroEstadoMonthDown" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="ahorroEstadoMonthLabel" style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700; min-width: 100px;">--</h3>
+
+                            <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px; margin-left: 10px;">
+                                <button id="ahorroEstadoYearUp" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="ahorroEstadoYearDown" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="ahorroEstadoYearLabel" style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">--</h3>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid" style="margin-bottom: 2rem;">
+                        <div class="card summary-card glass-panel">
+                            <h3>Ingresos Totales</h3>
+                            <p class="amount" id="ahorroEstadoTotalIncome">0,00 €</p>
+                        </div>
+                        <div class="card summary-card glass-panel">
+                            <h3>Gastos Totales</h3>
+                            <p class="amount" id="ahorroEstadoTotalExpense" style="color: var(--danger);">0,00 €</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 id="ahorroEstadoChartTitle" style="margin:0;">Distribución por Cajón</h3>
+                            <div class="view-toggle" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <button id="ahorroEstadoShowIncome" class="btn-sm" style="padding: 4px 12px; border: none; cursor: pointer; background: var(--primary); color: white; border-radius: 6px;">Ingresos</button>
+                                <button id="ahorroEstadoShowExpenses" class="btn-sm" style="padding: 4px 12px; border: none; cursor: pointer; background: transparent; color: var(--text-muted); border-radius: 6px;">Gastos</button>
+                            </div>
+                        </div>
+                        <div id="ahorroEstadoPieChart" style="width: 100%; min-height: 250px;"></div>
+                    </div>
+
+                    <div class="table-container glass-panel">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary);">
+                                    <th style="padding: 1rem; text-align: left;">Cajón</th>
+                                    <th style="padding: 1rem; text-align: center;">Porcentaje</th>
+                                    <th style="padding: 1rem; text-align: right;">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ahorroEstadoTableBody">
+                                <!-- Data injected by JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1614,7 +1676,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603210604"></script>
+    <script src="app.js?v=202603210822"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1801,7 +1863,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603210604';
+        const APP_VERSION = '202603210822';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
