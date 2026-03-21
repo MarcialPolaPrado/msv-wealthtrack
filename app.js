@@ -477,6 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ahorroGlobalCalendarYearLabel: document.getElementById('ahorroGlobalCalendarYearLabel'),
         ahorroGlobalCalendarGrid: document.getElementById('ahorroGlobalCalendarGrid'),
         ahorroGlobalCalendarDrawerFilter: document.getElementById('ahorroGlobalCalendarDrawerFilter'),
+        ahorroGlobalCalendarTotalBalance: document.getElementById('ahorroGlobalCalendarTotalBalance'),
 
         // Nomina Elements
         nominaSection: document.getElementById('nominaSection'),
@@ -5680,6 +5681,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateGlobalAhorroCalendarDrawerFilterOptions();
 
+        // Update Total Balance display
+        if (elements.ahorroGlobalCalendarTotalBalance) {
+            let totalBalance = 0;
+            if (globalAhorroCalendarDrawerFilter === 'all') {
+                totalBalance = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
+            } else {
+                const drawer = savingsDrawers.find(d => d.id === globalAhorroCalendarDrawerFilter);
+                if (drawer) totalBalance = drawer.balance;
+            }
+            elements.ahorroGlobalCalendarTotalBalance.textContent = `Total: ${fmtEUR(totalBalance)}`;
+        }
+
         const year = globalAhorroCalendarViewDate.getFullYear();
         const month = globalAhorroCalendarViewDate.getMonth();
 
@@ -7547,6 +7560,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 switchView(view);
                 closeMobileSidebar();
+            });
+        });
+
+        // Ensure clicking the header also triggers the main button
+        document.querySelectorAll('.nav-item-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                if (e.target.closest('button')) return;
+                const btn = header.querySelector('.wealth-nav-item');
+                if (btn) btn.click();
             });
         });
 
@@ -10405,7 +10427,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("[Cache] Found stored prices, setting isFirstUpdateDone = true");
         }
 
-        render();
+        switchView(currentView);
         setupEventListeners();
         // Automatic update cycle removed. Now manual via refresh button.
         // Simplified sync for first load REMOVED as per request to use persistent/cached data.

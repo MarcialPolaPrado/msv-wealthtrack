@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603201937">
+    <link rel="stylesheet" href="styles.css?v=202603210604">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -127,7 +127,7 @@
                         </div>
                     </div>
 
-                    <div class="nav-item-container" id="ahorroNavContainer">
+                    <div class="nav-item-container active open" id="ahorroNavContainer">
                         <div class="nav-item-header">
                             <button class="wealth-nav-item active" data-view="ahorro">
                                 <span class="nav-icon">💰</span>
@@ -506,10 +506,13 @@
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <h2 style="margin:0">Calendario de Ahorro Global</h2>
-                            <select id="ahorroGlobalCalendarDrawerFilter" 
-                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none; max-width: 150px;">
-                                <option value="all">📁 Todos</option>
-                            </select>
+                            <div style="display: flex; flex-direction: column; gap: 2px; align-items: center;">
+                                <select id="ahorroGlobalCalendarDrawerFilter" 
+                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none; width: 150px; text-align: center;">
+                                    <option value="all">📁 Todos</option>
+                                </select>
+                                <div id="ahorroGlobalCalendarTotalBalance" style="font-size: 0.75rem; font-weight: 700; color: var(--success); opacity: 0.9; text-align: center; width: 100%;">Total: 0,00 €</div>
+                            </div>
                         </div>
                         <div
                             style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
@@ -1611,7 +1614,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603201937"></script>
+    <script src="app.js?v=202603210604"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1798,7 +1801,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603201937';
+        const APP_VERSION = '202603210604';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
