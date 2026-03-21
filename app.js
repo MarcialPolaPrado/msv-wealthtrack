@@ -411,9 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         manualRefreshBtn: document.getElementById('manualRefreshBtn'),
         portfolioPieChart: document.getElementById('portfolioPieChart'),
         bolsaSummarySection: document.getElementById('bolsaSummarySection'),
-        bolsaSummaryToggleBtn: document.getElementById('bolsaSummaryToggleBtn'),
         ahorroSummarySection: document.getElementById('ahorroSummarySection'),
-        ahorroSummaryToggleBtn: document.getElementById('ahorroSummaryToggleBtn'),
 
         // Savings Elements
         navItems: document.querySelectorAll('.nav-item'),
@@ -598,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bolsaBreakdownBtn: document.getElementById('bolsaBreakdownBtn'),
         bolsaHighlights: document.getElementById('bolsaHighlights'),
         bolsaHighlightsToggleBtn: document.getElementById('bolsaHighlightsToggleBtn'),
-        bolsaTotalesToggle: document.getElementById('bolsaTotalesToggle'),
+
         stockTable: document.getElementById('stockTable'),
         savingsCategoryGroup: document.getElementById('savingsCategoryGroup'),
         savingsCategorySelect: document.getElementById('savingsCategorySelect'),
@@ -1026,10 +1024,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         updateSubmenuBtn('bolsaHighlightsToggleBtn2', bolsaHighlightsVisible, 'Highlights');
-        updateSubmenuBtn('bolsaSummaryToggleBtn2', bolsaSummaryVisible, 'Mostrar/Ocultar Totales');
-        updateSubmenuBtn('bolsaTotalesToggle2', bolsaTotalsMode, 'Totales por Acción');
-        updateSubmenuBtn('ahorroSummaryToggleBtn2', ahorroSummaryVisible, 'Mostrar/Ocultar Totales');
-        updateSubmenuBtn('ahorroTotalesToggle2', ahorroListFilterMode === 'totals', 'Totales por Cajón');
+
+        // Highlighting for Ahorro submenu items
+        const highlightSubmenu = (id, isActive) => {
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('active', isActive);
+        };
+        highlightSubmenu('ahorroCardsBtn2', currentView === 'ahorro' && ahorroViewMode === 'cards');
+        highlightSubmenu('ahorroListBtn2', currentView === 'ahorro' && ahorroViewMode === 'list');
+        highlightSubmenu('ahorroEstadoBtn2', currentView === 'ahorroEstado');
+        highlightSubmenu('ahorroCalendarBtn2', currentView === 'ahorroCalendar');
     }
 
     // --- Logic ---
@@ -1160,9 +1164,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Toggle Bolsa Summary Visibility
         if (elements.bolsaSummarySection) {
             elements.bolsaSummarySection.classList.toggle('hidden', !bolsaSummaryVisible);
-        }
-        if (elements.bolsaSummaryToggleBtn) {
-            elements.bolsaSummaryToggleBtn.style.background = bolsaSummaryVisible ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
         }
 
         // 1. Prepare Data and Calculate Totals 
@@ -1308,17 +1309,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 : '<span>🗂️</span> Vista Tarjetas';
         }
 
-        if (elements.bolsaTotalesToggle) {
-            elements.bolsaTotalesToggle.classList.toggle('hidden', bolsaViewMode === 'cards');
-            elements.bolsaTotalesToggle.style.background = bolsaTotalsMode ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
-
-            // Sync with Sidebar
-            const sidebarTotalsBtn = document.getElementById('bolsaTotalesToggle2');
-            if (sidebarTotalsBtn) {
-                sidebarTotalsBtn.style.background = bolsaTotalsMode ? 'rgba(59, 130, 246, 0.2)' : 'transparent';
-                sidebarTotalsBtn.style.color = bolsaTotalsMode ? 'white' : 'var(--text-muted)';
-            }
-        }
 
         if (bolsaViewMode === 'cards') {
             if (elements.stockTable) elements.stockTable.parentElement.classList.add('hidden');
@@ -3170,10 +3160,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.ahorroSummarySection) {
             elements.ahorroSummarySection.classList.toggle('hidden', !ahorroSummaryVisible);
 
-            if (elements.ahorroSummaryToggleBtn) {
-                elements.ahorroSummaryToggleBtn.style.background = ahorroSummaryVisible ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
-            }
-
             const cashTotal = savingsDrawers.filter(d => d.id !== 'bolsa').reduce((s, d) => s + d.balance, 0);
             const bolsaBalance = savingsDrawers.find(d => d.id === 'bolsa')?.balance || 0;
             const patrimonyTotal = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
@@ -3211,39 +3197,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Toggle visibility based on view mode
+        updateAhorroToggleIcons();
         if (ahorroViewMode === 'list') {
             elements.drawersGrid?.classList.add('hidden');
             elements.ahorroTableContainer?.classList.remove('hidden');
-
-            if (elements.ahorroViewToggleBtn) {
-                elements.ahorroViewToggleBtn.innerHTML = '<span>📅</span>';
-                elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Calendario';
-            }
-
-            // Sync with Sidebar
-            const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
-            if (sidebarBtn) sidebarBtn.innerHTML = '<span>📅</span> Vista Calendario';
-
             renderSavingsList();
-        } else if (ahorroViewMode === 'calendar') {
-            // This state is usually redirected to ahorroCalendar view via toggleAhorroView, 
-            // but we provide a fallback icon here just in case.
-            if (elements.ahorroViewToggleBtn) {
-                elements.ahorroViewToggleBtn.innerHTML = '<span>🗂️</span>';
-                elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Cajones';
-            }
         } else {
+            // Cards or others
             elements.drawersGrid?.classList.remove('hidden');
             elements.ahorroTableContainer?.classList.add('hidden');
-
-            if (elements.ahorroViewToggleBtn) {
-                elements.ahorroViewToggleBtn.innerHTML = '<span>📄</span>';
-                elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Listado';
-            }
-
-            // Sync with Sidebar
-            const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
-            if (sidebarBtn) sidebarBtn.innerHTML = '<span>📄</span> Vista Listado';
         }
 
         elements.drawersGrid.innerHTML = '';
@@ -5937,12 +5899,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Update toggle button icon/text for "Next view" (Cards)
-        if (elements.ahorroViewToggleBtn) {
-            elements.ahorroViewToggleBtn.innerHTML = '<span>🗂️</span>';
-            elements.ahorroViewToggleBtn.title = 'Cambiar a Vista Cajones';
-        }
-        const sidebarBtn = document.getElementById('ahorroViewToggleBtn2');
-        if (sidebarBtn) sidebarBtn.innerHTML = '<span>🗂️</span> Vista Cajones';
+        updateAhorroToggleIcons();
 
         // Clear grid (keep day headers)
         const heads = grid.querySelectorAll('.calendar-day-head');
@@ -7540,25 +7497,50 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     }
 
-    function toggleAhorroView() {
-        if (currentView === 'ahorroEstado') {
-            switchView('ahorro');
-            return;
+    function updateAhorroToggleIcons() {
+        const toggleIds = ['ahorroViewToggleBtn', 'ahorroCalendarViewToggleBtn', 'ahorroEstadoViewToggleBtn', 'ahorroViewToggleBtn2'];
+        let nextIcon = '<span>🔲</span>';
+        let nextTitle = 'Cambiar Vista';
+
+        if (ahorroViewMode === 'cards') {
+            nextIcon = '<span>📋</span>';
+            nextTitle = 'Cambiar a Vista Listado';
+        } else if (ahorroViewMode === 'list') {
+            nextIcon = '<span>📅</span>';
+            nextTitle = 'Cambiar a Vista Calendario';
+        } else if (ahorroViewMode === 'calendar') {
+            nextIcon = '<span>📈</span>';
+            nextTitle = 'Cambiar a Vista Estado';
+        } else {
+            nextIcon = '<span>🗂️</span>';
+            nextTitle = 'Cambiar a Vista Cajones';
         }
+
+        toggleIds.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.innerHTML = nextIcon;
+                btn.title = nextTitle;
+            }
+        });
+    }
+
+    function toggleAhorroView() {
         if (ahorroViewMode === 'cards') {
             ahorroViewMode = 'list';
+            if (currentView !== 'ahorro') switchView('ahorro');
         } else if (ahorroViewMode === 'list') {
             ahorroViewMode = 'calendar';
             switchView('ahorroCalendar');
-            localStorage.setItem('ahorroViewMode', ahorroViewMode);
-            return;
+        } else if (ahorroViewMode === 'calendar') {
+            ahorroViewMode = 'estado';
+            switchView('ahorroEstado');
         } else {
             ahorroViewMode = 'cards';
-            if (currentView === 'ahorroCalendar') {
-                switchView('ahorro');
-            }
+            switchView('ahorro');
         }
         localStorage.setItem('ahorroViewMode', ahorroViewMode);
+        updateAhorroToggleIcons();
         render();
     }
 
@@ -7849,7 +7831,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const isAh = (view === 'ahorro' && currentView === 'ahorroCalendar');
+                const isAh = (view === 'ahorro' && (currentView === 'ahorroCalendar' || currentView === 'ahorroEstado'));
                 const isNom = (view === 'nomina' && currentView === 'analisis');
                 if (currentView === view || isAh || isNom) {
                     if (view === 'bolsa') toggleBolsaView();
@@ -8081,12 +8063,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('bolsaHighlightsVisible', bolsaHighlightsVisible);
             render();
         });
-        document.getElementById('bolsaSummaryToggleBtn2')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            bolsaSummaryVisible = !bolsaSummaryVisible;
-            localStorage.setItem('bolsaSummaryVisible', bolsaSummaryVisible);
-            render();
-        });
+
         document.getElementById('bolsaDataSourceToggleBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             toggleDataSource();
@@ -8099,40 +8076,39 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             toggleBolsaView();
         });
-        document.getElementById('bolsaTotalesToggle2')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            bolsaTotalsMode = !bolsaTotalsMode;
-            localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
 
-            // If turning on totals, force list view to see the effect
-            if (bolsaTotalsMode) {
-                bolsaViewMode = 'list';
-                localStorage.setItem('bolsaViewMode', 'list');
-            }
+
+
+
+        document.getElementById('ahorroCardsBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ahorroViewMode = 'cards';
+            localStorage.setItem('ahorroViewMode', ahorroViewMode);
+            if (currentView !== 'ahorro') switchView('ahorro');
             render();
         });
-
-        document.getElementById('ahorroViewToggleBtn2')?.addEventListener('click', (e) => {
+        document.getElementById('ahorroListBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleAhorroView();
-        });
-        document.getElementById('ahorroSummaryToggleBtn2')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            ahorroSummaryVisible = !ahorroSummaryVisible;
-            localStorage.setItem('ahorroSummaryVisible', ahorroSummaryVisible);
-            render();
-        });
-        document.getElementById('ahorroTotalesToggle2')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            ahorroListFilterMode = (ahorroListFilterMode === 'totals' ? 'detail' : 'totals');
-            localStorage.setItem('ahorroListFilterMode', ahorroListFilterMode);
-
-            // Force list view
             ahorroViewMode = 'list';
-            localStorage.setItem('ahorroViewMode', 'list');
-
+            localStorage.setItem('ahorroViewMode', ahorroViewMode);
+            if (currentView !== 'ahorro') switchView('ahorro');
             render();
         });
+        document.getElementById('ahorroEstadoBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ahorroViewMode = 'estado';
+            localStorage.setItem('ahorroViewMode', ahorroViewMode);
+            switchView('ahorroEstado');
+            render();
+        });
+        document.getElementById('ahorroCalendarBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ahorroViewMode = 'calendar';
+            localStorage.setItem('ahorroViewMode', ahorroViewMode);
+            switchView('ahorroCalendar');
+            render();
+        });
+
 
         // Activity Submenu Listeners
         const setActivitySearch = (query) => {
@@ -8869,6 +8845,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Ahorro View Toggles
         elements.ahorroViewToggleBtn?.addEventListener('click', toggleAhorroView);
+        document.getElementById('ahorroCalendarViewToggleBtn')?.addEventListener('click', toggleAhorroView);
+        document.getElementById('ahorroEstadoViewToggleBtn')?.addEventListener('click', toggleAhorroView);
 
 
         elements.ahorroFilterMode?.addEventListener('change', (e) => {
@@ -9170,21 +9148,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Bolsa Totals Toggle
-        if (elements.bolsaTotalesToggle) {
-            elements.bolsaTotalesToggle.addEventListener('click', () => {
-                bolsaTotalsMode = !bolsaTotalsMode;
-                localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
-
-                // If turning on totals, force list view to see the effect
-                if (bolsaTotalsMode) {
-                    bolsaViewMode = 'list';
-                    localStorage.setItem('bolsaViewMode', 'list');
-                }
-                render();
-            });
-        }
-
         // Bolsa Highlights Toggle
         if (elements.bolsaHighlightsToggleBtn) {
             elements.bolsaHighlightsToggleBtn.addEventListener('click', () => {
@@ -9194,23 +9157,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Bolsa Summary Toggle
-        if (elements.bolsaSummaryToggleBtn) {
-            elements.bolsaSummaryToggleBtn.addEventListener('click', () => {
-                bolsaSummaryVisible = !bolsaSummaryVisible;
-                localStorage.setItem('bolsaSummaryVisible', bolsaSummaryVisible);
-                render();
-            });
-        }
 
-        // Ahorro Summary Toggle (Header button)
-        if (elements.ahorroSummaryToggleBtn) {
-            elements.ahorroSummaryToggleBtn.addEventListener('click', () => {
-                ahorroSummaryVisible = !ahorroSummaryVisible;
-                localStorage.setItem('ahorroSummaryVisible', ahorroSummaryVisible);
-                render();
-            });
-        }
+
+
 
         // ── Mobile Tooltip System (Long Press) ──
         (function () {

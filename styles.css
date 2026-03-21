@@ -466,6 +466,14 @@ header a {
     transform: translateX(4px);
 }
 
+.submenu-item.active {
+    color: white;
+    background: rgba(59, 130, 246, 0.15);
+    font-weight: 600;
+    transform: translateX(4px);
+    border-radius: 6px;
+}
+
 .submenu-item span {
     font-size: 1rem;
 }

@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603210948">
+    <link rel="stylesheet" href="styles.css?v=202603211903">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -119,10 +119,8 @@
                             <button id="exportDataBtn2" class="submenu-item"><span>💾</span> Exportar CSV</button>
                             <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span>
                                 Highlights</button>
-                            <button id="bolsaSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar
-                                Totales</button>
-                            <button id="bolsaTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por
-                                Acción</button>
+
+
                             <button id="bolsaCalendarBtn2" class="submenu-item"><span>📅</span> Calendario</button>
                         </div>
                     </div>
@@ -136,15 +134,12 @@
                             <span class="nav-item-chevron">▼</span>
                         </div>
                         <div class="sidebar-submenu">
-                            <button id="ahorroViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista
-                                Tarjetas/Lista</button>
-                            <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
-                            <button class="submenu-item" data-view="ahorroEstado"><span>📈</span> Estado</button>
+                            <button id="ahorroCardsBtn2" class="submenu-item"><span>🎲</span> Vista Cajones</button>
+                            <button id="ahorroListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
+                            <button id="ahorroEstadoBtn2" class="submenu-item" data-view="ahorroEstado"><span>📈</span> Vista Estado</button>
+                            <button id="ahorroCalendarBtn2" class="submenu-item"><span>📅</span> Vista Calendario</button>
                             <button id="addDrawerBtn2" class="submenu-item"><span>📁</span> Añadir Cajón</button>
-                            <button id="ahorroSummaryToggleBtn2" class="submenu-item"><span>📊</span> Mostrar/Ocultar
-                                Totales</button>
-                            <button id="ahorroTotalesToggle2" class="submenu-item"><span>🧮</span> Totales por
-                                Cajón</button>
+
                             <button id="addGlobalMovementBtn2" class="submenu-item"><span>💶</span> Nuevo
                                 Movimiento</button>
                         </div>
@@ -277,8 +272,7 @@
                             <button id="bolsaHighlightsToggleBtn" class="btn-sm"
                                 title="Mostrar/Ocultar Highlights Animados"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🚀</button>
-                            <button id="bolsaSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Totales"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
+
                             <button id="bolsaBreakdownBtn" class="btn-sm" title="Rendimientos"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📉</button>
                         </div>
@@ -361,8 +355,7 @@
                         <div class="view-toggle" style="display:flex; gap: 1.2rem;">
                             <button id="bolsaViewToggleBtn" class="btn-sm" title="Cambiar Vista"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
-                            <button id="bolsaTotalesToggle" class="btn-sm" title="Alternar Vista Totales"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
+
                         </div>
                     </div>
                     <div id="bolsaGrid" class="drawers-grid" style="margin-top: 1rem;">
@@ -412,8 +405,7 @@
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
                         </div>
                         <div style="display:flex; gap: 0.8rem;">
-                            <button id="ahorroSummaryToggleBtn" class="btn-sm" title="Mostrar/Ocultar Totales"
-                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📊</button>
+
                             <button id="ahorroBreakdownBtn" class="btn-secondary" style="padding: 0.5rem 1rem;"
                                 title="Rendimientos">📈</button>
                             <button id="addDrawerBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
@@ -507,6 +499,7 @@
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <h2 style="margin:0">Calendario de Ahorro Global</h2>
+                            <button class="icon-btn" id="ahorroCalendarViewToggleBtn" title="Cambiar Vista">🔲</button>
                             <div style="display: flex; flex-direction: column; gap: 2px; align-items: center;">
                                 <select id="ahorroGlobalCalendarDrawerFilter" 
                                     style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none; width: 150px; text-align: center;">
@@ -567,6 +560,7 @@
                     <div class="section-header" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <h2 style="margin:0">Estado de Ahorro</h2>
+                            <button class="icon-btn" id="ahorroEstadoViewToggleBtn" title="Cambiar Vista">🔲</button>
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
                             <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
@@ -1672,7 +1666,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603210948"></script>
+    <script src="app.js?v=202603211903"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1859,7 +1853,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603210948';
+        const APP_VERSION = '202603211903';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
