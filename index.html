@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603211903">
+    <link rel="stylesheet" href="styles.css?v=202603211916">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -106,21 +106,15 @@
                             <span class="nav-item-chevron">▼</span>
                         </div>
                         <div class="sidebar-submenu">
-                            <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir
-                                Inversión</button>
+                            <button id="bolsaCardsBtn2" class="submenu-item"><span>🗂️</span> Vista Tarjetas</button>
+                            <button id="bolsaListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
+                            <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir Inversión</button>
                             <button id="bolsaRefreshBtn2" class="submenu-item"><span>🔄</span> Actualizar Datos</button>
                             <button id="bolsaBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
-                            <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen
-                                Datos</button>
-                            <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios
-                                Manuales</button>
-                            <button id="bolsaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista
-                                Tarjetas/Lista</button>
+                            <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen Datos</button>
+                            <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios Manuales</button>
                             <button id="exportDataBtn2" class="submenu-item"><span>💾</span> Exportar CSV</button>
-                            <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span>
-                                Highlights</button>
-
-
+                            <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
                             <button id="bolsaCalendarBtn2" class="submenu-item"><span>📅</span> Calendario</button>
                         </div>
                     </div>
@@ -154,13 +148,11 @@
                             <span class="nav-item-chevron">▼</span>
                         </div>
                         <div class="sidebar-submenu">
+                            <button id="nominaCardsBtn2" class="submenu-item"><span>🗂️</span> Vista Tarjetas</button>
+                            <button id="nominaListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
                             <button id="addNominaBtn2" class="submenu-item"><span>➕</span> Añadir Concepto</button>
-                            <button id="nominaAnalisisViewBtn2" class="submenu-item"><span>📈</span> Análisis
-                                Anual</button>
-                            <button id="nominaViewToggleBtn2" class="submenu-item"><span>🔲</span> Vista
-                                Tarjetas/Lista</button>
-                            <button id="fiscalCountdownBtn2" class="submenu-item"><span>⏳</span> Días Mes Fiscal: <span
-                                    id="fiscalDaysLeft2">--</span></button>
+                            <button id="nominaAnalisisViewBtn2" class="submenu-item"><span>📈</span> Análisis Anual</button>
+                            <button id="fiscalCountdownBtn2" class="submenu-item"><span>⏳</span> Días Mes Fiscal: <span id="fiscalDaysLeft2">--</span></button>
                         </div>
                     </div>
                     <div class="nav-item-container" id="activityNavContainer">
@@ -1666,7 +1658,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603211903"></script>
+    <script src="app.js?v=202603211916"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1853,7 +1845,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603211903';
+        const APP_VERSION = '202603211916';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

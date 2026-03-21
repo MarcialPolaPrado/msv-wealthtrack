@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isNominaAhorroExpanded = localStorage.getItem('isNominaAhorroExpanded') !== 'false';
     let isNominaGastosExpanded = localStorage.getItem('isNominaGastosExpanded') !== 'false';
     let isNominaEgresosExpanded = localStorage.getItem('isNominaEgresosExpanded') !== 'false';
+    let isAhorroEstadoChartExpanded = localStorage.getItem('isAhorroEstadoChartExpanded') !== 'false';
     let expandedSummaryDrawers = new Set();
     let drawerDetailFilterMode = localStorage.getItem('drawerDetailFilterMode') || 'all';
     let activityListMonth = _initialMonthStr;
@@ -1015,6 +1016,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSidebarTogglesUI() {
+        const highlightSubmenu = (id, isActive) => {
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('active', isActive);
+        };
+
         const updateSubmenuBtn = (id, isActive, baseText) => {
             const btn = document.getElementById(id);
             if (!btn) return;
@@ -1025,11 +1031,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateSubmenuBtn('bolsaHighlightsToggleBtn2', bolsaHighlightsVisible, 'Highlights');
 
+        // Highlighting for Bolsa submenu items
+        highlightSubmenu('bolsaCardsBtn2', currentView === 'bolsa' && bolsaViewMode === 'cards');
+        highlightSubmenu('bolsaListBtn2', currentView === 'bolsa' && bolsaViewMode === 'list');
+
+        // Highlighting for Nomina submenu items
+        highlightSubmenu('nominaCardsBtn2', (currentView === 'nomina' || currentView === 'analisis') && nominaViewMode === 'cards');
+        highlightSubmenu('nominaListBtn2', (currentView === 'nomina' || currentView === 'analisis') && nominaViewMode === 'list');
+
         // Highlighting for Ahorro submenu items
-        const highlightSubmenu = (id, isActive) => {
-            const btn = document.getElementById(id);
-            if (btn) btn.classList.toggle('active', isActive);
-        };
         highlightSubmenu('ahorroCardsBtn2', currentView === 'ahorro' && ahorroViewMode === 'cards');
         highlightSubmenu('ahorroListBtn2', currentView === 'ahorro' && ahorroViewMode === 'list');
         highlightSubmenu('ahorroEstadoBtn2', currentView === 'ahorroEstado');
@@ -1301,13 +1311,6 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.bolsaViewToggleBtn.title = bolsaViewMode === 'cards' ? 'Vista Lista' : 'Vista Tarjetas';
         }
 
-        // Sync Sidebar View Toggle
-        const sidebarViewBtn = document.getElementById('bolsaViewToggleBtn2');
-        if (sidebarViewBtn) {
-            sidebarViewBtn.innerHTML = bolsaViewMode === 'cards'
-                ? '<span>📄</span> Vista Lista'
-                : '<span>🗂️</span> Vista Tarjetas';
-        }
 
 
         if (bolsaViewMode === 'cards') {
@@ -4374,9 +4377,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.nominaViewToggleBtn.innerHTML = '<span>🗂️</span>';
                 elements.nominaViewToggleBtn.title = 'Cambiar a Vista Tarjetas';
             }
-            // Sync with Sidebar
-            const sidebarBtn = document.getElementById('nominaViewToggleBtn2');
-            if (sidebarBtn) sidebarBtn.innerHTML = '<span>🗂️</span> Vista Tarjetas';
         } else {
             elements.nominaGridContainer?.classList.remove('hidden');
             elements.nominaTableContainer?.classList.add('hidden');
@@ -4385,9 +4385,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.nominaViewToggleBtn.innerHTML = '<span>📄</span>';
                 elements.nominaViewToggleBtn.title = 'Cambiar a Vista Listado';
             }
-            // Sync with Sidebar
-            const sidebarBtn = document.getElementById('nominaViewToggleBtn2');
-            if (sidebarBtn) sidebarBtn.innerHTML = '<span>📄</span> Vista Listado';
         }
 
         // Helper to ensure the automatic drawer exists - DO THIS BEFORE RENDERING LIST
@@ -7781,10 +7778,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.ahorroEstadoChartHeader?.addEventListener('click', () => {
             if (elements.ahorroEstadoChartContent && elements.ahorroEstadoChartToggleIcon) {
-                const isHidden = elements.ahorroEstadoChartContent.classList.toggle('hidden');
-                elements.ahorroEstadoChartToggleIcon.textContent = isHidden ? '▶' : '▼';
+                isAhorroEstadoChartExpanded = !isAhorroEstadoChartExpanded;
+                localStorage.setItem('isAhorroEstadoChartExpanded', isAhorroEstadoChartExpanded);
+                elements.ahorroEstadoChartContent.classList.toggle('hidden', !isAhorroEstadoChartExpanded);
+                elements.ahorroEstadoChartToggleIcon.textContent = isAhorroEstadoChartExpanded ? '▼' : '▶';
             }
         });
+
+        // Apply initial Ahorro Estado Chart state
+        if (elements.ahorroEstadoChartContent && elements.ahorroEstadoChartToggleIcon) {
+            elements.ahorroEstadoChartContent.classList.toggle('hidden', !isAhorroEstadoChartExpanded);
+            elements.ahorroEstadoChartToggleIcon.textContent = isAhorroEstadoChartExpanded ? '▼' : '▶';
+        }
 
 
         // Global Date Picker Trigger: open calendar on field click
@@ -8072,9 +8077,19 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             openManualPriceModal();
         });
-        document.getElementById('bolsaViewToggleBtn2')?.addEventListener('click', (e) => {
+        document.getElementById('bolsaCardsBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleBolsaView();
+            bolsaViewMode = 'cards';
+            localStorage.setItem('bolsaViewMode', 'cards');
+            if (currentView !== 'bolsa') switchView('bolsa');
+            render();
+        });
+        document.getElementById('bolsaListBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bolsaViewMode = 'list';
+            localStorage.setItem('bolsaViewMode', 'list');
+            if (currentView !== 'bolsa') switchView('bolsa');
+            render();
         });
 
 
@@ -8179,9 +8194,19 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             switchView('analisis');
         });
-        document.getElementById('nominaViewToggleBtn2')?.addEventListener('click', (e) => {
+        document.getElementById('nominaCardsBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleNominaView();
+            nominaViewMode = 'cards';
+            localStorage.setItem('nominaViewMode', 'cards');
+            if (currentView !== 'nomina') switchView('nomina');
+            render();
+        });
+        document.getElementById('nominaListBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            nominaViewMode = 'list';
+            localStorage.setItem('nominaViewMode', 'list');
+            if (currentView !== 'nomina') switchView('nomina');
+            render();
         });
         document.getElementById('exportDataBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
