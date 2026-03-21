@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let sortConfig = getSortConfig('bolsaSortConfig', { key: null, direction: 'asc' });
     let expandedTickers = new Set(); // Track which positions are expanded to show details
+    let expandedEstadoDrawers = new Set(); // Track which drawers are expanded in Estado view
     let selectedAhorroFiscalMonth = null;
     let ahorroViewMode = localStorage.getItem('ahorroViewMode') || 'cards'; // 'cards' or 'list'
 
@@ -3005,9 +3006,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (sum > 0) {
                 drawerData[drawer.id] = {
+                    id: drawer.id,
                     name: drawer.name,
                     icon: drawer.icon,
-                    amount: sum
+                    amount: sum,
+                    mvmts: relevantMvmts
                 };
             }
         });
@@ -3039,12 +3042,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
                     const pct = totalForType > 0 ? (d.amount / totalForType) * 100 : 0;
+                    const isExpanded = expandedEstadoDrawers.has(d.id);
                     tr.innerHTML = `
-                        <td style="padding: 0.75rem; text-align: left;">${d.icon} ${d.name}</td>
+                        <td style="padding: 0.75rem; text-align: left; display: flex; align-items: center; gap: 8px;">
+                            <button class="toggle-estado-drawer" data-id="${d.id}" style="background:none; border:none; color:white; cursor:pointer; font-size:0.8rem; padding:0; width:12px;">${isExpanded ? '▼' : '▶'}</button>
+                            <span>${d.icon} ${d.name}</span>
+                        </td>
                         <td style="padding: 0.75rem; text-align: center; color: var(--text-muted);">${fmtNum(pct)}%</td>
                         <td style="padding: 0.75rem; text-align: right; font-weight: 600;">${fmtEUR(d.amount)}</td>
                     `;
                     elements.ahorroEstadoTableBody.appendChild(tr);
+
+                    if (isExpanded) {
+                        d.mvmts.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(m => {
+                            const detailTr = document.createElement('tr');
+                            detailTr.style.background = 'rgba(255,255,255,0.02)';
+                            detailTr.style.fontSize = '0.75rem';
+                            detailTr.innerHTML = `
+                                <td style="padding: 0.5rem 0.75rem 0.5rem 2rem; opacity: 0.7;">
+                                    ${new Date(m.date).toLocaleDateString()} - ${m.description || 'Sin concepto'}
+                                </td>
+                                <td style="text-align: center; opacity: 0.5;">
+                                    ${m.category && m.category.includes(':') ? m.category.split(':')[1] : ''}
+                                </td>
+                                <td style="padding: 0.5rem 0.75rem; text-align: right; opacity: 0.7;">${fmtEUR(Math.abs(m.amount))}</td>
+                            `;
+                            elements.ahorroEstadoTableBody.appendChild(detailTr);
+                        });
+                    }
                 });
 
                 // Add TOTAL row
@@ -3053,11 +3078,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalTr.style.borderTop = '2px solid var(--primary)';
                 totalTr.style.fontWeight = 'bold';
                 totalTr.innerHTML = `
-                    <td style="padding: 0.75rem; text-align: left;">TOTAL</td>
+                    <td style="padding: 0.75rem; text-align: left; padding-left: 2rem;">TOTAL</td>
                     <td style="padding: 0.75rem; text-align: center;">100%</td>
                     <td style="padding: 0.75rem; text-align: right;">${fmtEUR(totalForType)}</td>
                 `;
                 elements.ahorroEstadoTableBody.appendChild(totalTr);
+
+                // Add listeners to toggle buttons
+                elements.ahorroEstadoTableBody.querySelectorAll('.toggle-estado-drawer').forEach(btn => {
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        const id = btn.dataset.id;
+                        if (expandedEstadoDrawers.has(id)) expandedEstadoDrawers.delete(id);
+                        else expandedEstadoDrawers.add(id);
+                        renderAhorroEstado();
+                    };
+                });
             }
         }
     }
