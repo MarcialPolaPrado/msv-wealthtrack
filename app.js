@@ -459,8 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ahorroEstadoYearUp: document.getElementById('ahorroEstadoYearUp'),
         ahorroEstadoYearDown: document.getElementById('ahorroEstadoYearDown'),
         ahorroEstadoYearLabel: document.getElementById('ahorroEstadoYearLabel'),
-        ahorroEstadoTotalIncome: document.getElementById('ahorroEstadoTotalIncome'),
-        ahorroEstadoTotalExpense: document.getElementById('ahorroEstadoTotalExpense'),
+        ahorroEstadoChartHeader: document.getElementById('ahorroEstadoChartHeader'),
+        ahorroEstadoChartToggleIcon: document.getElementById('ahorroEstadoChartToggleIcon'),
+        ahorroEstadoChartContent: document.getElementById('ahorroEstadoChartContent'),
         ahorroEstadoShowIncome: document.getElementById('ahorroEstadoShowIncome'),
         ahorroEstadoShowExpenses: document.getElementById('ahorroEstadoShowExpenses'),
         ahorroEstadoPieChart: document.getElementById('ahorroEstadoPieChart'),
@@ -3011,8 +3012,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        if (elements.ahorroEstadoTotalIncome) elements.ahorroEstadoTotalIncome.textContent = fmtEUR(totalIncome);
-        if (elements.ahorroEstadoTotalExpense) elements.ahorroEstadoTotalExpense.textContent = fmtEUR(totalExpense);
+        // Summary cards removed by user request
+
 
         if (elements.ahorroEstadoShowIncome) {
             elements.ahorroEstadoShowIncome.style.background = ahorroEstadoType === 'income' ? 'var(--primary)' : 'transparent';
@@ -3045,6 +3046,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                     elements.ahorroEstadoTableBody.appendChild(tr);
                 });
+
+                // Add TOTAL row
+                const totalTr = document.createElement('tr');
+                totalTr.style.background = 'rgba(59, 130, 246, 0.15)';
+                totalTr.style.borderTop = '2px solid var(--primary)';
+                totalTr.style.fontWeight = 'bold';
+                totalTr.innerHTML = `
+                    <td style="padding: 0.75rem; text-align: left;">TOTAL</td>
+                    <td style="padding: 0.75rem; text-align: center;">100%</td>
+                    <td style="padding: 0.75rem; text-align: right;">${fmtEUR(totalForType)}</td>
+                `;
+                elements.ahorroEstadoTableBody.appendChild(totalTr);
             }
         }
     }
@@ -7712,6 +7725,13 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.ahorroEstadoShowExpenses?.addEventListener('click', () => {
             ahorroEstadoType = 'expense';
             renderAhorroEstado();
+        });
+
+        elements.ahorroEstadoChartHeader?.addEventListener('click', () => {
+            if (elements.ahorroEstadoChartContent && elements.ahorroEstadoChartToggleIcon) {
+                const isHidden = elements.ahorroEstadoChartContent.classList.toggle('hidden');
+                elements.ahorroEstadoChartToggleIcon.textContent = isHidden ? '▶' : '▼';
+            }
         });
 
 

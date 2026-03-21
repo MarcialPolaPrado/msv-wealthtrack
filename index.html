@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603210907">
+    <link rel="stylesheet" href="styles.css?v=202603210928">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -583,26 +583,22 @@
                         </div>
                     </div>
 
-                    <div class="dashboard-grid" style="margin-bottom: 2rem;">
-                        <div class="card summary-card glass-panel">
-                            <h3>Ingresos Totales</h3>
-                            <p class="amount" id="ahorroEstadoTotalIncome">0,00 €</p>
-                        </div>
-                        <div class="card summary-card glass-panel">
-                            <h3>Gastos Totales</h3>
-                            <p class="amount" id="ahorroEstadoTotalExpense" style="color: var(--danger);">0,00 €</p>
-                        </div>
-                    </div>
+                    <!-- Summary cards removed as requested by user -->
 
                     <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3 id="ahorroEstadoChartTitle" style="margin:0;">Distribución por Cajón</h3>
+                            <h3 id="ahorroEstadoChartHeader" style="margin:0; cursor:pointer; display:flex; align-items:center; gap:8px;" title="Mostrar/Ocultar Gráfico">
+                                <span>Distribución por Cajón</span>
+                                <span id="ahorroEstadoChartToggleIcon" style="font-size:0.8rem; opacity:0.6;">▼</span>
+                            </h3>
                             <div class="view-toggle" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
                                 <button id="ahorroEstadoShowIncome" class="btn-sm" style="padding: 4px 12px; border: none; cursor: pointer; background: var(--primary); color: white; border-radius: 6px;">Ingresos</button>
                                 <button id="ahorroEstadoShowExpenses" class="btn-sm" style="padding: 4px 12px; border: none; cursor: pointer; background: transparent; color: var(--text-muted); border-radius: 6px;">Gastos</button>
                             </div>
                         </div>
-                        <div id="ahorroEstadoPieChart" style="width: 100%; min-height: 250px;"></div>
+                        <div id="ahorroEstadoChartContent">
+                            <div id="ahorroEstadoPieChart" style="width: 100%; min-height: 250px;"></div>
+                        </div>
                     </div>
 
                     <div class="table-container glass-panel" style="overflow-x: auto;">
@@ -1676,7 +1672,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603210907"></script>
+    <script src="app.js?v=202603210928"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1863,7 +1859,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603210907';
+        const APP_VERSION = '202603210928';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
