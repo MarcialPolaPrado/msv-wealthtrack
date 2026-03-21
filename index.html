@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603211916">
+    <link rel="stylesheet" href="styles.css?v=202603211959">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -132,6 +132,7 @@
                             <button id="ahorroListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
                             <button id="ahorroEstadoBtn2" class="submenu-item" data-view="ahorroEstado"><span>📈</span> Vista Estado</button>
                             <button id="ahorroCalendarBtn2" class="submenu-item"><span>📅</span> Vista Calendario</button>
+                            <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📊</span> Rendimientos (D+I+E)</button>
                             <button id="addDrawerBtn2" class="submenu-item"><span>📁</span> Añadir Cajón</button>
 
                             <button id="addGlobalMovementBtn2" class="submenu-item"><span>💶</span> Nuevo
@@ -1658,7 +1659,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603211916"></script>
+    <script src="app.js?v=202603211959"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1845,7 +1846,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603211916';
+        const APP_VERSION = '202603211959';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
