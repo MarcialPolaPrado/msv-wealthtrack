@@ -3056,8 +3056,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.ahorroEstadoTotalIncome) elements.ahorroEstadoTotalIncome.textContent = fmtEUR(totalIncome);
         if (elements.ahorroEstadoTotalExpense) elements.ahorroEstadoTotalExpense.textContent = fmtEUR(totalExpense);
 
-        if (elements.ahorroEstadoShowIncome) elements.ahorroEstadoShowIncome.style.opacity = ahorroEstadoType === 'income' ? '1' : '0.6';
-        if (elements.ahorroEstadoShowExpenses) elements.ahorroEstadoShowExpenses.style.opacity = ahorroEstadoType === 'expense' ? '1' : '0.6';
+        if (elements.ahorroEstadoShowIncome) {
+            elements.ahorroEstadoShowIncome.style.background = ahorroEstadoType === 'income' ? 'var(--primary)' : 'transparent';
+            elements.ahorroEstadoShowIncome.style.color = ahorroEstadoType === 'income' ? 'white' : 'var(--text-muted)';
+        }
+        if (elements.ahorroEstadoShowExpenses) {
+            elements.ahorroEstadoShowExpenses.style.background = ahorroEstadoType === 'expense' ? 'var(--primary)' : 'transparent';
+            elements.ahorroEstadoShowExpenses.style.color = ahorroEstadoType === 'expense' ? 'white' : 'var(--text-muted)';
+        }
         if (elements.ahorroEstadoChartTitle) elements.ahorroEstadoChartTitle.textContent = `Distribución de ${ahorroEstadoType === 'income' ? 'Ingresos' : 'Gastos'} por Cajón`;
 
         const chartData = Object.values(drawerData).sort((a, b) => b.amount - a.amount);

@@ -3497,3 +3497,24 @@ button,
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
     }
 }
+
+/* Estado Table Mobile Optimization */
+@media (max-width: 600px) {
+    .estado-table th,
+    .estado-table td {
+        padding: 0.5rem 0.4rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    #ahorroEstadoSection .dashboard-grid {
+        gap: 0.75rem;
+    }
+    
+    #ahorroEstadoSection .summary-card {
+        padding: 1rem;
+    }
+    
+    #ahorroEstadoSection .amount {
+        font-size: 1.25rem;
+    }
+}
