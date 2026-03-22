@@ -709,6 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bottomNav: document.getElementById('bottomNavHub'),
         sidebarClockBtn: document.getElementById('sidebarClockBtn'),
         sidebarResetBtn: document.getElementById('sidebarResetBtn'),
+        sidebarMigrateInversionsBtn: document.getElementById('sidebarMigrateInversionsBtn'),
         sidebarDeleteAllBtn: document.getElementById('sidebarDeleteAllBtn'),
         sidebarActivityBtn: document.getElementById('sidebarActivityBtn'),
         wealthNavItems: document.querySelectorAll('.wealth-nav-item, .submenu-item'),
@@ -1730,7 +1731,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 date: s.date || new Date().toISOString().split('T')[0],
                 concept: `${s.qty < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
                 category: `Bolsa: ${s.market || 'Mercado'}`,
-                amount: -((s.qty || 0) * (s.price || 0)),
+                amount: ((s.qty || 0) * (s.price || 0)), // Mostramos inversión en positivo como pidió el usuario
                 type: 'bolsa',
                 drawerId: 'bolsa',
                 id: s.id,
@@ -1870,12 +1871,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalAmount = 0;
         filtered.forEach(m => {
             try {
+                const conceptLower = (m.concept || m.description || '').toLowerCase();
+                const isInversion = m.category === 'Inversión' || m.type === 'bolsa' || conceptLower.includes('invers') || conceptLower.includes('bolsa');
+                const displayAmount = isInversion ? Math.abs(m.amount) : m.amount;
                 totalAmount += m.amount;
                 const tr = document.createElement('tr');
 
-                const amountClass = m.amount >= 0 ? 'profit' : 'loss';
+                const amountClass = displayAmount >= 0 ? 'profit' : 'loss';
                 const dateStr = m.date ? new Date(m.date).toLocaleDateString() : '---';
-                const amountStr = fmtEUR(m.amount, 2);
+                const amountStr = (isInversion && displayAmount > 0 ? '+' : '') + fmtEUR(displayAmount, 2);
 
                 const isFiltered = (col, val) => {
                     if (activityCellFilter.column !== col) return false;
@@ -2924,8 +2928,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tr = document.createElement('tr');
                     tr.className = `ahorro-list-row mvmt-drawer-${drawer.id}`;
 
-                    const isIncome = m.amount > 0;
-                    const amountColor = isIncome ? 'var(--success)' : 'var(--danger)';
+                    const conceptLower = (m.concept || m.description || '').toLowerCase();
+                    const isInversion = m.category === 'Inversión' || conceptLower.includes('invers') || conceptLower.includes('bolsa');
+                    const isIncome = m.amount > 0 && !isInversion;
+                    const amountColor = isInversion ? 'var(--primary)' : (isIncome ? 'var(--success)' : 'var(--danger)');
                     const category = m.category || '-';
                     const concept = m.concept || m.description || '';
 
@@ -2935,7 +2941,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="category-tag">${category}</div>
                             ${concept && concept !== category ? `<div class="detail-text">${concept}</div>` : ''}
                         </td>
-                        <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
+                        <td class="amount" style="color: ${amountColor}">${isInversion ? '+' : ''}${fmtEUR(isInversion ? Math.abs(m.amount) : m.amount)}</td>
                     `;
 
                     tr.onclick = () => {
@@ -2984,7 +2990,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const filtered = mvmts.filter(m => {
                 if (!m.date) return false;
-                if (m.category === 'Traspaso' || m.category?.startsWith('Traspaso:')) return false;
+                if (m.category === 'Traspaso' || m.category === 'Inversión' || m.category?.startsWith('Traspaso:')) return false;
                 return getFiscalMonth(m.date) === targetFiscalMonth;
             });
 
@@ -5708,7 +5714,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     date: s.date,
                     concept: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
                     category: `Bolsa: ${s.market || 'Acción'}`,
-                    amount: -((s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1))
+                    amount: (s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1)
                 }));
             } else {
                 mvmts = (drawer.movements || []).filter(m => m.date === dateStr);
@@ -5758,7 +5764,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 date: s.date,
                 description: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
                 category: `Bolsa: ${s.market || 'Acción'}`,
-                amount: -((s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1))
+                amount: (s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1)
             }));
         } else {
             dayMovements = (drawer.movements || [])
@@ -5929,7 +5935,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (d.id === 'bolsa' && typeof stocks !== 'undefined') {
                 const stockMvmts = stocks.map(s => ({
                     date: s.date,
-                    amount: -((s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1)),
+                    amount: (s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1),
                     description: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
                     category: `Bolsa: ${s.market || 'Acción'}`
                 }));
@@ -6020,7 +6026,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (d.id === 'bolsa' && typeof stocks !== 'undefined') {
                 const stockMvmts = stocks.map((s, sIdx) => ({
                     date: s.date,
-                    amount: -((s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1)),
+                    amount: (s.qty || 0) * (s.price || 0) * (s.currency === 'USD' ? fx : 1),
                     description: `${(s.qty || 0) < 0 ? 'Venta' : 'Compra'} ${s.ticker}`,
                     category: `Bolsa: ${s.market || 'Acción'}`,
                     isStock: true,
@@ -7312,6 +7318,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.panicReset = panicReset;
 
+
+    async function migrateInversions() {
+        showCustomConfirm("Esta herramienta buscará movimientos que parezcan inversiones (con la palabra 'Inversión' o 'Bolsa' en la descripción) y los marcará con la categoría correcta para que se muestren en positivo automáticamente. ¿Deseas continuar?", () => {
+            let count = 0;
+            savingsDrawers.forEach(drawer => {
+                (drawer.movements || []).forEach(m => {
+                    const conceptLower = (m.concept || m.description || '').toLowerCase();
+                    if (conceptLower.includes('invers') || conceptLower.includes('bolsa')) {
+                        if (m.category !== 'Inversión') {
+                            m.category = 'Inversión';
+                            count++;
+                        }
+                    }
+                });
+            });
+            if (count > 0) {
+                if (window.saveSavings) window.saveSavings(savingsDrawers);
+                render();
+                alert(`Se han migrado ${count} movimientos a la categoría Inversión.`);
+            } else {
+                alert("No se encontraron nuevos movimientos para migrar.");
+            }
+        });
+    }
+
     async function forceAppUpdate() {
         showCustomConfirm('Esto borrará toda la caché del navegador para esta aplicación y forzará una recarga total. ¿Continuar?', async () => {
             try {
@@ -7997,6 +8028,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('clockMenuBtn')?.click();
         });
         elements.sidebarResetBtn?.addEventListener('click', () => forceAppUpdate());
+        elements.sidebarMigrateInversionsBtn?.addEventListener('click', () => migrateInversions());
         // --- Secure Delete All Button Hold logic ---
         let holdTimer = null;
         if (elements.sidebarDeleteAllBtn) {
@@ -8851,10 +8883,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     drawer.movements.push({
                         id: Date.now() + Math.random(),
                         date: elements.dateInput.value || new Date().toISOString().split('T')[0],
-                        amount: -totalInvested,
+                        amount: -totalInvested, // Se guarda en negativo para la lógica de saldo
                         description: `Inversión en ${stockData.name}`,
                         concept: `Inversión en ${stockData.name}`,
-                        category: 'Traspaso',
+                        category: 'Inversión', // Nueva categoría para identificarlo
                         activeMonths: [parseInt((elements.dateInput.value || new Date().toISOString().split('T')[0]).split('-')[1])],
                         paid: false
                     });
