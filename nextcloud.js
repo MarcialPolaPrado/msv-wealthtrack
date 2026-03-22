@@ -151,8 +151,11 @@ const NextcloudSync = (() => {
         });
 
         if (resp.ok || resp.status === 201 || resp.status === 204) {
-            setLocalModified(now);
-            return { ok: true, timestamp: now };
+            // Get the actual server modified time after upload to avoid skew
+            const meta = await getFileMetadata(config);
+            const finalTimestamp = meta ? meta.lastModified : now;
+            setLocalModified(finalTimestamp);
+            return { ok: true, timestamp: finalTimestamp };
         }
         return { ok: false, error: `Error al subir: ${resp.status}` };
     }

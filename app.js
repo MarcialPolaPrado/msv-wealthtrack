@@ -10522,6 +10522,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const serverDate = new Date(serverLastModified);
             const localDate = localModified ? new Date(localModified) : new Date(0);
             const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
+            
+            const diff = serverDate.getTime() - localDate.getTime();
+            const tolerance = 2000; // 2 seconds
 
             console.log(`[NC Sync] Final check - Server: ${serverLastModified} (${serverDate}), Local: ${localModified} (${localDate}), Same: ${isSameDevice}`);
 
@@ -10530,7 +10533,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (serverDate > localDate) {
+            if (diff > tolerance) {
                 // Server has newer data
                 if (isSameDevice) {
                     // Same device — auto-load silently
@@ -10538,8 +10541,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     isSyncingFromServer = true;
                     applyGlobalData(result.data);
                     isSyncingFromServer = false;
-                    NextcloudSync.setLocalModified(result.lastModified);
-                    updateSyncTimestampUI(result.lastModified);
+                    NextcloudSync.setLocalModified(serverLastModified);
+                    updateSyncTimestampUI(serverLastModified);
                     showToast('🔄 Datos actualizados desde Nextcloud', 'success');
                 } else {
                     // Different device — ask the user
@@ -10554,8 +10557,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             isSyncingFromServer = true;
                             applyGlobalData(result.data);
                             isSyncingFromServer = false;
-                            NextcloudSync.setLocalModified(result.lastModified);
-                            updateSyncTimestampUI(result.lastModified);
+                            NextcloudSync.setLocalModified(serverLastModified);
+                            updateSyncTimestampUI(serverLastModified);
                             showToast('✅ Datos cargados desde Nextcloud', 'success');
                         },
                         () => {
