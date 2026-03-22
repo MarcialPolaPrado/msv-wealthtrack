@@ -10574,6 +10574,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.saveLiveSources) window.saveLiveSources(window.LIVE_SOURCES);
                     if (window.saveFXRate) window.saveFXRate(window.FX_RATE);
                     if (window.saveFXDate) window.saveFXDate(window.FX_DATE);
+                    if (window.saveRecurringSavings) window.saveRecurringSavings(recurringSavingsMovements);
                     render();
                     if (currentView === 'nomina') renderNomina();
                     showToast("✅ Respaldo global restaurado con éxito.", "success");
@@ -10731,6 +10732,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.liveSources) window.LIVE_SOURCES = data.liveSources;
         if (data.fxRate) window.FX_RATE = data.fxRate;
         if (data.fxDate) window.FX_DATE = data.fxDate;
+        recurringSavingsMovements = data.recurringMovements || [];
 
         isFirstUpdateDone = true;
         if (data.exportDate) {
@@ -10774,6 +10776,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.saveLiveSources) window.saveLiveSources(window.LIVE_SOURCES);
         if (window.saveFXRate) window.saveFXRate(window.FX_RATE);
         if (window.saveFXDate) window.saveFXDate(window.FX_DATE);
+        if (window.saveRecurringSavings) window.saveRecurringSavings(recurringSavingsMovements);
         render();
         if (currentView === 'nomina') renderNomina();
     }
