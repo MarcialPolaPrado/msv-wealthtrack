@@ -8289,7 +8289,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Start Nextcloud auto-sync check on load (short delay to ensure core variables are ready)
-        setTimeout(ncSyncOnLoad, 500);
+        // Start Nextcloud auto-sync check on load
+        setTimeout(() => {
+            ncSyncOnLoad().then(() => {
+                // After initial sync, start background periodic check every 5 minutes
+                ncStartPeriodicCheck();
+            });
+        }, 500);
 
         // ── Nextcloud sidebar buttons ──
         document.getElementById('sidebarNcBackupBtn')?.addEventListener('click', () => ncBackupData());
@@ -10523,6 +10529,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Periodic check for server changes (e.g. from other devices)
+    function ncStartPeriodicCheck() {
+        setInterval(async () => {
+            const config = NextcloudSync.loadConfig();
+            if (!config || ncSyncInProgress) return;
+
+            try {
+                const result = await NextcloudSync.downloadData(config);
+                if (result.ok) {
+                    const serverDate = new Date(result.lastModified);
+                    const lastKnown = ncLastServerModified ? new Date(ncLastServerModified) : new Date(0);
+                    const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
+
+                    if (serverDate > lastKnown && !isSameDevice) {
+                        console.log('[NC Sync] Background check: Newer data found on server');
+                        // Show notification to user
+                        showCustomConfirm(
+                            `📱 Hay datos más recientes en Nextcloud (desde ${result.deviceName || 'otro dispositivo'}).\n\n¿Quieres cargarlos ahora?`,
+                            () => {
+                                isSyncingFromServer = true;
+                                applyGlobalData(result.data);
+                                isSyncingFromServer = false;
+                                NextcloudSync.setLocalModified(result.lastModified);
+                                ncLastServerModified = result.lastModified;
+                                updateSyncTimestampUI(result.lastModified);
+                                showToast('✅ Datos actualizados desde Nextcloud', 'success');
+                            }
+                        );
+                    }
+                }
+            } catch (e) {
+                console.warn('[NC Sync] Periodic check failed:', e);
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    }
+
     // Debounced auto-upload — called after data changes
     function ncScheduleAutoUpload() {
         if (isSyncingFromServer) return; // Don't upload while applying server data
@@ -10600,6 +10642,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await ncDoUpload(config);
         } catch (err) {
             console.error('[NC Sync] Auto-upload error:', err);
+            showToast('❌ Error de sincronización automática', 'error');
         } finally {
             ncSyncInProgress = false;
             const updateTimer = document.getElementById('updateTimer');
@@ -10761,8 +10804,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switchView(currentView);
         setupEventListeners();
-        // Automatic update cycle removed. Now manual via refresh button.
-        // Simplified sync for first load REMOVED as per request to use persistent/cached data.
+        // Nextcloud sync is initialized inside setupEventListeners() via ncSyncOnLoad()
+        // which handles pulled data from server and enables auto-uploads.
 
         console.log("initApp completed");
     }
