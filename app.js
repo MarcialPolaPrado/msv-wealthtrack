@@ -10484,6 +10484,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const localDate = localModified ? new Date(localModified) : new Date(0);
             const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
 
+            console.log(`[NC Sync] Server: ${serverDate.toISOString()}, Local: ${localDate.toISOString()}, Same: ${isSameDevice}`);
+
             if (serverDate > localDate) {
                 // Server has newer data
                 if (isSameDevice) {

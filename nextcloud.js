@@ -159,7 +159,8 @@ const NextcloudSync = (() => {
 
     // ── Download Data ──────────────────────────────────────
     async function downloadData(config) {
-        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
+        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`) + `?t=${Date.now()}`;
+        console.log('[NC Sync] Downloading data from:', url);
         const resp = await proxiedFetch(config, url, {
             method: 'GET',
             headers: authHeaders(config)
