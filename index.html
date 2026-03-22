@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603221748">
+    <link rel="stylesheet" href="styles.css?v=202603221857">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -128,12 +128,12 @@
                             <span class="nav-item-chevron">▼</span>
                         </div>
                         <div class="sidebar-submenu">
-                            <button id="ahorroCardsBtn2" class="submenu-item"><span>🎲</span> Vista Cajones</button>
+                            <button id="ahorroAccountsBtn2" class="submenu-item"><span>🎲</span> Vista Cuentas</button>
                             <button id="ahorroListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
                             <button id="ahorroEstadoBtn2" class="submenu-item" data-view="ahorroEstado"><span>📈</span> Vista Estado</button>
                             <button id="ahorroCalendarBtn2" class="submenu-item"><span>📅</span> Vista Calendario</button>
                             <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📊</span> Rendimientos (D+I+E)</button>
-                            <button id="addDrawerBtn2" class="submenu-item"><span>📁</span> Añadir Cajón</button>
+                            <button id="addAccountBtn2" class="submenu-item"><span>📁</span> Añadir Cuenta</button>
 
                             <button id="addGlobalMovementBtn2" class="submenu-item"><span>💶</span> Nuevo
                                 Movimiento</button>
@@ -394,7 +394,7 @@
                     <div id="ahorroHeaderActions"
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <div style="display:flex; align-items:center; gap:1rem;">
-                            <h2 id="misCajonesTitle" style="margin:0">Mis Cajones</h2>
+                            <h2 id="misCuentasTitle" style="margin:0">Mis Cuentas</h2>
                             <button id="ahorroViewToggleBtn" class="btn-sm" title="Cambiar Vista"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
                         </div>
@@ -402,8 +402,8 @@
 
                             <button id="ahorroBreakdownBtn" class="btn-secondary" style="padding: 0.5rem 1rem;"
                                 title="Rendimientos">📈</button>
-                            <button id="addDrawerBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
-                                title="Añadir Cajón">📁</button>
+                            <button id="addAccountBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
+                                title="Añadir Cuenta">📁</button>
                         </div>
                     </div>
 
@@ -455,7 +455,7 @@
                                     <tr style="border-bottom: 2px solid var(--primary);">
                                         <th data-sort="name" colspan="2" onclick=""
                                             style="padding: 1rem; text-align: left; cursor:pointer; user-select:none;">
-                                            Cajón <span class="sort-icon-ahorro">↕️</span></th>
+                                            Cuenta <span class="sort-icon-ahorro">↕️</span></th>
                                         <th data-sort="balance" onclick=""
                                             style="padding: 1rem; text-align: right; cursor:pointer; user-select:none;">
                                             Importe <span class="sort-icon-ahorro">↕️</span></th>
@@ -497,7 +497,7 @@
                             <div style="display: flex; flex-direction: column; gap: 2px; align-items: center;">
                                 <select id="ahorroGlobalCalendarDrawerFilter" 
                                     style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none; width: 150px; text-align: center;">
-                                    <option value="all">📁 Todos</option>
+                                    <option value="all">📁 Todas</option>
                                 </select>
                                 <div id="ahorroGlobalCalendarTotalBalance" style="font-size: 0.75rem; font-weight: 700; color: var(--success); opacity: 0.9; text-align: center; width: 100%;">Total: 0,00 €</div>
                             </div>
@@ -576,7 +576,7 @@
                     <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                             <h3 id="ahorroEstadoChartHeader" style="margin:0; cursor:pointer; display:flex; align-items:center; gap:8px;" title="Mostrar/Ocultar Gráfico">
-                                <span>Distribución por Cajón</span>
+                                <span>Distribución por Cuenta</span>
                                 <span id="ahorroEstadoChartToggleIcon" style="font-size:0.8rem; opacity:0.6;">▼</span>
                             </h3>
                             <div class="view-toggle" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
@@ -593,7 +593,7 @@
                         <table class="estado-table" style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="border-bottom: 2px solid var(--primary);">
-                                    <th style="padding: 0.75rem; text-align: left;">Cajón</th>
+                                    <th style="padding: 0.75rem; text-align: left;">Cuenta</th>
                                     <th style="padding: 0.75rem; text-align: center;">Porcentaje</th>
                                     <th style="padding: 0.75rem; text-align: right;">Importe</th>
                                 </tr>
@@ -626,7 +626,7 @@
                             </select>
                             <select id="activityDrawerFilter"
                                 style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; cursor: pointer; outline: none; width: 120px; height: 30px; box-sizing: border-box;">
-                                <option value="all">📁 Todos los Cajones</option>
+                                <option value="all">📁 Todas las Cuentas</option>
                             </select>
                             <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
                                 <button id="activityMonthUp" class="nav-arrow"
@@ -707,7 +707,7 @@
                         </button>
 
                         <button id="addNominaBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
-                            title="Añadir Cajón">💼</button>
+                            title="Añadir Cuenta">💼</button>
                     </div>
                 </div>
 
@@ -783,7 +783,7 @@
                             style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
                             <button id="analisisTableViewBtn" class="btn-sm active" title="Vista Lista"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">📄</button>
-                            <button id="analisisCardViewBtn" class="btn-sm" title="Vista Cajones"
+                            <button id="analisisCardViewBtn" class="btn-sm" title="Vista Cuentas"
                                 style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">🗂️</button>
                         </div>
                     </div>
@@ -848,7 +848,7 @@
                         de este día.</small>
                 </div>
                 <div class="form-group">
-                    <label for="defaultTransferSourceSelect">Cajón de Traspaso por Defecto (Opcional)</label>
+                    <label for="defaultTransferSourceSelect">Cuenta de Traspaso por Defecto (Opcional)</label>
                     <select id="defaultTransferSourceSelect">
                         <option value="">-- Sin traspaso por omisión --</option>
                         <!-- Options injected by JS -->
@@ -965,7 +965,7 @@
                     </div>
                 </div>
                 <div class="form-group hidden" id="stockSourceInfoGroup">
-                    <label>Cajón de Origen</label>
+                    <label>Cuenta de Origen</label>
                     <div id="stockSourceInfoDisplay"
                         style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-weight: 600; color: var(--primary); border: 1px solid var(--border-color);">
                         --</div>
@@ -1109,19 +1109,19 @@
                 <input type="hidden" id="savingsMovementIndex">
 
                 <div class="form-group hidden" id="drawerInfoGroup">
-                    <label>Cajón</label>
+                    <label>Cuenta</label>
                     <div id="drawerInfoDisplay"
                         style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-weight: 600; color: var(--primary); border: 1px solid var(--border-color);">
                         --</div>
                 </div>
 
                 <div class="form-group" id="drawerNameGroup">
-                    <label for="drawerNameInput">Nombre del Cajón</label>
+                    <label for="drawerNameInput">Nombre de la Cuenta</label>
                     <input type="text" id="drawerNameInput" placeholder="Ej: Tesoro Público, Cuenta Meta">
                 </div>
 
                 <div class="form-group hidden" id="targetDrawerSelectGroup">
-                    <label for="targetDrawerSelect">Cajón</label>
+                    <label for="targetDrawerSelect">Cuenta</label>
                     <select id="targetDrawerSelect">
                         <!-- Filled by JS -->
                     </select>
@@ -1135,7 +1135,7 @@
                 </div>
 
                 <div class="form-group hidden" id="drawerIconGroup">
-                    <label>Icono del Cajón</label>
+                    <label>Icono de la Cuenta</label>
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
                         <input type="text" id="drawerIconInput" value="📁"
                             style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
@@ -1185,7 +1185,7 @@
                 </div>
 
                 <div class="form-group hidden" id="transferTargetGroup">
-                    <label for="transferTargetSelect">Cajón de Destino</label>
+                    <label for="transferTargetSelect">Cuenta de Destino</label>
                     <select id="transferTargetSelect">
                         <!-- Options filled by JS -->
                     </select>
@@ -1244,7 +1244,7 @@
                 <span id="closeGoalModal" class="close-modal">&times;</span>
             </div>
             <p id="goalModalDescription" style="font-size: 0.9rem; color: var(--text-muted); margin: 1rem 0;">Establece
-                el importe objetivo para este cajón. Introduce 0 para quitarlo.</p>
+                el importe objetivo para esta cuenta. Introduce 0 para quitarlo.</p>
             <form id="goalForm">
                 <div class="form-group">
                     <label for="goalAmountInput">Importe Objetivo (€)</label>
@@ -1263,13 +1263,13 @@
     <div id="nominaModal" class="modal hidden">
         <div class="modal-content glass-panel" style="max-width: 450px;">
             <div class="modal-header">
-                <h2 id="nominaModalTitle">Añadir Nuevo Cajón</h2>
+                <h2 id="nominaModalTitle">Añadir Nueva Cuenta</h2>
                 <span id="closeNominaModal" class="close-modal">&times;</span>
             </div>
             <form id="nominaForm">
                 <input type="hidden" id="nominaEditId">
                 <div class="form-group">
-                    <label for="nominaNameInput">Nombre del Concepto/Cajón</label>
+                    <label for="nominaNameInput">Nombre del Concepto/Cuenta</label>
                     <input type="text" id="nominaNameInput" placeholder="Ej: Salario, Alquiler, Luz" required>
                 </div>
                 <div class="form-group">
@@ -1277,7 +1277,7 @@
                     <input type="number" id="nominaAmountInput" step="0.01" placeholder="Ej: 1500.00" required>
                 </div>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label for="nominaTypeSelect">Tipo de Cajón</label>
+                    <label for="nominaTypeSelect">Tipo de Cuenta</label>
                     <select id="nominaTypeSelect">
                         <option value="income">📈 Ingreso (Añadir a ingresos)</option>
                         <option value="saving">🏦 Ahorro (Añadir a ahorro)</option>
@@ -1309,13 +1309,13 @@
                     </div>
                 </div>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label for="nominaLinkedAhorroSelect">Vincular a Cajón de Ahorro destino (Opcional)</label>
+                    <label for="nominaLinkedAhorroSelect">Vincular a Cuenta de Ahorro destino (Opcional)</label>
                     <select id="nominaLinkedAhorroSelect">
                         <option value="">-- No vincular --</option>
                         <!-- Options injected by JS -->
                     </select>
                     <p style="font-size: 0.75rem; opacity: 0.7; margin-top: 4px;">Permite transferir automáticamente el
-                        ahorro de este cajón al cajón de ahorro seleccionado.</p>
+                        ahorro de esta cuenta al cajón de ahorro seleccionado.</p>
                 </div>
                 <div class="form-group">
                     <label>Meses que afecta la provisión</label>
@@ -1660,7 +1660,7 @@
     <script src="storage.js?v=202603221625"></script>
     <script src="mock_data.js?v=202603221625"></script>
     <script src="nextcloud.js?v=202603221625"></script>
-    <script src="app.js?v=202603221748"></script>
+    <script src="app.js?v=202603221857"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1851,7 +1851,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603221748';
+        const APP_VERSION = '202603221857';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

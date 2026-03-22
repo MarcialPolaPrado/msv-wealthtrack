@@ -424,14 +424,14 @@ document.addEventListener('DOMContentLoaded', () => {
         navItems: document.querySelectorAll('.nav-item'),
         bolsaSection: document.getElementById('bolsaSection'),
         ahorroSection: document.getElementById('ahorroSection'),
-        misCajonesTitle: document.getElementById('misCajonesTitle'),
+        misCajonesTitle: document.getElementById('misCuentasTitle'),
         drawersGrid: document.getElementById('drawersGrid'),
-        addDrawerBtn: document.getElementById('addDrawerBtn'),
+        addDrawerBtn: document.getElementById('addAccountBtn'),
         exportSavingsBtn: document.getElementById('exportSavingsBtn'),
 
         // Savings Modal Elements
         savingsInputModal: document.getElementById('savingsInputModal'),
-        addDrawerBtn: document.getElementById('addDrawerBtn'),
+        addDrawerBtn: document.getElementById('addAccountBtn'),
         ahorroViewToggleBtn: document.getElementById('ahorroViewToggleBtn'),
         ahorroTableContainer: document.getElementById('ahorroTableContainer'),
         ahorroTableBody: document.getElementById('ahorroTableBody'),
@@ -1048,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightSubmenu('nominaListBtn2', (currentView === 'nomina' || currentView === 'analisis') && nominaViewMode === 'list');
 
         // Highlighting for Ahorro submenu items
-        highlightSubmenu('ahorroCardsBtn2', currentView === 'ahorro' && ahorroViewMode === 'cards');
+        highlightSubmenu('ahorroAccountsBtn2', currentView === 'ahorro' && ahorroViewMode === 'cards');
         highlightSubmenu('ahorroListBtn2', currentView === 'ahorro' && ahorroViewMode === 'list');
         highlightSubmenu('ahorroEstadoBtn2', currentView === 'ahorroEstado');
         highlightSubmenu('ahorroCalendarBtn2', currentView === 'ahorroCalendar');
@@ -2095,7 +2095,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateActivityDrawerFilterOptions() {
         if (!elements.activityDrawerFilter) return;
         const currentValue = activityDrawerFilter;
-        let html = '<option value="all">📁 Todos los Cajones</option>';
+        let html = '<option value="all">📁 Todas las Cuentas</option>';
         savingsDrawers.forEach(drawer => {
             html += `<option value="${drawer.id}">${drawer.icon || '📁'} ${drawer.name}</option>`;
         });
@@ -2674,7 +2674,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <!-- Global Wealth Summary -->
                     <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; border: 1px dashed var(--primary-light); padding: 1.2rem; border-radius: 16px; background: rgba(var(--primary-rgb), 0.05);">
                         <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Efectivo (Cajones)</div>
+                            <div style="font-size: 0.75rem; opacity: 0.6; text-transform: uppercase;">Efectivo (Cuentas)</div>
                             <div style="font-size: 1.2rem; font-weight: 700; color: white;">${fmtEUR(savingsDrawers.filter(d => d.id !== 'bolsa').reduce((s, d) => s + d.balance, 0))}</div>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -2769,7 +2769,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.ahorroTableBody.innerHTML = '';
 
         if (savingsDrawers.length === 0) {
-            elements.ahorroTableBody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5;">No hay cajones configurados</td></tr>';
+            elements.ahorroTableBody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5;">No hay cuentas configuradas</td></tr>';
             return;
         }
 
@@ -2883,8 +2883,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="list-actions">
                                 <button class="add-mvmt-list-btn btn-primary" title="Añadir Movimiento">➕</button>
                                 <button class="transfer-list-btn btn-secondary" title="Transferir">⇆</button>
-                                <button class="edit-drawer-list-btn btn-secondary" title="Editar Cajón">✏️</button>
-                                <button class="delete-drawer-list-btn btn-danger" title="Borrar Cajón">🗑️</button>
+                                <button class="edit-drawer-list-btn btn-secondary" title="Editar Cuenta">✏️</button>
+                                <button class="delete-drawer-list-btn btn-danger" title="Borrar Cuenta">🗑️</button>
                             </div>
                         ` : ''}
                     </div>
@@ -3032,7 +3032,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroEstadoShowExpenses.style.background = ahorroEstadoType === 'expense' ? 'var(--primary)' : 'transparent';
             elements.ahorroEstadoShowExpenses.style.color = ahorroEstadoType === 'expense' ? 'white' : 'var(--text-muted)';
         }
-        if (elements.ahorroEstadoChartTitle) elements.ahorroEstadoChartTitle.textContent = `Distribución de ${ahorroEstadoType === 'income' ? 'Ingresos' : 'Gastos'} por Cajón`;
+        if (elements.ahorroEstadoChartTitle) elements.ahorroEstadoChartTitle.textContent = `Distribución de ${ahorroEstadoType === 'income' ? 'Ingresos' : 'Gastos'} por Cuenta`;
 
         const chartData = Object.values(drawerData).sort((a, b) => b.amount - a.amount);
         renderAhorroEstadoPieChart(chartData);
@@ -3209,7 +3209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate Global Total
         const total = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
         if (elements.misCajonesTitle) {
-            elements.misCajonesTitle.textContent = `Mis Cajones: ${fmtEUR(total)}`;
+            elements.misCajonesTitle.textContent = `Mis Cuentas: ${fmtEUR(total)}`;
         }
 
         // Toggle visibility based on view mode
@@ -3336,7 +3336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:nowrap;">
                              <button class="add-mvmt-btn btn-primary" title="Añadir Movimiento" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">➕</button>
                             <button class="transfer-btn btn-secondary" title="Transferir" style="padding:0.5rem 0; font-size:1.2rem; font-weight:bold; flex:1; display:flex; justify-content:center; align-items:center;">⇆</button>
-                            <button class="edit-drawer-btn btn-secondary" title="Editar Cajón" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">✏️</button>
+                            <button class="edit-drawer-btn btn-secondary" title="Editar Cuenta" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">✏️</button>
                         </div>` : ''}
                 `;
 
@@ -3973,7 +3973,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="drawer-icon">🍰</span>
                     <div class="drawer-info">
                         <h4 style="margin:0">Distribución de Ahorros <span class="toggle-arrow ${isSavingsPieExpanded ? 'expanded' : ''}">▼</span></h4>
-                        <p style="font-size: 0.8rem; opacity: 0.7;">Reparto total por cajones de ahorro</p>
+                        <p style="font-size: 0.8rem; opacity: 0.7;">Reparto total por cuentas de ahorro</p>
                     </div>
                 </div>
             `;
@@ -4278,8 +4278,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="list-actions">
                                 <button class="add-nomina-mvmt-list-btn btn-primary" title="Añadir Movimiento">➕</button>
                                 ${drawer.linkedSavingsDrawerId ? `<button class="transfer-nomina-ahorro-list-btn btn-primary" style="background:var(--success); padding: 0.3rem 0.6rem;" title="Transferir Ahorro">➡️</button>` : ''}
-                                <button class="edit-nomina-drawer-list-btn btn-secondary" title="Editar Cajón">✏️</button>
-                                <button class="delete-nomina-drawer-list-btn btn-danger" title="Borrar Cajón">🗑️</button>
+                                <button class="edit-nomina-drawer-list-btn btn-secondary" title="Editar Cuenta">✏️</button>
+                                <button class="delete-nomina-drawer-list-btn btn-danger" title="Borrar Cuenta">🗑️</button>
                             </div>
                         ` : ''}
                     </div>
@@ -4641,8 +4641,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${concept.isAutomatic ? '' : `
                     <div class="drawer-actions">
-                        <button class="btn-icon edit-nomina-drawer" data-id="${concept.id}" title="Editar Cajón">✏️</button>
-                        <button class="btn-icon delete-nomina-drawer" data-id="${concept.id}" title="Borrar Cajón">🗑️</button>
+                        <button class="btn-icon edit-nomina-drawer" data-id="${concept.id}" title="Editar Cuenta">✏️</button>
+                        <button class="btn-icon delete-nomina-drawer" data-id="${concept.id}" title="Borrar Cuenta">🗑️</button>
                     </div>`}
                 </div>
                 ${balanceDisplay}
@@ -4853,7 +4853,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="drawer-icon">📉</span>
                         <div class="drawer-info">
                             <h4 style="margin:0">Resumen de Gastos: ${formatFiscalMonth(fiscalMonthStr)} <span class="toggle-arrow ${isExpenseSummaryExpanded ? 'expanded' : ''}">▼</span></h4>
-                            <p style="font-size: 0.8rem; opacity: 0.7;">${allMonthlyExpenses.length} gastos en ${Object.keys(totalsByDrawer).length} cajones</p>
+                            <p style="font-size: 0.8rem; opacity: 0.7;">${allMonthlyExpenses.length} gastos en ${Object.keys(totalsByDrawer).length} cuentas</p>
                         </div>
                     </div>
                     <div style="text-align: right;">
@@ -4977,7 +4977,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btn.classList.contains('transfer-nomina-ahorro')) transferNominaToAhorro(id);
             if (btn.classList.contains('edit-nomina-drawer')) showEditNominaDrawer(id);
             if (btn.classList.contains('delete-nomina-drawer')) {
-                if (confirm('¿Estás seguro de que quieres eliminar este cajón de Nomina?')) {
+                if (confirm('¿Estás seguro de que quieres eliminar esta cuenta de Nómina?')) {
                     deleteNominaDrawer(id);
                 }
             }
@@ -5099,7 +5099,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateGroupDatalist();
         form.reset();
         typeInput.value = 'drawer';
-        if (title) title.textContent = "Crear Nuevo Cajón";
+        if (title) title.textContent = "Crear Nueva Cuenta";
 
         nameGroup?.classList.remove('hidden');
         elements.drawerInfoGroup?.classList.add('hidden');
@@ -5161,7 +5161,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .map(d => `<option value="${d.id}">${d.name} (${fmtEUR(d.balance)})</option>`)
                 .join('');
             if (targetDrawerSelect.options.length === 0) {
-                alert("Necesitas crear un cajón primero.");
+                alert("Necesitas crear una cuenta primero.");
                 return;
             }
         }
@@ -5308,7 +5308,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (transferTargetSelect.options.length === 0) {
-            alert("Necesitas al menos otro cajón manual para realizar una transferencia.");
+            alert("Necesitas al menos otra cuenta manual para realizar un traspaso.");
             return;
         }
 
@@ -5337,7 +5337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         typeInput.value = 'edit-drawer';
         if (targetIdInput) targetIdInput.value = drawerId;
-        if (title) title.textContent = `Editar Cajón: ${drawer.name}`;
+        if (title) title.textContent = `Editar Cuenta: ${drawer.name}`;
 
         if (drawerNameInput) drawerNameInput.value = drawer.name;
         if (elements.drawerGroupInput) elements.drawerGroupInput.value = drawer.group || '';
@@ -5510,7 +5510,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer || drawer.isAuto) return;
 
-        showCustomConfirm(`¿Estás seguro de que deseas borrar el cajón "${drawer.name}"? Esta acción no se puede deshacer.`, () => {
+        showCustomConfirm(`¿Estás seguro de que deseas borrar la cuenta "${drawer.name}"? Esta acción no se puede deshacer.`, () => {
             savingsDrawers = savingsDrawers.filter(d => d.id !== drawerId);
             if (window.saveSavings) window.saveSavings(savingsDrawers);
             render();
@@ -5579,7 +5579,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : filteredMovementsWithIndex;
 
         let movementsHtml = drawer.isAuto
-            ? '<p style="opacity:0.7">Este cajón se sincroniza automáticamente con el valor de tu cartera de acciones.</p>'
+            ? '<p style="opacity:0.7">Esta cuenta se sincroniza automáticamente con el valor de tu cartera de acciones.</p>'
             : displayedMovements.map((m) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.8rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
                     <div style="flex-grow:1;">
@@ -5616,8 +5616,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div style="display:flex; gap:0.8rem; align-items:center;">
                         ${!drawer.isAuto ? `
-                            <button id="editDrawerFromDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.2rem;" title="Editar Cajón">✏️</button>
-                            <button id="deleteDrawerFromDetails" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1.2rem;" title="Borrar Cajón">🗑️</button>
+                            <button id="editDrawerFromDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.2rem;" title="Editar Cuenta">✏️</button>
+                            <button id="deleteDrawerFromDetails" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1.2rem;" title="Borrar Cuenta">🗑️</button>
                         ` : ''}
                         <button id="closeDetails" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.5rem;" title="Cerrar">✕</button>
                     </div>
@@ -7579,7 +7579,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nextTitle = 'Cambiar a Vista Estado';
         } else {
             nextIcon = '<span>🗂️</span>';
-            nextTitle = 'Cambiar a Vista Cajones';
+            nextTitle = 'Cambiar a Vista Cuentas';
         }
 
         toggleIds.forEach(id => {
@@ -7696,7 +7696,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.breakdownModalTitle) {
             if (breakdownDrawerFilter) {
                 const drawer = savingsDrawers.find(d => d.id === breakdownDrawerFilter);
-                elements.breakdownModalTitle.textContent = `Rendimientos: ${drawer ? drawer.name : 'Cajón'}`;
+                elements.breakdownModalTitle.textContent = `Rendimientos: ${drawer ? drawer.name : 'Cuenta'}`;
             } else {
                 elements.breakdownModalTitle.textContent = "Resumen de Rendimientos (Global)";
             }
@@ -8500,7 +8500,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const icon = elements.drawerIconInput.value || getBankIcon(name) || '📁';
                 const newDrawer = {
                     id: 'drawer_' + Date.now(),
-                    name: name || 'Nuevo Cajón',
+                    name: name || 'Nueva Cuenta',
                     icon: icon,
                     group: elements.drawerGroupInput.value.trim() || '',
                     balance: amount || 0,
@@ -8544,8 +8544,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const toDrawer = savingsDrawers.find(d => d.id === toId);
 
                 if (fromDrawer && toDrawer && amount > 0) {
-                    const concept = elements.movementConceptInput.value.trim() || `Transferencia a ${toDrawer.name}`;
-                    const targetConcept = `Transferencia desde ${fromDrawer.name}`;
+                    const concept = elements.movementConceptInput.value.trim() || `Traspaso a ${toDrawer.name}`;
+                    const targetConcept = `Traspaso desde ${fromDrawer.name}`;
                     const customDate = elements.savingsDateInput.value || new Date().toISOString().split('T')[0];
                     const transferId = 'tr_' + Date.now();
 
@@ -8573,7 +8573,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         transferId: transferId
                     });
                 } else if (amount <= 0) {
-                    alert("El importe de la transferencia debe ser mayor que cero.");
+                    alert("El importe del traspaso debe ser mayor que cero.");
                     return;
                 }
             } else if (action === 'edit-drawer') {
@@ -9347,7 +9347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const openDefaultBreakdown = () => {
             const defaultSourceId = localStorage.getItem('defaultTransferSource');
             if (!defaultSourceId) {
-                alert("No hay un cajón por defecto seleccionado en los Ajustes.");
+                alert("No hay una cuenta de traspaso por defecto seleccionada en los Ajustes.");
                 return;
             }
             breakdownDrawerFilter = defaultSourceId;
@@ -9849,7 +9849,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showAddNomina() {
-        if (elements.nominaModalTitle) elements.nominaModalTitle.textContent = 'Añadir Nuevo Cajón';
+        if (elements.nominaModalTitle) elements.nominaModalTitle.textContent = 'Añadir Nueva Cuenta';
         if (elements.nominaEditId) elements.nominaEditId.value = '';
         if (elements.nominaNameInput) elements.nominaNameInput.value = '';
         if (elements.nominaAmountInput) elements.nominaAmountInput.value = '';
@@ -9865,7 +9865,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showEditNominaDrawer(id) {
         const drawer = nominaData.find(d => d.id == id);
         if (!drawer) return;
-        if (elements.nominaModalTitle) elements.nominaModalTitle.textContent = 'Editar Cajón';
+        if (elements.nominaModalTitle) elements.nominaModalTitle.textContent = 'Editar Cuenta';
         if (elements.nominaEditId) elements.nominaEditId.value = id;
         if (elements.nominaNameInput) elements.nominaNameInput.value = drawer.name;
         let initialMvmt = (drawer.movements || []).find(m => isProvision(m));
@@ -9883,7 +9883,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function deleteNominaDrawer(id) {
-        showCustomConfirm('¿Estás seguro de que quieres eliminar este cajón y todos sus movimientos?', () => {
+        showCustomConfirm('¿Estás seguro de que quieres eliminar esta cuenta y todos sus movimientos?', () => {
             nominaData = nominaData.filter(d => d.id != id);
             if (window.saveNomina) window.saveNomina(nominaData);
             renderNomina();
@@ -9980,7 +9980,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const targetAhorroDrawer = savingsDrawers.find(d => d.id == drawer.linkedSavingsDrawerId);
         if (!targetAhorroDrawer) {
-            alert('El cajón de Ahorro vinculado ya no existe.');
+            alert('La cuenta de Ahorro vinculada ya no existe.');
             return;
         }
 
@@ -10188,7 +10188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.stocks || !data.savings || !data.nomina) {
                     throw new Error("El archivo no tiene el formato de respaldo global esperado.");
                 }
-                showCustomConfirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cajones de Ahorro\n- ${data.nomina.length} cajones de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.manualPrices ? '- Precios manuales\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`, () => {
+                showCustomConfirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cuentas de Ahorro\n- ${data.nomina.length} cuentas de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.manualPrices ? '- Precios manuales\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`, () => {
                     stocks = data.stocks;
                     savingsDrawers = data.savings.map(d => ({ ...d, group: d.group || '' }));
                     nominaData = migrateNominaData(data.nomina);
@@ -10385,8 +10385,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showCustomConfirm(
             `Se restaurarán desde Nextcloud:\n` +
             `- ${data.stocks.length} activos en Bolsa\n` +
-            `- ${data.savings.length} cajones de Ahorro\n` +
-            `- ${data.nomina.length} cajones de Nómina\n` +
+            `- ${data.savings.length} cuentas de Ahorro\n` +
+            `- ${data.nomina.length} cuentas de Nómina\n` +
             `📅 Guardado: ${sourceDate}${deviceWarning}\n\n` +
             `¿Reemplazar tus datos actuales?`,
             () => {
