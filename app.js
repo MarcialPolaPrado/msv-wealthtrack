@@ -634,6 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
         transferSourceDrawerName: document.getElementById('transferSourceDrawerName'),
         transferTargetDrawerName: document.getElementById('transferTargetDrawerName'),
         transferAmountInput: document.getElementById('transferAmountInput'),
+        transferDateInput: document.getElementById('transferDateInput'),
         transferCategorySelect: document.getElementById('transferCategorySelect'),
         transferSubcategorySelect: document.getElementById('transferSubcategorySelect'),
         cancelTransferBtn: document.getElementById('cancelTransferBtn'),
@@ -9965,6 +9966,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.transferAmountInput.value = defaultAmount.toFixed(2);
                 elements.transferAmountInput.focus();
             }
+            if (elements.transferDateInput) {
+                elements.transferDateInput.value = new Date().toISOString().split('T')[0];
+            }
 
             // Show Modal
             if (elements.transferToAhorroModal) elements.transferToAhorroModal.classList.remove('hidden');
@@ -9987,7 +9991,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 targetAhorroDrawer.movements.push({
                     description: `Traspaso`,
-                    date: new Date().toISOString().split('T')[0],
+                    date: elements.transferDateInput.value || new Date().toISOString().split('T')[0],
                     amount: amountToTransfer,
                     category: finalCategory
                 });

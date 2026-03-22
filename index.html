@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603220657">
+    <link rel="stylesheet" href="styles.css?v=202603220809">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -1660,7 +1660,7 @@
     <script src="storage.js?v=202603180611"></script>
     <script src="mock_data.js?v=202603161637"></script>
     <script src="nextcloud.js?v=202603181520"></script>
-    <script src="app.js?v=202603220657"></script>
+    <script src="app.js?v=202603220809"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1680,6 +1680,10 @@
                     <label>Destino:</label>
                     <p id="transferTargetDrawerName"
                         style="font-weight: 600; color: var(--success); margin-bottom: 1rem;">-</p>
+                </div>
+                <div class="form-group">
+                    <label for="transferDateInput">Fecha</label>
+                    <input type="date" id="transferDateInput" required>
                 </div>
                 <div class="form-group">
                     <label for="transferAmountInput">Importe (€)</label>
@@ -1847,7 +1851,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603220657';
+        const APP_VERSION = '202603220809';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
