@@ -5291,14 +5291,20 @@ document.addEventListener('DOMContentLoaded', () => {
             .map(d => `<option value="${d.id}">${d.name} (${fmtEUR(d.balance)})</option>`)
             .join('');
 
-        if (elements.transferCategorySelect) {
-            elements.transferCategorySelect.innerHTML = expenseCategories.map(c => `<option value="${c}">${c}</option>`).join('');
-            elements.transferCategorySelect.value = 'Traspaso';
+        if (elements.savingsCategoryGroup) {
+            elements.savingsCategoryGroup.classList.remove('hidden');
         }
-        if (elements.transferSubcategorySelect) {
-            elements.transferSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' +
+        if (elements.savingsCategorySelect) {
+            elements.savingsCategorySelect.innerHTML = expenseCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+            elements.savingsCategorySelect.value = 'Traspaso';
+        }
+        if (elements.savingsSubcategoryGroup) {
+            elements.savingsSubcategoryGroup.classList.remove('hidden');
+        }
+        if (elements.savingsSubcategorySelect) {
+            elements.savingsSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' +
                 expenseSubcategories.map(s => `<option value="${s}">${s}</option>`).join('');
-            elements.transferSubcategorySelect.value = '';
+            elements.savingsSubcategorySelect.value = '';
         }
 
         if (transferTargetSelect.options.length === 0) {
@@ -8543,8 +8549,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const customDate = elements.savingsDateInput.value || new Date().toISOString().split('T')[0];
                     const transferId = 'tr_' + Date.now();
 
-                    let category = elements.transferCategorySelect?.value || 'Traspaso';
-                    const subcategory = elements.transferSubcategorySelect?.value || '';
+                    let category = elements.savingsCategorySelect?.value || 'Traspaso';
+                    const subcategory = elements.savingsSubcategorySelect?.value || '';
                     if (subcategory) category = `${category}:${subcategory}`;
 
                     // Subtract from source
