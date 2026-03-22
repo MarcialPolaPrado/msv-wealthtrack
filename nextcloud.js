@@ -158,8 +158,32 @@ const NextcloudSync = (() => {
     }
 
     // ── Download Data ──────────────────────────────────────
+    async function getFileMetadata(config) {
+        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
+        const resp = await proxiedFetch(config, url, {
+            method: 'PROPFIND',
+            headers: {
+                ...authHeaders(config),
+                'Depth': '0'
+            }
+        });
+
+        if (!resp.ok) return null;
+
+        const xml = await resp.text();
+        const lastModifiedMatch = xml.match(/<d:getlastmodified>(.*?)<\/d:getlastmodified>/i) || xml.match(/<getlastmodified>(.*?)<\/getlastmodified>/i);
+        
+        if (lastModifiedMatch && lastModifiedMatch[1]) {
+            return {
+                lastModified: new Date(lastModifiedMatch[1]).toISOString()
+            };
+        }
+        return null;
+    }
+
+    // ── Download Data ──────────────────────────────────────
     async function downloadData(config) {
-        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`) + `?t=${Date.now()}`;
+        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
         console.log('[NC Sync] Downloading data from:', url);
         const resp = await proxiedFetch(config, url, {
             method: 'GET',
@@ -176,10 +200,17 @@ const NextcloudSync = (() => {
 
         try {
             const payload = await resp.json();
+            // Use payload lastModified or fallback to HTTP header
+            let lm = payload.lastModified;
+            if (!lm) {
+                const headerLm = resp.headers.get('Last-Modified');
+                if (headerLm) lm = new Date(headerLm).toISOString();
+            }
+
             return {
                 ok: true,
                 data: payload.data,
-                lastModified: payload.lastModified,
+                lastModified: lm,
                 deviceId: payload.deviceId,
                 deviceName: payload.deviceName
             };
@@ -199,6 +230,7 @@ const NextcloudSync = (() => {
         setLocalModified,
         testConnection,
         uploadData,
-        downloadData
+        downloadData,
+        getFileMetadata
     };
 })();

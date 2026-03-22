@@ -10455,13 +10455,18 @@ document.addEventListener('DOMContentLoaded', () => {
     async function ncSyncOnLoad() {
         const config = NextcloudSync.loadConfig();
         if (!config) {
-            isInitialLoad = false; // Not configured, ready for future changes
+            isInitialLoad = false;
             return;
         }
 
         try {
-            const result = await NextcloudSync.downloadData(config);
+            // Priority 1: Check metadata via PROPFIND (bypasses GET cache)
+            const metadata = await NextcloudSync.getFileMetadata(config);
+            if (metadata) {
+                console.log('[NC Sync] PROPFIND Metadata lastModified:', metadata.lastModified);
+            }
 
+            const result = await NextcloudSync.downloadData(config);
             if (!result.ok) {
                 if (result.notFound) {
                     const appData = getGlobalDataObject();
@@ -10480,11 +10485,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // USE STARTUP TIMESTAMP for comparison to avoid race condition with initial renders
             const localModified = startupLocalModified;
 
-            const serverDate = new Date(result.lastModified);
+            let serverLastModified = result.lastModified;
+            if (metadata && metadata.lastModified) {
+                // PROPFIND is generally more reliable for real-time "true" file modification time
+                serverLastModified = metadata.lastModified;
+            }
+
+            const serverDate = new Date(serverLastModified);
             const localDate = localModified ? new Date(localModified) : new Date(0);
             const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
 
-            console.log(`[NC Sync] Server: ${serverDate.toISOString()}, Local: ${localDate.toISOString()}, Same: ${isSameDevice}`);
+            console.log(`[NC Sync] Final check - Server: ${serverLastModified} (${serverDate}), Local: ${localModified} (${localDate}), Same: ${isSameDevice}`);
+
+            if (isNaN(serverDate.getTime())) {
+                console.error('[NC Sync] Invalid server date, skipping sync check');
+                return;
+            }
 
             if (serverDate > localDate) {
                 // Server has newer data
