@@ -9950,6 +9950,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.transferCategorySelect.value = 'Traspaso';
             }
 
+            if (elements.transferSubcategorySelect) {
+                const allSubCats = [...new Set([...incomeSubcategories, ...expenseSubcategories])];
+                elements.transferSubcategorySelect.innerHTML = '<option value="">-- Sin subcategoría --</option>' +
+                    allSubCats.map(s => `<option value="${s}">${s}</option>`).join('');
+                elements.transferSubcategorySelect.value = '';
+            }
+
             // Setup Modal Fields
             if (elements.transferSourceDrawerId) elements.transferSourceDrawerId.value = drawer.id;
             if (elements.transferSourceDrawerName) elements.transferSourceDrawerName.textContent = drawer.name;
@@ -9967,6 +9974,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const amountToTransfer = parseFloat(elements.transferAmountInput.value);
                 const selectedCategory = elements.transferCategorySelect.value;
+                const selectedSubcategory = elements.transferSubcategorySelect?.value || '';
 
                 if (isNaN(amountToTransfer) || amountToTransfer === 0) {
                     alert('Por favor, ingresa una cantidad válida diferente de 0.');
@@ -9974,11 +9982,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Add movement to Savings
+                let finalCategory = selectedCategory;
+                if (selectedSubcategory) finalCategory = `${selectedCategory}:${selectedSubcategory}`;
+
                 targetAhorroDrawer.movements.push({
                     description: `Traspaso`,
                     date: new Date().toISOString().split('T')[0],
                     amount: amountToTransfer,
-                    category: selectedCategory
+                    category: finalCategory
                 });
 
                 // Update Savings Balance
