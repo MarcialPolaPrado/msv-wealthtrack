@@ -5509,6 +5509,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const drawer = savingsDrawers.find(d => d.id === drawerId);
         if (!drawer || !drawer.movements[index]) return;
 
+        const movement = drawer.movements[index];
+        const tId = movement.transferId;
+
+        if (tId) {
+            showCustomConfirm(`Este movimiento forma parte de un traspaso. ¿Deseas borrar el traspaso completo? (Se eliminarán ambos movimientos)`, () => {
+                savingsDrawers.forEach(d => {
+                    d.movements = d.movements.filter(m => {
+                        if (m.transferId === tId) {
+                            d.balance -= m.amount;
+                            return false;
+                        }
+                        return true;
+                    });
+                });
+                if (window.saveSavings) window.saveSavings(savingsDrawers);
+                render();
+                showDrawerDetails(drawerId);
+            });
+            return;
+        }
+
         showCustomConfirm(`¿Estás seguro de que deseas borrar este movimiento? Esta acción no se puede deshacer.`, () => {
             const amount = drawer.movements[index].amount;
             drawer.movements.splice(index, 1);
@@ -8514,6 +8535,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const concept = elements.movementConceptInput.value.trim() || `Transferencia a ${toDrawer.name}`;
                     const targetConcept = `Transferencia desde ${fromDrawer.name}`;
                     const customDate = elements.savingsDateInput.value || new Date().toISOString().split('T')[0];
+                    const transferId = 'tr_' + Date.now();
 
                     let category = elements.transferCategorySelect?.value || 'Traspaso';
                     const subcategory = elements.transferSubcategorySelect?.value || '';
@@ -8525,7 +8547,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         date: customDate,
                         amount: -amount,
                         description: concept,
-                        category: category
+                        category: category,
+                        transferId: transferId
                     });
 
                     // Add to target
@@ -8534,7 +8557,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         date: customDate,
                         amount: amount,
                         description: targetConcept,
-                        category: category
+                        category: category,
+                        transferId: transferId
                     });
                 } else if (amount <= 0) {
                     alert("El importe de la transferencia debe ser mayor que cero.");
