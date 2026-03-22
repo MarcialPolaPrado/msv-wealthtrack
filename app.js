@@ -97,6 +97,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'yellow', border: '#eab308', bg: '#713f12', grad: 'rgba(234, 179, 8, 0.4)' }
     ];
 
+    // Helper to normalize strings (remove accents and lower-case) for search
+    const normalizeString = (str) => {
+        if (!str) return '';
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+
 
 
     // Dynamic Settings
@@ -1798,13 +1804,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2c. Apply Search Filter
         if (activitySearchQuery) {
-            // Support OR (|) and AND (+) logic
-            const orGroups = activitySearchQuery.toLowerCase().split('|').map(g => g.trim()).filter(g => g);
+            // Support OR (|) and AND (+) logic, and ignore accents
+            const normalizedQuery = normalizeString(activitySearchQuery);
+            const orGroups = normalizedQuery.split('|').map(g => g.trim()).filter(g => g);
+            
             filtered = filtered.filter(m => {
-                const concept = (m.concept || '').toLowerCase();
-                const category = (m.category || '').toLowerCase();
-                const text = concept + " " + category;
-
+                const text = normalizeString((m.concept || '') + " " + (m.category || ''));
+                
                 // Return true if ANY of the OR groups match
                 return orGroups.some(group => {
                     const andTerms = group.split('+').map(t => t.trim()).filter(t => t);
