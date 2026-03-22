@@ -5260,9 +5260,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetIdInput) targetIdInput.value = drawerId;
         if (title) title.textContent = `Transferir desde: ${sourceDrawer.name}`;
 
-        // Set default concept
+        // Set default concept and date
         const conceptInput = document.getElementById('movementConceptInput');
         if (conceptInput) conceptInput.value = 'Traspaso';
+        
+        if (elements.savingsDateInput) {
+            elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
+        }
 
         nameGroup?.classList.add('hidden');
         transferTargetGroup?.classList.remove('hidden');
@@ -8509,7 +8513,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (fromDrawer && toDrawer && amount > 0) {
                     const concept = elements.movementConceptInput.value.trim() || `Transferencia a ${toDrawer.name}`;
                     const targetConcept = `Transferencia desde ${fromDrawer.name}`;
-                    const today = new Date().toISOString().split('T')[0];
+                    const customDate = elements.savingsDateInput.value || new Date().toISOString().split('T')[0];
 
                     let category = elements.transferCategorySelect?.value || 'Traspaso';
                     const subcategory = elements.transferSubcategorySelect?.value || '';
@@ -8518,7 +8522,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Subtract from source
                     fromDrawer.balance -= amount;
                     fromDrawer.movements.push({
-                        date: today,
+                        date: customDate,
                         amount: -amount,
                         description: concept,
                         category: category
@@ -8527,7 +8531,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Add to target
                     toDrawer.balance += amount;
                     toDrawer.movements.push({
-                        date: today,
+                        date: customDate,
                         amount: amount,
                         description: targetConcept,
                         category: category
