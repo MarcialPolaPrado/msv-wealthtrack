@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603221857">
+    <link rel="stylesheet" href="styles.css?v=202603221948">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -137,6 +137,7 @@
 
                             <button id="addGlobalMovementBtn2" class="submenu-item"><span>💶</span> Nuevo
                                 Movimiento</button>
+                            <button id="recurringMovementsBtn2" class="submenu-item"><span>🔄</span> Mov. Periódicos</button>
                         </div>
                     </div>
 
@@ -1228,6 +1229,12 @@
                     </select>
                 </div>
 
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem;">
+                        <input type="checkbox" id="savingsRecurringInput">
+                        <span>Marcar como Periódico</span>
+                    </label>
+                </div>
                 <div class="modal-actions">
                     <button type="submit" class="btn-primary" id="saveSavingsBtn" style="width:100%"
                         title="Guardar">💾</button>
@@ -1660,7 +1667,7 @@
     <script src="storage.js?v=202603221625"></script>
     <script src="mock_data.js?v=202603221625"></script>
     <script src="nextcloud.js?v=202603221625"></script>
-    <script src="app.js?v=202603221857"></script>
+    <script src="app.js?v=202603221948"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1850,8 +1857,30 @@
         </div>
     </div>
 
+    <div id="recurringMovementsModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px; width: 95%;">
+            <div class="modal-header">
+                <h2>Movimientos Periódicos</h2>
+                <span id="closeRecurringMovementsModal" class="close-modal">&times;</span>
+            </div>
+            <div style="margin: 1rem 0;">
+                <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 1.2rem;">
+                    Estos son movimientos que has marcado como periódicos. Puedes volver a crearlos todos a la vez con la fecha que elijas.
+                </p>
+                <div id="recurringMovementsList" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem;">
+                    <!-- List of recurring items -->
+                </div>
+                <div class="modal-actions">
+                    <button id="executeRecurringMovementsBtn" class="btn-primary" style="width: 100%; padding: 1rem; font-weight: 700;">
+                        🔄 Ejecutar Movimientos Seleccionados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const APP_VERSION = '202603221857';
+        const APP_VERSION = '202603221948';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

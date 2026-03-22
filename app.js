@@ -161,12 +161,15 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'bolsa', name: 'Bolsas y Acciones', icon: '📈', balance: 0, movements: [], isAuto: true, targetAmount: 0 }
     ];
 
+    let recurringSavingsMovements = (window.loadRecurringSavings) ? window.loadRecurringSavings() : [];
+    let recurringExecutionQueue = []; // New state for sequential execution
+
     let countdowns = (window.loadCountdowns) ? window.loadCountdowns() : [];
 
     let currentGoalDrawerId = null;
 
     function setDrawerTargetAmount(id) {
-        const drawer = savingsDrawers.find(d => d.id === id);
+        const drawer = savingsDrawers.find(d => d.id == id);
         if (!drawer) return;
 
         currentGoalDrawerId = id;
@@ -756,7 +759,13 @@ document.addEventListener('DOMContentLoaded', () => {
         ahorroEstadoShowExpenses: document.getElementById('ahorroEstadoShowExpenses'),
         ahorroEstadoChartTitle: document.getElementById('ahorroEstadoChartTitle'),
         ahorroEstadoPieChart: document.getElementById('ahorroEstadoPieChart'),
-        ahorroEstadoTableBody: document.getElementById('ahorroEstadoTableBody')
+        ahorroEstadoTableBody: document.getElementById('ahorroEstadoTableBody'),
+        recurringMovementsBtn: document.getElementById('recurringMovementsBtn2'),
+        recurringMovementsModal: document.getElementById('recurringMovementsModal'),
+        recurringMovementsList: document.getElementById('recurringMovementsList'),
+        executeRecurringMovementsBtn: document.getElementById('executeRecurringMovementsBtn'),
+        savingsRecurringInput: document.getElementById('savingsRecurringInput'),
+        closeRecurringMovementsModal: document.getElementById('closeRecurringMovementsModal')
     };
 
     const updateNominaMovementType = (type) => {
@@ -3379,6 +3388,157 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderSavingsPieChart();
         renderAhorroSummaryDrawer();
+    }
+
+    function renderRecurringMovements() {
+        if (!elements.recurringMovementsList) return;
+        elements.recurringMovementsList.innerHTML = '';
+
+        if (recurringSavingsMovements.length === 0) {
+            elements.recurringMovementsList.innerHTML = '<p style="text-align:center; opacity:0.5; padding:2rem;">No hay movimientos periódicos configurados.</p>';
+            return;
+        }
+
+        recurringSavingsMovements.forEach((template) => {
+            const item = document.createElement('div');
+            item.className = 'glass-panel';
+            item.style.padding = '1rem';
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.gap = '12px';
+            item.style.marginBottom = '0.5rem';
+
+            let typeInfo = '';
+            if (template.type === 'movement') {
+                const drawer = savingsDrawers.find(d => d.id === template.drawerId);
+                typeInfo = `<span style="color: ${template.isIncome ? 'var(--success)' : 'var(--danger)'}; font-size: 0.8rem;">[${template.isIncome ? 'Ingreso' : 'Gasto'}]</span> <b>${drawer ? drawer.name : 'Cuenta eliminada'}</b>`;
+            } else {
+                const from = savingsDrawers.find(d => d.id === template.fromDrawerId);
+                const to = savingsDrawers.find(d => d.id === template.toDrawerId);
+                typeInfo = `<span style="color: var(--primary); font-size: 0.8rem;">[Traspaso]</span> <b>${from ? from.name : '?'} ➔ ${to ? to.name : '?'}</b>`;
+            }
+
+            item.innerHTML = `
+                <input type="checkbox" class="recurring-select-checkbox" data-id="${template.id}" style="width: 18px; height: 18px; cursor: pointer;">
+                <div style="flex: 1;">
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:4px;">
+                        ${typeInfo}
+                    </div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">${template.description}</div>
+                    <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 4px;">${fmtEUR(template.amount)} ${template.category ? '• ' + template.category : ''}</div>
+                </div>
+                <button class="btn-icon delete-recurring-btn" data-id="${template.id}" title="Eliminar" style="color: var(--danger); opacity: 0.7;">🗑️</button>
+            `;
+
+            const deleteBtn = item.querySelector('.delete-recurring-btn');
+            const checkbox = item.querySelector('.recurring-select-checkbox');
+
+            item.style.cursor = 'pointer';
+            item.onclick = (e) => {
+                if (e.target !== checkbox && e.target !== deleteBtn && !deleteBtn.contains(e.target)) {
+                    checkbox.checked = !checkbox.checked;
+                }
+            };
+
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (confirm('¿Estás seguro de que quieres eliminar este movimiento periódico?')) {
+                    const deletedTemplate = template;
+                    recurringSavingsMovements = recurringSavingsMovements.filter(t => t.id !== template.id);
+                    
+                    // Unmark all matching movements in the system
+                    savingsDrawers.forEach(d => {
+                        d.movements.forEach(m => {
+                            let match = false;
+                            const absAmount = Math.abs(m.amount);
+                            const templateAmount = Math.abs(deletedTemplate.amount);
+
+                            if (deletedTemplate.type === 'movement') {
+                                match = (d.id == deletedTemplate.drawerId && templateAmount == absAmount && m.description == deletedTemplate.description);
+                            } else if (deletedTemplate.type === 'transfer' && m.transferId) {
+                                match = ((d.id == deletedTemplate.fromDrawerId || d.id == deletedTemplate.toDrawerId) && templateAmount == absAmount);
+                            }
+                            
+                            if (match) m.isPeriodic = false;
+                        });
+                    });
+
+                    if (window.saveRecurringSavings) window.saveRecurringSavings(recurringSavingsMovements);
+                    if (window.saveSavings) window.saveSavings(savingsDrawers);
+                    renderRecurringMovements();
+                    render(); // Refresh the main view to show unmarked movements
+                }
+            };
+
+            elements.recurringMovementsList.appendChild(item);
+        });
+    }
+
+    async function executeRecurringMovements() {
+        if (recurringSavingsMovements.length === 0) return;
+
+        const selectedCheckboxes = elements.recurringMovementsList.querySelectorAll('.recurring-select-checkbox:checked');
+        const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.id);
+
+        if (selectedIds.length === 0) {
+            showToast("Selecciona al menos un movimiento para ejecutar.", "warning");
+            return;
+        }
+
+        recurringExecutionQueue = recurringSavingsMovements.filter(t => selectedIds.includes(t.id.toString()));
+        
+        showToast(`Iniciando ejecución de ${recurringExecutionQueue.length} movimientos...`, "info");
+        elements.recurringMovementsModal?.classList.add('hidden');
+        processNextRecurringInQueue();
+    }
+
+    function processNextRecurringInQueue() {
+        if (recurringExecutionQueue.length === 0) {
+            showToast("✅ Ejecución de movimientos periódicos completada.", "success");
+            return;
+        }
+
+        const template = recurringExecutionQueue.shift();
+        
+        if (template.type === 'movement') {
+            const drawer = savingsDrawers.find(d => d.id == template.drawerId);
+            if (drawer) {
+                showAddMovementModal(template.drawerId);
+                // Pre-fill
+                if (elements.movementAmountInput) elements.movementAmountInput.value = Math.abs(template.amount);
+                if (elements.movementConceptInput) elements.movementConceptInput.value = template.description;
+                if (elements.savingsMovementType) updateSavingsMovementType(template.isIncome ? 'income' : 'expense');
+                if (elements.savingsCategorySelect) {
+                    const catParts = (template.category || '').split(':');
+                    elements.savingsCategorySelect.value = catParts[0];
+                    updateSavingsSubcategories();
+                    if (elements.savingsSubcategorySelect) elements.savingsSubcategorySelect.value = catParts[1] || '';
+                }
+                // Uncheck the recurring checkbox so we don't create a recursive template unless desired
+                if (elements.savingsRecurringInput) elements.savingsRecurringInput.checked = false;
+            } else {
+                processNextRecurringInQueue(); // Skip if drawer missing
+            }
+        } else if (template.type === 'transfer') {
+            const fromDrawer = savingsDrawers.find(d => d.id == template.fromDrawerId);
+            const toDrawer = savingsDrawers.find(d => d.id == template.toDrawerId);
+            if (fromDrawer && toDrawer) {
+                showTransferModal(template.fromDrawerId);
+                // Pre-fill
+                if (elements.movementAmountInput) elements.movementAmountInput.value = template.amount;
+                if (elements.movementConceptInput) elements.movementConceptInput.value = template.description;
+                if (elements.transferTargetSelect) elements.transferTargetSelect.value = template.toDrawerId;
+                if (elements.savingsCategorySelect) {
+                    const catParts = (template.category || '').split(':');
+                    elements.savingsCategorySelect.value = catParts[0];
+                    updateSavingsSubcategories();
+                    if (elements.savingsSubcategorySelect) elements.savingsSubcategorySelect.value = catParts[1] || '';
+                }
+                if (elements.savingsRecurringInput) elements.savingsRecurringInput.checked = false;
+            } else {
+                processNextRecurringInQueue();
+            }
+        }
     }
 
     function renderBolsaCards(displayStocksData) {
@@ -6495,6 +6655,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateSavingsMovementType(movement.amount >= 0 ? 'income' : 'expense');
             if (elements.savingsCategorySelect) elements.savingsCategorySelect.value = mainCat;
+            
+            // Dynamic check for periodic status
+            if (elements.savingsRecurringInput) {
+                const isPeriodic = recurringSavingsMovements.some(t => {
+                    const absAmount = Math.abs(movement.amount);
+                    if (t.type === 'movement') {
+                        return t.drawerId == drawerId && Math.abs(t.amount) == absAmount && t.description == movement.description;
+                    } else if (t.type === 'transfer' && movement.transferId) {
+                        return (t.fromDrawerId == drawerId || t.toDrawerId == drawerId) && Math.abs(t.amount) == absAmount;
+                    }
+                    return false;
+                });
+                elements.savingsRecurringInput.checked = isPeriodic;
+                movement.isPeriodic = isPeriodic; // Keep state in sync
+            }
+
             if (elements.savingsSubcategorySelect) elements.savingsSubcategorySelect.value = subCat;
 
             if (elements.savingsCategoryGroup) {
@@ -8484,10 +8660,16 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.addDrawerBtn.addEventListener('click', showAddDrawer);
         }
         if (elements.closeSavingsModal) {
-            elements.closeSavingsModal.addEventListener('click', () => toggleSavingsModal(false));
+            elements.closeSavingsModal.addEventListener('click', () => {
+                toggleSavingsModal(false);
+                recurringExecutionQueue = []; // Clear queue on manual close
+            });
         }
         window.addEventListener('click', (e) => {
-            if (e.target === elements.savingsInputModal) toggleSavingsModal(false);
+            if (e.target === elements.savingsInputModal) {
+                toggleSavingsModal(false);
+                recurringExecutionQueue = []; // Clear queue on backdrop click
+            }
         });
 
         elements.savingsInputForm?.addEventListener('submit', (e) => {
@@ -8534,14 +8716,36 @@ document.addEventListener('DOMContentLoaded', () => {
                         date: date,
                         amount: finalAmount,
                         description: concept,
-                        category: category
+                        category: category,
+                        isPeriodic: elements.savingsRecurringInput?.checked || false
                     });
+
+                    // Recurring Sync Logic
+                    if (elements.savingsRecurringInput?.checked) {
+                        const templateAmount = Math.abs(finalAmount);
+                        const exists = recurringSavingsMovements.some(t => 
+                            t.type === 'movement' && t.drawerId == drawerId && Math.abs(t.amount) == templateAmount && t.description == concept
+                        );
+                        
+                        if (!exists) {
+                            recurringSavingsMovements.push({
+                                id: 'rec_' + Date.now(),
+                                type: 'movement',
+                                drawerId: drawerId,
+                                amount: amount,
+                                description: concept,
+                                category: category,
+                                isIncome: type === 'income'
+                            });
+                            if (window.saveRecurringSavings) window.saveRecurringSavings(recurringSavingsMovements);
+                        }
+                    }
                 }
             } else if (action === 'transfer') {
                 const fromId = elements.savingsTargetId.value;
                 const toId = elements.transferTargetSelect.value;
-                const fromDrawer = savingsDrawers.find(d => d.id === fromId);
-                const toDrawer = savingsDrawers.find(d => d.id === toId);
+                const fromDrawer = savingsDrawers.find(d => d.id == fromId);
+                const toDrawer = savingsDrawers.find(d => d.id == toId);
 
                 if (fromDrawer && toDrawer && amount > 0) {
                     const concept = elements.movementConceptInput.value.trim() || `Traspaso a ${toDrawer.name}`;
@@ -8556,22 +8760,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Subtract from source
                     fromDrawer.balance -= amount;
                     fromDrawer.movements.push({
+                        id: 'mv_' + Date.now() + '_src',
                         date: customDate,
                         amount: -amount,
                         description: concept,
                         category: category,
-                        transferId: transferId
+                        transferId: transferId,
+                        isPeriodic: elements.savingsRecurringInput?.checked || false
                     });
 
                     // Add to target
                     toDrawer.balance += amount;
                     toDrawer.movements.push({
+                        id: 'mv_' + Date.now() + '_dst',
                         date: customDate,
                         amount: amount,
                         description: targetConcept,
                         category: category,
-                        transferId: transferId
+                        transferId: transferId,
+                        isPeriodic: elements.savingsRecurringInput?.checked || false
                     });
+
+                    // Recurring Sync Logic
+                    if (elements.savingsRecurringInput?.checked) {
+                        const exists = recurringSavingsMovements.some(t => 
+                            t.type === 'transfer' && t.fromDrawerId == fromId && t.toDrawerId == toId && Math.abs(t.amount) == amount
+                        );
+
+                        if (!exists) {
+                            recurringSavingsMovements.push({
+                                id: 'rec_' + Date.now(),
+                                type: 'transfer',
+                                fromDrawerId: fromId,
+                                toDrawerId: toId,
+                                amount: amount,
+                                description: concept.replace('Traspaso a ', ''),
+                                category: category
+                            });
+                            if (window.saveRecurringSavings) window.saveRecurringSavings(recurringSavingsMovements);
+                        }
+                    }
                 } else if (amount <= 0) {
                     alert("El importe del traspaso debe ser mayor que cero.");
                     return;
@@ -8624,14 +8852,108 @@ document.addEventListener('DOMContentLoaded', () => {
                     movement.description = concept;
                     movement.category = category;
                     movement.date = date;
+                    movement.isPeriodic = elements.savingsRecurringInput?.checked || false;
                     drawer.balance += (finalAmount - oldAmount);
+
+                    // Recurring Sync Logic
+                    if (elements.savingsRecurringInput) {
+                        const isChecked = elements.savingsRecurringInput.checked;
+                        const templateAmount = Math.abs(finalAmount);
+
+                        if (isChecked) {
+                            // Check if it already exists to avoid duplicates
+                            const exists = recurringSavingsMovements.some(t => {
+                                if (t.type === 'movement') {
+                                    return t.drawerId == drawerId && Math.abs(t.amount) == templateAmount && t.description == concept;
+                                } else if (t.type === 'transfer' && movement.transferId) {
+                                    return (t.fromDrawerId == drawerId || t.toDrawerId == drawerId) && Math.abs(t.amount) == templateAmount;
+                                }
+                                return false;
+                            });
+
+                            if (!exists) {
+                                if (movement.transferId) {
+                                    // Find other leg
+                                    let fromId = drawerId;
+                                    let toId = null;
+                                    savingsDrawers.forEach(d => {
+                                        d.movements.forEach(m => {
+                                            if (m.transferId === movement.transferId && m !== movement) {
+                                                toId = d.id;
+                                            }
+                                        });
+                                    });
+
+                                    if (finalAmount > 0) { // We're editing the credit leg. Swap for From/To
+                                        const temp = fromId; fromId = toId; toId = temp;
+                                    }
+
+                                    recurringSavingsMovements.push({
+                                        id: 'rec_' + Date.now(),
+                                        type: 'transfer',
+                                        fromDrawerId: fromId,
+                                        toDrawerId: toId,
+                                        amount: templateAmount,
+                                        description: concept.replace('Traspaso desde ', '').replace('Traspaso a ', ''),
+                                        category: category
+                                    });
+                                } else {
+                                    recurringSavingsMovements.push({
+                                        id: 'rec_' + Date.now(),
+                                        type: 'movement',
+                                        drawerId: drawerId,
+                                        amount: amount,
+                                        description: concept,
+                                        category: category,
+                                        isIncome: type === 'income'
+                                    });
+                                }
+                                if (window.saveRecurringSavings) window.saveRecurringSavings(recurringSavingsMovements);
+                            }
+                        } else {
+                            // REMOVE if exists
+                            const originalLen = recurringSavingsMovements.length;
+                            recurringSavingsMovements = recurringSavingsMovements.filter(t => {
+                                if (t.type === 'movement') {
+                                    return !(t.drawerId == drawerId && Math.abs(t.amount) == templateAmount && t.description == concept);
+                                } else if (t.type === 'transfer' && movement.transferId) {
+                                    // Remove the transfer template if it involves this drawer and amount
+                                    return !((t.fromDrawerId == drawerId || t.toDrawerId == drawerId) && Math.abs(t.amount) == templateAmount);
+                                }
+                                return true;
+                            });
+                            if (recurringSavingsMovements.length !== originalLen) {
+                                if (window.saveRecurringSavings) window.saveRecurringSavings(recurringSavingsMovements);
+                            }
+                        }
+                    }
                 }
             }
 
             if (window.saveSavings) window.saveSavings(savingsDrawers);
             toggleSavingsModal(false);
             render();
+
+            if (recurringExecutionQueue.length > 0) {
+                setTimeout(() => processNextRecurringInQueue(), 400); // Small delay for UX
+            }
         });
+
+        // Set up recurring movements listeners
+        if (elements.recurringMovementsBtn) {
+            elements.recurringMovementsBtn.onclick = () => {
+                renderRecurringMovements();
+                elements.recurringMovementsModal.classList.remove('hidden');
+            };
+        }
+        if (elements.closeRecurringMovementsModal) {
+            elements.closeRecurringMovementsModal.onclick = () => {
+                elements.recurringMovementsModal.classList.add('hidden');
+            };
+        }
+        if (elements.executeRecurringMovementsBtn) {
+            elements.executeRecurringMovementsBtn.onclick = executeRecurringMovements;
+        }
 
         // Nomina View Mode Listeners
         if (elements.nominaAnalisisViewBtn) {
@@ -10158,6 +10480,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveSources: window.LIVE_SOURCES || {},
             fxRate: window.FX_RATE,
             fxDate: window.FX_DATE,
+            recurringMovements: recurringSavingsMovements,
             settings: {
                 fiscalDay: fiscalDay,
                 incomeCategories: incomeCategories,
@@ -10191,6 +10514,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCustomConfirm(`Se restaurarán:\n- ${data.stocks.length} activos en Bolsa\n- ${data.savings.length} cuentas de Ahorro\n- ${data.nomina.length} cuentas de Nómina\n${data.countdowns ? '- ' + data.countdowns.length + ' cuentas atrás\n' : ''}${data.manualPrices ? '- Precios manuales\n' : ''}${data.settings ? '- Ajustes personalizados\n' : ''}\n¿Estás SEGURO? Esto reemplazará tus datos actuales.`, () => {
                     stocks = data.stocks;
                     savingsDrawers = data.savings.map(d => ({ ...d, group: d.group || '' }));
+                    recurringSavingsMovements = data.recurringMovements || [];
                     nominaData = migrateNominaData(data.nomina);
                     if (data.countdowns) {
                         countdowns = data.countdowns;

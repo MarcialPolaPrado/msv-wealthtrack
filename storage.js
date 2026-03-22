@@ -5,6 +5,7 @@ const NOMINA_KEY = 'msv_nomina_v1';
 const LIVE_PRICES_KEY = 'msv_live_prices_v1';
 const LIVE_DATES_KEY = 'msv_live_dates_v1';
 const LIVE_SOURCES_KEY = 'msv_live_sources_v1';
+const RECURRING_SAVINGS_KEY = 'msv_recurring_savings_v1';
 
 window.saveStocks = (stocks) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stocks));
@@ -123,4 +124,13 @@ window.saveLiveSources = (data) => {
 window.loadLiveSources = () => {
     const data = localStorage.getItem(LIVE_SOURCES_KEY);
     return data ? JSON.parse(data) : {};
+};
+
+window.saveRecurringSavings = (data) => {
+    localStorage.setItem(RECURRING_SAVINGS_KEY, JSON.stringify(data));
+};
+
+window.loadRecurringSavings = () => {
+    const data = localStorage.getItem(RECURRING_SAVINGS_KEY);
+    return data ? JSON.parse(data) : [];
 };
