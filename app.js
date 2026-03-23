@@ -8573,6 +8573,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Nextcloud sidebar buttons ──
         document.getElementById('sidebarNcBackupBtn')?.addEventListener('click', () => ncBackupData());
         document.getElementById('sidebarNcRestoreBtn')?.addEventListener('click', () => ncRestoreData());
+        elements.sidebarSyncInfo?.addEventListener('click', () => {
+            ncSafeUpload(true); // Manually trigger forced sync
+        });
 
         // Activity Listeners
         elements.activityLoadMoreBtn?.addEventListener('click', () => {
