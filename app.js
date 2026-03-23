@@ -10931,8 +10931,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Add Total Row for "Invertido" (below the table)
-            const totalRowBolsa = wsBolsa.addRow(['TOTAL', '', '', '', Number(totalCost.toFixed(2))]);
-            totalRowBolsa.font = { bold: true };
+            const bTotalRowIdx = bolsaRows.length + 2;
+            const bTotalRow = wsBolsa.getRow(bTotalRowIdx);
+            bTotalRow.getCell(1).value = 'TOTAL';
+            bTotalRow.getCell(5).value = Number(totalCost.toFixed(2));
+            bTotalRow.font = { bold: true };
 
             // Summary Bolsa (Aggregated by Name)
             wsBolsa.addTable({
@@ -10948,6 +10951,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 ],
                 rows: bolsaSummaryRows
             });
+            const bSumTotalRowIdx = bolsaSummaryRows.length + 2;
+            const bSumTotalRow = wsBolsa.getRow(bSumTotalRowIdx);
+            bSumTotalRow.getCell(8).value = 'TOTAL';
+            bSumTotalRow.getCell(11).value = Number(totalCost.toFixed(2));
+            bSumTotalRow.font = { bold: true };
 
             wsBolsa.columns = [
                 { width: 15 }, { width: 30 }, { width: 12 }, { width: 18 }, { width: 18 },
@@ -10973,7 +10981,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { name: 'Concepto', filterButton: true },
                     { name: 'Categoría', filterButton: true },
                     { name: 'Importe', filterButton: true },
-                    { name: 'Cajón/Cuenta', filterButton: true }
+                    { name: 'Cuenta', filterButton: true }
                 ],
                 rows: ahorroRows
             });
@@ -10989,13 +10997,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'J1',
                 headerRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
-                columns: [{ name: 'Categoría' }, { name: 'Total' }],
+                columns: [{ name: 'Categoría', filterButton: true }, { name: 'Total', filterButton: true }],
                 rows: catRows
             });
-            const totalRowCat = wsAhorro.addRow(['', '', '', '', '', '', '', '', '', 'TOTAL', Number(totalAhorroCat.toFixed(2))]);
-            totalRowCat.font = { bold: true };
+            const catTotalRowIdx = catRows.length + 2;
+            const catTotalRow = wsAhorro.getRow(catTotalRowIdx);
+            catTotalRow.getCell(10).value = 'TOTAL';
+            catTotalRow.getCell(11).value = Number(totalAhorroCat.toFixed(2));
+            catTotalRow.font = { bold: true };
 
-            // Summary Ahorro: Drawers
+            // Summary Ahorro: Accounts
             let totalAhorroDr = 0;
             const drRows = Object.entries(drawerTotals).map(([dr, amt]) => {
                 totalAhorroDr += amt;
@@ -11006,15 +11017,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'M1',
                 headerRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
-                columns: [{ name: 'Cajón/Cuenta' }, { name: 'Total' }],
+                columns: [{ name: 'Cuenta', filterButton: true }, { name: 'Total', filterButton: true }],
                 rows: drRows
             });
-            const totalRowDr = wsAhorro.addRow(['', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', Number(totalAhorroDr.toFixed(2))]);
-            totalRowDr.font = { bold: true };
+            const drTotalRowIdx = drRows.length + 2;
+            const drTotalRow = wsAhorro.getRow(drTotalRowIdx);
+            drTotalRow.getCell(13).value = 'TOTAL';
+            drTotalRow.getCell(14).value = Number(totalAhorroDr.toFixed(2));
+            drTotalRow.font = { bold: true };
 
             // Main Table Total Row
-            const totalRowAhorro = wsAhorro.addRow(['TOTAL', '', '', Number(totalAhorroCat.toFixed(2))]);
-            totalRowAhorro.font = { bold: true };
+            const aTotalRowIdx = ahorroRows.length + 2;
+            const aTotalRow = wsAhorro.getRow(aTotalRowIdx);
+            aTotalRow.getCell(1).value = 'TOTAL';
+            aTotalRow.getCell(4).value = Number(totalAhorroCat.toFixed(2));
+            aTotalRow.font = { bold: true };
 
             wsAhorro.columns = [
                 { width: 15 }, { width: 40 }, { width: 25 }, { width: 15 }, { width: 25 },
