@@ -10882,7 +10882,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ahorroRowsTemp.push({
                             rawDate: m.date,
                             displayDate: formatDMY(m.date),
-                            concept: m.concept,
+                            concept: m.concept || m.description || '',
                             category: cat,
                             amount: Number(amt.toFixed(2)),
                             drawerName: dName
