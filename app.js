@@ -699,8 +699,6 @@ document.addEventListener('DOMContentLoaded', () => {
         activityMonthUp: document.getElementById('activityMonthUp'),
         activityMonthDown: document.getElementById('activityMonthDown'),
         activityFilterMode: document.getElementById('activityFilterMode'),
-        activityDateTrigger: document.getElementById('activityDateTrigger'),
-        activityMonthInput: document.getElementById('activityMonthInput'),
         activitySearchInput: document.getElementById('activitySearchInput'),
         activityDrawerFilter: document.getElementById('activityDrawerFilter'),
         activityLoadMoreBtn: document.getElementById('activityLoadMoreBtn'),
@@ -1814,8 +1812,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show navigation arrows unless mode is 'all'
         elements.activityMonthUp?.classList.toggle('hidden', activityFilterMode === 'all');
         elements.activityMonthDown?.classList.toggle('hidden', activityFilterMode === 'all');
-        // Date trigger is a month picker, so it's most relevant for 'month' mode
-        elements.activityDateTrigger?.classList.toggle('hidden', activityFilterMode !== 'month');
 
         // 2b. Apply Cell Filter
         if (activityCellFilter.column && activityCellFilter.value !== null) {
@@ -8588,8 +8584,11 @@ document.addEventListener('DOMContentLoaded', () => {
             activityFilterMode = e.target.value;
             activityCurrentLimit = activityPageSize; // Reset limit
             
-            // Normalize activityListMonth when switching away from week
-            if ((activityFilterMode === 'month' || activityFilterMode === 'year') && activityListMonth.length > 7) {
+            // Normalize activityListMonth when switching
+            if (activityFilterMode === 'week') {
+                // Default to current week when selecting "Semana"
+                activityListMonth = new Date().toISOString().split('T')[0];
+            } else if ((activityFilterMode === 'month' || activityFilterMode === 'year') && activityListMonth.length > 7) {
                 activityListMonth = activityListMonth.substring(0, 7);
             }
             
@@ -8631,13 +8630,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let [y, m] = activityListMonth.split('-').map(Number);
                 activityListMonth = `${y - 1}-${String(m).padStart(2, '0')}`;
             }
-            renderActivity();
-        });
-        elements.activityDateTrigger?.addEventListener('click', () => {
-            if (elements.activityMonthInput) elements.activityMonthInput.showPicker();
-        });
-        elements.activityMonthInput?.addEventListener('change', (e) => {
-            activityListMonth = e.target.value;
             renderActivity();
         });
 
@@ -9355,8 +9347,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.ahorroFilterMode?.addEventListener('change', (e) => {
             ahorroFilterMode = e.target.value;
-            // Normalize date when switching away from week
-            if ((ahorroFilterMode === 'month' || ahorroFilterMode === 'year') && ahorroListMonth.length > 7) {
+            // Normalize date when switching
+            if (ahorroFilterMode === 'week') {
+                // Default to current week when selecting "Semana"
+                ahorroListMonth = new Date().toISOString().split('T')[0];
+            } else if ((ahorroFilterMode === 'month' || ahorroFilterMode === 'year') && ahorroListMonth.length > 7) {
                 ahorroListMonth = ahorroListMonth.substring(0, 7);
             }
             localStorage.setItem('ahorroFilterMode', ahorroFilterMode);

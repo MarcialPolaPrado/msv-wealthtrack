@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603230749">
+    <link rel="stylesheet" href="styles.css?v=202603230819">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
@@ -640,9 +640,6 @@
                             <h3 id="activityMonthLabel"
                                 style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">
                                 Marzo 2024</h3>
-                            <button id="activityDateTrigger" class="nav-icon-btn" title="Selector de Mes"
-                                style="margin-left:5px">📅</button>
-                            <input type="month" id="activityMonthInput" class="hidden">
                         </div>
                     </div>
                     <div id="activityTableContainer" class="table-container glass-panel"
@@ -1669,7 +1666,7 @@
     <script src="storage.js?v=202603221625"></script>
     <script src="mock_data.js?v=202603221625"></script>
     <script src="nextcloud.js?v=202603221625"></script>
-    <script src="app.js?v=202603230749"></script>
+    <script src="app.js?v=202603230819"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1882,7 +1879,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603230749';
+        const APP_VERSION = '202603230819';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
