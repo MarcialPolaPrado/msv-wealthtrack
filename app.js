@@ -10868,7 +10868,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             savingsDrawers.forEach(drawer => {
                 const dName = drawer.name || 'Sin nombre';
-                if (!drawerTotals[dName]) drawerTotals[dName] = 0;
+                // Initialize with 0 or with totalCost if it's the Bolsa drawer
+                if (drawer.id === 'bolsa' || dName.toLowerCase().includes('bolsa')) {
+                    drawerTotals[dName] = totalCost;
+                } else {
+                    if (!drawerTotals[dName]) drawerTotals[dName] = 0;
+                }
 
                 if (drawer.movements) {
                     drawer.movements.forEach(m => {
@@ -10877,7 +10882,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (!categoryTotals[cat]) categoryTotals[cat] = 0;
                         categoryTotals[cat] += amt;
-                        drawerTotals[dName] += amt;
+                        // Only add movements to non-bolsa drawers (bolsa total is handled by totalCost)
+                        if (drawer.id !== 'bolsa' && !dName.toLowerCase().includes('bolsa')) {
+                            drawerTotals[dName] += amt;
+                        }
 
                         ahorroRowsTemp.push({
                             rawDate: m.date,
