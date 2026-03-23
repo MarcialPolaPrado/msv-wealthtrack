@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activityListMonth = _initialMonthStr;
     let activitySortConfig = getSortConfig('activitySortConfig', { key: 'date', direction: 'desc' });
     let activityCellFilter = { column: null, value: null };
-    let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'month' or 'year'
+    let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'week', 'month', 'year' or 'all'
     let activityDrawerFilter = localStorage.getItem('activityDrawerFilter') || 'all';
     let activitySearchQuery = '';
     let activityPageSize = 50;
@@ -1781,6 +1781,26 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (activityFilterMode === 'year') {
             const year = activityListMonth.split('-')[0];
             filtered = allMovements.filter(m => m.date && m.date.startsWith(year));
+        } else if (activityFilterMode === 'week') {
+            // "Week" mode: Filter movement from the week containing activityListMonth
+            const refDate = activityListMonth.length === 7 ? new Date(activityListMonth + "-01") : new Date(activityListMonth);
+            
+            // Standardize to Monday-Sunday week
+            const day = refDate.getDay(); // 0 (Sun) to 6 (Sat)
+            const diff = refDate.getDate() - (day === 0 ? 6 : day - 1); // Monday is start
+            const startOfWeek = new Date(refDate);
+            startOfWeek.setDate(diff);
+            startOfWeek.setHours(0,0,0,0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            endOfWeek.setHours(23,59,59,999);
+
+            filtered = allMovements.filter(m => {
+                if (!m.date) return false;
+                const d = new Date(m.date);
+                return d >= startOfWeek && d <= endOfWeek;
+            });
         } else {
             // mode === 'all'
             filtered = allMovements;
@@ -1794,6 +1814,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show navigation arrows unless mode is 'all'
         elements.activityMonthUp?.classList.toggle('hidden', activityFilterMode === 'all');
         elements.activityMonthDown?.classList.toggle('hidden', activityFilterMode === 'all');
+        // Date trigger is a month picker, so it's most relevant for 'month' mode
         elements.activityDateTrigger?.classList.toggle('hidden', activityFilterMode !== 'month');
 
         // 2b. Apply Cell Filter
@@ -1854,6 +1875,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.activityMonthLabel.textContent = activityListMonth.split('-')[0];
             } else if (activityFilterMode === 'month') {
                 elements.activityMonthLabel.textContent = formatFiscalMonth(activityListMonth);
+            } else if (activityFilterMode === 'week') {
+                const refDate = activityListMonth.length === 7 ? new Date(activityListMonth + "-01") : new Date(activityListMonth);
+                const day = refDate.getDay();
+                const diff = refDate.getDate() - (day === 0 ? 6 : day - 1);
+                const start = new Date(refDate);
+                start.setDate(diff);
+                const end = new Date(start);
+                end.setDate(start.getDate() + 6);
+                
+                const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                elements.activityMonthLabel.textContent = `${fmt(start)} - ${fmt(end)}`;
             } else {
                 elements.activityMonthLabel.textContent = 'Historial Completo';
             }
@@ -2758,6 +2790,18 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.ahorroCurrentMonthLabel.textContent = formatFiscalMonth(ahorroListMonth);
             elements.prevAhorroMonthBtn.style.visibility = 'visible';
             elements.nextAhorroMonthBtn.style.visibility = 'visible';
+        } else if (ahorroFilterMode === 'week') {
+            const refDate = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
+            const day = refDate.getDay();
+            const diff = refDate.getDate() - (day === 0 ? 6 : day - 1);
+            const start = new Date(refDate);
+            start.setDate(diff);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+            elements.ahorroCurrentMonthLabel.textContent = `${fmt(start)} - ${fmt(end)}`;
+            elements.prevAhorroMonthBtn.style.visibility = 'visible';
+            elements.nextAhorroMonthBtn.style.visibility = 'visible';
         } else if (ahorroFilterMode === 'year') {
             elements.ahorroCurrentMonthLabel.textContent = ahorroListMonth.split('-')[0];
             elements.prevAhorroMonthBtn.style.visibility = 'visible';
@@ -2807,6 +2851,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     let mvmts = getMvmts(d);
                     if (ahorroFilterMode === 'month') {
                         mvmts = mvmts.filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+                    } else if (ahorroFilterMode === 'week') {
+                        const ref = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
+                        const day = ref.getDay();
+                        const diff = ref.getDate() - (day === 0 ? 6 : day - 1);
+                        const start = new Date(ref); start.setDate(diff); start.setHours(0,0,0,0);
+                        const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+                        mvmts = mvmts.filter(m => {
+                            if (!m.date) return false;
+                            const d = new Date(m.date);
+                            return d >= start && d <= end;
+                        });
                     } else if (ahorroFilterMode === 'year') {
                         const year = ahorroListMonth.split('-')[0];
                         mvmts = mvmts.filter(m => m.date && m.date.startsWith(year));
@@ -2819,6 +2874,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const getLeadCategory = (drawer) => {
                     let mvmts = getMvmts(drawer).filter(m => {
                         if (ahorroFilterMode === 'month') return m.date && getFiscalMonth(m.date) === ahorroListMonth;
+                        if (ahorroFilterMode === 'week') {
+                            const ref = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
+                            const day = ref.getDay();
+                            const diff = ref.getDate() - (day === 0 ? 6 : day - 1);
+                            const start = new Date(ref); start.setDate(diff); start.setHours(0,0,0,0);
+                            const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+                            const d = new Date(m.date);
+                            return d >= start && d <= end;
+                        }
                         if (ahorroFilterMode === 'year') return m.date && m.date.startsWith(ahorroListMonth.split('-')[0]);
                         return true;
                     });
@@ -8523,6 +8587,12 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.activityFilterMode?.addEventListener('change', (e) => {
             activityFilterMode = e.target.value;
             activityCurrentLimit = activityPageSize; // Reset limit
+            
+            // Normalize activityListMonth when switching away from week
+            if ((activityFilterMode === 'month' || activityFilterMode === 'year') && activityListMonth.length > 7) {
+                activityListMonth = activityListMonth.substring(0, 7);
+            }
+            
             localStorage.setItem('activityFilterMode', activityFilterMode);
             renderActivity();
         });
@@ -8535,7 +8605,11 @@ document.addEventListener('DOMContentLoaded', () => {
             activityCurrentLimit = activityPageSize;
             if (activityFilterMode === 'month') {
                 activityListMonth = changeMonthVal(activityListMonth, 1);
-            } else {
+            } else if (activityFilterMode === 'week') {
+                const d = activityListMonth.length === 7 ? new Date(activityListMonth + "-01") : new Date(activityListMonth);
+                d.setDate(d.getDate() + 7);
+                activityListMonth = d.toISOString().split('T')[0];
+            } else if (activityFilterMode === 'year') {
                 let [y, m] = activityListMonth.split('-').map(Number);
                 activityListMonth = `${y + 1}-${String(m).padStart(2, '0')}`;
             }
@@ -8549,7 +8623,11 @@ document.addEventListener('DOMContentLoaded', () => {
             activityCurrentLimit = activityPageSize;
             if (activityFilterMode === 'month') {
                 activityListMonth = changeMonthVal(activityListMonth, -1);
-            } else {
+            } else if (activityFilterMode === 'week') {
+                const d = activityListMonth.length === 7 ? new Date(activityListMonth + "-01") : new Date(activityListMonth);
+                d.setDate(d.getDate() - 7);
+                activityListMonth = d.toISOString().split('T')[0];
+            } else if (activityFilterMode === 'year') {
                 let [y, m] = activityListMonth.split('-').map(Number);
                 activityListMonth = `${y - 1}-${String(m).padStart(2, '0')}`;
             }
@@ -9277,6 +9355,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.ahorroFilterMode?.addEventListener('change', (e) => {
             ahorroFilterMode = e.target.value;
+            // Normalize date when switching away from week
+            if ((ahorroFilterMode === 'month' || ahorroFilterMode === 'year') && ahorroListMonth.length > 7) {
+                ahorroListMonth = ahorroListMonth.substring(0, 7);
+            }
             localStorage.setItem('ahorroFilterMode', ahorroFilterMode);
             renderSavings();
         });
@@ -9769,6 +9851,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.ahorroFilterMode?.value === 'year') {
                 let [y, m] = ahorroListMonth.split('-').map(Number);
                 ahorroListMonth = `${y + 1}-${String(m).padStart(2, '0')}`;
+            } else if (elements.ahorroFilterMode?.value === 'week') {
+                const d = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
+                d.setDate(d.getDate() + 7);
+                ahorroListMonth = d.toISOString().split('T')[0];
             } else if (elements.ahorroFilterMode?.value === 'month') {
                 ahorroListMonth = changeMonthVal(ahorroListMonth, 1);
             }
@@ -9778,6 +9864,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.ahorroFilterMode?.value === 'year') {
                 let [y, m] = ahorroListMonth.split('-').map(Number);
                 ahorroListMonth = `${y - 1}-${String(m).padStart(2, '0')}`;
+            } else if (elements.ahorroFilterMode?.value === 'week') {
+                const d = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
+                d.setDate(d.getDate() - 7);
+                ahorroListMonth = d.toISOString().split('T')[0];
             } else if (elements.ahorroFilterMode?.value === 'month') {
                 ahorroListMonth = changeMonthVal(ahorroListMonth, -1);
             }
