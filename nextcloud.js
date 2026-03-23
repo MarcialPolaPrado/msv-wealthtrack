@@ -159,7 +159,6 @@ const NextcloudSync = (() => {
         }
         return { ok: false, error: `Error al subir: ${resp.status}` };
     }
-
     // ── Download Data ──────────────────────────────────────
     async function getFileMetadata(config) {
         const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);

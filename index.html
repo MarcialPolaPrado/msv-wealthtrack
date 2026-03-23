@@ -13,12 +13,14 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link rel="manifest" href="manifest.json">
-    <title>Premium Stock Portfolio - v202603221625</title>
+    <title>Premium Stock Portfolio - v202603231302</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603230831">
+    <link rel="stylesheet" href="styles.css?v=202603231259">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 
 <body>
@@ -64,7 +66,7 @@
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
                         <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
-                            id="logoVersion">v202603221625</p>
+                            id="logoVersion">v202603231302</p>
                     </div>
                 </div>
             </div>
@@ -217,6 +219,9 @@
                             <button id="sidebarNcRestoreBtn" class="submenu-item"
                                 style="color: var(--accent); background: rgba(59, 130, 246, 0.05);"><span>📥</span>
                                 Restaurar Nextcloud</button>
+                            <button id="sidebarNcExcelBtn" class="submenu-item"
+                                style="color: #f1c40f; background: rgba(241, 196, 15, 0.05);"><span>📄</span>
+                                Generar Hoja Cálculo</button>
                         </div>
                     </div>
                 </div>
@@ -1666,7 +1671,7 @@
     <script src="storage.js?v=202603221625"></script>
     <script src="mock_data.js?v=202603221625"></script>
     <script src="nextcloud.js?v=202603221625"></script>
-    <script src="app.js?v=202603230831"></script>
+    <script src="app.js?v=202603231259"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1879,7 +1884,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603230831';
+        const APP_VERSION = '202603231259';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

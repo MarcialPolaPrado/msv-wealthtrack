@@ -8573,8 +8573,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Nextcloud sidebar buttons ──
         document.getElementById('sidebarNcBackupBtn')?.addEventListener('click', () => ncBackupData());
         document.getElementById('sidebarNcRestoreBtn')?.addEventListener('click', () => ncRestoreData());
+        document.getElementById('sidebarNcExcelBtn')?.addEventListener('click', () => ncExportToExcel());
         elements.sidebarSyncInfo?.addEventListener('click', () => {
-            ncSafeUpload(true); // Manually trigger forced sync
+            showCustomConfirm('¿Deseas sincronizar y guardar tus datos actuales en Nextcloud ahora mismo?', () => {
+                ncSafeUpload(true); // Manually trigger forced sync
+            });
         });
 
         // Activity Listeners
@@ -10743,7 +10746,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('❌ ' + result.error, 'error', 5000);
         }
     }
-
     async function ncBackupData() {
         const config = NextcloudSync.loadConfig();
         if (!config) {
@@ -10786,7 +10788,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Show info about source device
         const sourceDevice = result.deviceName || 'Desconocido';
         const sourceDate = result.lastModified ? new Date(result.lastModified).toLocaleString() : '?';
         const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
@@ -10807,6 +10808,255 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('✅ Datos restaurados desde Nextcloud', 'success');
             }
         );
+    }
+
+    async function ncExportToExcel() {
+        console.log('--- ncExportToExcel v202603231205 (ExcelJS + Summary) ---');
+        showToast('⏳ Generando hoja de cálculo...', 'info');
+
+        const formatDMY = (dateStr) => {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        };
+
+        try {
+            // 1. Prepare data for ExcelJS
+            let totalUnits = 0;
+            let totalCost = 0;
+
+            const bolsaRows = stocks.map(s => {
+                const price = parseFloat(s.price) || 0;
+                const cost = s.qty * price;
+                
+                totalUnits += s.qty;
+                totalCost += cost;
+
+                return [
+                    s.ticker,
+                    s.name || s.ticker,
+                    s.qty,
+                    Number(price.toFixed(2)),
+                    Number(cost.toFixed(2))
+                ];
+            });
+
+            // Calculate Bolsa Summary aggregated by Name
+            const bolsaAgg = {};
+            stocks.forEach(s => {
+                const name = s.name || s.ticker;
+                if (!bolsaAgg[name]) {
+                    bolsaAgg[name] = { qty: 0, totalCost: 0, ticker: s.ticker };
+                }
+                bolsaAgg[name].qty += s.qty;
+                bolsaAgg[name].totalCost += (s.qty * (parseFloat(s.price) || 0));
+            });
+
+            const bolsaSummaryRows = Object.entries(bolsaAgg).map(([name, data]) => {
+                const avgPrice = data.qty > 0 ? data.totalCost / data.qty : 0;
+                return [
+                    name,
+                    data.qty,
+                    Number(avgPrice.toFixed(2)),
+                    Number(data.totalCost.toFixed(2))
+                ];
+            });
+
+            const categoryTotals = {};
+            const drawerTotals = {};
+            const ahorroRowsTemp = [];
+
+            savingsDrawers.forEach(drawer => {
+                const dName = drawer.name || 'Sin nombre';
+                if (!drawerTotals[dName]) drawerTotals[dName] = 0;
+
+                if (drawer.movements) {
+                    drawer.movements.forEach(m => {
+                        const amt = parseFloat(m.amount) || 0;
+                        const cat = m.category || 'Sin categoría';
+                        
+                        if (!categoryTotals[cat]) categoryTotals[cat] = 0;
+                        categoryTotals[cat] += amt;
+                        drawerTotals[dName] += amt;
+
+                        ahorroRowsTemp.push({
+                            rawDate: m.date,
+                            displayDate: formatDMY(m.date),
+                            concept: m.concept,
+                            category: cat,
+                            amount: Number(amt.toFixed(2)),
+                            drawerName: dName
+                        });
+                    });
+                }
+            });
+
+            ahorroRowsTemp.sort((a, b) => {
+                const acctA = String(a.drawerName || '').toLowerCase();
+                const acctB = String(b.drawerName || '').toLowerCase();
+                if (acctA < acctB) return -1;
+                if (acctA > acctB) return 1;
+                return new Date(b.rawDate) - new Date(a.rawDate);
+            });
+
+            const ahorroRows = ahorroRowsTemp.map(r => [
+                r.displayDate,
+                r.concept,
+                r.category,
+                r.amount,
+                r.drawerName
+            ]);
+
+            // 2. Create Workbook using ExcelJS
+            if (typeof ExcelJS === 'undefined') {
+                throw new Error('Librería ExcelJS no cargada');
+            }
+            const workbook = new ExcelJS.Workbook();
+            
+            // --- Sheet 1: Bolsa ---
+            const wsBolsa = workbook.addWorksheet('Bolsa');
+            wsBolsa.addTable({
+                name: 'TablaBolsa',
+                ref: 'A1',
+                headerRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Ticker', filterButton: true },
+                    { name: 'Nombre', filterButton: true },
+                    { name: 'Unidades', filterButton: true },
+                    { name: 'Precio Compra', filterButton: true },
+                    { name: 'Invertido', filterButton: true }
+                ],
+                rows: bolsaRows
+            });
+
+            // Add Total Row for "Invertido" (below the table)
+            const totalRowBolsa = wsBolsa.addRow(['TOTAL', '', '', '', Number(totalCost.toFixed(2))]);
+            totalRowBolsa.font = { bold: true };
+
+            // Summary Bolsa (Aggregated by Name)
+            wsBolsa.addTable({
+                name: 'ResumenBolsa',
+                ref: 'H1',
+                headerRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Nombre' },
+                    { name: 'Total Unidades' },
+                    { name: 'P. Medio Compra' },
+                    { name: 'Invertido' }
+                ],
+                rows: bolsaSummaryRows
+            });
+
+            wsBolsa.columns = [
+                { width: 15 }, { width: 30 }, { width: 12 }, { width: 18 }, { width: 18 },
+                { width: 5 }, { width: 5 }, // Spacers
+                { width: 25 }, { width: 18 }, { width: 18 }, { width: 18 } // Summary
+            ];
+
+            // Apply Euro Formatting to Bolsa
+            wsBolsa.getColumn(4).numFmt = '#,##0.00"€"'; // Precio Compra
+            wsBolsa.getColumn(5).numFmt = '#,##0.00"€"'; // Invertido
+            wsBolsa.getColumn(10).numFmt = '#,##0.00"€"'; // Summary P. Medio
+            wsBolsa.getColumn(11).numFmt = '#,##0.00"€"'; // Summary Invertido
+
+            // --- Sheet 2: Ahorro ---
+            const wsAhorro = workbook.addWorksheet('Ahorro');
+            wsAhorro.addTable({
+                name: 'TablaAhorro',
+                ref: 'A1',
+                headerRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Fecha', filterButton: true },
+                    { name: 'Concepto', filterButton: true },
+                    { name: 'Categoría', filterButton: true },
+                    { name: 'Importe', filterButton: true },
+                    { name: 'Cajón/Cuenta', filterButton: true }
+                ],
+                rows: ahorroRows
+            });
+
+            // Summary Ahorro: Categories
+            let totalAhorroCat = 0;
+            const catRows = Object.entries(categoryTotals).map(([cat, amt]) => {
+                totalAhorroCat += amt;
+                return [cat, Number(amt.toFixed(2))];
+            });
+            wsAhorro.addTable({
+                name: 'ResumenCategorias',
+                ref: 'J1',
+                headerRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [{ name: 'Categoría' }, { name: 'Total' }],
+                rows: catRows
+            });
+            const totalRowCat = wsAhorro.addRow(['', '', '', '', '', '', '', '', '', 'TOTAL', Number(totalAhorroCat.toFixed(2))]);
+            totalRowCat.font = { bold: true };
+
+            // Summary Ahorro: Drawers
+            let totalAhorroDr = 0;
+            const drRows = Object.entries(drawerTotals).map(([dr, amt]) => {
+                totalAhorroDr += amt;
+                return [dr, Number(amt.toFixed(2))];
+            });
+            wsAhorro.addTable({
+                name: 'ResumenCajones',
+                ref: 'M1',
+                headerRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [{ name: 'Cajón/Cuenta' }, { name: 'Total' }],
+                rows: drRows
+            });
+            const totalRowDr = wsAhorro.addRow(['', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', Number(totalAhorroDr.toFixed(2))]);
+            totalRowDr.font = { bold: true };
+
+            // Main Table Total Row
+            const totalRowAhorro = wsAhorro.addRow(['TOTAL', '', '', Number(totalAhorroCat.toFixed(2))]);
+            totalRowAhorro.font = { bold: true };
+
+            wsAhorro.columns = [
+                { width: 15 }, { width: 40 }, { width: 25 }, { width: 15 }, { width: 25 },
+                { width: 5 }, { width: 5 }, { width: 5 }, { width: 5 }, // Spacers
+                { width: 25 }, { width: 15 }, // Categories
+                { width: 5 }, // Spacer
+                { width: 25 }, { width: 15 } // Drawers
+            ];
+
+            // Apply Euro Formatting to Ahorro
+            wsAhorro.getColumn(4).numFmt = '#,##0.00"€"'; // Importe
+            wsAhorro.getColumn(11).numFmt = '#,##0.00"€"'; // Summary Category Total
+            wsAhorro.getColumn(14).numFmt = '#,##0.00"€"'; // Summary Drawer Total
+
+            // 3. Generate and Buffer
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            const fileName = `msv-export-${timestamp}.xlsx`;
+
+            // 4. Download
+            if (typeof saveAs !== 'undefined') {
+                saveAs(blob, fileName);
+                showToast('✅ Hoja de cálculo generada con éxito');
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('✅ Hoja de cálculo generada con éxito');
+            }
+
+        } catch (error) {
+            console.error('Error exportando a Excel:', error);
+            showToast('❌ Error: ' + error.message, 'error');
+        }
     }
 
     function applyGlobalData(data) {
