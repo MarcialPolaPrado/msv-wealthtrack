@@ -7253,7 +7253,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fiscal Day
         let newFiscalDay = parseInt(elements.fiscalDayInput?.value);
         if (isNaN(newFiscalDay) || newFiscalDay < 1 || newFiscalDay > 31) newFiscalDay = 25;
-        localStorage.setItem('fiscalDay', newFiscalDay);
+        fiscalDay = newFiscalDay; // Update variable
+        localStorage.setItem('fiscalDay', fiscalDay);
 
         // Default Transfer Source
 
@@ -7270,7 +7271,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Bottom Nav Mode
         if (elements.bottomNavModeInput) {
-            localStorage.setItem('bottomNavMode', elements.bottomNavModeInput.value);
+            bottomNavMode = elements.bottomNavModeInput.value; // Update variable
+            localStorage.setItem('bottomNavMode', bottomNavMode);
+            updateBottomNavLayout(); // Refresh UI
         }
 
         // Apply visual updates and notify user
@@ -10725,6 +10728,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (data.settings.bottomNavMode) {
                             bottomNavMode = data.settings.bottomNavMode;
                             localStorage.setItem('bottomNavMode', bottomNavMode);
+                            updateBottomNavLayout();
                         }
                     }
 
