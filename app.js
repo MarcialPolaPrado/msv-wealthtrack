@@ -10933,14 +10933,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function ncExportToExcel() {
-        console.log('--- ncExportToExcel v202603231205 (ExcelJS + Summary) ---');
+        console.log('--- ncExportToExcel v20260324 (Enhanced ExcelJS) ---');
         showToast('⏳ Generando hoja de cálculo...', 'info');
-
-        const formatDMY = (dateStr) => {
-            if (!dateStr) return '';
-            const [y, m, d] = dateStr.split('-');
-            return `${d}/${m}/${y}`;
-        };
 
         try {
             // 1. Prepare data for ExcelJS
@@ -10959,7 +10953,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     s.name || s.ticker,
                     s.qty,
                     Number(price.toFixed(2)),
-                    Number(cost.toFixed(2))
+                    Number(cost.toFixed(2)),
+                    s.date ? new Date(s.date) : null
                 ];
             });
 
@@ -10990,7 +10985,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             savingsDrawers.forEach(drawer => {
                 const dName = drawer.name || 'Sin nombre';
-                // Initialize with 0 or with totalCost if it's the Bolsa drawer
                 if (drawer.id === 'bolsa' || dName.toLowerCase().includes('bolsa')) {
                     drawerTotals[dName] = totalCost;
                 } else {
@@ -11004,14 +10998,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (!categoryTotals[cat]) categoryTotals[cat] = 0;
                         categoryTotals[cat] += amt;
-                        // Only add movements to non-bolsa drawers (bolsa total is handled by totalCost)
                         if (drawer.id !== 'bolsa' && !dName.toLowerCase().includes('bolsa')) {
                             drawerTotals[dName] += amt;
                         }
 
                         ahorroRowsTemp.push({
                             rawDate: m.date,
-                            displayDate: formatDMY(m.date),
                             concept: m.concept || m.description || '',
                             category: cat,
                             amount: Number(amt.toFixed(2)),
@@ -11030,17 +11022,37 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const ahorroRows = ahorroRowsTemp.map(r => [
-                r.displayDate,
+                r.rawDate ? new Date(r.rawDate) : null,
                 r.concept,
                 r.category,
                 r.amount,
                 r.drawerName
             ]);
 
+            // Nomina Data
+            const nominaRows = [];
+            let totalNomina = 0;
+            nominaData.forEach(drawer => {
+                const dName = drawer.name || 'Sin nombre';
+                if (drawer.movements) {
+                    drawer.movements.forEach(m => {
+                        const amt = parseFloat(m.amount) || 0;
+                        totalNomina += amt;
+                        nominaRows.push([
+                            m.date ? new Date(m.date) : null,
+                            m.concept || m.description || 'Sin concepto',
+                            dName,
+                            m.amount >= 0 ? 'Ingreso' : 'Gasto',
+                            Number(amt.toFixed(2)),
+                            (m.activeMonths || []).join(', ')
+                        ]);
+                    });
+                }
+            });
+            nominaRows.sort((a, b) => (b[0] || 0) - (a[0] || 0));
+
             // 2. Create Workbook using ExcelJS
-            if (typeof ExcelJS === 'undefined') {
-                throw new Error('Librería ExcelJS no cargada');
-            }
+            if (typeof ExcelJS === 'undefined') throw new Error('Librería ExcelJS no cargada');
             const workbook = new ExcelJS.Workbook();
             
             // --- Sheet 1: Bolsa ---
@@ -11049,55 +11061,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: 'TablaBolsa',
                 ref: 'A1',
                 headerRow: true,
+                totalsRow: true,
                 style: { theme: 'TableStyleMedium2', showRowStripes: true },
                 columns: [
                     { name: 'Ticker', filterButton: true },
                     { name: 'Nombre', filterButton: true },
-                    { name: 'Unidades', filterButton: true },
+                    { name: 'Unidades', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Precio Compra', filterButton: true },
-                    { name: 'Invertido', filterButton: true }
+                    { name: 'Invertido', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Fecha Compra', filterButton: true }
                 ],
                 rows: bolsaRows
             });
 
-            // Add Total Row for "Invertido" (below the table)
-            const bTotalRowIdx = bolsaRows.length + 2;
-            const bTotalRow = wsBolsa.getRow(bTotalRowIdx);
-            bTotalRow.getCell(1).value = 'TOTAL';
-            bTotalRow.getCell(5).value = Number(totalCost.toFixed(2));
-            bTotalRow.font = { bold: true };
-
-            // Summary Bolsa (Aggregated by Name)
             wsBolsa.addTable({
                 name: 'ResumenBolsa',
-                ref: 'H1',
+                ref: 'I1',
                 headerRow: true,
+                totalsRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
                 columns: [
-                    { name: 'Nombre' },
-                    { name: 'Total Unidades' },
+                    { name: 'Nombre', totalsRowLabel: 'TOTAL' },
+                    { name: 'Total Unidades', totalsRowFunction: 'sum' },
                     { name: 'P. Medio Compra' },
-                    { name: 'Invertido' }
+                    { name: 'Invertido', totalsRowFunction: 'sum' }
                 ],
                 rows: bolsaSummaryRows
             });
-            const bSumTotalRowIdx = bolsaSummaryRows.length + 2;
-            const bSumTotalRow = wsBolsa.getRow(bSumTotalRowIdx);
-            bSumTotalRow.getCell(8).value = 'TOTAL';
-            bSumTotalRow.getCell(11).value = Number(totalCost.toFixed(2));
-            bSumTotalRow.font = { bold: true };
 
             wsBolsa.columns = [
-                { width: 15 }, { width: 30 }, { width: 12 }, { width: 18 }, { width: 18 },
+                { width: 15 }, { width: 30 }, { width: 12 }, { width: 18 }, { width: 18 }, { width: 18 },
                 { width: 5 }, { width: 5 }, // Spacers
                 { width: 25 }, { width: 18 }, { width: 18 }, { width: 18 } // Summary
             ];
 
-            // Apply Euro Formatting to Bolsa
-            wsBolsa.getColumn(4).numFmt = '#,##0.00"€"'; // Precio Compra
-            wsBolsa.getColumn(5).numFmt = '#,##0.00"€"'; // Invertido
-            wsBolsa.getColumn(10).numFmt = '#,##0.00"€"'; // Summary P. Medio
-            wsBolsa.getColumn(11).numFmt = '#,##0.00"€"'; // Summary Invertido
+            wsBolsa.getColumn(4).numFmt = '#,##0.00"€"';
+            wsBolsa.getColumn(5).numFmt = '#,##0.00"€"';
+            wsBolsa.getColumn(6).numFmt = 'dd/mm/yyyy';
+            wsBolsa.getColumn(11).numFmt = '#,##0.00"€"';
+            wsBolsa.getColumn(12).numFmt = '#,##0.00"€"';
 
             // --- Sheet 2: Ahorro ---
             const wsAhorro = workbook.addWorksheet('Ahorro');
@@ -11105,76 +11107,83 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: 'TablaAhorro',
                 ref: 'A1',
                 headerRow: true,
+                totalsRow: true,
                 style: { theme: 'TableStyleMedium2', showRowStripes: true },
                 columns: [
-                    { name: 'Fecha', filterButton: true },
+                    { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Concepto', filterButton: true },
                     { name: 'Categoría', filterButton: true },
-                    { name: 'Importe', filterButton: true },
+                    { name: 'Importe', filterButton: true, totalsRowFunction: 'sum' },
                     { name: 'Cuenta', filterButton: true }
                 ],
                 rows: ahorroRows
             });
 
-            // Summary Ahorro: Categories
-            let totalAhorroCat = 0;
-            const catRows = Object.entries(categoryTotals).map(([cat, amt]) => {
-                totalAhorroCat += amt;
-                return [cat, Number(amt.toFixed(2))];
-            });
+            const catRows = Object.entries(categoryTotals).map(([cat, amt]) => [cat, Number(amt.toFixed(2))]);
             wsAhorro.addTable({
                 name: 'ResumenCategorias',
-                ref: 'J1',
+                ref: 'K1',
                 headerRow: true,
+                totalsRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
-                columns: [{ name: 'Categoría', filterButton: true }, { name: 'Total', filterButton: true }],
+                columns: [
+                    { name: 'Categoría', filterButton: true, totalsRowLabel: 'TOTAL' }, 
+                    { name: 'Total', filterButton: true, totalsRowFunction: 'sum' }
+                ],
                 rows: catRows
             });
-            const catTotalRowIdx = catRows.length + 2;
-            const catTotalRow = wsAhorro.getRow(catTotalRowIdx);
-            catTotalRow.getCell(10).value = 'TOTAL';
-            catTotalRow.getCell(11).value = Number(totalAhorroCat.toFixed(2));
-            catTotalRow.font = { bold: true };
 
-            // Summary Ahorro: Accounts
-            let totalAhorroDr = 0;
-            const drRows = Object.entries(drawerTotals).map(([dr, amt]) => {
-                totalAhorroDr += amt;
-                return [dr, Number(amt.toFixed(2))];
-            });
+            const drRows = Object.entries(drawerTotals).map(([dr, amt]) => [dr, Number(amt.toFixed(2))]);
             wsAhorro.addTable({
                 name: 'ResumenCajones',
-                ref: 'M1',
+                ref: 'N1',
                 headerRow: true,
+                totalsRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
-                columns: [{ name: 'Cuenta', filterButton: true }, { name: 'Total', filterButton: true }],
+                columns: [
+                    { name: 'Cuenta', filterButton: true, totalsRowLabel: 'TOTAL' }, 
+                    { name: 'Total', filterButton: true, totalsRowFunction: 'sum' }
+                ],
                 rows: drRows
             });
-            const drTotalRowIdx = drRows.length + 2;
-            const drTotalRow = wsAhorro.getRow(drTotalRowIdx);
-            drTotalRow.getCell(13).value = 'TOTAL';
-            drTotalRow.getCell(14).value = Number(totalAhorroDr.toFixed(2));
-            drTotalRow.font = { bold: true };
-
-            // Main Table Total Row
-            const aTotalRowIdx = ahorroRows.length + 2;
-            const aTotalRow = wsAhorro.getRow(aTotalRowIdx);
-            aTotalRow.getCell(1).value = 'TOTAL';
-            aTotalRow.getCell(4).value = Number(totalAhorroCat.toFixed(2));
-            aTotalRow.font = { bold: true };
 
             wsAhorro.columns = [
                 { width: 15 }, { width: 40 }, { width: 25 }, { width: 15 }, { width: 25 },
-                { width: 5 }, { width: 5 }, { width: 5 }, { width: 5 }, // Spacers
+                { width: 5 }, { width: 5 }, { width: 5 }, { width: 5 }, { width: 5 }, // Spacers
                 { width: 25 }, { width: 15 }, // Categories
                 { width: 5 }, // Spacer
                 { width: 25 }, { width: 15 } // Drawers
             ];
 
-            // Apply Euro Formatting to Ahorro
-            wsAhorro.getColumn(4).numFmt = '#,##0.00"€"'; // Importe
-            wsAhorro.getColumn(11).numFmt = '#,##0.00"€"'; // Summary Category Total
-            wsAhorro.getColumn(14).numFmt = '#,##0.00"€"'; // Summary Drawer Total
+            wsAhorro.getColumn(1).numFmt = 'dd/mm/yyyy';
+            wsAhorro.getColumn(4).numFmt = '#,##0.00"€"';
+            wsAhorro.getColumn(12).numFmt = '#,##0.00"€"';
+            wsAhorro.getColumn(15).numFmt = '#,##0.00"€"';
+
+            // --- Sheet 3: Nómina ---
+            const wsNomina = workbook.addWorksheet('Nómina');
+            wsNomina.addTable({
+                name: 'TablaNomina',
+                ref: 'A1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Concepto', filterButton: true },
+                    { name: 'Cuenta Nómina', filterButton: true },
+                    { name: 'Tipo', filterButton: true },
+                    { name: 'Importe', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Meses Activos', filterButton: true }
+                ],
+                rows: nominaRows
+            });
+
+            wsNomina.columns = [
+                { width: 15 }, { width: 40 }, { width: 25 }, { width: 15 }, { width: 15 }, { width: 25 }
+            ];
+            wsNomina.getColumn(1).numFmt = 'dd/mm/yyyy';
+            wsNomina.getColumn(5).numFmt = '#,##0.00"€"';
 
             // 3. Generate and Buffer
             const buffer = await workbook.xlsx.writeBuffer();
@@ -11187,7 +11196,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // 4. Download
             if (typeof saveAs !== 'undefined') {
                 saveAs(blob, fileName);
-                showToast('✅ Hoja de cálculo generada con éxito');
             } else {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -11197,8 +11205,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showToast('✅ Hoja de cálculo generada con éxito');
             }
+            showToast('✅ Hoja de cálculo generada con éxito');
 
         } catch (error) {
             console.error('Error exportando a Excel:', error);
