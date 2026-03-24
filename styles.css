@@ -58,6 +58,7 @@ body {
 
 #appMain {
     flex-grow: 1;
+    min-width: 0; /* Add this to prevent flex child from expanding beyond parent */
     padding: 2rem;
     max-width: none !important;
     width: 98%;
@@ -2617,9 +2618,21 @@ select:focus {
     #bolsaTotalesToggle {
         font-size: 0.7rem !important;
         padding: 0.2rem 0.5rem !important;
+        margin-left: 5px !important;
     }
 }
 
+/* Medium screens: Hide non-essential columns in Bolsa list to avoid horizontal overflow */
+@media (max-width: 900px) {
+    #stockTable:not(.bolsa-totals-compact) th:nth-child(2),
+    #stockTable:not(.bolsa-totals-compact) td:nth-child(2),
+    #stockTable:not(.bolsa-totals-compact) th:nth-child(4),
+    #stockTable:not(.bolsa-totals-compact) td:nth-child(4),
+    #stockTable:not(.bolsa-totals-compact) th:nth-child(9),
+    #stockTable:not(.bolsa-totals-compact) td:nth-child(9) {
+        display: none;
+    }
+}
 /* ── Unified Totales Toggle Button ─────────────── */
 .totales-toggle-btn {
     padding: 0.3rem 0.8rem;
