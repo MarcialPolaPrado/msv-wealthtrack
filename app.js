@@ -2993,7 +2993,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${(!drawer.isAuto && ahorroListFilterMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-mvmt-list-btn btn-primary" title="Añadir Movimiento">➕</button>
-                                <button class="transfer-list-btn btn-secondary" title="Transferir">⇆</button>
+                                <button class="transfer-list-btn btn-secondary" title="Traspasar">⇆</button>
                                 <button class="edit-drawer-list-btn btn-secondary" title="Editar Cuenta">✏️</button>
                                 <button class="delete-drawer-list-btn btn-danger" title="Borrar Cuenta">🗑️</button>
                             </div>
@@ -3446,7 +3446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${!drawer.isAuto ? `
                         <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:nowrap;">
                              <button class="add-mvmt-btn btn-primary" title="Añadir Movimiento" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">➕</button>
-                            <button class="transfer-btn btn-secondary" title="Transferir" style="padding:0.5rem 0; font-size:1.2rem; font-weight:bold; flex:1; display:flex; justify-content:center; align-items:center;">⇆</button>
+                            <button class="transfer-btn btn-secondary" title="Traspasar" style="padding:0.5rem 0; font-size:1.2rem; font-weight:bold; flex:1; display:flex; justify-content:center; align-items:center;">⇆</button>
                             <button class="edit-drawer-btn btn-secondary" title="Editar Cuenta" style="padding:0.5rem 0; font-size:1rem; flex:1; display:flex; justify-content:center; align-items:center;">✏️</button>
                         </div>` : ''}
                 `;
@@ -4539,7 +4539,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${(!drawer.isAutomatic && nominaListFilterMode === 'detail') ? `
                             <div class="list-actions">
                                 <button class="add-nomina-mvmt-list-btn btn-primary" title="Añadir Movimiento">➕</button>
-                                ${drawer.linkedSavingsDrawerId ? `<button class="transfer-nomina-ahorro-list-btn btn-primary" style="background:var(--success); padding: 0.3rem 0.6rem;" title="Transferir Ahorro">➡️</button>` : ''}
+                                ${drawer.linkedSavingsDrawerId ? `<button class="transfer-nomina-ahorro-list-btn btn-primary" style="background:var(--success); padding: 0.3rem 0.6rem;" title="Traspasar Ahorro">➡️</button>` : ''}
                                 <button class="edit-nomina-drawer-list-btn btn-secondary" title="Editar Cuenta">✏️</button>
                                 <button class="delete-nomina-drawer-list-btn btn-danger" title="Borrar Cuenta">🗑️</button>
                             </div>
@@ -4911,7 +4911,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="drawer-footer" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
                    <button class="btn-secondary btn-sm add-nomina-movement" data-id="${concept.id}" style="flex:1" title="Añadir Movimiento">➕</button>
                    <button class="btn-primary btn-sm view-nomina-details" data-id="${concept.id}" style="flex:1" title="Historial">🕒</button>
-                   ${concept.linkedSavingsDrawerId ? `<button class="btn-primary btn-sm transfer-nomina-ahorro" data-id="${concept.id}" style="background:var(--success); padding: 0.5rem; flex: 0 0 auto;" title="Transferir Ahorro">➡️</button>` : ''}
+                   ${concept.linkedSavingsDrawerId ? `<button class="btn-primary btn-sm transfer-nomina-ahorro" data-id="${concept.id}" style="background:var(--success); padding: 0.5rem; flex: 0 0 auto;" title="Traspasar Ahorro">➡️</button>` : ''}
                 </div>
             `;
 
@@ -5529,7 +5529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         typeInput.value = 'transfer';
         if (targetIdInput) targetIdInput.value = drawerId;
-        if (title) title.textContent = `Transferir desde: ${sourceDrawer.name}`;
+        if (title) title.textContent = `Traspasar desde: ${sourceDrawer.name}`;
 
         // Set default concept and date
         const conceptInput = document.getElementById('movementConceptInput');
@@ -5542,7 +5542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nameGroup?.classList.add('hidden');
         transferTargetGroup?.classList.remove('hidden');
         conceptGroup?.classList.remove('hidden');
-        if (amountInput) amountInput.placeholder = "Importe a transferir";
+        if (amountInput) amountInput.placeholder = "Importe a traspasar";
         if (elements.savingsMovementTypeContainer) elements.savingsMovementTypeContainer.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
         if (elements.drawerIconGroup) elements.drawerIconGroup.classList.add('hidden');
@@ -10614,7 +10614,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     btnContainer.style = 'margin-top: -10px; margin-bottom: 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;';
                     btnContainer.innerHTML = `
                         <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Vinculado a: <strong>${targetAhorro.name}</strong></p>
-                        <button class="btn-primary" id="btnTransferToAhorro" title="Transferir a Ahorro" style="width: 100%; background: var(--success); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <button class="btn-primary" id="btnTransferToAhorro" title="Traspasar a Ahorro" style="width: 100%; background: var(--success); display: flex; align-items: center; justify-content: center; gap: 8px;">
                             ➡️
                         </button>
                     `;
