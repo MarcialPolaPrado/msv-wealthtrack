@@ -78,9 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let activityCellFilter = { column: null, value: null };
     let activityFilterMode = localStorage.getItem('activityFilterMode') || 'month'; // 'week', 'month', 'year' or 'all'
     let activityDrawerFilter = localStorage.getItem('activityDrawerFilter') || 'all';
-    let activitySearchQuery = '';
+    let activitySearchQuery = localStorage.getItem('activitySearchQuery') || '';
     let activityPageSize = 50;
     let activityCurrentLimit = 50;
+    let bottomNavMode = localStorage.getItem('bottomNavMode') || 'nomina';
 
     let calendarDrawerId = null;
     let calendarViewDate = new Date(); // Month/Year currently shown in the calendar modal
@@ -738,6 +739,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bolsaCalendarBtn2: document.getElementById('bolsaCalendarBtn2'),
         bolsaCalendarModal: document.getElementById('bolsaCalendarModal'),
         closeBolsaCalendarModal: document.getElementById('closeBolsaCalendarModal'),
+        bottomNavModeInput: document.getElementById('bottomNavModeInput'),
+        fiscalDayInput: document.getElementById('fiscalDayInput'),
         bolsaCalendarGrid: document.getElementById('bolsaCalendarGrid'),
         bolsaCalendarCurrentMonth: document.getElementById('bolsaCalendarCurrentMonth'),
         prevBolsaCalendarMonth: document.getElementById('prevBolsaCalendarMonth'),
@@ -5227,8 +5230,11 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.bottomNavItems?.forEach(item => {
             const isAh = (item.dataset.view === 'ahorro' && (view === 'ahorroCalendar' || view === 'ahorroEstado'));
             const isNom = (item.dataset.view === 'nomina' && view === 'analisis');
-            item.classList.toggle('active', item.dataset.view === view || isAh || isNom);
+            const isAct = (item.dataset.view === 'activity' && view === 'activity');
+            item.classList.toggle('active', item.dataset.view === view || isAh || isNom || isAct);
         });
+
+        updateBottomNavLayout();
 
         // Update Mobile FAB (mobileMenuBtn) Icon/Label based on view context
         if (elements.mobileMenuBtn) {
@@ -7224,6 +7230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openSettingsModal() {
         if (elements.fiscalDayInput) elements.fiscalDayInput.value = parseInt(localStorage.getItem('fiscalDay')) || 25;
+        if (elements.bottomNavModeInput) elements.bottomNavModeInput.value = bottomNavMode;
         if (elements.defaultTransferSourceSelect) {
             elements.defaultTransferSourceSelect.innerHTML = '<option value="">-- Sin traspaso por omisión --</option>';
             const activeDrawers = savingsDrawers.filter(d => !d.isAuto && !d.name.toLowerCase().includes('nómina') && !d.name.toLowerCase().includes('nomina'));
@@ -7260,6 +7267,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Nextcloud Config
         const ncCfg = getNcConfigFromInputs();
         if (ncCfg) NextcloudSync.saveConfig(ncCfg.url, ncCfg.user, ncCfg.password, ncCfg.proxy);
+
+        // Bottom Nav Mode
+        if (elements.bottomNavModeInput) {
+            localStorage.setItem('bottomNavMode', elements.bottomNavModeInput.value);
+        }
 
         // Apply visual updates and notify user
         if (typeof updateStorageStatus === 'function') updateStorageStatus();
@@ -7816,6 +7828,42 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     }
 
+    function toggleActivityView() {
+        const rendQuery = 'Intereses | Dividendos | Especulación';
+        if (activitySearchQuery === rendQuery) {
+            activitySearchQuery = '';
+        } else {
+            activitySearchQuery = rendQuery;
+        }
+        localStorage.setItem('activitySearchQuery', activitySearchQuery);
+        if (elements.activitySearchInput) elements.activitySearchInput.value = activitySearchQuery;
+        render();
+        updateBottomNavLayout();
+    }
+
+    function updateBottomNavLayout() {
+        if (!elements.bottomNav) return;
+        
+        // Find the 3rd navigation item (can have view nomina or activity)
+        const navItems = elements.bottomNav.querySelectorAll('.bottom-nav-item');
+        if (navItems.length < 3) return;
+        
+        const nav3 = navItems[2];
+        const iconSpan = nav3.querySelector('.bottom-nav-icon');
+        const textSpan = nav3.querySelector('.bottom-nav-text');
+
+        if (bottomNavMode === 'activity') {
+            nav3.setAttribute('data-view', 'activity');
+            const isRend = activitySearchQuery === 'Intereses | Dividendos | Especulación';
+            if (iconSpan) iconSpan.textContent = isRend ? '📊' : '📝';
+            if (textSpan) textSpan.textContent = isRend ? 'Act. Rend.' : 'Actividad';
+        } else {
+            nav3.setAttribute('data-view', 'nomina');
+            if (iconSpan) iconSpan.textContent = '💶';
+            if (textSpan) textSpan.textContent = 'Nómina';
+        }
+    }
+
     function updateAhorroToggleIcons() {
         const toggleIds = ['ahorroViewToggleBtn', 'ahorroCalendarViewToggleBtn', 'ahorroEstadoViewToggleBtn', 'ahorroViewToggleBtn2'];
         let nextIcon = '<span>🔲</span>';
@@ -7865,7 +7913,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggleNominaView() {
         if (currentView === 'analisis') {
-            switchView('nomina');
+            switchView('analisis'); // Stay in analisis view but re-render
             return;
         }
         nominaViewMode = nominaViewMode === 'cards' ? 'list' : 'cards';
@@ -8164,6 +8212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (view === 'bolsa') toggleBolsaView();
                     else if (view === 'ahorro') toggleAhorroView();
                     else if (view === 'nomina') toggleNominaView();
+                    else if (view === 'activity') toggleActivityView();
 
                     if (isSidebar && container) {
                         container.classList.toggle('open');
@@ -10597,7 +10646,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 expenseCategories: expenseCategories,
                 incomeSubcategories: incomeSubcategories,
                 expenseSubcategories: expenseSubcategories,
-                defaultTransferSource: localStorage.getItem('defaultTransferSource')
+                defaultTransferSource: localStorage.getItem('defaultTransferSource'),
+                bottomNavMode: bottomNavMode
             },
             exportDate: new Date().toISOString(),
             version: "1.3"
@@ -10671,6 +10721,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         if (data.settings.defaultTransferSource !== undefined) {
                             localStorage.setItem('defaultTransferSource', data.settings.defaultTransferSource || "");
+                        }
+                        if (data.settings.bottomNavMode) {
+                            bottomNavMode = data.settings.bottomNavMode;
+                            localStorage.setItem('bottomNavMode', bottomNavMode);
                         }
                     }
 

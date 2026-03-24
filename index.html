@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603240733">
+    <link rel="stylesheet" href="styles.css?v=202603240747">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -862,6 +862,15 @@
                         añadir una nueva inversión.</small>
                 </div>
 
+                <div class="form-group">
+                    <label for="bottomNavMode">Vista Principal en Navegación</label>
+                    <select id="bottomNavModeInput">
+                        <option value="nomina">Nómina</option>
+                        <option value="activity">Actividad</option>
+                    </select>
+                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Elige qué sección mostrar en el tercer botón de la barra inferior.</small>
+                </div>
+
                 <div class="form-group"
                     style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
                     <div
@@ -1671,7 +1680,7 @@
     <script src="storage.js?v=202603221625"></script>
     <script src="mock_data.js?v=202603221625"></script>
     <script src="nextcloud.js?v=202603221625"></script>
-    <script src="app.js?v=202603240733"></script>
+    <script src="app.js?v=202603240747"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1884,7 +1893,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603240733';
+        const APP_VERSION = '202603240747';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
