@@ -1322,8 +1322,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Toggle Table vs Cards
         if (elements.bolsaViewToggleBtn) {
-            elements.bolsaViewToggleBtn.innerHTML = bolsaViewMode === 'cards' ? '<span>📄</span>' : '<span>🗂️</span>';
-            elements.bolsaViewToggleBtn.title = bolsaViewMode === 'cards' ? 'Vista Lista' : 'Vista Tarjetas';
+            if (bolsaViewMode === 'cards') {
+                elements.bolsaViewToggleBtn.innerHTML = '<span>📄</span>';
+                elements.bolsaViewToggleBtn.title = 'Vista Lista Detallada';
+            } else if (!bolsaTotalsMode) {
+                elements.bolsaViewToggleBtn.innerHTML = '<span>📊</span>';
+                elements.bolsaViewToggleBtn.title = 'Vista Totales';
+            } else {
+                elements.bolsaViewToggleBtn.innerHTML = '<span>🗂️</span>';
+                elements.bolsaViewToggleBtn.title = 'Vista Tarjetas';
+            }
         }
 
 
@@ -7794,8 +7802,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- View Toggle Helpers ---
     function toggleBolsaView() {
-        bolsaViewMode = bolsaViewMode === 'cards' ? 'list' : 'cards';
+        if (bolsaViewMode === 'cards') {
+            bolsaViewMode = 'list';
+            bolsaTotalsMode = false;
+        } else if (!bolsaTotalsMode) {
+            bolsaTotalsMode = true;
+        } else {
+            bolsaViewMode = 'cards';
+            bolsaTotalsMode = false;
+        }
         localStorage.setItem('bolsaViewMode', bolsaViewMode);
+        localStorage.setItem('bolsaTotalsMode', bolsaTotalsMode);
         render();
     }
 
@@ -8401,7 +8418,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        document.getElementById('ahorroCardsBtn2')?.addEventListener('click', (e) => {
+        document.getElementById('ahorroAccountsBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             ahorroViewMode = 'cards';
             localStorage.setItem('ahorroViewMode', ahorroViewMode);
@@ -9644,16 +9661,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bolsaMobileTitle) {
             bolsaMobileTitle.style.cursor = 'pointer';
             const updateMobileTitle = () => {
-                bolsaMobileTitle.textContent = bolsaViewMode === 'cards'
-                    ? 'Mis Acciones 🃏'
-                    : 'Mis Acciones 📋';
+                if (bolsaViewMode === 'cards') {
+                    bolsaMobileTitle.textContent = 'Mis Acciones 🃏';
+                } else if (!bolsaTotalsMode) {
+                    bolsaMobileTitle.textContent = 'Mis Acciones 📋';
+                } else {
+                    bolsaMobileTitle.textContent = 'Mis Acciones 📊';
+                }
             };
             updateMobileTitle();
             bolsaMobileTitle.addEventListener('click', () => {
-                bolsaViewMode = bolsaViewMode === 'cards' ? 'list' : 'cards';
-                localStorage.setItem('bolsaViewMode', bolsaViewMode);
+                toggleBolsaView(); // Use the unified toggle logic
                 updateMobileTitle();
-                render();
             });
         }
 
