@@ -1928,7 +1928,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const conceptLower = (m.concept || m.description || '').toLowerCase();
                 const isInversion = m.category === 'Inversión' || m.type === 'bolsa' || conceptLower.includes('invers') || conceptLower.includes('bolsa');
-                const displayAmount = isInversion ? Math.abs(m.amount) : m.amount;
+                const displayAmount = m.amount;
                 totalAmount += m.amount;
                 const tr = document.createElement('tr');
 
@@ -3028,7 +3028,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="category-tag">${category}</div>
                             ${concept && concept !== category ? `<div class="detail-text">${concept}</div>` : ''}
                         </td>
-                        <td class="amount" style="color: ${amountColor}">${isInversion ? '+' : ''}${fmtEUR(isInversion ? Math.abs(m.amount) : m.amount)}</td>
+                        <td class="amount" style="color: ${amountColor}">${fmtEUR(m.amount)}</td>
                     `;
 
                     tr.onclick = () => {
@@ -6755,7 +6755,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (amountInput) amountInput.value = Math.abs(movement.amount);
+        if (amountInput) amountInput.value = movement.amount; // Use actual sign
         if (conceptInput) conceptInput.value = movement.description;
         if (elements.savingsDateInput && movement.date) {
             elements.savingsDateInput.value = movement.date;
@@ -8820,7 +8820,11 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.savingsInputForm?.addEventListener('submit', (e) => {
             e.preventDefault();
             const action = elements.savingsActionType.value;
-            const amount = parseFloat(elements.movementAmountInput.value);
+            let rawAmount = parseFloat(elements.movementAmountInput.value);
+            const amount = Math.abs(rawAmount);
+
+            // If user explicitly typed a negative number, ensure it's treated as expense
+            const typeOverride = (rawAmount < 0) ? 'expense' : (elements.savingsMovementType ? elements.savingsMovementType.value : 'income');
 
             if (action === 'drawer') {
                 const name = elements.drawerNameInput.value.trim();
@@ -8848,8 +8852,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const drawer = savingsDrawers.find(d => d.id === drawerId);
                 if (drawer) {
                     const concept = elements.movementConceptInput.value.trim() || 'Ajuste manual';
-                    const type = elements.savingsMovementType.value;
-                    const finalAmount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
+                    const type = typeOverride; 
+                    const finalAmount = type === 'expense' ? -amount : amount;
                     let category = elements.savingsCategorySelect.value;
                     const subcategory = elements.savingsSubcategorySelect?.value || '';
                     if (subcategory) category = `${category}:${subcategory}`;
@@ -8990,7 +8994,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const date = elements.savingsDateInput.value || movement.date;
 
-                    const type = elements.savingsMovementType.value;
+                    const type = (parseFloat(elements.movementAmountInput.value) < 0) ? 'expense' : elements.savingsMovementType.value;
                     const finalAmount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
 
                     movement.amount = finalAmount;
@@ -10083,6 +10087,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         toggleModal(true);
     }
+
+    // Sign synchronization for movement amounts
+    elements.movementAmountInput?.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (val.startsWith('-')) {
+            updateSavingsMovementType('expense');
+        } else if (val.startsWith('+')) {
+            updateSavingsMovementType('income');
+        }
+    });
 
     function openManualPriceModal() {
         if (!elements.manualPriceList) return;
