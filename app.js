@@ -236,13 +236,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}`;
     }
 
-    function formatFiscalMonth(isoMonth) {
+    function formatFiscalMonth(isoMonth, includeRange = true) {
         if (!isoMonth || typeof isoMonth !== 'string' || !isoMonth.includes('-')) return isoMonth || '---';
-        const [year, month] = isoMonth.split('-');
-        const date = new Date(parseInt(year), parseInt(month) - 1);
-        if (isNaN(date.getTime())) return isoMonth;
-        const str = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(date);
-        return str.charAt(0).toUpperCase() + str.slice(1);
+        const [year, month] = isoMonth.split('-').map(Number);
+        const date = new Date(year, month - 1, 1);
+        
+        const monthNameStr = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(date);
+        let result = monthNameStr.charAt(0).toUpperCase() + monthNameStr.slice(1);
+
+        if (includeRange && fiscalDay > 1) {
+            // Fiscal Month MM starts on day fiscalDay of month MM-1
+            const start = new Date(year, month - 2, fiscalDay);
+            const end = new Date(year, month - 1, fiscalDay - 1);
+            const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+            result += ` (${fmt(start)} - ${fmt(end)})`;
+        }
+        return result;
     }
 
     // Nomina State
@@ -1786,30 +1795,47 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Filter by Month/Year/All
         let filtered = [];
         if (activityFilterMode === 'month') {
-            filtered = allMovements.filter(m => m.date && m.date.startsWith(activityListMonth));
+            filtered = allMovements.filter(m => m.date && getFiscalMonth(m.date) === activityListMonth);
         } else if (activityFilterMode === 'year') {
             const year = activityListMonth.split('-')[0];
-            filtered = allMovements.filter(m => m.date && m.date.startsWith(year));
+            filtered = allMovements.filter(m => m.date && getFiscalMonth(m.date).startsWith(year));
         } else if (activityFilterMode === 'week') {
-            // "Week" mode: Filter movement from the week containing activityListMonth
+            // Fiscal-aligned 7-day week (Option 2)
             const refDate = activityListMonth.length === 7 ? new Date(activityListMonth + "-01") : new Date(activityListMonth);
             
-            // Standardize to Monday-Sunday week
-            const day = refDate.getDay(); // 0 (Sun) to 6 (Sat)
-            const diff = refDate.getDate() - (day === 0 ? 6 : day - 1); // Monday is start
-            const startOfWeek = new Date(refDate);
-            startOfWeek.setDate(diff);
-            startOfWeek.setHours(0,0,0,0);
+            // Find the fiscal start of the month containing refDate
+            let fiscalStartYear, fiscalStartMonth;
+            const refY = refDate.getFullYear();
+            const refM = refDate.getMonth(); // 0-indexed
             
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            endOfWeek.setHours(23,59,59,999);
+            if (refDate.getDate() >= fiscalDay) {
+                fiscalStartYear = refY;
+                fiscalStartMonth = refM;
+            } else {
+                const prevMonth = new Date(refY, refM - 1, 1);
+                fiscalStartYear = prevMonth.getFullYear();
+                fiscalStartMonth = prevMonth.getMonth();
+            }
+            const fiscalStartTime = new Date(fiscalStartYear, fiscalStartMonth, fiscalDay).getTime();
+            const refTime = refDate.getTime();
+            const daysDiff = Math.floor((refTime - fiscalStartTime) / (24 * 60 * 60 * 1000));
+            const weeksSince = Math.floor(daysDiff / 7);
+            
+            const startOfWeek = new Date(fiscalStartTime + (weeksSince * 7 * 24 * 60 * 60 * 1000));
+            startOfWeek.setHours(0,0,0,0);
+            const endOfWeek = new Date(startOfWeek.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
 
             filtered = allMovements.filter(m => {
                 if (!m.date) return false;
                 const d = new Date(m.date);
                 return d >= startOfWeek && d <= endOfWeek;
             });
+
+            // Update label range based on these calculated dates
+            if (elements.activityMonthLabel) {
+                const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                elements.activityMonthLabel.textContent = `${fmt(startOfWeek)} - ${fmt(endOfWeek)}`;
+            }
         } else {
             // mode === 'all'
             filtered = allMovements;
@@ -1883,16 +1909,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (activityFilterMode === 'month') {
                 elements.activityMonthLabel.textContent = formatFiscalMonth(activityListMonth);
             } else if (activityFilterMode === 'week') {
-                const refDate = activityListMonth.length === 7 ? new Date(activityListMonth + "-01") : new Date(activityListMonth);
-                const day = refDate.getDay();
-                const diff = refDate.getDate() - (day === 0 ? 6 : day - 1);
-                const start = new Date(refDate);
-                start.setDate(diff);
-                const end = new Date(start);
-                end.setDate(start.getDate() + 6);
-                
-                const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-                elements.activityMonthLabel.textContent = `${fmt(start)} - ${fmt(end)}`;
+                // Label updated inside filtering logic for precision with current daysSince calculation
             } else {
                 elements.activityMonthLabel.textContent = 'Historial Completo';
             }
@@ -2799,12 +2816,19 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nextAhorroMonthBtn.style.visibility = 'visible';
         } else if (ahorroFilterMode === 'week') {
             const refDate = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
-            const day = refDate.getDay();
-            const diff = refDate.getDate() - (day === 0 ? 6 : day - 1);
-            const start = new Date(refDate);
-            start.setDate(diff);
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
+            
+            // Fiscal-anchored week (Option 2)
+            let fsY, fsM;
+            const rY = refDate.getFullYear(), rM = refDate.getMonth();
+            if (refDate.getDate() >= fiscalDay) { fsY = rY; fsM = rM; }
+            else { const prev = new Date(rY, rM-1, 1); fsY = prev.getFullYear(); fsM = prev.getMonth(); }
+            
+            const fsTime = new Date(fsY, fsM, fiscalDay).getTime();
+            const daysDiff = Math.floor((refDate.getTime() - fsTime) / (24 * 60 * 60 * 1000));
+            const weeksSince = Math.floor(daysDiff / 7);
+            const start = new Date(fsTime + (weeksSince * 7 * 24 * 60 * 60 * 1000));
+            const end = new Date(start.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
+            
             const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
             elements.ahorroCurrentMonthLabel.textContent = `${fmt(start)} - ${fmt(end)}`;
             elements.prevAhorroMonthBtn.style.visibility = 'visible';
@@ -2860,18 +2884,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         mvmts = mvmts.filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
                     } else if (ahorroFilterMode === 'week') {
                         const ref = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
-                        const day = ref.getDay();
-                        const diff = ref.getDate() - (day === 0 ? 6 : day - 1);
-                        const start = new Date(ref); start.setDate(diff); start.setHours(0,0,0,0);
-                        const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+                        // Re-calc fiscal-anchored start/end for consistency
+                        let fsY, fsM; const rY = ref.getFullYear(), rM = ref.getMonth();
+                        if (ref.getDate() >= fiscalDay) { fsY = rY; fsM = rM; }
+                        else { const p = new Date(rY, rM-1, 1); fsY = p.getFullYear(); fsM = p.getMonth(); }
+                        const fsT = new Date(fsY, fsM, fiscalDay).getTime();
+                        const ws = Math.floor((ref.getTime() - fsT) / (7 * 24 * 60 * 60 * 1000));
+                        const s = new Date(fsT + (ws * 7 * 24 * 60 * 60 * 1000)); s.setHours(0,0,0,0);
+                        const e = new Date(s.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
                         mvmts = mvmts.filter(m => {
                             if (!m.date) return false;
                             const d = new Date(m.date);
-                            return d >= start && d <= end;
+                            return d >= s && d <= e;
                         });
                     } else if (ahorroFilterMode === 'year') {
                         const year = ahorroListMonth.split('-')[0];
-                        mvmts = mvmts.filter(m => m.date && m.date.startsWith(year));
+                        mvmts = mvmts.filter(m => m.date && getFiscalMonth(m.date).startsWith(year));
                     }
                     return mvmts.reduce((s, m) => s + m.amount, 0);
                 };
@@ -2883,14 +2911,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (ahorroFilterMode === 'month') return m.date && getFiscalMonth(m.date) === ahorroListMonth;
                         if (ahorroFilterMode === 'week') {
                             const ref = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
-                            const day = ref.getDay();
-                            const diff = ref.getDate() - (day === 0 ? 6 : day - 1);
-                            const start = new Date(ref); start.setDate(diff); start.setHours(0,0,0,0);
-                            const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+                            let fsY, fsM; const rY = ref.getFullYear(), rM = ref.getMonth();
+                            if (ref.getDate() >= fiscalDay) { fsY = rY; fsM = rM; }
+                            else { const p = new Date(rY, rM-1, 1); fsY = p.getFullYear(); fsM = p.getMonth(); }
+                            const fsT = new Date(fsY, fsM, fiscalDay).getTime();
+                            const ws = Math.floor((ref.getTime() - fsT) / (7 * 24 * 60 * 60 * 1000));
+                            const s = new Date(fsT + (ws * 7 * 24 * 60 * 60 * 1000)); s.setHours(0,0,0,0);
+                            const e = new Date(s.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
                             const d = new Date(m.date);
-                            return d >= start && d <= end;
+                            return d >= s && d <= e;
                         }
-                        if (ahorroFilterMode === 'year') return m.date && m.date.startsWith(ahorroListMonth.split('-')[0]);
+                        if (ahorroFilterMode === 'year') return m.date && getFiscalMonth(m.date).startsWith(ahorroListMonth.split('-')[0]);
                         return true;
                     });
                     if (mvmts.length === 0) return '';
@@ -2940,7 +2971,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 drawerMovements = drawerMovements.filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
             } else if (ahorroFilterMode === 'year') {
                 const year = ahorroListMonth.split('-')[0];
-                drawerMovements = drawerMovements.filter(m => m.date && m.date.startsWith(year));
+                drawerMovements = drawerMovements.filter(m => m.date && getFiscalMonth(m.date).startsWith(year));
             }
 
             if (drawerMovements.length === 0) return; // Don't show drawer if no movements in this view
