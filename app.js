@@ -11087,31 +11087,37 @@ document.addEventListener('DOMContentLoaded', () => {
             wsDash.getCell('B2').font = { bold: true };
 
             let totalAhorroOnly = 0;
-            let currentTotalRow = 3;
+            const savingsAccountRows = [];
             Object.entries(drawerTotals).forEach(([name, amt]) => {
                 if (!name.toLowerCase().includes('bolsa')) {
-                    wsDash.getCell(`A${currentTotalRow}`).value = `  - ${name}`;
-                    wsDash.getCell(`B${currentTotalRow}`).value = Number(amt.toFixed(2));
-                    wsDash.getCell(`B${currentTotalRow}`).numFmt = '#,##0.00"€"';
-                    wsDash.getCell(`B${currentTotalRow}`).font = { italic: true };
+                    savingsAccountRows.push([name, Number(amt.toFixed(2))]);
                     totalAhorroOnly += amt;
-                    currentTotalRow++;
                 }
             });
 
-            wsDash.getCell(`A${currentTotalRow}`).value = 'Total Cuentas Ahorro';
-            wsDash.getCell(`B${currentTotalRow}`).value = totalAhorroOnly;
-            wsDash.getCell(`B${currentTotalRow}`).numFmt = '#,##0.00"€"';
-            wsDash.getCell(`B${currentTotalRow}`).font = { bold: true };
-            currentTotalRow++;
+            // Summary Ahorro Breakdown Table
+            wsDash.addTable({
+                name: 'DashDesgloseCuentas',
+                ref: 'A4',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Cuentas de Ahorro', filterButton: true, totalsRowLabel: 'TOTAL AHORRO' },
+                    { name: 'Saldo', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: savingsAccountRows
+            });
 
-            wsDash.getCell(`A${currentTotalRow}`).value = 'PATRIMONIO TOTAL';
-            wsDash.getCell(`A${currentTotalRow}`).font = { bold: true, color: { argb: 'FFC00000' } };
-            wsDash.getCell(`B${currentTotalRow}`).value = totalBolsa + totalAhorroOnly;
-            wsDash.getCell(`B${currentTotalRow}`).numFmt = '#,##0.00"€"';
-            wsDash.getCell(`B${currentTotalRow}`).font = { bold: true, color: { argb: 'FFC00000' } };
+            const accountTableEndRow = 4 + savingsAccountRows.length + 1; // Header + Data + TotalsRow
 
-            const tableStartRow = currentTotalRow + 2;
+            wsDash.getCell(`A${accountTableEndRow + 1}`).value = 'PATRIMONIO TOTAL';
+            wsDash.getCell(`A${accountTableEndRow + 1}`).font = { bold: true, color: { argb: 'FFC00000' } };
+            wsDash.getCell(`B${accountTableEndRow + 1}`).value = totalBolsa + totalAhorroOnly;
+            wsDash.getCell(`B${accountTableEndRow + 1}`).numFmt = '#,##0.00"€"';
+            wsDash.getCell(`B${accountTableEndRow + 1}`).font = { bold: true, color: { argb: 'FFC00000' } };
+
+            const tableStartRow = accountTableEndRow + 3;
 
             // Summary Bolsa in Dashboard (Shifted dynamic)
             wsDash.addTable({
