@@ -5533,7 +5533,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Set default concept and date
         const conceptInput = document.getElementById('movementConceptInput');
-        if (conceptInput) conceptInput.value = 'Traspaso';
+        if (conceptInput) conceptInput.value = `Traspaso desde: ${sourceDrawer.name}`;
         
         if (elements.savingsDateInput) {
             elements.savingsDateInput.value = new Date().toISOString().split('T')[0];
@@ -5579,6 +5579,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
+
+        // Add listener for target selection to update concept
+        if (transferTargetSelect) {
+            const updateConceptOnTargetChange = () => {
+                if (typeInput.value === 'transfer') {
+                    const targetId = transferTargetSelect.value;
+                    const targetDrawer = savingsDrawers.find(d => d.id == targetId);
+                    if (targetDrawer && conceptInput) {
+                        conceptInput.value = `Traspaso Hasta: ${targetDrawer.name}`;
+                    }
+                }
+            };
+            transferTargetSelect.onchange = updateConceptOnTargetChange;
+            // Trigger once if there's already a selection
+            if (transferTargetSelect.value) updateConceptOnTargetChange();
+        }
     }
 
     function showEditDrawerModal(drawerId) {
