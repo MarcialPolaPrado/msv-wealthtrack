@@ -10949,7 +10949,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function ncExportToExcel() {
-        console.log('--- ncExportToExcel v20260324 (Enhanced ExcelJS) ---');
+        console.log('--- ncExportToExcel (Standard) ---');
         showToast('⏳ Generando hoja de cálculo...', 'info');
 
         try {
@@ -11071,6 +11071,67 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof ExcelJS === 'undefined') throw new Error('Librería ExcelJS no cargada');
             const workbook = new ExcelJS.Workbook();
             
+            // --- Sheet 0: Dashboard (Resumen General) ---
+            const wsDash = workbook.addWorksheet('Resumen General');
+            wsDash.getCell('A1').value = 'RESUMEN DE CARTERA';
+            wsDash.getCell('A1').font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
+            wsDash.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F75B5' } };
+
+            // Summary Bolsa in Dashboard
+            wsDash.addTable({
+                name: 'DashResumenBolsa',
+                ref: 'A3',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Activo Bolsa', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Unidades', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'P. Medio', filterButton: true },
+                    { name: 'Invertido', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: bolsaSummaryRows
+            });
+
+            // Summary Ahorro (Categories) in Dashboard
+            wsDash.addTable({
+                name: 'DashResumenCategorias',
+                ref: 'F3',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Categoría Ahorro', filterButton: true, totalsRowLabel: 'TOTAL' }, 
+                    { name: 'Total', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: Object.entries(categoryTotals).map(([cat, amt]) => [cat, Number(amt.toFixed(2))])
+            });
+
+            // Summary Ahorro (Accounts) in Dashboard
+            wsDash.addTable({
+                name: 'DashResumenCuentas',
+                ref: 'I3',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Cuenta', filterButton: true, totalsRowLabel: 'TOTAL' }, 
+                    { name: 'Total', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: Object.entries(drawerTotals).map(([dr, amt]) => [dr, Number(amt.toFixed(2))])
+            });
+
+            wsDash.columns = [
+                { width: 25 }, { width: 15 }, { width: 15 }, { width: 18 }, // Bolsa
+                { width: 5 }, // Spacer
+                { width: 25 }, { width: 15 }, // Categories
+                { width: 5 }, // Spacer
+                { width: 25 }, { width: 15 } // Accounts
+            ];
+            wsDash.getColumn(4).numFmt = '#,##0.00"€"';
+            wsDash.getColumn(7).numFmt = '#,##0.00"€"';
+            wsDash.getColumn(10).numFmt = '#,##0.00"€"';
+
             // --- Sheet 1: Bolsa ---
             const wsBolsa = workbook.addWorksheet('Bolsa');
             wsBolsa.addTable({
@@ -11097,10 +11158,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalsRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
                 columns: [
-                    { name: 'Nombre', totalsRowLabel: 'TOTAL' },
-                    { name: 'Total Unidades', totalsRowFunction: 'sum' },
-                    { name: 'P. Medio Compra' },
-                    { name: 'Invertido', totalsRowFunction: 'sum' }
+                    { name: 'Nombre', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Total Unidades', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'P. Medio Compra', filterButton: true },
+                    { name: 'Invertido', filterButton: true, totalsRowFunction: 'sum' }
                 ],
                 rows: bolsaSummaryRows
             });
