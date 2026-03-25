@@ -11081,33 +11081,42 @@ document.addEventListener('DOMContentLoaded', () => {
             wsDash.mergeCells('A1:B1');
 
             const totalBolsa = totalCost;
-            let totalAhorroOnly = 0;
-            Object.entries(drawerTotals).forEach(([name, amt]) => {
-                if (!name.toLowerCase().includes('bolsa')) {
-                    totalAhorroOnly += amt;
-                }
-            });
-
             wsDash.getCell('A2').value = 'Total Inversión (Bolsa)';
             wsDash.getCell('B2').value = totalBolsa;
             wsDash.getCell('B2').numFmt = '#,##0.00"€"';
             wsDash.getCell('B2').font = { bold: true };
 
-            wsDash.getCell('A3').value = 'Total Cuentas Ahorro';
-            wsDash.getCell('B3').value = totalAhorroOnly;
-            wsDash.getCell('B3').numFmt = '#,##0.00"€"';
-            wsDash.getCell('B3').font = { bold: true };
+            let totalAhorroOnly = 0;
+            let currentTotalRow = 3;
+            Object.entries(drawerTotals).forEach(([name, amt]) => {
+                if (!name.toLowerCase().includes('bolsa')) {
+                    wsDash.getCell(`A${currentTotalRow}`).value = `  - ${name}`;
+                    wsDash.getCell(`B${currentTotalRow}`).value = Number(amt.toFixed(2));
+                    wsDash.getCell(`B${currentTotalRow}`).numFmt = '#,##0.00"€"';
+                    wsDash.getCell(`B${currentTotalRow}`).font = { italic: true };
+                    totalAhorroOnly += amt;
+                    currentTotalRow++;
+                }
+            });
 
-            wsDash.getCell('A4').value = 'PATRIMONIO TOTAL';
-            wsDash.getCell('A4').font = { bold: true, color: { argb: 'FFC00000' } };
-            wsDash.getCell('B4').value = totalBolsa + totalAhorroOnly;
-            wsDash.getCell('B4').numFmt = '#,##0.00"€"';
-            wsDash.getCell('B4').font = { bold: true, color: { argb: 'FFC00000' } };
+            wsDash.getCell(`A${currentTotalRow}`).value = 'Total Cuentas Ahorro';
+            wsDash.getCell(`B${currentTotalRow}`).value = totalAhorroOnly;
+            wsDash.getCell(`B${currentTotalRow}`).numFmt = '#,##0.00"€"';
+            wsDash.getCell(`B${currentTotalRow}`).font = { bold: true };
+            currentTotalRow++;
 
-            // Summary Bolsa in Dashboard (Shifted down)
+            wsDash.getCell(`A${currentTotalRow}`).value = 'PATRIMONIO TOTAL';
+            wsDash.getCell(`A${currentTotalRow}`).font = { bold: true, color: { argb: 'FFC00000' } };
+            wsDash.getCell(`B${currentTotalRow}`).value = totalBolsa + totalAhorroOnly;
+            wsDash.getCell(`B${currentTotalRow}`).numFmt = '#,##0.00"€"';
+            wsDash.getCell(`B${currentTotalRow}`).font = { bold: true, color: { argb: 'FFC00000' } };
+
+            const tableStartRow = currentTotalRow + 2;
+
+            // Summary Bolsa in Dashboard (Shifted dynamic)
             wsDash.addTable({
                 name: 'DashResumenBolsa',
-                ref: 'A6',
+                ref: `A${tableStartRow}`,
                 headerRow: true,
                 totalsRow: true,
                 style: { theme: 'TableStyleMedium2', showRowStripes: true },
@@ -11120,10 +11129,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: bolsaSummaryRows
             });
 
-            // Summary Ahorro (Categories) in Dashboard (Shifted down)
+            // Summary Ahorro (Categories) in Dashboard (Shifted dynamic)
             wsDash.addTable({
                 name: 'DashResumenCategorias',
-                ref: 'F6',
+                ref: `F${tableStartRow}`,
                 headerRow: true,
                 totalsRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
@@ -11134,10 +11143,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: Object.entries(categoryTotals).map(([cat, amt]) => [cat, Number(amt.toFixed(2))])
             });
 
-            // Summary Ahorro (Accounts) in Dashboard (Shifted down)
+            // Summary Ahorro (Accounts) in Dashboard (Shifted dynamic)
             wsDash.addTable({
                 name: 'DashResumenCuentas',
-                ref: 'I6',
+                ref: `I${tableStartRow}`,
                 headerRow: true,
                 totalsRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
