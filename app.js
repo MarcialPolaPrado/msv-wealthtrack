@@ -11073,14 +11073,41 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // --- Sheet 0: Dashboard (Resumen General) ---
             const wsDash = workbook.addWorksheet('Resumen General');
-            wsDash.getCell('A1').value = 'RESUMEN DE CARTERA';
+            
+            // Header and Main Totals
+            wsDash.getCell('A1').value = 'RESUMEN DE PATRIMONIO';
             wsDash.getCell('A1').font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
             wsDash.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F75B5' } };
+            wsDash.mergeCells('A1:B1');
 
-            // Summary Bolsa in Dashboard
+            const totalBolsa = totalCost;
+            let totalAhorroOnly = 0;
+            Object.entries(drawerTotals).forEach(([name, amt]) => {
+                if (!name.toLowerCase().includes('bolsa')) {
+                    totalAhorroOnly += amt;
+                }
+            });
+
+            wsDash.getCell('A2').value = 'Total Inversión (Bolsa)';
+            wsDash.getCell('B2').value = totalBolsa;
+            wsDash.getCell('B2').numFmt = '#,##0.00"€"';
+            wsDash.getCell('B2').font = { bold: true };
+
+            wsDash.getCell('A3').value = 'Total Cuentas Ahorro';
+            wsDash.getCell('B3').value = totalAhorroOnly;
+            wsDash.getCell('B3').numFmt = '#,##0.00"€"';
+            wsDash.getCell('B3').font = { bold: true };
+
+            wsDash.getCell('A4').value = 'PATRIMONIO TOTAL';
+            wsDash.getCell('A4').font = { bold: true, color: { argb: 'FFC00000' } };
+            wsDash.getCell('B4').value = totalBolsa + totalAhorroOnly;
+            wsDash.getCell('B4').numFmt = '#,##0.00"€"';
+            wsDash.getCell('B4').font = { bold: true, color: { argb: 'FFC00000' } };
+
+            // Summary Bolsa in Dashboard (Shifted down)
             wsDash.addTable({
                 name: 'DashResumenBolsa',
-                ref: 'A3',
+                ref: 'A6',
                 headerRow: true,
                 totalsRow: true,
                 style: { theme: 'TableStyleMedium2', showRowStripes: true },
@@ -11093,10 +11120,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: bolsaSummaryRows
             });
 
-            // Summary Ahorro (Categories) in Dashboard
+            // Summary Ahorro (Categories) in Dashboard (Shifted down)
             wsDash.addTable({
                 name: 'DashResumenCategorias',
-                ref: 'F3',
+                ref: 'F6',
                 headerRow: true,
                 totalsRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
@@ -11107,22 +11134,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: Object.entries(categoryTotals).map(([cat, amt]) => [cat, Number(amt.toFixed(2))])
             });
 
-            // Summary Ahorro (Accounts) in Dashboard
+            // Summary Ahorro (Accounts) in Dashboard (Shifted down)
             wsDash.addTable({
                 name: 'DashResumenCuentas',
-                ref: 'I3',
+                ref: 'I6',
                 headerRow: true,
                 totalsRow: true,
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
                 columns: [
-                    { name: 'Cuenta', filterButton: true, totalsRowLabel: 'TOTAL' }, 
-                    { name: 'Total', filterButton: true, totalsRowFunction: 'sum' }
+                    { name: 'Cuenta de Ahorro', filterButton: true, totalsRowLabel: 'TOTAL' }, 
+                    { name: 'Saldo Actual', filterButton: true, totalsRowFunction: 'sum' }
                 ],
-                rows: Object.entries(drawerTotals).map(([dr, amt]) => [dr, Number(amt.toFixed(2))])
+                rows: Object.entries(drawerTotals)
+                    .filter(([name]) => !name.toLowerCase().includes('bolsa'))
+                    .map(([dr, amt]) => [dr, Number(amt.toFixed(2))])
             });
 
             wsDash.columns = [
-                { width: 25 }, { width: 15 }, { width: 15 }, { width: 18 }, // Bolsa
+                { width: 25 }, { width: 18 }, { width: 15 }, { width: 18 }, // Bolsa
                 { width: 5 }, // Spacer
                 { width: 25 }, { width: 15 }, // Categories
                 { width: 5 }, // Spacer
