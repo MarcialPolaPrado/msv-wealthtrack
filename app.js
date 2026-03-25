@@ -11172,6 +11172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { width: 5 }, // Spacer
                 { width: 25 }, { width: 15 } // Accounts
             ];
+            wsDash.getColumn(2).numFmt = '#,##0.00"€"';
             wsDash.getColumn(4).numFmt = '#,##0.00"€"';
             wsDash.getColumn(7).numFmt = '#,##0.00"€"';
             wsDash.getColumn(10).numFmt = '#,##0.00"€"';
