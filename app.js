@@ -3367,7 +3367,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ── Build period list ───────────────────────────────────────────
         const periods = [];
-        const count = historicoMode === 'month' ? 24 : 6;
+        const count = historicoMode === 'month' ? 12 : 6;
 
         for (let i = 0; i < count; i++) {
             let startMonth = curStartMonth - i;
@@ -3390,8 +3390,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const label = `${monthNames[labelMonth]} ${labelYear}${i === 0 ? ' (hoy)' : ''}`;
                 periods.push({ label, endDate });
             } else {
-                // For annual mode: fiscal year named as the year we are entering
-                const labelYear = startYear + 1;
+                // For annual mode: use the start year as the label year.
+                // The user expects Mar 2026 to be fiscal year 2026.
+                const labelYear = startYear; 
                 if (startMonth === 11) {
                     periods.push({ label: `Año ${labelYear}${i === 0 ? ' (hoy)' : ''}`, endDate });
                 } else if (i === 0) {
@@ -3470,11 +3471,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
         chartContainer.innerHTML = `
-            <svg viewBox="0 0 ${svgW} ${chartH + 30}" style="width:100%; max-height:220px;">
-                ${bars}
-                <line x1="28" y1="8" x2="28" y2="${chartH + 8}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
-                <line x1="28" y1="${chartH + 8}" x2="${svgW}" y2="${chartH + 8}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
-            </svg>
+            <div style="width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom: 5px;">
+                <svg width="${svgW}" height="${chartH + 30}" viewBox="0 0 ${svgW} ${chartH + 30}" style="display:block;">
+                    ${bars}
+                    <line x1="28" y1="8" x2="28" y2="${chartH + 8}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                    <line x1="28" y1="${chartH + 8}" x2="${svgW}" y2="${chartH + 8}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                </svg>
+            </div>
             <div style="display:flex; gap:1rem; font-size:0.75rem; opacity:0.7; margin-top:0.5rem; flex-wrap:wrap;">
                 <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:4px;"></span>Ahorro (acumulado)</span>
                 <span><span style="display:inline-block;width:10px;height:10px;background:rgba(99,102,241,0.6);border-radius:2px;margin-right:4px;"></span>Coste Bolsa</span>
