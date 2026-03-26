@@ -11491,6 +11491,71 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
             wsNomina.getColumn(1).numFmt = 'dd/mm/yyyy';
             wsNomina.getColumn(5).numFmt = '#,##0.00"€"';
+            
+            // --- Sheet 4: Patrimonio Histórico ---
+            const wsHist = workbook.addWorksheet('Patrimonio Histórico');
+            const monthNamesShort = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const histNow = new Date();
+            const histToday = new Date(histNow.getFullYear(), histNow.getMonth(), histNow.getDate());
+            
+            let hStartMonth = histToday.getMonth();
+            let hStartYear = histToday.getFullYear();
+            if (histToday.getDate() < fiscalDay) {
+                hStartMonth--;
+                if (hStartMonth < 0) { hStartMonth = 11; hStartYear--; }
+            }
+
+            const histPeriods = [];
+            for (let i = 0; i < 24; i++) {
+                let sMonth = hStartMonth - i;
+                let sYear = hStartYear;
+                while (sMonth < 0) { sMonth += 12; sYear--; }
+                
+                const fStart = new Date(sYear, sMonth, fiscalDay);
+                const eDate = i === 0 ? histToday : new Date(fStart.getTime() - 86400000);
+                if (eDate > histToday) continue;
+
+                const lMonth = (sMonth + 1) % 12;
+                const lYear = sMonth === 11 ? sYear + 1 : sYear;
+                const label = `${monthNamesShort[lMonth]} ${lYear}`;
+                
+                const stats = calculatePatrimonioAt(eDate);
+                histPeriods.push({ label, ...stats });
+            }
+
+            const histData = histPeriods.filter(d => d.cashTotal !== 0 || d.stockCost !== 0);
+            const histTableRows = histData.map((row, i) => {
+                const prev = histData[i + 1];
+                const delta = prev ? row.total - prev.total : 0;
+                return [
+                    row.label,
+                    Number(row.cashTotal.toFixed(2)),
+                    Number(row.stockCost.toFixed(2)),
+                    Number(row.total.toFixed(2)),
+                    Number(delta.toFixed(2))
+                ];
+            });
+
+            wsHist.addTable({
+                name: 'TablaPatrimonioHist',
+                ref: 'A1',
+                headerRow: true,
+                totalsRow: false,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Período', filterButton: true },
+                    { name: 'Cuentas Ahorro', filterButton: true },
+                    { name: 'Coste Bolsa', filterButton: true },
+                    { name: 'Patrimonio Total', filterButton: true },
+                    { name: 'Δ Período', filterButton: true }
+                ],
+                rows: histTableRows
+            });
+
+            wsHist.columns = [
+                { width: 20 }, { width: 18 }, { width: 18 }, { width: 20 }, { width: 18 }
+            ];
+            [2, 3, 4, 5].forEach(col => wsHist.getColumn(col).numFmt = '#,##0.00"€"');
 
             // 3. Generate and Buffer
             const buffer = await workbook.xlsx.writeBuffer();
