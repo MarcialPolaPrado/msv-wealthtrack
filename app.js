@@ -518,6 +518,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ahorroGlobalCalendarDrawerFilter: document.getElementById('ahorroGlobalCalendarDrawerFilter'),
         ahorroGlobalCalendarTotalBalance: document.getElementById('ahorroGlobalCalendarTotalBalance'),
 
+        // Ahorro Historico Elements
+        ahorroHistoricoSection: document.getElementById('ahorroHistoricoSection'),
+        ahorroHistoricoChart: document.getElementById('ahorroHistoricoChart'),
+        ahorroHistoricoTableBody: document.getElementById('ahorroHistoricoTableBody'),
+        ahorroHistoricoBtn2: document.getElementById('ahorroHistoricoBtn2'),
+        historicoModeMonth: document.getElementById('historicoModeMonth'),
+        historicoModeYear: document.getElementById('historicoModeYear'),
+
         // Nomina Elements
         nominaSection: document.getElementById('nominaSection'),
         nominaGrid: document.getElementById('nominaGrid'),
@@ -1726,6 +1734,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
         if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
         if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.add('hidden');
+        if (elements.ahorroHistoricoSection) elements.ahorroHistoricoSection.classList.add('hidden');
         if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
 
         if (currentView === 'activity') {
@@ -1750,6 +1759,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (currentView === 'ahorroEstado') {
             if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.remove('hidden');
             renderAhorroEstado();
+        } else if (currentView === 'ahorroHistorico') {
+            if (elements.ahorroHistoricoSection) elements.ahorroHistoricoSection.classList.remove('hidden');
+            renderAhorroHistorico();
         }
     }
 
@@ -3280,6 +3292,166 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `).join('')}
                 </div>
+            </div>
+        `;
+    }
+
+    // ── Patrimonio Histórico ─────────────────────────────────────────
+    // State
+    let historicoMode = 'month'; // 'month' | 'year'
+
+    /**
+     * Reconstruct savings cash balance + stock purchase cost as of a given date.
+     * @param {Date} date - the upper bound date (inclusive)
+     * @returns {{ cashTotal: number, stockCost: number, total: number }}
+     */
+    function calculatePatrimonioAt(date) {
+        const ts = date.getTime();
+
+        // Cash: replay all non-bolsa drawer movements up to date
+        let cashTotal = 0;
+        savingsDrawers.forEach(drawer => {
+            if (drawer.id === 'bolsa') return;
+            (drawer.movements || []).forEach(m => {
+                if (!m.date) return;
+                const mDate = new Date(m.date + 'T00:00:00');
+                if (mDate.getTime() <= ts) {
+                    cashTotal += Number(m.amount) || 0;
+                }
+            });
+        });
+
+        // Stock cost: sum qty*price for entries purchased on or before the date
+        let stockCost = 0;
+        stocks.forEach(s => {
+            if (!s.date) return;
+            const sDate = new Date(s.date + 'T00:00:00');
+            if (sDate.getTime() <= ts) {
+                stockCost += (parseFloat(s.qty) || 0) * (parseFloat(s.price) || 0);
+            }
+        });
+
+        return { cashTotal, stockCost, total: cashTotal + stockCost };
+    }
+
+    function renderAhorroHistorico() {
+        const tableBody = elements.ahorroHistoricoTableBody;
+        const chartContainer = elements.ahorroHistoricoChart;
+        if (!tableBody || !chartContainer) return;
+
+        // Update mode button styles
+        if (elements.historicoModeMonth) {
+            elements.historicoModeMonth.style.background = historicoMode === 'month' ? 'var(--primary)' : 'transparent';
+            elements.historicoModeMonth.style.color = historicoMode === 'month' ? 'white' : 'var(--text-muted)';
+        }
+        if (elements.historicoModeYear) {
+            elements.historicoModeYear.style.background = historicoMode === 'year' ? 'var(--primary)' : 'transparent';
+            elements.historicoModeYear.style.color = historicoMode === 'year' ? 'white' : 'var(--text-muted)';
+        }
+
+        // Build list of period end-dates (day before fiscal start)
+        const periods = [];
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        if (historicoMode === 'month') {
+            // 24 past fiscal months, newest first
+            for (let i = 0; i < 24; i++) {
+                // The end of fiscal month i-ago = the day before fiscal start of the current fiscal month minus i periods
+                // Fiscal month N starts on fiscalDay of calendar month M
+                // We walk backwards
+                let refYear = today.getFullYear();
+                let refMonth = today.getMonth(); // 0-indexed
+
+                // Move back i months
+                refMonth -= i;
+                while (refMonth < 0) { refMonth += 12; refYear--; }
+
+                // Fiscal period label: the fiscal month that starts on fiscalDay of (refYear, refMonth)
+                // End date = fiscalDay of (refYear, refMonth) - 1 day = last day of previous fiscal month
+                const fiscalStart = new Date(refYear, refMonth, fiscalDay);
+                const endDate = new Date(fiscalStart.getTime() - 86400000); // -1 day
+
+                if (endDate > today) continue; // skip future periods
+
+                // Label: show the fiscal month starting in refYear/refMonth
+                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                const label = `${monthNames[refMonth]} ${refYear}`;
+                periods.push({ label, endDate });
+            }
+        } else {
+            // 5 past fiscal years (defined as starting on Dec 25 or the fiscalDay of Dec)
+            for (let i = 0; i < 5; i++) {
+                const fiscalStartYear = today.getFullYear() - i;
+                const fiscalStart = new Date(fiscalStartYear - 1, 11, fiscalDay); // Dec fiscalDay of prev year
+                const endDate = new Date(fiscalStart.getTime() - 86400000);
+
+                if (endDate > today) continue;
+
+                const label = `Año ${fiscalStartYear}`;
+                periods.push({ label, endDate });
+            }
+        }
+
+        if (periods.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5">No hay datos históricos disponibles</td></tr>';
+            chartContainer.innerHTML = '';
+            return;
+        }
+
+        // Calculate data for each period
+        const data = periods.map(p => ({ ...p, ...calculatePatrimonioAt(p.endDate) }));
+
+        // Render table
+        tableBody.innerHTML = '';
+        data.forEach((row, i) => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            if (i === 0) tr.style.background = 'rgba(99,102,241,0.08)';
+            tr.innerHTML = `
+                <td style="padding:0.75rem; font-weight:${i === 0 ? '700' : '400'}">${row.label}</td>
+                <td style="padding:0.75rem; text-align:right; color:var(--success)">${fmtEUR(row.cashTotal)}</td>
+                <td style="padding:0.75rem; text-align:right; color:var(--primary)">${fmtEUR(row.stockCost)}</td>
+                <td style="padding:0.75rem; text-align:right; font-weight:${i === 0 ? '700' : '400'}">${fmtEUR(row.total)}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        // Render bar chart
+        const maxVal = Math.max(...data.map(d => d.total), 1);
+        const barWidth = Math.floor(Math.min(48, (280 / data.length)));
+        const chartH = 160;
+        const svgW = data.length * (barWidth + 6) + 40;
+
+        const bars = [...data].reverse().map((d, i) => {
+            const x = 30 + i * (barWidth + 6);
+            const barH = Math.max(2, (d.total / maxVal) * chartH);
+            const y = chartH - barH + 8;
+            const cashH = Math.max(1, (d.cashTotal / maxVal) * chartH);
+            const cashY = chartH - cashH + 8;
+            return `
+                <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="3"
+                      fill="rgba(99,102,241,0.25)" />
+                <rect x="${x}" y="${cashY}" width="${barWidth}" height="${cashH}" rx="3"
+                      fill="#10b981" opacity="0.85">
+                    <title>${d.label}\nAhorro: ${fmtEUR(d.cashTotal)}\nBolsa: ${fmtEUR(d.stockCost)}\nTotal: ${fmtEUR(d.total)}</title>
+                </rect>
+                <text x="${x + barWidth / 2}" y="${chartH + 22}" text-anchor="middle"
+                      fill="rgba(255,255,255,0.5)" font-size="9">
+                    ${d.label.slice(0, historicoMode === 'month' ? 3 : 6)}
+                </text>
+            `;
+        }).join('');
+
+        chartContainer.innerHTML = `
+            <svg viewBox="0 0 ${svgW} ${chartH + 30}" style="width:100%; max-height:220px;">
+                ${bars}
+                <line x1="28" y1="8" x2="28" y2="${chartH + 8}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                <line x1="28" y1="${chartH + 8}" x2="${svgW}" y2="${chartH + 8}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            </svg>
+            <div style="display:flex; gap:1rem; font-size:0.75rem; opacity:0.7; margin-top:0.5rem; flex-wrap:wrap;">
+                <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:4px;"></span>Ahorro (acumulado)</span>
+                <span><span style="display:inline-block;width:10px;height:10px;background:rgba(99,102,241,0.6);border-radius:2px;margin-right:4px;"></span>Coste Bolsa</span>
             </div>
         `;
     }
@@ -5280,7 +5452,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (view === 'bolsa') {
                     iconSpan.textContent = '✨';
                     elements.mobileMenuBtn.title = 'Añadir Inversión';
-                } else if (view === 'ahorro' || view === 'ahorroCalendar' || view === 'ahorroEstado') {
+                } else if (view === 'ahorro' || view === 'ahorroCalendar' || view === 'ahorroEstado' || view === 'ahorroHistorico') {
                     iconSpan.textContent = '💶';
                     elements.mobileMenuBtn.title = 'Nuevo Movimiento';
                 } else if (view === 'nomina' || view === 'analisis') {
@@ -8604,6 +8776,18 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('ahorroBreakdownBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();
             showAhorroBreakdown();
+        });
+        document.getElementById('ahorroHistoricoBtn2')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            switchView('ahorroHistorico');
+        });
+        document.getElementById('historicoModeMonth')?.addEventListener('click', () => {
+            historicoMode = 'month';
+            renderAhorroHistorico();
+        });
+        document.getElementById('historicoModeYear')?.addEventListener('click', () => {
+            historicoMode = 'year';
+            renderAhorroHistorico();
         });
         document.getElementById('addDrawerBtn2')?.addEventListener('click', (e) => {
             e.stopPropagation();

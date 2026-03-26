@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603260622">
+    <link rel="stylesheet" href="styles.css?v=202603260639">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -135,6 +135,7 @@
                             <button id="ahorroEstadoBtn2" class="submenu-item" data-view="ahorroEstado"><span>📈</span> Vista Estado</button>
                             <button id="ahorroCalendarBtn2" class="submenu-item"><span>📅</span> Vista Calendario</button>
                             <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📊</span> Rendimientos (D+I+E)</button>
+                            <button id="ahorroHistoricoBtn2" class="submenu-item"><span>📉</span> Patrimonio Histórico</button>
                             <button id="addAccountBtn2" class="submenu-item"><span>📁</span> Añadir Cuenta</button>
 
                             <button id="addGlobalMovementBtn2" class="submenu-item"><span>💶</span> Nuevo
@@ -608,6 +609,36 @@
                             <tbody id="ahorroEstadoTableBody">
                                 <!-- Data injected by JS -->
                             </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ahorro Historico Section -->
+            <div id="ahorroHistoricoSection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; padding-top:1rem;">
+                        <h2 style="margin:0">📉 Patrimonio Histórico</h2>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <div class="view-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:8px; border:1px solid var(--border-color);">
+                                <button id="historicoModeMonth" class="btn-sm" style="padding:4px 12px; border:none; cursor:pointer; background:var(--primary); color:white; border-radius:6px;">Mensual</button>
+                                <button id="historicoModeYear" class="btn-sm" style="padding:4px 12px; border:none; cursor:pointer; background:transparent; color:var(--text-muted); border-radius:6px;">Anual</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="font-size:0.8rem; opacity:0.55; margin-bottom:1.5rem;">⚠️ El valor de compra de Bolsa refleja únicamente los stocks actualmente registrados. Los stocks eliminados (vendidos) no dejan rastro histórico.</p>
+                    <div id="ahorroHistoricoChart" style="min-height:200px; margin-bottom:2rem;"></div>
+                    <div class="table-container glass-panel" style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="border-bottom:2px solid var(--primary);">
+                                    <th style="padding:0.75rem; text-align:left;">Período</th>
+                                    <th style="padding:0.75rem; text-align:right;">Cuentas Ahorro</th>
+                                    <th style="padding:0.75rem; text-align:right;">Coste Bolsa</th>
+                                    <th style="padding:0.75rem; text-align:right;">Patrimonio Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ahorroHistoricoTableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -1677,10 +1708,10 @@
     <button id="clockMenuBtn" class="hidden"></button>
 
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
-    <script src="storage.js?v=202603260625"></script>
-    <script src="mock_data.js?v=202603260625"></script>
-    <script src="nextcloud.js?v=202603260625"></script>
-    <script src="app.js?v=202603260622"></script>
+    <script src="storage.js?v=202603260640"></script>
+    <script src="mock_data.js?v=202603260640"></script>
+    <script src="nextcloud.js?v=202603260640"></script>
+    <script src="app.js?v=202603260639"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1893,7 +1924,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603260622';
+        const APP_VERSION = '202603260639';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
