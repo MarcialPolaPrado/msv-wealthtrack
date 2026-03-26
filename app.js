@@ -236,6 +236,36 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}`;
     }
 
+    /**
+     * returns {start: Date, end: Date} for the week containing refDateStr,
+     * anchored to the fiscal month starting on fiscalDay.
+     */
+    function getAhorroWeekRange(refDateStr) {
+        const ref = refDateStr.length === 7 ? new Date(refDateStr + "-01") : new Date(refDateStr);
+        let fsY, fsM; 
+        const rY = ref.getFullYear(), rM = ref.getMonth();
+        if (ref.getDate() >= fiscalDay) { 
+            fsY = rY; fsM = rM; 
+        } else { 
+            const p = new Date(rY, rM-1, 1); 
+            fsY = p.getFullYear(); fsM = p.getMonth(); 
+        }
+        const fsT = new Date(fsY, fsM, fiscalDay).getTime();
+        const daysDiff = Math.floor((ref.getTime() - fsT) / (24 * 60 * 60 * 1000));
+        const weeksSince = Math.floor(daysDiff / 7);
+        const s = new Date(fsT + (weeksSince * 7 * 24 * 60 * 60 * 1000)); 
+        s.setHours(0,0,0,0);
+        const e = new Date(s.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
+        return { start: s, end: e };
+    }
+
+    function isDateInAhorroWeek(dateInput, refDateStr) {
+        if (!dateInput) return false;
+        const { start, end } = getAhorroWeekRange(refDateStr);
+        const d = new Date(dateInput);
+        return d >= start && d <= end;
+    }
+
     function formatFiscalMonth(isoMonth, includeRange = true) {
         if (!isoMonth || typeof isoMonth !== 'string' || !isoMonth.includes('-')) return isoMonth || '---';
         const [year, month] = isoMonth.split('-').map(Number);
@@ -2712,6 +2742,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let match = false;
                 if (ahorroFilterMode === 'month') {
                     match = (m.date && getFiscalMonth(mDate) === ahorroListMonth);
+                } else if (ahorroFilterMode === 'week') {
+                    match = isDateInAhorroWeek(m.date, ahorroListMonth);
                 } else if (ahorroFilterMode === 'year') {
                     const year = ahorroListMonth.split('-')[0];
                     match = (m.date && m.date.startsWith(year));
@@ -2741,6 +2773,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 0.8rem; opacity: 0.6; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px;">${ahorroFilterMode === 'month' ? formatFiscalMonth(ahorroListMonth) :
+                ahorroFilterMode === 'week' ? (()=>{
+                    const {start, end} = getAhorroWeekRange(ahorroListMonth);
+                    const f = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                    return `${f(start)} - ${f(end)}`;
+                })() :
                 ahorroFilterMode === 'year' ? ahorroListMonth.split('-')[0] :
                     'Todos'
             }</span>
@@ -2775,9 +2812,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const contributors = {};
                 savingsDrawers.forEach(d => {
                     (d.movements || []).forEach(m => {
-                        let match = false;
-                        const mDate = new Date(m.date);
                         if (ahorroFilterMode === 'month') match = (getFiscalMonth(mDate) === ahorroListMonth);
+                        else if (ahorroFilterMode === 'week') match = isDateInAhorroWeek(m.date, ahorroListMonth);
                         else if (ahorroFilterMode === 'year') match = (m.date && m.date.startsWith(ahorroListMonth.split('-')[0]));
                         else match = true;
 
@@ -2827,22 +2863,9 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.prevAhorroMonthBtn.style.visibility = 'visible';
             elements.nextAhorroMonthBtn.style.visibility = 'visible';
         } else if (ahorroFilterMode === 'week') {
-            const refDate = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
-            
-            // Fiscal-anchored week (Option 2)
-            let fsY, fsM;
-            const rY = refDate.getFullYear(), rM = refDate.getMonth();
-            if (refDate.getDate() >= fiscalDay) { fsY = rY; fsM = rM; }
-            else { const prev = new Date(rY, rM-1, 1); fsY = prev.getFullYear(); fsM = prev.getMonth(); }
-            
-            const fsTime = new Date(fsY, fsM, fiscalDay).getTime();
-            const daysDiff = Math.floor((refDate.getTime() - fsTime) / (24 * 60 * 60 * 1000));
-            const weeksSince = Math.floor(daysDiff / 7);
-            const start = new Date(fsTime + (weeksSince * 7 * 24 * 60 * 60 * 1000));
-            const end = new Date(start.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
-            
-            const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-            elements.ahorroCurrentMonthLabel.textContent = `${fmt(start)} - ${fmt(end)}`;
+            const { start, end } = getAhorroWeekRange(ahorroListMonth);
+            const fmtDay = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+            elements.ahorroCurrentMonthLabel.textContent = `${fmtDay(start)} - ${fmtDay(end)}`;
             elements.prevAhorroMonthBtn.style.visibility = 'visible';
             elements.nextAhorroMonthBtn.style.visibility = 'visible';
         } else if (ahorroFilterMode === 'year') {
@@ -2895,20 +2918,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (ahorroFilterMode === 'month') {
                         mvmts = mvmts.filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
                     } else if (ahorroFilterMode === 'week') {
-                        const ref = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
-                        // Re-calc fiscal-anchored start/end for consistency
-                        let fsY, fsM; const rY = ref.getFullYear(), rM = ref.getMonth();
-                        if (ref.getDate() >= fiscalDay) { fsY = rY; fsM = rM; }
-                        else { const p = new Date(rY, rM-1, 1); fsY = p.getFullYear(); fsM = p.getMonth(); }
-                        const fsT = new Date(fsY, fsM, fiscalDay).getTime();
-                        const ws = Math.floor((ref.getTime() - fsT) / (7 * 24 * 60 * 60 * 1000));
-                        const s = new Date(fsT + (ws * 7 * 24 * 60 * 60 * 1000)); s.setHours(0,0,0,0);
-                        const e = new Date(s.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
-                        mvmts = mvmts.filter(m => {
-                            if (!m.date) return false;
-                            const d = new Date(m.date);
-                            return d >= s && d <= e;
-                        });
+                        mvmts = mvmts.filter(m => isDateInAhorroWeek(m.date, ahorroListMonth));
                     } else if (ahorroFilterMode === 'year') {
                         const year = ahorroListMonth.split('-')[0];
                         mvmts = mvmts.filter(m => m.date && getFiscalMonth(m.date).startsWith(year));
@@ -2921,18 +2931,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const getLeadCategory = (drawer) => {
                     let mvmts = getMvmts(drawer).filter(m => {
                         if (ahorroFilterMode === 'month') return m.date && getFiscalMonth(m.date) === ahorroListMonth;
-                        if (ahorroFilterMode === 'week') {
-                            const ref = ahorroListMonth.length === 7 ? new Date(ahorroListMonth + "-01") : new Date(ahorroListMonth);
-                            let fsY, fsM; const rY = ref.getFullYear(), rM = ref.getMonth();
-                            if (ref.getDate() >= fiscalDay) { fsY = rY; fsM = rM; }
-                            else { const p = new Date(rY, rM-1, 1); fsY = p.getFullYear(); fsM = p.getMonth(); }
-                            const fsT = new Date(fsY, fsM, fiscalDay).getTime();
-                            const ws = Math.floor((ref.getTime() - fsT) / (7 * 24 * 60 * 60 * 1000));
-                            const s = new Date(fsT + (ws * 7 * 24 * 60 * 60 * 1000)); s.setHours(0,0,0,0);
-                            const e = new Date(s.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
-                            const d = new Date(m.date);
-                            return d >= s && d <= e;
-                        }
+                        if (ahorroFilterMode === 'week') return isDateInAhorroWeek(m.date, ahorroListMonth);
                         if (ahorroFilterMode === 'year') return m.date && getFiscalMonth(m.date).startsWith(ahorroListMonth.split('-')[0]);
                         return true;
                     });
@@ -2981,6 +2980,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (ahorroFilterMode === 'month') {
                 drawerMovements = drawerMovements.filter(m => m.date && getFiscalMonth(m.date) === ahorroListMonth);
+            } else if (ahorroFilterMode === 'week') {
+                drawerMovements = drawerMovements.filter(m => isDateInAhorroWeek(m.date, ahorroListMonth));
             } else if (ahorroFilterMode === 'year') {
                 const year = ahorroListMonth.split('-')[0];
                 drawerMovements = drawerMovements.filter(m => m.date && getFiscalMonth(m.date).startsWith(year));
