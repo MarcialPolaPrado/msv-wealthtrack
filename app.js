@@ -11301,38 +11301,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wsDash.getCell('B2').numFmt = '#,##0.00"€"';
             wsDash.getCell('B2').font = { bold: true };
 
-            let totalAhorroOnly = 0;
-            const savingsAccountRows = [];
-            Object.entries(drawerTotals).forEach(([name, amt]) => {
-                if (!name.toLowerCase().includes('bolsa')) {
-                    savingsAccountRows.push([name, Number(amt.toFixed(2))]);
-                    totalAhorroOnly += amt;
-                }
-            });
-
-            // Summary Ahorro Breakdown Table
-            wsDash.addTable({
-                name: 'DashDesgloseCuentas',
-                ref: 'A4',
-                headerRow: true,
-                totalsRow: true,
-                style: { theme: 'TableStyleMedium4', showRowStripes: true },
-                columns: [
-                    { name: 'Cuentas de Ahorro', filterButton: true, totalsRowLabel: 'TOTAL AHORRO' },
-                    { name: 'Saldo', filterButton: true, totalsRowFunction: 'sum' }
-                ],
-                rows: savingsAccountRows
-            });
-
-            const accountTableEndRow = 4 + savingsAccountRows.length + 1; // Header + Data + TotalsRow
-
-            wsDash.getCell(`A${accountTableEndRow + 1}`).value = 'PATRIMONIO TOTAL';
-            wsDash.getCell(`A${accountTableEndRow + 1}`).font = { bold: true, color: { argb: 'FFC00000' } };
-            wsDash.getCell(`B${accountTableEndRow + 1}`).value = totalBolsa + totalAhorroOnly;
-            wsDash.getCell(`B${accountTableEndRow + 1}`).numFmt = '#,##0.00"€"';
-            wsDash.getCell(`B${accountTableEndRow + 1}`).font = { bold: true, color: { argb: 'FFC00000' } };
-
-            const tableStartRow = accountTableEndRow + 3;
+            const tableStartRow = 5;
 
             // Summary Bolsa in Dashboard (Shifted dynamic)
             wsDash.addTable({
