@@ -4,7 +4,7 @@
   "name": "MSV WealthTrack",
   "launcherName": "WealthTrack",
   "display": "standalone",
-  "themeColor": "#0F172A",
+  "themeColor": "#10B981",
   "themeColorDark": "#000000",
   "navigationColor": "#000000",
   "navigationColorDark": "#000000",
@@ -14,14 +14,13 @@
   "enableNotifications": true,
   "startUrl": "/msv-wealthtrack/index.html",
   "iconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/icon-512.png",
-  "maskableIconUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "C:\\Users\\marci\\OneDrive\\MSV\\android_project\\android.keystore",
+    "path": "629400",
     "alias": "android"
   },
-  "appVersionName": "13",
-  "appVersionCode": 13,
+  "appVersionName": "1",
+  "appVersionCode": 1,
   "shortcuts": [
     {
       "name": "Bolsa",
@@ -54,17 +53,13 @@
   "isMetaQuest": false,
   "fullScopeUrl": "https://marcialpolaprado.github.io/msv-wealthtrack/",
   "minSdkVersion": 21,
-  "orientation": "default",
-  "fingerprints": [
-    {
-      "sha256": "23:FE:33:15:B8:49:F1:BC:97:0A:C1:21:B0:A5:10:88:F3:D7:5C:FD:0B:32:18:C4:B7:9F:F7:3F:9B:B8:5E:53"
-    }
-  ],
+  "orientation": "portrait",
+  "fingerprints": [],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
   "protocolHandlers": [],
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "13"
+  "appVersion": "1"
 }

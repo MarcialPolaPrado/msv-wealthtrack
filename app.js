@@ -241,7 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
      * anchored to the fiscal month starting on fiscalDay.
      */
     function getAhorroWeekRange(refDateStr) {
+        if (!refDateStr) return { start: new Date(), end: new Date() };
         const ref = refDateStr.length === 7 ? new Date(refDateStr + "-01") : new Date(refDateStr);
+        if (isNaN(ref.getTime())) return { start: new Date(), end: new Date() };
+        
         let fsY, fsM; 
         const rY = ref.getFullYear(), rM = ref.getMonth();
         if (ref.getDate() >= fiscalDay) { 
@@ -260,9 +263,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function isDateInAhorroWeek(dateInput, refDateStr) {
-        if (!dateInput) return false;
+        if (!dateInput || !refDateStr) return false;
         const { start, end } = getAhorroWeekRange(refDateStr);
         const d = new Date(dateInput);
+        if (isNaN(d.getTime()) || isNaN(start.getTime())) return false;
         return d >= start && d <= end;
     }
 
@@ -270,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isoMonth || typeof isoMonth !== 'string' || !isoMonth.includes('-')) return isoMonth || '---';
         const [year, month] = isoMonth.split('-').map(Number);
         const date = new Date(year, month - 1, 1);
+        if (isNaN(date.getTime())) return isoMonth;
         
         const monthNameStr = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(date);
         let result = monthNameStr.charAt(0).toUpperCase() + monthNameStr.slice(1);
@@ -278,8 +283,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fiscal Month MM starts on day fiscalDay of month MM-1
             const start = new Date(year, month - 2, fiscalDay);
             const end = new Date(year, month - 1, fiscalDay - 1);
-            const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-            result += ` (${fmt(start)} - ${fmt(end)})`;
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                result += ` (${fmt(start)} - ${fmt(end)})`;
+            }
         }
         return result;
     }
@@ -448,14 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         techMA: document.getElementById('techMA'),
         techPatterns: document.getElementById('techPatterns'),
 
-        // Portfolio Candle Elements
-        portfolioCandleCard: document.getElementById('portfolioCandleCard'),
-        portfolioCandleGraphic: document.getElementById('portfolioCandleGraphic'),
-        valOpen: document.getElementById('valOpen'),
-        valClose: document.getElementById('valClose'),
-        valHigh: document.getElementById('valHigh'),
-        valLow: document.getElementById('valLow'),
-        candleDate: document.getElementById('candleDate'),
+        ahorroListMonthItem: document.getElementById('ahorroListMonthItem'),
         connStatusDot: document.getElementById('connStatusDot'),
         marketStatusIcon: document.getElementById('marketStatusIcon'),
         manualRefreshBtn: document.getElementById('manualRefreshBtn'),
@@ -1235,7 +1235,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isFirstUpdateDone = false;
 
     function render() {
-        updateSidebarTogglesUI();
+        try {
+            updateSidebarTogglesUI();
         // Toggle Bolsa Summary Visibility
         if (elements.bolsaSummarySection) {
             elements.bolsaSummarySection.classList.toggle('hidden', !bolsaSummaryVisible);
@@ -1754,7 +1755,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR);
+            // updatePortfolioCandle(totalInvestedEUR, totalCurrentValueEUR); // Removed
 
         // Section Toggling logic
         if (elements.activitySection) elements.activitySection.classList.add('hidden');
@@ -1792,6 +1793,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (currentView === 'ahorroHistorico') {
             if (elements.ahorroHistoricoSection) elements.ahorroHistoricoSection.classList.remove('hidden');
             renderAhorroHistorico();
+        }
+        } catch (err) {
+            console.error("CRITICAL RENDER ERROR:", err, err.stack);
+            // Emergency fallback: unhide requested view anyway if possible
+            const viewMap = {
+                'activity': elements.activitySection,
+                'bolsa': elements.bolsaSection,
+                'ahorro': elements.ahorroSection,
+                'ahorroCalendar': elements.ahorroCalendarSection,
+                'nomina': elements.nominaSection,
+                'analisis': elements.analisisSection,
+                'ahorroEstado': elements.ahorroEstadoSection,
+                'ahorroHistorico': elements.ahorroHistoricoSection
+            };
+            const target = viewMap[currentView];
+            if (target) target.classList.remove('hidden');
+            
+            showToast(`⚠️ Error al visualizar datos: ${err.message}. Revisa la consola o limpia caché.`, "error");
         }
     }
 
@@ -2812,6 +2831,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const contributors = {};
                 savingsDrawers.forEach(d => {
                     (d.movements || []).forEach(m => {
+                        const mDate = new Date(m.date);
                         if (ahorroFilterMode === 'month') match = (getFiscalMonth(mDate) === ahorroListMonth);
                         else if (ahorroFilterMode === 'week') match = isDateInAhorroWeek(m.date, ahorroListMonth);
                         else if (ahorroFilterMode === 'year') match = (m.date && m.date.startsWith(ahorroListMonth.split('-')[0]));
@@ -3489,36 +3509,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!elements.drawersGrid) return;
 
         if (elements.ahorroSummarySection) {
-            elements.ahorroSummarySection.classList.toggle('hidden', !ahorroSummaryVisible);
-
-            const cashTotal = savingsDrawers.filter(d => d.id !== 'bolsa').reduce((s, d) => s + d.balance, 0);
-            const bolsaBalance = savingsDrawers.find(d => d.id === 'bolsa')?.balance || 0;
+            // Keep it hidden as requested by user - redundant totals removed
+            elements.ahorroSummarySection.classList.add('hidden');
+            
+            // Still calculate the total for internal use if needed
             const patrimonyTotal = savingsDrawers.reduce((sum, d) => sum + d.balance, 0);
             currentPatrimonioTotal = patrimonyTotal;
-
-            elements.ahorroSummarySection.innerHTML = `
-                <div class="card summary-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; border-color: rgba(255,255,255,0.1);">
-                    <div class="summary-icon" style="font-size: 1.75rem; background: rgba(255,255,255,0.05); min-width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: 14px;">🏦</div>
-                    <div class="summary-info" style="display: flex; flex-direction: column; gap: 2px;">
-                        <span class="summary-label" style="font-size: 0.7rem; opacity: 0.6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">EFECTIVO</span>
-                        <span class="summary-value" style="font-size: 1.4rem; font-weight: 800; color: white;">${fmtEUR(cashTotal)}</span>
-                    </div>
-                </div>
-                <div class="card summary-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; border-color: rgba(59, 130, 246, 0.3);">
-                    <div class="summary-icon" style="font-size: 1.75rem; background: rgba(59, 130, 246, 0.1); min-width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: 14px;">📈</div>
-                    <div class="summary-info" style="display: flex; flex-direction: column; gap: 2px;">
-                        <span class="summary-label" style="font-size: 0.7rem; opacity: 0.6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">INVERSIONES</span>
-                        <span class="summary-value" style="color: var(--primary); font-size: 1.4rem; font-weight: 800;">${fmtEUR(bolsaBalance)}</span>
-                    </div>
-                </div>
-                <div class="card summary-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; border-color: rgba(16, 185, 129, 0.3);">
-                    <div class="summary-icon" style="font-size: 1.75rem; background: rgba(16, 185, 129, 0.1); min-width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: 14px;">💎</div>
-                    <div class="summary-info" style="display: flex; flex-direction: column; gap: 2px;">
-                        <span class="summary-label" style="font-size: 0.7rem; opacity: 0.6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">PATRIMONIO TOTAL</span>
-                        <span class="summary-value" style="color: var(--success); font-weight: 800; font-size: 1.4rem;">${fmtEUR(patrimonyTotal)}</span>
-                    </div>
-                </div>
-            `;
         }
 
         // Calculate Global Total
@@ -7030,61 +7026,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updatePortfolioCandle(dashInvested = 0, dashClose = 0) {
         if (!elements.portfolioCandleGraphic) return;
 
-        let totalOpen = 0;
-        let totalHigh = 0;
-        let totalLow = 0;
-        let totalClose = 0;
-        let candleDateStr = '';
-        let hasData = false;
-
-        stocks.forEach(stock => {
-            const tickerUpper = stock.ticker.trim().toUpperCase();
-            const mockInfo = window.MOCK_DATA[tickerUpper];
-            if (mockInfo && mockInfo.historical && mockInfo.historical['D']) {
-                const history = mockInfo.historical['D'];
-                if (history.length >= 1) {
-                    const latestBar = history[history.length - 1];
-                    if (!candleDateStr) candleDateStr = latestBar.time;
-                    const fx = mockInfo.currency === 'USD' ? window.FX_RATE : 1;
-
-                    totalOpen += latestBar.open * fx * stock.qty;
-                    totalHigh += latestBar.high * fx * stock.qty;
-                    totalLow += latestBar.low * fx * stock.qty;
-                    totalClose += latestBar.close * fx * stock.qty;
-                    hasData = true;
-                }
-            }
-        });
-
-        // FORCE SYNC: Si estamos en modo simulado/fin de semana, el cierre debe ser EXACTO al del dashboard
-        // para evitar discrepancias por decimales o redondeos entre funciones
-        if (dashClose > 0 && !window.NETWORK_OFFLINE) {
-            totalClose = dashClose;
-        }
-
-        if (!hasData || stocks.length === 0) {
-            elements.portfolioCandleCard.classList.add('hidden');
-            return;
-        }
-
-        elements.portfolioCandleCard.classList.remove('hidden');
-
-        // Numeric values
-        const invested = dashInvested;
-        const current = dashClose;
-        elements.valOpen.textContent = fmtEUR(totalOpen);
-        elements.valClose.textContent = fmtEUR(totalClose);
-        elements.valHigh.textContent = fmtEUR(totalHigh);
-        elements.valLow.textContent = fmtEUR(totalLow);
-        if (elements.candleDate) elements.candleDate.textContent = formatDate(candleDateStr);
-
-        // SVG Candle
-        const isBullish = totalClose >= totalOpen;
-        const color = isBullish ? '#10b981' : '#ef4444'; // Using hex to be safe
-        const height = 100;
-        const width = 60;
-        const padding = 10;
-
         // Scale values for display (relative to H/L)
         const range = totalHigh - totalLow || 1;
         const scale = (val) => height - padding - ((val - totalLow) / range) * (height - 2 * padding);
@@ -8454,8 +8395,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // New Navigation Logic
-        const allNavs = [...elements.wealthNavItems, ...elements.bottomNavItems];
+        const wealthNavsArr = elements.wealthNavItems ? Array.from(elements.wealthNavItems) : [];
+        const bottomNavsArr = elements.bottomNavItems ? Array.from(elements.bottomNavItems) : [];
+        const allNavs = [...wealthNavsArr, ...bottomNavsArr];
+
         allNavs.forEach(nav => {
+            if (!nav) return;
             nav.addEventListener('click', (e) => {
                 const view = nav.dataset.view;
                 const isSidebar = nav.classList.contains('wealth-nav-item');

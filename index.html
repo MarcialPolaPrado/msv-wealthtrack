@@ -13,11 +13,11 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link rel="manifest" href="manifest.json">
-    <title>Premium Stock Portfolio - v202603231407</title>
+    <title>WealthTrack</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603261617">
+    <link rel="stylesheet" href="styles.css?v=202603261948">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -44,6 +44,11 @@
                         autocomplete="current-password">
                 </div>
                 <button type="submit" class="btn-primary full-width">Iniciar Sesión</button>
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <a href="?reset=1" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; opacity: 0.6;">
+                        ⚠️ Si tienes problemas con el menú, pulsa aquí para un <b>Hard Reset</b>
+                    </a>
+                </div>
                 <p id="loginError" class="error-text hidden"
                     style="margin-top: 1rem; color: var(--danger); font-size: 0.9rem; text-align: center;">Credenciales
                     incorrectas</p>
@@ -66,7 +71,7 @@
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
                         <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
-                            id="logoVersion">v202603231407</p>
+                            id="logoVersion">v20260326-DEBUG-RESET</p>
                     </div>
                 </div>
             </div>
@@ -98,7 +103,7 @@
 
             <nav class="sidebar-nav">
                 <div class="nav-group">
-                    <p class="nav-group-title">Portfolio</p>
+                    <p class="nav-group-title">Inversiones</p>
                     <div class="nav-item-container" id="bolsaNavContainer">
                         <div class="nav-item-header">
                             <button class="wealth-nav-item" data-view="bolsa">
@@ -301,48 +306,7 @@
 
                 <!-- Dashboard Section -->
                 <section id="bolsaSummarySection" class="dashboard-grid">
-                    <div class="card summary-card glass-panel">
-                        <div
-                            style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
-                            <span id="connStatusDot" class="status-dot simulated" title="Estado de conexión"></span>
-                            <h3 style="margin: 0;">Total Value <span id="marketStatusIcon"
-                                    style="margin-left:5px; font-size:0.9em;" title="Estado del Mercado">🔒</span></h3>
-                            <button id="manualRefreshBtn" class="btn-icon" title="Actualizar Datos"
-                                style="background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1; margin-left: 8px; transition: transform 0.3s ease;">🔄</button>
-                        </div>
-                        <p class="amount" id="totalValue">€0.00</p>
-                        <span class="trend neutral" id="totalTrend">0%</span>
-                    </div>
-                    <div class="card summary-card glass-panel">
-                        <h3>Total Invested</h3>
-                        <p class="amount" id="totalInvested">€0.00</p>
-                    </div>
-                    <div class="card summary-card glass-panel">
-                        <h3>Total Profit/Loss</h3>
-                        <p class="amount" id="totalPL">€0.00</p>
-                        <div id="fxIndicator" style="font-size:0.75em; color:var(--text-muted); margin-top:0.5rem">FX
-                            Rate:
-                            1 USD = 0.92 EUR</div>
-                        <div id="liveStatus" style="font-size: 0.7em; opacity: 0.6; margin-top: 2px;">Modo: Simulado
-                            (añade
-                            API Key para tiempo real)</div>
-                    </div>
-                    <div class="card summary-card glass-panel" id="portfolioCandleCard">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; width: 100%;">
-                            <h3 style="margin:0">Portfolio 24h</h3>
-                            <span id="candleDate" style="font-size: 0.8rem; color: var(--text-muted);">--/--/----</span>
-                        </div>
-                        <div id="candleContainer" class="candle-container">
-                            <div class="candle-graphics" id="portfolioCandleGraphic"></div>
-                            <div class="candle-values" id="portfolioCandleValues">
-                                <div class="val-row"><span class="label">O:</span> <span id="valOpen">-</span></div>
-                                <div class="val-row"><span class="label">C:</span> <span id="valClose">-</span></div>
-                                <div class="val-row"><span class="label">H:</span> <span id="valHigh">-</span></div>
-                                <div class="val-row"><span class="label">L:</span> <span id="valLow">-</span></div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Portfolio Candle removed by user request -->
                 </section>
 
 
@@ -396,7 +360,7 @@
             </div><!-- End Bolsa Section -->
 
             <!-- Ahorro Section -->
-            <div id="ahorroSection" class="view-section">
+            <div id="ahorroSection" class="view-section hidden">
                 <div class="savings-container" style="margin-top: 1rem;">
                     <div id="ahorroHeaderActions"
                         style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -1712,7 +1676,7 @@
     <script src="storage.js?v=202603260640"></script>
     <script src="mock_data.js?v=202603260640"></script>
     <script src="nextcloud.js?v=202603260640"></script>
-    <script src="app.js?v=202603261617"></script>
+    <script src="app.js?v=202603261948"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1925,7 +1889,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603261617';
+        const APP_VERSION = '202603261948';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -2055,6 +2019,46 @@
         if (pwaResetBtn) pwaResetBtn.addEventListener('click', handleReset);
         const mobileResetBtn = document.getElementById('mobileResetBtn');
         if (mobileResetBtn) mobileResetBtn.addEventListener('click', handleReset);
+
+        // Emergency Reset via URL parameter (to fix "stuck menu" cache issues)
+        if (window.location.search.includes('reset=1')) {
+            console.log('Emergency reset triggered via URL...');
+            
+            var performReset = function() {
+                var promises = [];
+                
+                if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+                    promises.push(navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        var regPromises = [];
+                        for (var i = 0; i < registrations.length; i++) {
+                            regPromises.push(registrations[i].unregister());
+                        }
+                        return Promise.all(regPromises);
+                    }));
+                }
+                
+                if (window.caches && window.caches.keys) {
+                    promises.push(window.caches.keys().then(function(keys) {
+                        var cachePromises = [];
+                        for (var j = 0; j < keys.length; j++) {
+                            cachePromises.push(window.caches.delete(keys[j]));
+                        }
+                        return Promise.all(cachePromises);
+                    }));
+                }
+                
+                Promise.all(promises).then(function() {
+                    console.log('Reset complete, reloading...');
+                    window.location.href = window.location.pathname;
+                }).catch(function(err) {
+                    console.error('Reset error:', err);
+                    alert('Error parcial en el reset. Intenta limpiar la caché manualmente en ajustes del navegador.');
+                    window.location.href = window.location.pathname;
+                });
+            };
+            
+            performReset();
+        }
     </script>
 </body>
 

@@ -26,7 +26,7 @@ def twaManifest = [
     launchUrl: '/msv-wealthtrack/index.html', // The start path for the TWA. Must be relative to the domain.
     name: 'MSV WealthTrack', // The application name.
     launcherName: 'WealthTrack', // The name shown on the Android Launcher.
-    themeColor: '#0F172A', // The color used for the status bar.
+    themeColor: '#10B981', // The color used for the status bar.
     themeColorDark: '#000000', // The color used for the dark status bar.
     navigationColor: '#000000', // The color used for the navigation bar.
     navigationColorDark: '#000000', // The color used for the dark navbar.
@@ -47,7 +47,7 @@ def twaManifest = [
     // 'customtabs' and 'webview'.
     fallbackType: 'customtabs',
     enableSiteSettingsShortcut: 'true',
-    orientation: 'default',
+    orientation: 'portrait',
 ]
 
 android {
@@ -57,8 +57,8 @@ android {
         applicationId "io.github.marcialpolaprado.twa"
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 13
-        versionName "13"
+        versionCode 1
+        versionName "1"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
