@@ -3246,6 +3246,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         function arcPath(cx, cy, r, startDeg, endDeg) {
+            if (endDeg - startDeg >= 359.99) {
+                return `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`;
+            }
             const s = { x: cx + r * Math.cos(toRad(startDeg)), y: cy + r * Math.sin(toRad(startDeg)) };
             const e = { x: cx + r * Math.cos(toRad(endDeg)), y: cy + r * Math.sin(toRad(endDeg)) };
             const large = (endDeg - startDeg) > 180 ? 1 : 0;
@@ -4192,6 +4195,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // SVG arc path helper
         function arcPath(cx, cy, r, startDeg, endDeg) {
+            if (endDeg - startDeg >= 359.99) {
+                return `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`;
+            }
             const s = { x: cx + r * Math.cos(toRad(startDeg)), y: cy + r * Math.sin(toRad(startDeg)) };
             const e = { x: cx + r * Math.cos(toRad(endDeg)), y: cy + r * Math.sin(toRad(endDeg)) };
             const large = (endDeg - startDeg) > 180 ? 1 : 0;
