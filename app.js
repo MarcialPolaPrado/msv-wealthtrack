@@ -3708,11 +3708,11 @@ document.addEventListener('DOMContentLoaded', () => {
         recurringSavingsMovements.forEach((template) => {
             const item = document.createElement('div');
             item.className = 'glass-panel';
-            item.style.padding = '1rem';
+            item.style.padding = '0.6rem 0.8rem';
             item.style.display = 'flex';
             item.style.alignItems = 'center';
-            item.style.gap = '12px';
-            item.style.marginBottom = '0.5rem';
+            item.style.gap = '8px';
+            item.style.marginBottom = '0.4rem';
 
             let typeInfo = '';
             if (template.type === 'movement') {
@@ -3726,12 +3726,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             item.innerHTML = `
                 <input type="checkbox" class="recurring-select-checkbox" data-id="${template.id}" style="width: 18px; height: 18px; cursor: pointer;">
-                <div style="flex: 1;">
-                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:4px;">
-                        ${typeInfo}
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; min-width:0; flex:1;">
+                            ${typeInfo}
+                        </div>
+                        <div style="font-weight:700; color:white; font-size:0.9rem; white-space:nowrap;">${fmtEUR(template.amount)}</div>
                     </div>
-                    <div style="font-size: 0.9rem; opacity: 0.9;">${template.description}</div>
-                    <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 4px;">${fmtEUR(template.amount)} ${template.category ? '• ' + template.category : ''}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top: 2px;">
+                        <div style="font-size: 0.8rem; opacity: 0.8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${template.description}</div>
+                        ${template.category ? `<div style="font-size: 0.7rem; opacity: 0.4; white-space:nowrap;">${template.category}</div>` : ''}
+                    </div>
                 </div>
                 <button class="btn-icon delete-recurring-btn" data-id="${template.id}" title="Eliminar" style="color: var(--danger); opacity: 0.7;">🗑️</button>
             `;
