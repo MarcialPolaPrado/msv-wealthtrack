@@ -17,13 +17,39 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603261948">
+    <link rel="stylesheet" href="styles.css?v=202603262202">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 
 <body>
+    <!-- Welcome Overlay -->
+    <div id="welcomeOverlay" class="welcome-overlay hidden">
+        <div class="welcome-card glass-panel">
+            <div class="welcome-header">
+                <span id="welcomeEmoji" style="font-size: 3rem; display: block; margin-bottom: 1rem;">✨</span>
+                <h1 id="welcomeGreeting" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">¡Bienvenido!</h1>
+                <p id="welcomeSubtext" style="opacity: 0.6; font-size: 0.9rem; margin-bottom: 2rem;">WealthTrack está listo para tus finanzas.</p>
+            </div>
+            
+            <div class="welcome-info-grid" style="display: grid; gap: 1rem; margin-bottom: 2.5rem; width: 100%;">
+                <div class="welcome-info-item glass-panel" style="padding: 1.25rem; text-align: left; border-color: rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.7rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Fecha y Hora</div>
+                    <div id="welcomeDateTime" style="font-size: 1.1rem; font-weight: 600; color: white;">--/--/---- --:--</div>
+                </div>
+                <div id="welcomeNextcloudGroup" class="welcome-info-item glass-panel hidden" style="padding: 1.25rem; text-align: left; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
+                    <div style="font-size: 0.7rem; color: var(--success); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Copia de Seguridad</div>
+                    <div id="welcomeNextcloudTime" style="font-size: 1.1rem; font-weight: 600; color: white;">Sincronizado</div>
+                </div>
+            </div>
+
+            <button id="welcomeEnterBtn" class="btn btn-primary" style="width: 100%; padding: 1.25rem; font-size: 1.1rem; font-weight: 700; border-radius: 18px; box-shadow: 0 10px 20px rgba(var(--primary-rgb), 0.3);">
+                Comenzar
+            </button>
+        </div>
+    </div>
+
     <div id="loginOverlay" class="login-overlay hidden">
         <div class="login-card glass-panel">
             <div class="logo" style="margin-bottom: 2rem; justify-content: center;">
@@ -71,7 +97,7 @@
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
                         <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
-                            id="logoVersion">v20260326-DEBUG-RESET</p>
+                            id="logoVersion">v202603262202</p>
                     </div>
                 </div>
             </div>
@@ -1673,10 +1699,10 @@
     <button id="clockMenuBtn" class="hidden"></button>
 
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
-    <script src="storage.js?v=202603260640"></script>
-    <script src="mock_data.js?v=202603260640"></script>
-    <script src="nextcloud.js?v=202603260640"></script>
-    <script src="app.js?v=202603261948"></script>
+    <script src="storage.js?v=202603262202"></script>
+    <script src="mock_data.js?v=202603262202"></script>
+    <script src="nextcloud.js?v=202603262202"></script>
+    <script src="app.js?v=202603262202"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1889,7 +1915,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603261948';
+        const APP_VERSION = '202603262202';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

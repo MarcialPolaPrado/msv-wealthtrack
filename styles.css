@@ -3538,4 +3538,55 @@ button,
     #ahorroEstadoSection .amount {
         font-size: 1.25rem;
     }
-}
+}
+/* Welcome Overlay */
+.welcome-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: radial-gradient(circle at center, rgba(30, 41, 59, 0.9) 0%, #0f172a 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.welcome-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.05);
+}
+
+.welcome-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 3.5rem 2.5rem;
+    text-align: center;
+    animation: welcomeFadeIn 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@keyframes welcomeFadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#welcomeGreeting {
+    margin: 0;
+    line-height: 1.2;
+}
+
+.welcome-info-item {
+    transition: all 0.3s ease;
+}
+
+.welcome-info-item:hover {
+    transform: translateY(-3px);
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.15);
+}

@@ -456,6 +456,12 @@ document.addEventListener('DOMContentLoaded', () => {
         techPatterns: document.getElementById('techPatterns'),
 
         ahorroListMonthItem: document.getElementById('ahorroListMonthItem'),
+        welcomeOverlay: document.getElementById('welcomeOverlay'),
+        welcomeGreeting: document.getElementById('welcomeGreeting'),
+        welcomeDateTime: document.getElementById('welcomeDateTime'),
+        welcomeNextcloudGroup: document.getElementById('welcomeNextcloudGroup'),
+        welcomeNextcloudTime: document.getElementById('welcomeNextcloudTime'),
+        welcomeEnterBtn: document.getElementById('welcomeEnterBtn'),
         connStatusDot: document.getElementById('connStatusDot'),
         marketStatusIcon: document.getElementById('marketStatusIcon'),
         manualRefreshBtn: document.getElementById('manualRefreshBtn'),
@@ -7813,7 +7819,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload(true);
         }
     }
-    window.panicReset = panicReset;
+    // window.panicReset removed
 
 
     async function migrateInversions() {
@@ -11970,6 +11976,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStorageStatus();
         const initialSync = NextcloudSync.getLocalModified();
         updateSyncTimestampUI(initialSync);
+        showWelcomeScreen(); // New startup greeting
         if (elements.bolsaDataSourceToggleBtn) {
             elements.bolsaDataSourceToggleBtn.addEventListener('click', toggleDataSource);
         }
@@ -12014,6 +12021,55 @@ document.addEventListener('DOMContentLoaded', () => {
         // which handles pulled data from server and enables auto-uploads.
 
         console.log("initApp completed");
+    }
+
+    /**
+     * Shows a premium welcome screen on app startup
+     */
+    function showWelcomeScreen() {
+        if (!elements.welcomeOverlay) return;
+
+        // Calculate greeting
+        const hour = new Date().getHours();
+        let greeting = "¡Buenas noches!";
+        let emoji = "✨";
+        if (hour >= 6 && hour < 12) {
+            greeting = "¡Buenos días!";
+            emoji = "☀️";
+        } else if (hour >= 12 && hour < 20) {
+            greeting = "¡Buenas tardes!";
+            emoji = "🌤️";
+        }
+
+        elements.welcomeGreeting.textContent = greeting;
+        const emojiEl = document.getElementById('welcomeEmoji');
+        if (emojiEl) emojiEl.textContent = emoji;
+
+        // Date and Time
+        const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
+        elements.welcomeDateTime.textContent = new Date().toLocaleString('es-ES', options);
+
+        // Nextcloud Sync Status
+        const ncConfig = NextcloudSync.loadConfig();
+        if (ncConfig) {
+            const lastSync = NextcloudSync.getLocalModified();
+            if (lastSync) {
+                elements.welcomeNextcloudGroup.classList.remove('hidden');
+                elements.welcomeNextcloudTime.textContent = new Date(lastSync).toLocaleString('es-ES', {
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+            }
+        }
+
+        // Show overlay
+        elements.welcomeOverlay.classList.remove('hidden');
+
+        // Close button
+        elements.welcomeEnterBtn.onclick = () => {
+            elements.welcomeOverlay.classList.add('hidden');
+            // Check if login is needed AFTER welcome
+            if (typeof checkLogin === 'function') checkLogin();
+        };
     }
     function setupClockCountdown() {
         const clockMenuBtn = document.getElementById('clockMenuBtn');
