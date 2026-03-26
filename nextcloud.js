@@ -80,13 +80,18 @@ const NextcloudSync = (() => {
     }
 
     async function proxiedFetch(config, targetUrl, options = {}) {
+        const fetchOptions = {
+            cache: 'no-store', // Force bypass browser cache
+            ...options
+        };
+
         if (config.proxy) {
             const proxyUrl = config.proxy;
-            const headers = new Headers(options.headers || {});
+            const headers = new Headers(fetchOptions.headers || {});
             headers.set('X-Target-URL', targetUrl);
-            return fetch(proxyUrl, { ...options, headers });
+            return fetch(proxyUrl, { ...fetchOptions, headers });
         } else {
-            return fetch(targetUrl, options);
+            return fetch(targetUrl, fetchOptions);
         }
     }
 
@@ -161,7 +166,8 @@ const NextcloudSync = (() => {
     }
     // ── Download Data ──────────────────────────────────────
     async function getFileMetadata(config) {
-        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
+        const cb = Date.now();
+        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}?_cb=${cb}`);
         const resp = await proxiedFetch(config, url, {
             method: 'PROPFIND',
             headers: {
@@ -185,7 +191,8 @@ const NextcloudSync = (() => {
 
     // ── Download Data ──────────────────────────────────────
     async function downloadData(config) {
-        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
+        const cb = Date.now();
+        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}?_cb=${cb}`);
         console.log('[NC Sync] Downloading data from:', url);
         const resp = await proxiedFetch(config, url, {
             method: 'GET',
