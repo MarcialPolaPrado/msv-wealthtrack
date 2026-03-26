@@ -3349,62 +3349,87 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.historicoModeYear.style.color = historicoMode === 'year' ? 'white' : 'var(--text-muted)';
         }
 
-        // Build list of period end-dates (day before fiscal start)
-        const periods = [];
+        const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        if (historicoMode === 'month') {
-            // 24 past fiscal months, newest first
-            for (let i = 0; i < 24; i++) {
-                // The end of fiscal month i-ago = the day before fiscal start of the current fiscal month minus i periods
-                // Fiscal month N starts on fiscalDay of calendar month M
-                // We walk backwards
-                let refYear = today.getFullYear();
-                let refMonth = today.getMonth(); // 0-indexed
+        // ── Find current fiscal period start ────────────────────────────
+        // If today >= fiscalDay, the current fiscal period started THIS calendar month.
+        // The fiscal period NAME is the FOLLOWING calendar month (e.g. starts Mar 25 → "Abr").
+        let curStartMonth = today.getMonth(); // 0-indexed calendar month of the fiscal period start
+        let curStartYear  = today.getFullYear();
+        if (today.getDate() < fiscalDay) {
+            // We haven't hit fiscalDay yet → fiscal period started the previous calendar month
+            curStartMonth--;
+            if (curStartMonth < 0) { curStartMonth = 11; curStartYear--; }
+        }
 
-                // Move back i months
-                refMonth -= i;
-                while (refMonth < 0) { refMonth += 12; refYear--; }
+        // ── Build period list ───────────────────────────────────────────
+        const periods = [];
+        const count = historicoMode === 'month' ? 24 : 6;
 
-                // Fiscal period label: the fiscal month that starts on fiscalDay of (refYear, refMonth)
-                // End date = fiscalDay of (refYear, refMonth) - 1 day = last day of previous fiscal month
-                const fiscalStart = new Date(refYear, refMonth, fiscalDay);
-                const endDate = new Date(fiscalStart.getTime() - 86400000); // -1 day
+        for (let i = 0; i < count; i++) {
+            let startMonth = curStartMonth - i;
+            let startYear  = curStartYear;
+            while (startMonth < 0) { startMonth += 12; startYear--; }
 
-                if (endDate > today) continue; // skip future periods
+            // Snapshot date = day before fiscal period starts
+            const fiscalStart = new Date(startYear, startMonth, fiscalDay);
+            const endDate = new Date(fiscalStart.getTime() - 86400000);
 
-                // Label: show the fiscal month starting in refYear/refMonth
-                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                const label = `${monthNames[refMonth]} ${refYear}`;
+            // Skip truly future snapshots (edge case: very early in the month)
+            if (endDate > today) continue;
+
+            if (historicoMode === 'month') {
+                // Label = month AFTER startMonth (that is the fiscal period name)
+                const labelMonth = (startMonth + 1) % 12;
+                const labelYear  = startMonth === 11 ? startYear + 1 : startYear;
+                const label = `${monthNames[labelMonth]} ${labelYear}`;
                 periods.push({ label, endDate });
-            }
-        } else {
-            // 5 past fiscal years (defined as starting on Dec 25 or the fiscalDay of Dec)
-            for (let i = 0; i < 5; i++) {
-                const fiscalStartYear = today.getFullYear() - i;
-                const fiscalStart = new Date(fiscalStartYear - 1, 11, fiscalDay); // Dec fiscalDay of prev year
-                const endDate = new Date(fiscalStart.getTime() - 86400000);
-
-                if (endDate > today) continue;
-
-                const label = `Año ${fiscalStartYear}`;
-                periods.push({ label, endDate });
+            } else {
+                // For annual mode: fiscal year named as the year we are entering
+                // Fiscal year "2026" = started Dec 25 2025, so labelYear = startYear + 1
+                const labelYear = startYear + 1;
+                // Only push once per fiscal year
+                if (startMonth === 11) { // Dec start = new fiscal year
+                    periods.push({ label: `Año ${labelYear}`, endDate });
+                } else if (i === 0) {
+                    // Current year (may have started in a non-Dec month if first iteration)
+                    periods.push({ label: `Año ${labelYear}`, endDate });
+                }
             }
         }
 
-        if (periods.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5">No hay datos históricos disponibles</td></tr>';
+        // Calculate patrimonio for each period
+        let data = periods.map(p => ({ ...p, ...calculatePatrimonioAt(p.endDate) }));
+
+        // Filter out periods with no data at all
+        data = data.filter(d => d.cashTotal !== 0 || d.stockCost !== 0);
+
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; opacity:0.5">No hay datos históricos disponibles</td></tr>';
             chartContainer.innerHTML = '';
             return;
         }
 
-        // Calculate data for each period
-        const data = periods.map(p => ({ ...p, ...calculatePatrimonioAt(p.endDate) }));
+        // ── Render table ────────────────────────────────────────────────
+        // Update header to include Δ column
+        const thead = tableBody.closest('table').querySelector('thead tr');
+        if (thead && thead.children.length < 5) {
+            const thDelta = document.createElement('th');
+            thDelta.style.cssText = 'padding:0.75rem; text-align:right;';
+            thDelta.textContent = 'Δ Período';
+            thead.appendChild(thDelta);
+        }
 
-        // Render table
         tableBody.innerHTML = '';
         data.forEach((row, i) => {
+            const prev = data[i + 1]; // older period (array is newest-first)
+            const delta = prev !== undefined ? row.total - prev.total : null;
+            const deltaColor = delta === null ? '' : delta >= 0 ? 'var(--success)' : 'var(--danger)';
+            const deltaStr = delta === null ? '—'
+                : `${delta >= 0 ? '+' : ''}${fmtEUR(delta)}`;
+
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
             if (i === 0) tr.style.background = 'rgba(99,102,241,0.08)';
@@ -3413,11 +3438,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="padding:0.75rem; text-align:right; color:var(--success)">${fmtEUR(row.cashTotal)}</td>
                 <td style="padding:0.75rem; text-align:right; color:var(--primary)">${fmtEUR(row.stockCost)}</td>
                 <td style="padding:0.75rem; text-align:right; font-weight:${i === 0 ? '700' : '400'}">${fmtEUR(row.total)}</td>
+                <td style="padding:0.75rem; text-align:right; color:${deltaColor}; font-size:0.85rem">${deltaStr}</td>
             `;
             tableBody.appendChild(tr);
         });
 
-        // Render bar chart
+        // ── Render bar chart ────────────────────────────────────────────
         const maxVal = Math.max(...data.map(d => d.total), 1);
         const barWidth = Math.floor(Math.min(48, (280 / data.length)));
         const chartH = 160;
