@@ -3373,29 +3373,28 @@ document.addEventListener('DOMContentLoaded', () => {
             let startYear  = curStartYear;
             while (startMonth < 0) { startMonth += 12; startYear--; }
 
-            // Snapshot date = day before fiscal period starts
+            // For the CURRENT fiscal period, show today's balance so it matches Vista Cuentas.
+            // For past periods, show the balance on the day before the next fiscal period starts
+            // (i.e., the day before THIS fiscal period's START = the end of the previous period).
             const fiscalStart = new Date(startYear, startMonth, fiscalDay);
-            const endDate = new Date(fiscalStart.getTime() - 86400000);
+            const endDate = i === 0 ? today : new Date(fiscalStart.getTime() - 86400000);
 
-            // Skip truly future snapshots (edge case: very early in the month)
+            // Skip truly future snapshots
             if (endDate > today) continue;
 
             if (historicoMode === 'month') {
                 // Label = month AFTER startMonth (that is the fiscal period name)
                 const labelMonth = (startMonth + 1) % 12;
                 const labelYear  = startMonth === 11 ? startYear + 1 : startYear;
-                const label = `${monthNames[labelMonth]} ${labelYear}`;
+                const label = `${monthNames[labelMonth]} ${labelYear}${i === 0 ? ' (hoy)' : ''}`;
                 periods.push({ label, endDate });
             } else {
                 // For annual mode: fiscal year named as the year we are entering
-                // Fiscal year "2026" = started Dec 25 2025, so labelYear = startYear + 1
                 const labelYear = startYear + 1;
-                // Only push once per fiscal year
-                if (startMonth === 11) { // Dec start = new fiscal year
-                    periods.push({ label: `Año ${labelYear}`, endDate });
+                if (startMonth === 11) {
+                    periods.push({ label: `Año ${labelYear}${i === 0 ? ' (hoy)' : ''}`, endDate });
                 } else if (i === 0) {
-                    // Current year (may have started in a non-Dec month if first iteration)
-                    periods.push({ label: `Año ${labelYear}`, endDate });
+                    periods.push({ label: `Año ${labelYear} (hoy)`, endDate });
                 }
             }
         }
