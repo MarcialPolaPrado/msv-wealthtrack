@@ -12051,6 +12051,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function showWelcomeScreen() {
         if (!elements.welcomeOverlay) return;
 
+        // Display current URL / hostname
+        const subtextEl = document.getElementById('welcomeSubtext');
+        if (subtextEl) {
+            subtextEl.innerHTML = `WealthTrack está listo para tus finanzas.<br><span style="font-size: 0.8rem; color: var(--accent); opacity: 0.8; margin-top: 0.5rem; display: inline-block;">📍 Accesible desde: <strong>${window.location.hostname || 'localhost'}</strong></span>`;
+        }
+
         // Calculate greeting
         const hour = new Date().getHours();
         let greeting = "¡Buenas noches!";
