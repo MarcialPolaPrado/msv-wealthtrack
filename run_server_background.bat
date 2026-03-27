@@ -12,11 +12,11 @@ if %errorLevel% equ 0 (
 :: Iniciar el servidor de Python (Prueba 'python' y luego 'py' para maxima compatibilidad)
 where python >nul 2>&1
 if %errorLevel% equ 0 (
-    python -m http.server 8000 >> server_log.txt 2>&1
+    python -m http.server 8000 --bind 0.0.0.0 >> server_log.txt 2>&1
 ) else (
     where py >nul 2>&1
     if %errorLevel% equ 0 (
-        py -m http.server 8000 >> server_log.txt 2>&1
+        py -m http.server 8000 --bind 0.0.0.0 >> server_log.txt 2>&1
     ) else (
         echo [%DATE% %TIME%] ERROR: No se encontro Python ni el lanzador 'py' en el sistema. >> server_log.txt
     )

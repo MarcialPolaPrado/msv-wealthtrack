@@ -1,4 +1,5 @@
 @echo off
+cd /d "c:\Users\marci\OneDrive\MSV"
 echo ==========================================
 echo   MSV - SERVIDOR LOCAL
 echo ==========================================
@@ -13,6 +14,6 @@ echo.
 start http://localhost:8000
 
 :: Iniciar el servidor de Python
-python -m http.server 8000
+python -m http.server 8000 --bind 0.0.0.0
 
 pause
