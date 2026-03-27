@@ -8400,6 +8400,17 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.mobilePrivacyToggleBtn.addEventListener('click', togglePrivacy);
         }
 
+        /**
+         * Collapses all other sidebar nav containers except the one provided
+         */
+        function collapseOtherSidebarGroups(exceptContainer) {
+            document.querySelectorAll('.nav-item-container').forEach(container => {
+                if (container !== exceptContainer) {
+                    container.classList.remove('open');
+                }
+            });
+        }
+
         // New Navigation Logic
         const wealthNavsArr = elements.wealthNavItems ? Array.from(elements.wealthNavItems) : [];
         const bottomNavsArr = elements.bottomNavItems ? Array.from(elements.bottomNavItems) : [];
@@ -8414,6 +8425,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!view) {
                     if (isSidebar && container) {
+                        const opening = !container.classList.contains('open');
+                        if (opening) collapseOtherSidebarGroups(container);
                         container.classList.toggle('open');
                     }
                     return;
@@ -8428,6 +8441,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (view === 'activity') toggleActivityView();
 
                     if (isSidebar && container) {
+                        const opening = !container.classList.contains('open');
+                        if (opening) collapseOtherSidebarGroups(container);
                         container.classList.toggle('open');
                     }
                     closeMobileSidebar();
@@ -8439,6 +8454,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     activityCellFilter = { column: null, value: null };
                     activitySearchQuery = '';
                     if (elements.activitySearchInput) elements.activitySearchInput.value = '';
+                }
+                // Accordion: collapse others, open this one
+                if (isSidebar && container) {
+                    collapseOtherSidebarGroups(container);
+                    container.classList.add('open');
                 }
                 switchView(view);
                 closeMobileSidebar();
@@ -8825,6 +8845,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 const container = chevron.closest('.nav-item-container');
                 if (container) {
+                    const opening = !container.classList.contains('open');
+                    if (opening) collapseOtherSidebarGroups(container);
                     container.classList.toggle('open');
 
                     // Also trigger navigation for that item
