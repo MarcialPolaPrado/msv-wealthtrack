@@ -8401,6 +8401,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         /**
+         * Closes the mobile sidebar if it's open
+         */
+        function closeMobileSidebar() {
+            elements.wealthSidebar?.classList.remove('mobile-open');
+            elements.sidebarOverlay?.classList.remove('visible');
+        }
+
+        /**
          * Collapses all other sidebar nav containers except the one provided
          */
         function collapseOtherSidebarGroups(exceptContainer) {
