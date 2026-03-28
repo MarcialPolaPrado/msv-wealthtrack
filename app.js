@@ -8143,10 +8143,10 @@ document.addEventListener('DOMContentLoaded', () => {
         breakdownContext = 'ahorro';
         const now = new Date();
         if (elements.breakdownMonthInput) {
-            elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
+            elements.breakdownMonthInput.value = getFiscalMonth(now);
         }
         if (elements.breakdownYearInput) {
-            elements.breakdownYearInput.value = now.getFullYear();
+            elements.breakdownYearInput.value = getFiscalMonth(now).split('-')[0];
         }
         elements.breakdownDetailContainer?.classList.add('hidden');
         currentActiveBreakdownCategory = null;
@@ -8222,15 +8222,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filteredDrawers.forEach(drawer => {
             (drawer.movements || []).forEach(mov => {
-                const movDate = new Date(mov.date);
-                const movYear = movDate.getFullYear();
-                const movMonthStr = movDate.toISOString().slice(0, 7);
+                const movFiscalMonth = getFiscalMonth(mov.date);
+                const movFiscalYear = movFiscalMonth.split('-')[0];
 
                 let match = false;
                 if (filterType === 'month') {
-                    match = movMonthStr === monthVal;
+                    match = movFiscalMonth === monthVal;
                 } else {
-                    match = movYear.toString() === yearVal.toString();
+                    match = movFiscalYear === yearVal.toString();
                 }
 
                 if (match) {
@@ -10094,10 +10093,10 @@ document.addEventListener('DOMContentLoaded', () => {
             breakdownContext = 'bolsa';
             const now = new Date();
             if (elements.breakdownMonthInput) {
-                elements.breakdownMonthInput.value = now.toISOString().slice(0, 7);
+                elements.breakdownMonthInput.value = getFiscalMonth(now);
             }
             if (elements.breakdownYearInput) {
-                elements.breakdownYearInput.value = now.getFullYear();
+                elements.breakdownYearInput.value = getFiscalMonth(now).split('-')[0];
             }
             elements.breakdownDetailContainer?.classList.add('hidden');
             currentActiveBreakdownCategory = null;
