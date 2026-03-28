@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202603271731">
+    <link rel="stylesheet" href="styles.css?v=202603280734">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -125,7 +125,7 @@
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
                         <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
-                            id="logoVersion">v202603271731</p>
+                            id="logoVersion">v202603280734</p>
                     </div>
                 </div>
             </div>
@@ -600,7 +600,7 @@
                     <!-- Summary cards removed as requested by user -->
 
                     <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                             <h3 id="ahorroEstadoChartHeader" style="margin:0; cursor:pointer; display:flex; align-items:center; gap:8px;" title="Mostrar/Ocultar Gráfico">
                                 <span>Distribución por Cuenta</span>
                                 <span id="ahorroEstadoChartToggleIcon" style="font-size:0.8rem; opacity:0.6;">▼</span>
@@ -609,6 +609,9 @@
                                 <button id="ahorroEstadoShowIncome" class="btn-sm" style="padding: 4px 12px; border: none; cursor: pointer; background: var(--primary); color: white; border-radius: 6px;">Ingresos</button>
                                 <button id="ahorroEstadoShowExpenses" class="btn-sm" style="padding: 4px 12px; border: none; cursor: pointer; background: transparent; color: var(--text-muted); border-radius: 6px;">Gastos</button>
                             </div>
+                        </div>
+                        <div style="text-align: right; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                            Diferencia: <span id="ahorroEstadoDifference" style="font-weight: bold;"></span>
                         </div>
                         <div id="ahorroEstadoChartContent">
                             <div id="ahorroEstadoPieChart" style="width: 100%; min-height: 250px;"></div>
@@ -1727,10 +1730,10 @@
     <button id="clockMenuBtn" class="hidden"></button>
 
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
-    <script src="storage.js?v=202603271731"></script>
-    <script src="mock_data.js?v=202603271731"></script>
-    <script src="nextcloud.js?v=202603271731"></script>
-    <script src="app.js?v=202603271731"></script>
+    <script src="storage.js?v=202603280734"></script>
+    <script src="mock_data.js?v=202603280734"></script>
+    <script src="nextcloud.js?v=202603280734"></script>
+    <script src="app.js?v=202603280734"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1943,7 +1946,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202603271731';
+        const APP_VERSION = '202603280734';
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

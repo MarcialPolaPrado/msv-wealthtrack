@@ -3171,6 +3171,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Render the difference between income and expenses
+        const diffEl = document.getElementById('ahorroEstadoDifference');
+        if (diffEl) {
+            const difference = totalIncome - totalExpense;
+            diffEl.textContent = fmtEUR(difference);
+            diffEl.style.color = difference >= 0 ? 'var(--success)' : 'var(--danger)';
+        }
+
         // Summary cards removed by user request
 
 
