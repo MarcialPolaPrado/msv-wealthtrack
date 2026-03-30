@@ -1,12 +1,12 @@
-const CACHE_NAME = 'msv-wealthtrack-v202603301511';
+const CACHE_NAME = 'msv-wealthtrack-v202603301516';
 const ASSETS = [
     './',
     './index.html',
-    './styles.css?v=202603301511',
-    './app.js?v=202603301511',
-    './storage.js?v=202603301511',
-    './mock_data.js?v=202603301511',
-    './nextcloud.js?v=202603301511',
+    './styles.css?v=202603301516',
+    './app.js?v=202603301516',
+    './storage.js?v=202603301516',
+    './mock_data.js?v=202603301516',
+    './nextcloud.js?v=202603301516',
     './manifest.json',
     './icon-192.png',
     './icon-512.png',

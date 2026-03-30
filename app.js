@@ -11197,13 +11197,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 bolsaAgg[name].totalCost += (s.qty * (parseFloat(s.price) || 0));
             });
 
+            const maxBolsaInv = Math.max(...Object.values(bolsaAgg).map(d => d.totalCost), 1);
             const bolsaSummaryRows = Object.entries(bolsaAgg).map(([name, data]) => {
                 const avgPrice = data.qty > 0 ? data.totalCost / data.qty : 0;
+                
+                const segments = 15;
+                const filled = Math.round((data.totalCost / maxBolsaInv) * segments);
+                const visual = '█'.repeat(filled) + '░'.repeat(segments - filled);
+                
                 return [
                     name,
                     data.qty,
                     Number(avgPrice.toFixed(2)),
-                    Number(data.totalCost.toFixed(2))
+                    Number(data.totalCost.toFixed(2)),
+                    visual
                 ];
             });
 
@@ -11311,7 +11318,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     { name: 'Activo Bolsa', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Unidades', filterButton: true, totalsRowFunction: 'sum' },
                     { name: 'P. Medio', filterButton: true },
-                    { name: 'Invertido', filterButton: true, totalsRowFunction: 'sum' }
+                    { name: 'Invertido', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Visual', filterButton: false }
                 ],
                 rows: bolsaSummaryRows
             });
@@ -11347,12 +11355,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             wsDash.columns = [
-                { width: 25 }, { width: 18 }, { width: 15 }, { width: 18 }, // Bolsa
+                { width: 25 }, { width: 15 }, { width: 15 }, { width: 18 }, { width: 20 }, // Bolsa + Visual
                 { width: 5 }, // Spacer
                 { width: 25 }, { width: 15 }, // Categories
                 { width: 5 }, // Spacer
                 { width: 25 }, { width: 15 } // Accounts
             ];
+            wsDash.getColumn(5).font = { name: 'Consolas', size: 10 };
+            wsDash.getColumn(5).alignment = { horizontal: 'left' };
             wsDash.getColumn(2).numFmt = '#,##0.00"€"';
             wsDash.getColumn(4).numFmt = '#,##0.00"€"';
             wsDash.getColumn(7).numFmt = '#,##0.00"€"';
@@ -11387,7 +11397,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     { name: 'Nombre', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Total Unidades', filterButton: true, totalsRowFunction: 'sum' },
                     { name: 'P. Medio Compra', filterButton: true },
-                    { name: 'Invertido', filterButton: true, totalsRowFunction: 'sum' }
+                    { name: 'Invertido', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Visual', filterButton: false }
                 ],
                 rows: bolsaSummaryRows
             });
@@ -11395,8 +11406,10 @@ document.addEventListener('DOMContentLoaded', () => {
             wsBolsa.columns = [
                 { width: 15 }, { width: 30 }, { width: 12 }, { width: 18 }, { width: 18 }, { width: 18 },
                 { width: 5 }, { width: 5 }, // Spacers
-                { width: 25 }, { width: 18 }, { width: 18 }, { width: 18 } // Summary
+                { width: 25 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 20 } // Summary + Visual
             ];
+            wsBolsa.getColumn(13).font = { name: 'Consolas', size: 10 };
+            wsBolsa.getColumn(13).alignment = { horizontal: 'left' };
 
             wsBolsa.getColumn(4).numFmt = '#,##0.00"€"';
             wsBolsa.getColumn(5).numFmt = '#,##0.00"€"';
