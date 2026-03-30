@@ -11532,6 +11532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ];
             });
 
+            const maxTotal = Math.max(...histData.map(d => d.total), 1);
             wsHist.addTable({
                 name: 'TablaPatrimonioHist',
                 ref: 'A1',
@@ -11543,15 +11544,48 @@ document.addEventListener('DOMContentLoaded', () => {
                     { name: 'Cuentas Ahorro', filterButton: true },
                     { name: 'Coste Bolsa', filterButton: true },
                     { name: 'Patrimonio Total', filterButton: true },
-                    { name: 'Δ Período', filterButton: true }
+                    { name: 'Δ Período', filterButton: true },
+                    { name: 'Tendencia', filterButton: false }
                 ],
-                rows: histTableRows
+                rows: histData.map((row, i) => {
+                    const prev = histData[i + 1];
+                    const delta = prev ? row.total - prev.total : 0;
+                    return [
+                        row.label,
+                        Number(row.cashTotal.toFixed(2)),
+                        Number(row.stockCost.toFixed(2)),
+                        Number(row.total.toFixed(2)),
+                        Number(delta.toFixed(2)),
+                        Number(row.total.toFixed(2))
+                    ];
+                })
+            });
+
+            // Add Data Bar conditional formatting for the 'Tendencia' column
+            wsHist.addConditionalFormatting({
+                ref: `F2:F${histData.length + 1}`,
+                rules: [
+                    {
+                        type: 'dataBar',
+                        color: { argb: 'FF6366F1' },
+                        cfvo: [
+                            { type: 'min', value: 0 },
+                            { type: 'max', value: maxTotal }
+                        ],
+                        showValue: false
+                    }
+                ]
             });
 
             wsHist.columns = [
-                { width: 20 }, { width: 18 }, { width: 18 }, { width: 20 }, { width: 18 }
+                { width: 20 }, // Período
+                { width: 18 }, // Ahorro
+                { width: 18 }, // Bolsa
+                { width: 20 }, // Total
+                { width: 18 }, // Delta
+                { width: 25 }  // Tendencia
             ];
-            [2, 3, 4, 5].forEach(col => wsHist.getColumn(col).numFmt = '#,##0.00"€"');
+            [2, 3, 4, 5, 6].forEach(col => wsHist.getColumn(col).numFmt = '#,##0.00"€"');
 
             // 3. Generate and Buffer
             const buffer = await workbook.xlsx.writeBuffer();
