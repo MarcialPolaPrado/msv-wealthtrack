@@ -11532,7 +11532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ];
             });
 
-            const maxTotal = Math.max(...histData.map(d => d.total), 1);
+            const maxT = Math.max(...histData.map(d => d.total), 1);
             wsHist.addTable({
                 name: 'TablaPatrimonioHist',
                 ref: 'A1',
@@ -11541,51 +11541,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 style: { theme: 'TableStyleMedium2', showRowStripes: true },
                 columns: [
                     { name: 'Período', filterButton: true },
-                    { name: 'Cuentas Ahorro', filterButton: true },
-                    { name: 'Coste Bolsa', filterButton: true },
-                    { name: 'Patrimonio Total', filterButton: true },
+                    { name: 'Ahorro', filterButton: true },
+                    { name: 'Bolsa', filterButton: true },
+                    { name: 'Total', filterButton: true },
                     { name: 'Δ Período', filterButton: true },
-                    { name: 'Tendencia', filterButton: false }
+                    { name: 'Visual', filterButton: false } // Symbol-based fallback
                 ],
                 rows: histData.map((row, i) => {
                     const prev = histData[i + 1];
                     const delta = prev ? row.total - prev.total : 0;
+                    
+                    // Simple symbol bar: █ for Bolsa, ▒ for Ahorro
+                    const segments = 25;
+                    const bolsaBars = Math.round((row.stockCost / maxT) * segments);
+                    const ahorroBars = Math.round((row.cashTotal / maxT) * segments);
+                    const visual = '█'.repeat(bolsaBars) + '▒'.repeat(ahorroBars);
+                    
                     return [
                         row.label,
                         Number(row.cashTotal.toFixed(2)),
                         Number(row.stockCost.toFixed(2)),
                         Number(row.total.toFixed(2)),
                         Number(delta.toFixed(2)),
-                        Number(row.total.toFixed(2))
+                        visual
                     ];
                 })
             });
 
-            // Add Data Bar conditional formatting for the 'Tendencia' column
+            // Set column widths and formatting
+            wsHist.columns = [
+                { width: 15 }, // Período
+                { width: 18 }, // Ahorro
+                { width: 18 }, // Bolsa
+                { width: 18 }, // Total
+                { width: 15 }, // Delta
+                { width: 35 }  // Visual Chart
+            ];
+            [2, 3, 4, 5].forEach(col => wsHist.getColumn(col).numFmt = '#,##0.00"€"');
+            wsHist.getColumn(6).font = { name: 'Consolas', size: 10 }; // Fixed width font for better visual
+
+            // DataBar conditional formatting for 'Total' column
             wsHist.addConditionalFormatting({
-                ref: `F2:F${histData.length + 1}`,
+                ref: `D2:D${histData.length + 1}`,
                 rules: [
                     {
                         type: 'dataBar',
-                        color: { argb: 'FF6366F1' },
-                        cfvo: [
-                            { type: 'min', value: 0 },
-                            { type: 'max', value: maxTotal }
-                        ],
-                        showValue: false
+                        color: { argb: 'FF3B82F6' },
+                        cfvo: [{ type: 'min', value: 0 }, { type: 'max', value: maxT }],
+                        showValue: true
                     }
                 ]
             });
 
-            wsHist.columns = [
-                { width: 20 }, // Período
-                { width: 18 }, // Ahorro
-                { width: 18 }, // Bolsa
-                { width: 20 }, // Total
-                { width: 18 }, // Delta
-                { width: 25 }  // Tendencia
-            ];
-            [2, 3, 4, 5, 6].forEach(col => wsHist.getColumn(col).numFmt = '#,##0.00"€"');
+            // Background coloring (manual bar look) for columns B, C, D
+            // Note: Since ExcelJS 4.4.0 might have limited dataBar support in some exports,
+            // the 'Visual' column (6) with symbols is the most robust way.
 
             // 3. Generate and Buffer
             const buffer = await workbook.xlsx.writeBuffer();
