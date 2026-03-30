@@ -11436,7 +11436,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: catRows
             });
 
-            const drRows = Object.entries(drawerTotals).map(([dr, amt]) => [dr, Number(amt.toFixed(2))]);
+            const maxDr = Math.max(...Object.values(drawerTotals), 1);
+            const drRows = Object.entries(drawerTotals).map(([dr, amt]) => {
+                const segments = 15;
+                const filled = Math.round((Math.max(0, amt) / maxDr) * segments);
+                const visual = '█'.repeat(filled) + '░'.repeat(segments - filled);
+                return [dr, Number(amt.toFixed(2)), visual];
+            });
+            
             wsAhorro.addTable({
                 name: 'ResumenCajones',
                 ref: 'N1',
@@ -11445,7 +11452,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 style: { theme: 'TableStyleMedium4', showRowStripes: true },
                 columns: [
                     { name: 'Cuenta', filterButton: true, totalsRowLabel: 'TOTAL' }, 
-                    { name: 'Total', filterButton: true, totalsRowFunction: 'sum' }
+                    { name: 'Total', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Visual', filterButton: false }
                 ],
                 rows: drRows
             });
@@ -11455,13 +11463,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 { width: 5 }, { width: 5 }, { width: 5 }, { width: 5 }, { width: 5 }, // Spacers
                 { width: 25 }, { width: 15 }, // Categories
                 { width: 5 }, // Spacer
-                { width: 25 }, { width: 15 } // Drawers
+                { width: 25 }, { width: 15 }, { width: 20 } // Drawers + Visual
             ];
 
             wsAhorro.getColumn(1).numFmt = 'dd/mm/yyyy';
+            wsAhorro.getColumn(1).alignment = { horizontal: 'left' };
             wsAhorro.getColumn(4).numFmt = '#,##0.00"€"';
             wsAhorro.getColumn(12).numFmt = '#,##0.00"€"';
             wsAhorro.getColumn(15).numFmt = '#,##0.00"€"';
+            wsAhorro.getColumn(16).font = { name: 'Consolas', size: 10 };
+            wsAhorro.getColumn(16).alignment = { horizontal: 'left' };
 
             // --- Sheet 3: Nómina ---
             const wsNomina = workbook.addWorksheet('Nómina');
