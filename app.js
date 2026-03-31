@@ -228,12 +228,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getFiscalMonth(dateInput = new Date()) {
         const d = new Date(dateInput);
+        let year = d.getFullYear();
+        let month = d.getMonth(); // 0-indexed
+
         if (d.getDate() >= fiscalDay) {
-            d.setMonth(d.getMonth() + 1);
+            month++;
+            if (month > 11) {
+                month = 0;
+                year++;
+            }
         }
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        return `${year}-${month}`;
+        return `${year}-${String(month + 1).padStart(2, '0')}`;
     }
 
     /**
@@ -7948,7 +7953,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadDemoData() {
         const now = new Date();
-        const past = new Date();
+        const past = new Date(now);
+        past.setDate(1); // avoid rollover
         past.setMonth(now.getMonth() - 1);
         const pastStr = past.toISOString().split('T')[0];
         const currentStr = now.toISOString().split('T')[0];
@@ -8489,12 +8495,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Global Ahorro Calendar Listeners
         elements.ahorroGlobalCalendarMonthUp?.addEventListener('click', () => {
+            globalAhorroCalendarViewDate.setDate(1);
             globalAhorroCalendarViewDate.setMonth(globalAhorroCalendarViewDate.getMonth() + 1);
             renderGlobalAhorroCalendar();
         });
         elements.ahorroGlobalCalendarMonthDown?.addEventListener('click', () => {
+            globalAhorroCalendarViewDate.setDate(1);
             globalAhorroCalendarViewDate.setMonth(globalAhorroCalendarViewDate.getMonth() - 1);
             renderGlobalAhorroCalendar();
         });
@@ -10127,11 +10134,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         elements.prevBolsaCalendarMonth?.addEventListener('click', () => {
+            bolsaCalendarViewDate.setDate(1);
             bolsaCalendarViewDate.setMonth(bolsaCalendarViewDate.getMonth() - 1);
             renderBolsaCalendar();
         });
 
         elements.nextBolsaCalendarMonth?.addEventListener('click', () => {
+            bolsaCalendarViewDate.setDate(1);
             bolsaCalendarViewDate.setMonth(bolsaCalendarViewDate.getMonth() + 1);
             renderBolsaCalendar();
         });
@@ -12549,12 +12558,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (elements.prevCalendarMonth) {
         elements.prevCalendarMonth.addEventListener('click', () => {
+            calendarViewDate.setDate(1);
             calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
             renderCalendar();
         });
     }
     if (elements.nextCalendarMonth) {
         elements.nextCalendarMonth.addEventListener('click', () => {
+            calendarViewDate.setDate(1);
             calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
             renderCalendar();
         });
