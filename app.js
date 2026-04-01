@@ -11320,8 +11320,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 Number(amt.toFixed(2)),
                                 dName
                             ]);
-                            const d = m.date ? new Date(m.date) : new Date();
-                            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                            const monthKey = getFiscalMonth(m.date || new Date());
                             if (!gastosByMonth[monthKey]) gastosByMonth[monthKey] = 0;
                             gastosByMonth[monthKey] += amt;
                         }
