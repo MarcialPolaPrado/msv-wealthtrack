@@ -11276,6 +11276,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const divAgg = {};
             const gastosRows = [];
             const gastosByMonth = {};
+            const ingresosRows = [];
+            const ingresosByMonth = {};
+            const gananciasRows = [];
+            const gananciasByAccount = {};
 
             savingsDrawers.forEach(drawer => {
                 const dName = drawer.name || 'Sin nombre';
@@ -11292,8 +11296,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         const catTrimmed = catRaw.trim().toLowerCase();
                         const conceptTrimmed = (m.concept || m.description || '').trim();
                         
-                        if (!categoryTotals[catRaw]) categoryTotals[catRaw] = 0;
-                        categoryTotals[catRaw] += amt;
+                        const isTransfer = catRaw === 'Traspaso' || 
+                                         catRaw === 'Inversión' || 
+                                         (catRaw || '').startsWith('Traspaso:');
+
+                        if (!isTransfer) {
+                            if (!categoryTotals[catRaw]) categoryTotals[catRaw] = 0;
+                            categoryTotals[catRaw] += amt;
+                        }
 
                         // --- Logic for Dividendos ---
                         if (catTrimmed === 'dividendos') {
@@ -11307,15 +11317,30 @@ document.addEventListener('DOMContentLoaded', () => {
                             divAgg[conceptTrimmed] += amt;
                         }
 
+                        // --- Logic for Ganancias (Intereses, Dividendos, Especulación) ---
+                        const isEarnings = catTrimmed === 'intereses' || 
+                                         catTrimmed === 'dividendos' || 
+                                         catTrimmed === 'especulación' || 
+                                         catTrimmed === 'especulacion';
+                        
+                        if (isEarnings) {
+                            gananciasRows.push([
+                                m.date ? new Date(m.date) : null,
+                                conceptTrimmed,
+                                catRaw,
+                                Number(amt.toFixed(2)),
+                                dName
+                            ]);
+                            if (!gananciasByAccount[dName]) gananciasByAccount[dName] = 0;
+                            gananciasByAccount[dName] += amt;
+                        }
+
                         if (drawer.id !== 'bolsa' && !dName.toLowerCase().includes('bolsa')) {
                             drawerTotals[dName] += amt;
                         }
 
                         // --- Logic for Gastos (Excluding transfers and investments) ---
-                        const isSpending = amt < 0 && 
-                                         catRaw !== 'Traspaso' && 
-                                         catRaw !== 'Inversión' && 
-                                         !(catRaw || '').startsWith('Traspaso:');
+                        const isSpending = amt < 0 && !isTransfer;
 
                         if (isSpending) {
                             gastosRows.push([
@@ -11330,13 +11355,32 @@ document.addEventListener('DOMContentLoaded', () => {
                             gastosByMonth[monthKey] += amt;
                         }
 
-                        savingsRowsTemp.push({
-                            rawDate: m.date,
-                            concept: conceptTrimmed,
-                            category: catRaw,
-                            amount: Number(amt.toFixed(2)),
-                            drawerName: dName
-                        });
+                        // --- Logic for Ingresos (Excluding transfers and investments) ---
+                        const isIncome = amt > 0 && !isTransfer;
+                        
+                        if (isIncome) {
+                            ingresosRows.push([
+                                m.date ? new Date(m.date) : null,
+                                conceptTrimmed,
+                                catRaw,
+                                Number(amt.toFixed(2)),
+                                dName
+                            ]);
+                            const monthKey = getFiscalMonth(m.date || new Date());
+                            if (!ingresosByMonth[monthKey]) ingresosByMonth[monthKey] = 0;
+                            ingresosByMonth[monthKey] += amt;
+                        }
+
+                        // --- Logic for Ahorro list (Excluding transfers and investments as requested) ---
+                        if (!isTransfer) {
+                            savingsRowsTemp.push({
+                                rawDate: m.date,
+                                concept: conceptTrimmed,
+                                category: catRaw,
+                                amount: Number(amt.toFixed(2)),
+                                drawerName: dName
+                            });
+                        }
                     });
                 }
             });
@@ -11351,6 +11395,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const gastosMonthGroupedRows = Object.entries(gastosByMonth)
                 .map(([month, total]) => [month, Number(total.toFixed(2))])
                 .sort((a, b) => b[0].localeCompare(a[0])); // Sort months descending
+
+            ingresosRows.sort((a, b) => (b[0] || 0) - (a[0] || 0));
+            const ingresosMonthGroupedRows = Object.entries(ingresosByMonth)
+                .map(([month, total]) => [month, Number(total.toFixed(2))])
+                .sort((a, b) => b[0].localeCompare(a[0])); // Sort months descending
+
+            gananciasRows.sort((a, b) => (b[0] || 0) - (a[0] || 0));
+            const gananciasAccountGroupedRows = Object.entries(gananciasByAccount)
+                .map(([acc, total]) => [acc, Number(total.toFixed(2))])
+                .sort((a, b) => b[1] - a[1]); // Sort by amount descending
 
             savingsRowsTemp.sort((a, b) => {
                 const acctA = String(a.drawerName || '').toLowerCase();
@@ -11669,6 +11723,86 @@ document.addEventListener('DOMContentLoaded', () => {
             wsGastos.getColumn(1).numFmt = 'dd/mm/yyyy';
             wsGastos.getColumn(4).numFmt = '#,##0.00"€"';
             wsGastos.getColumn(8).numFmt = '#,##0.00"€"';
+
+            // --- Sheet: Ingresos ---
+            const wsIncomes = workbook.addWorksheet('Ingresos');
+            wsIncomes.addTable({
+                name: 'TablaIngresos',
+                ref: 'A1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Concepto', filterButton: true },
+                    { name: 'Categoría', filterButton: true },
+                    { name: 'Importe', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Cuenta', filterButton: true }
+                ],
+                rows: ingresosRows
+            });
+
+            wsIncomes.addTable({
+                name: 'ResumenIngresosMes',
+                ref: 'G1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Mes', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Total Ingresos', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: ingresosMonthGroupedRows
+            });
+
+            wsIncomes.columns = [
+                { width: 15 }, { width: 35 }, { width: 25 }, { width: 15 }, { width: 25 },
+                { width: 5 }, // Spacer
+                { width: 20 }, { width: 15 }
+            ];
+            wsIncomes.getColumn(1).numFmt = 'dd/mm/yyyy';
+            wsIncomes.getColumn(4).numFmt = '#,##0.00"€"';
+            wsIncomes.getColumn(8).numFmt = '#,##0.00"€"';
+
+            // --- Sheet: Ganancias ---
+            const wsEarnings = workbook.addWorksheet('Ganancias');
+            wsEarnings.addTable({
+                name: 'TablaGanancias',
+                ref: 'A1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Concepto', filterButton: true },
+                    { name: 'Categoría', filterButton: true },
+                    { name: 'Importe', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Cuenta', filterButton: true }
+                ],
+                rows: gananciasRows
+            });
+
+            wsEarnings.addTable({
+                name: 'ResumenGananciasCuenta',
+                ref: 'G1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Cuenta', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Total Ganancia', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: gananciasAccountGroupedRows
+            });
+
+            wsEarnings.columns = [
+                { width: 15 }, { width: 35 }, { width: 25 }, { width: 15 }, { width: 25 },
+                { width: 5 }, // Spacer
+                { width: 25 }, { width: 15 }
+            ];
+            wsEarnings.getColumn(1).numFmt = 'dd/mm/yyyy';
+            wsEarnings.getColumn(4).numFmt = '#,##0.00"€"';
+            wsEarnings.getColumn(8).numFmt = '#,##0.00"€"';
 
             // --- Sheet 3: Nómina ---
             const wsNomina = workbook.addWorksheet('Nómina');
