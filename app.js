@@ -11311,8 +11311,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             drawerTotals[dName] += amt;
                         }
 
-                        // --- Logic for Gastos ---
-                        if (amt < 0) {
+                        // --- Logic for Gastos (Excluding transfers and investments) ---
+                        const isSpending = amt < 0 && 
+                                         catRaw !== 'Traspaso' && 
+                                         catRaw !== 'Inversión' && 
+                                         !(catRaw || '').startsWith('Traspaso:');
+
+                        if (isSpending) {
                             gastosRows.push([
                                 m.date ? new Date(m.date) : null,
                                 conceptTrimmed,
