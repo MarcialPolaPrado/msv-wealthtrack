@@ -11280,6 +11280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const ingresosByMonth = {};
             const gananciasRows = [];
             const gananciasByAccount = {};
+            const gananciasByCategory = {};
 
             savingsDrawers.forEach(drawer => {
                 const dName = drawer.name || 'Sin nombre';
@@ -11333,6 +11334,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             ]);
                             if (!gananciasByAccount[dName]) gananciasByAccount[dName] = 0;
                             gananciasByAccount[dName] += amt;
+                            if (!gananciasByCategory[catRaw]) gananciasByCategory[catRaw] = 0;
+                            gananciasByCategory[catRaw] += amt;
                         }
 
                         if (drawer.id !== 'bolsa' && !dName.toLowerCase().includes('bolsa')) {
@@ -11405,6 +11408,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const gananciasAccountGroupedRows = Object.entries(gananciasByAccount)
                 .map(([acc, total]) => [acc, Number(total.toFixed(2))])
                 .sort((a, b) => b[1] - a[1]); // Sort by amount descending
+            
+            const gananciasCategoryGroupedRows = Object.entries(gananciasByCategory)
+                .map(([cat, total]) => [cat, Number(total.toFixed(2))])
+                .sort((a, b) => b[1] - a[1]);
 
             savingsRowsTemp.sort((a, b) => {
                 const acctA = String(a.drawerName || '').toLowerCase();
@@ -11795,14 +11802,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: gananciasAccountGroupedRows
             });
 
+            wsEarnings.addTable({
+                name: 'ResumenGananciasCategoria',
+                ref: 'J1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Categoría', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Total Ganancia', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: gananciasCategoryGroupedRows
+            });
+
             wsEarnings.columns = [
                 { width: 15 }, { width: 35 }, { width: 25 }, { width: 15 }, { width: 25 },
                 { width: 5 }, // Spacer
-                { width: 25 }, { width: 15 }
+                { width: 25 }, { width: 15 }, // By Account
+                { width: 5 }, // Spacer
+                { width: 25 }, { width: 15 } // By Category
             ];
             wsEarnings.getColumn(1).numFmt = 'dd/mm/yyyy';
             wsEarnings.getColumn(4).numFmt = '#,##0.00"€"';
             wsEarnings.getColumn(8).numFmt = '#,##0.00"€"';
+            wsEarnings.getColumn(11).numFmt = '#,##0.00"€"';
 
             // --- Sheet 3: Nómina ---
             const wsNomina = workbook.addWorksheet('Nómina');
