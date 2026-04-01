@@ -3040,6 +3040,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const filteredBalance = drawerMovements.reduce((sum, m) => sum + m.amount, 0);
             globalFilteredTotal += filteredBalance;
 
+            // Calculate balance up to today if there are future movements in this period
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            const balanceToday = drawerMovements.reduce((sum, m) => {
+                const mDate = new Date(m.date + 'T00:00:00');
+                return mDate <= today ? sum + m.amount : sum;
+            }, 0);
+
+            const hasFutureMovements = Math.abs(filteredBalance - balanceToday) > 0.01;
+            const balanceTodayContent = hasFutureMovements 
+                ? `<span style="font-size: 0.85em; opacity: 0.6; margin-left: 4px; font-weight: 400;">[${fmtEUR(balanceToday)}]</span>` 
+                : '';
+
             // Drawer Header Row
             const headerTr = document.createElement('tr');
             headerTr.className = 'ahorro-list-header';
@@ -3060,7 +3073,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ` : ''}
                     </div>
                 </td>
-                <td class="balance">${fmtEUR(filteredBalance)}</td>
+                <td class="balance">${fmtEUR(filteredBalance)}${balanceTodayContent}</td>
             `;
 
             // Add event listeners to list buttons
@@ -3659,6 +3672,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const diff = targetAmount > 0 ? targetAmount - drawer.balance : 0;
                 const diffColor = diff <= 0 ? 'var(--success)' : 'var(--danger)';
 
+                const today = new Date();
+                today.setHours(23, 59, 59, 999);
+                let balanceToday = 0;
+                if (drawer.id === 'bolsa') {
+                    balanceToday = drawer.balance;
+                } else {
+                    balanceToday = (drawer.movements || []).reduce((sum, m) => {
+                        const mDate = new Date(m.date + 'T00:00:00');
+                        return mDate <= today ? sum + m.amount : sum;
+                    }, 0);
+                }
+
+                const balanceTodayDisplayHtml = (Math.abs(drawer.balance - balanceToday) > 0.01)
+                    ? `<span style="font-size: 0.75em; opacity: 0.6; font-weight: 500; margin-left: 4px;">[${fmtEUR(balanceToday)}]</span>`
+                    : '';
+
                 card.innerHTML = `
                     <div class="drawer-color-btn" title="Cambiar Color" style="position: absolute; top: 0.5rem; right: 0.5rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: grayscale(1); opacity: 0.4; transition: all 0.2s;">🎨</div>
                     <div class="drawer-target-icon" title="Establecer Objetivo" style="right: 3rem !important; top: 0.5rem !important;">🎯</div>
@@ -3668,7 +3697,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; flex-direction: column;">
                             <div style="font-size: 0.65rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 2px; font-weight: 700; color: white;">${drawer.id === 'bolsa' ? 'En Bolsa' : ''}</div>
-                            <span class="drawer-amount" style="color: ${drawer.id === 'bolsa' ? 'white' : theme.border} !important; font-weight: 800; font-size: 1.2rem; display: block;">${fmtEUR(drawer.balance)}</span>
+                            <div style="display: flex; align-items: baseline; flex-wrap: wrap;">
+                                <span class="drawer-amount" style="color: ${drawer.id === 'bolsa' ? 'white' : theme.border} !important; font-weight: 800; font-size: 1.2rem; display: block;">${fmtEUR(drawer.balance)}</span>
+                                ${balanceTodayDisplayHtml}
+                            </div>
                             ${targetAmount > 0 ? `
                                 <div class="target-info" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 4px;">
                                     <span>Obj: ${fmtEUR(targetAmount)}</span>
