@@ -11271,9 +11271,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const categoryTotals = {};
             const drawerTotals = {};
-            const ahorroRowsTemp = [];
+            const savingsRowsTemp = [];
             const divRows = [];
             const divAgg = {};
+            const gastosRows = [];
+            const gastosByMonth = {};
 
             savingsDrawers.forEach(drawer => {
                 const dName = drawer.name || 'Sin nombre';
@@ -11309,7 +11311,22 @@ document.addEventListener('DOMContentLoaded', () => {
                             drawerTotals[dName] += amt;
                         }
 
-                        ahorroRowsTemp.push({
+                        // --- Logic for Gastos ---
+                        if (amt < 0) {
+                            gastosRows.push([
+                                m.date ? new Date(m.date) : null,
+                                conceptTrimmed,
+                                catRaw,
+                                Number(amt.toFixed(2)),
+                                dName
+                            ]);
+                            const d = m.date ? new Date(m.date) : new Date();
+                            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                            if (!gastosByMonth[monthKey]) gastosByMonth[monthKey] = 0;
+                            gastosByMonth[monthKey] += amt;
+                        }
+
+                        savingsRowsTemp.push({
                             rawDate: m.date,
                             concept: conceptTrimmed,
                             category: catRaw,
@@ -11326,7 +11343,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 .map(([concept, total]) => [concept, Number(total.toFixed(2))])
                 .sort((a, b) => b[1] - a[1]);
 
-            ahorroRowsTemp.sort((a, b) => {
+            gastosRows.sort((a, b) => (b[0] || 0) - (a[0] || 0));
+            const gastosMonthGroupedRows = Object.entries(gastosByMonth)
+                .map(([month, total]) => [month, Number(total.toFixed(2))])
+                .sort((a, b) => b[0].localeCompare(a[0])); // Sort months descending
+
+            savingsRowsTemp.sort((a, b) => {
                 const acctA = String(a.drawerName || '').toLowerCase();
                 const acctB = String(b.drawerName || '').toLowerCase();
                 if (acctA < acctB) return -1;
@@ -11334,7 +11356,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return new Date(b.rawDate) - new Date(a.rawDate);
             });
 
-            const ahorroRows = ahorroRowsTemp.map(r => [
+            const ahorroRows = savingsRowsTemp.map(r => [
                 r.rawDate ? new Date(r.rawDate) : null,
                 r.concept,
                 r.category,
@@ -11603,6 +11625,46 @@ document.addEventListener('DOMContentLoaded', () => {
             wsDivs.getColumn(1).numFmt = 'dd/mm/yyyy';
             wsDivs.getColumn(3).numFmt = '#,##0.00"€"';
             wsDivs.getColumn(7).numFmt = '#,##0.00"€"';
+
+            // --- Sheet: Gastos ---
+            const wsGastos = workbook.addWorksheet('Gastos');
+            wsGastos.addTable({
+                name: 'TablaGastos',
+                ref: 'A1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Concepto', filterButton: true },
+                    { name: 'Categoría', filterButton: true },
+                    { name: 'Importe', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Cuenta', filterButton: true }
+                ],
+                rows: gastosRows
+            });
+
+            wsGastos.addTable({
+                name: 'ResumenGastosMes',
+                ref: 'G1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Mes', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Total Gastos', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: gastosMonthGroupedRows
+            });
+
+            wsGastos.columns = [
+                { width: 15 }, { width: 35 }, { width: 25 }, { width: 15 }, { width: 25 },
+                { width: 5 }, // Spacer
+                { width: 20 }, { width: 15 }
+            ];
+            wsGastos.getColumn(1).numFmt = 'dd/mm/yyyy';
+            wsGastos.getColumn(4).numFmt = '#,##0.00"€"';
+            wsGastos.getColumn(8).numFmt = '#,##0.00"€"';
 
             // --- Sheet 3: Nómina ---
             const wsNomina = workbook.addWorksheet('Nómina');
