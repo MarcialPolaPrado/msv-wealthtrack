@@ -226,6 +226,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return desc.includes('saldo inicial') || desc.includes('provisión') || desc.includes('provision') || desc.includes('presupuesto') || desc.includes('asignado') || desc.includes('ahorro');
     }
 
+    function parseAppDate(dStr) {
+        if (!dStr) return new Date();
+        if (dStr instanceof Date) return dStr;
+        // ISO format check (YYYY-MM-DD or similar) - must be first for efficiency
+        if (typeof dStr === 'string' && dStr.includes('-')) return new Date(dStr);
+        // Spanish format check (DD/MM/YYYY)
+        if (typeof dStr === 'string' && dStr.includes('/')) {
+            const parts = dStr.split('/');
+            if (parts.length === 3) {
+                const [d, m, y] = parts.map(Number);
+                return new Date(y, m - 1, d);
+            }
+        }
+        return new Date(dStr);
+    }
+
     function getFiscalMonth(dateInput = new Date()) {
         const d = new Date(dateInput);
         let year = d.getFullYear();
@@ -5855,20 +5871,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.drawerIconGroup) elements.drawerIconGroup.classList.remove('hidden');
         if (elements.drawerIconInput) elements.drawerIconInput.value = drawer.icon || '📁';
 
-        // Find initial balance movement
-        const initialMvmt = drawer.movements.find(m => isProvision(m));
+        // Find initial balance movement with priority to "Saldo inicial" and older dates
+        const allMovements = [...(drawer.movements || [])].sort((a, b) => parseAppDate(a.date) - parseAppDate(b.date));
+        const initialMvmt = allMovements.find(m => (m.description || m.concept || "").toLowerCase().includes('saldo inicial'))
+                          || allMovements.find(m => isProvision(m));
+
         if (amountInput) {
             amountInput.value = initialMvmt ? initialMvmt.amount : 0;
             amountInput.placeholder = "Saldo Inicial (€)";
         }
 
-        // Default to oldest movement's date for editing
-        let oldestDate = new Date().toISOString().split('T')[0];
-        if (drawer.movements && drawer.movements.length > 0) {
-            const sortedMovements = [...drawer.movements].sort((a, b) => new Date(a.date) - new Date(b.date));
-            oldestDate = sortedMovements[0].date;
+        // Set date to the identified initial movement's date, or the true oldest movement, or today
+        let initialDate = initialMvmt ? initialMvmt.date : (allMovements.length > 0 ? allMovements[0].date : new Date().toISOString().split('T')[0]);
+        
+        // Ensure yyyy-mm-dd for input type="date"
+        if (initialDate && initialDate.includes('/')) {
+            const d = parseAppDate(initialDate);
+            if (!isNaN(d.getTime())) {
+                initialDate = d.toISOString().split('T')[0];
+            }
         }
-        if (elements.savingsDateInput) elements.savingsDateInput.value = oldestDate;
+        if (elements.savingsDateInput) elements.savingsDateInput.value = initialDate;
 
         conceptGroup?.classList.add('hidden');
         transferTargetGroup?.classList.add('hidden');
@@ -9230,17 +9253,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     drawer.group = elements.drawerGroupInput.value.trim() || '';
                     if (elements.drawerIconInput) drawer.icon = elements.drawerIconInput.value;
 
-                    // Find initial movement
-                    let initialMvmt = drawer.movements.find(m => isProvision(m));
+                    // Find initial movement with same logic as modal display
+                    const allMovementsSync = [...(drawer.movements || [])].sort((a, b) => parseAppDate(a.date) - parseAppDate(b.date));
+                    let initialMvmt = allMovementsSync.find(m => (m.description || m.concept || "").toLowerCase().includes('saldo inicial'))
+                                    || allMovementsSync.find(m => isProvision(m));
+                    
                     const oldInitialAmount = initialMvmt ? initialMvmt.amount : 0;
+                    const newDate = elements.savingsDateInput.value;
 
                     if (initialMvmt) {
                         initialMvmt.amount = newAmount;
+                        if (newDate) initialMvmt.date = newDate;
                     } else if (newAmount !== 0) {
                         drawer.movements.unshift({
-                            date: new Date().toISOString().split('T')[0],
+                            id: Date.now() + Math.random(),
+                            date: newDate || new Date().toISOString().split('T')[0],
                             amount: newAmount,
-                            description: 'Saldo inicial'
+                            description: 'Saldo inicial',
+                            concept: 'Saldo inicial'
                         });
                     }
 
@@ -12182,6 +12212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Show overlay
+        const sortedMovements = [...drawer.movements].sort((a, b) => parseAppDate(a.date) - parseAppDate(b.date));
         elements.welcomeOverlay.classList.remove('hidden');
 
         // Close button
