@@ -5658,6 +5658,11 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.drawerInfoGroup?.classList.add('hidden');
         if (amountInput) amountInput.placeholder = "0.00";
         conceptGroup?.classList.remove('hidden');
+        const conceptInput = document.getElementById('movementConceptInput');
+        if (conceptInput) {
+            conceptInput.readOnly = false;
+            conceptInput.style.opacity = '1';
+        }
         transferTargetGroup?.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
         if (elements.drawerIconGroup) elements.drawerIconGroup.classList.add('hidden');
@@ -5718,6 +5723,11 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.drawerInfoGroup?.classList.add('hidden');
         if (amountInput) amountInput.placeholder = "0.00";
         conceptGroup?.classList.remove('hidden');
+        const conceptInput = document.getElementById('movementConceptInput');
+        if (conceptInput) {
+            conceptInput.readOnly = false;
+            conceptInput.style.opacity = '1';
+        }
         transferTargetGroup?.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
         const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
@@ -7005,6 +7015,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         nameGroup?.classList.add('hidden');
         elements.drawerInfoGroup?.classList.add('hidden');
+        if (conceptInput) {
+            const isInitial = (movement.description || movement.concept || "").toLowerCase().includes('saldo inicial');
+            conceptInput.readOnly = isInitial;
+            conceptInput.style.opacity = isInitial ? '0.6' : '1';
+            conceptInput.value = movement.concept || movement.description;
+        }
         conceptGroup?.classList.remove('hidden');
         transferTargetGroup?.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
