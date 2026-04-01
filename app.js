@@ -11272,6 +11272,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const categoryTotals = {};
             const drawerTotals = {};
             const ahorroRowsTemp = [];
+            const divRows = [];
+            const divAgg = {};
 
             savingsDrawers.forEach(drawer => {
                 const dName = drawer.name || 'Sin nombre';
@@ -11284,24 +11286,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (drawer.movements) {
                     drawer.movements.forEach(m => {
                         const amt = parseFloat(m.amount) || 0;
-                        const cat = m.category || 'Sin categoría';
+                        const catRaw = m.category || 'Sin categoría';
+                        const catTrimmed = catRaw.trim().toLowerCase();
+                        const conceptTrimmed = (m.concept || m.description || '').trim();
                         
-                        if (!categoryTotals[cat]) categoryTotals[cat] = 0;
-                        categoryTotals[cat] += amt;
+                        if (!categoryTotals[catRaw]) categoryTotals[catRaw] = 0;
+                        categoryTotals[catRaw] += amt;
+
+                        // --- Logic for Dividendos ---
+                        if (catTrimmed === 'dividendos') {
+                            divRows.push([
+                                m.date ? new Date(m.date) : null,
+                                conceptTrimmed,
+                                Number(amt.toFixed(2)),
+                                dName
+                            ]);
+                            if (!divAgg[conceptTrimmed]) divAgg[conceptTrimmed] = 0;
+                            divAgg[conceptTrimmed] += amt;
+                        }
+
                         if (drawer.id !== 'bolsa' && !dName.toLowerCase().includes('bolsa')) {
                             drawerTotals[dName] += amt;
                         }
 
                         ahorroRowsTemp.push({
                             rawDate: m.date,
-                            concept: m.concept || m.description || '',
-                            category: cat,
+                            concept: conceptTrimmed,
+                            category: catRaw,
                             amount: Number(amt.toFixed(2)),
                             drawerName: dName
                         });
                     });
                 }
             });
+
+            console.log(`[Excel Export] Dividendos encontrados: ${divRows.length} en ${Object.keys(divAgg).length} empresas.`);
+            divRows.sort((a, b) => (b[0] || 0) - (a[0] || 0));
+            const divGroupedRows = Object.entries(divAgg)
+                .map(([concept, total]) => [concept, Number(total.toFixed(2))])
+                .sort((a, b) => b[1] - a[1]);
 
             ahorroRowsTemp.sort((a, b) => {
                 const acctA = String(a.drawerName || '').toLowerCase();
@@ -11541,6 +11564,45 @@ document.addEventListener('DOMContentLoaded', () => {
             wsAhorro.getColumn(15).numFmt = '#,##0.00"€"';
             wsAhorro.getColumn(16).font = { name: 'Consolas', size: 10 };
             wsAhorro.getColumn(16).alignment = { horizontal: 'left' };
+
+            // --- Sheet: Dividendos ---
+            const wsDivs = workbook.addWorksheet('Dividendos');
+            wsDivs.addTable({
+                name: 'TablaDividendos',
+                ref: 'A1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: [
+                    { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Empresa', filterButton: true },
+                    { name: 'Importe', filterButton: true, totalsRowFunction: 'sum' },
+                    { name: 'Cuenta', filterButton: true }
+                ],
+                rows: divRows
+            });
+
+            wsDivs.addTable({
+                name: 'ResumenDividendosEmpresa',
+                ref: 'F1',
+                headerRow: true,
+                totalsRow: true,
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                columns: [
+                    { name: 'Empresa', filterButton: true, totalsRowLabel: 'TOTAL' },
+                    { name: 'Total Dividendos', filterButton: true, totalsRowFunction: 'sum' }
+                ],
+                rows: divGroupedRows
+            });
+
+            wsDivs.columns = [
+                { width: 15 }, { width: 35 }, { width: 15 }, { width: 25 },
+                { width: 5 }, // Spacer
+                { width: 35 }, { width: 18 }
+            ];
+            wsDivs.getColumn(1).numFmt = 'dd/mm/yyyy';
+            wsDivs.getColumn(3).numFmt = '#,##0.00"€"';
+            wsDivs.getColumn(7).numFmt = '#,##0.00"€"';
 
             // --- Sheet 3: Nómina ---
             const wsNomina = workbook.addWorksheet('Nómina');
