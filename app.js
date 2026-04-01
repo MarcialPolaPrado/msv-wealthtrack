@@ -5386,7 +5386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                                 <div class="collapsible-content ${isExpanded ? 'expanded' : ''}" style="background: rgba(0,0,0,0.1);">
                                     <div style="padding: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
-                                        ${drawerMovements.sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => `
+                                        ${drawerMovements.sort((a, b) => parseAppDate(b.date) - parseAppDate(a.date)).map(m => `
                                             <div style="display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
                                                 <span style="opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px;">${m.concept || m.description}</span>
                                                 <span style="font-weight: 600; color: var(--danger);">${fmtEUR(m.amount)}</span>
@@ -12212,7 +12212,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Show overlay
-        const sortedMovements = [...drawer.movements].sort((a, b) => parseAppDate(a.date) - parseAppDate(b.date));
         elements.welcomeOverlay.classList.remove('hidden');
 
         // Close button
@@ -12254,7 +12253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             countdownsList.innerHTML = '';
 
             // Sort by closest date
-            countdowns.sort((a, b) => new Date(a.date) - new Date(b.date));
+            countdowns.sort((a, b) => parseAppDate(a.date) - parseAppDate(b.date));
 
             const now = new Date();
             now.setHours(0, 0, 0, 0);
