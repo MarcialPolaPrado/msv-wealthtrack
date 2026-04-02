@@ -1306,6 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('ahorroGastosAccountList');
         if (!container) return;
         container.innerHTML = '';
+        const fragment = document.createDocumentFragment();
 
         // 0. Pre-assign each nomina concept to the drawer that matches it MOST specifically
         const drawerIdToConcepts = new Map();
@@ -1471,11 +1472,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     ` : ''}
                 </div>
             `;
-            container.appendChild(card);
+            fragment.appendChild(card);
         });
 
-        if (container.innerHTML === '') {
+        if (fragment.children.length === 0) {
             container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 4rem;">No hay gastos relevantes para este mes fiscal.</div>';
+        } else {
+            container.appendChild(fragment);
         }
     }
 
@@ -1706,6 +1709,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 3. Render Table
         if (stockTableBody) {
             stockTableBody.innerHTML = '';
+            const stockFrag = document.createDocumentFragment();
 
             if (displayGroups.length === 0) {
                 emptyState?.classList.remove('hidden');
@@ -1750,7 +1754,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="btc-val" style="padding:0.35rem 0.5rem; text-align:right; font-weight:700; font-size:0.8rem;">${group.totalCurrentVal !== null ? fmtEUR(group.totalCurrentVal) : '-'}</td>
                         <td class="btc-gp ${plClass}" style="padding:0.35rem 0.5rem; text-align:right; font-weight:600; font-size:0.8rem;">${pl === null ? '-' : (pl >= 0 ? '+' : '') + fmtEUR(pl)}</td>
                     `;
-                    stockTableBody.appendChild(tr);
+                    stockFrag.appendChild(tr);
                 });
 
                 // Compact totals row
@@ -1765,7 +1769,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="btc-val" style="padding:0.5rem; text-align:right; font-size:0.8rem; background:rgba(59,130,246,0.08);">${totalCurrentValueEUR !== null ? fmtEUR(totalCurrentValueEUR) : '-'}</td>
                     <td class="btc-gp ${plClass}" style="padding:0.5rem; text-align:right; font-size:0.8rem;">${totalPL === null ? '-' : (totalPL >= 0 ? '+' : '') + fmtEUR(totalPL)}</td>
                 `;
-                stockTableBody.appendChild(trTotal);
+                stockFrag.appendChild(trTotal);
+                stockTableBody.appendChild(stockFrag);
 
             } else {
                 // --- Full Detail Table ---
@@ -1925,7 +1930,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                             </td>
                         `;
-                            stockTableBody.appendChild(trDetail);
+                            stockFrag.appendChild(trDetail);
                         });
                     }
                 });
@@ -1958,7 +1963,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td colspan="2"></td>
             `;
-                stockTableBody.appendChild(trTotal);
+                stockFrag.appendChild(trTotal);
+                stockTableBody.appendChild(stockFrag);
 
                 // Action handlers
                 document.querySelectorAll('.delete-btn').forEach(btn => {
@@ -3234,6 +3240,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         let globalFilteredTotal = 0;
+        const listFragment = document.createDocumentFragment();
+
         sortedDrawers.forEach(drawer => {
             // Filter movements for this drawer and selected mode
             let drawerMovements = [];
@@ -3333,7 +3341,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
 
-            elements.ahorroTableBody.appendChild(headerTr);
+            listFragment.appendChild(headerTr);
 
             // Sort by date descending
             drawerMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -3363,7 +3371,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         tr.classList.toggle('expanded');
                     };
 
-                    elements.ahorroTableBody.appendChild(tr);
+                    listFragment.appendChild(tr);
                 });
             }
         });
@@ -3377,11 +3385,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td colspan="2" style="font-weight: 800; text-align: right; padding: 1rem;">TOTAL:</td>
                 <td class="balance" style="font-weight: 800; color: var(--primary); padding: 1rem;">${fmtEUR(globalFilteredTotal)}</td>
             `;
-            elements.ahorroTableBody.appendChild(totalTr);
+            listFragment.appendChild(totalTr);
         }
 
-        if (elements.ahorroTableBody.innerHTML === '') {
+        if (listFragment.children.length === 0) {
             elements.ahorroTableBody.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; opacity:0.5;">No hay movimientos en este periodo</td></tr>';
+        } else {
+            elements.ahorroTableBody.appendChild(listFragment);
         }
     }
 
@@ -4854,6 +4864,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.nominaListFilterMode.classList.toggle('active', nominaListFilterMode === 'totals');
         }
         elements.nominaTableBody.innerHTML = '';
+        const nominaListFrag = document.createDocumentFragment();
 
         if (nominaData.length === 0) {
             elements.nominaTableBody.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; opacity:0.5;">No hay conceptos configurados</td></tr>';
@@ -5000,7 +5011,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td colspan="2">${typeLabels[drawer.type]}</td>
                     <td style="text-align: right; padding-right: 1rem;">${fmtEUR(categoryTotals[drawer.type] || 0)}</td>
                 `;
-                elements.nominaTableBody.appendChild(sepTr);
+                nominaListFrag.appendChild(sepTr);
                 lastType = drawer.type;
             }
 
@@ -5070,7 +5081,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
 
-            elements.nominaTableBody.appendChild(headerTr);
+            nominaListFrag.appendChild(headerTr);
 
             // In totals mode, skip movement rows
             if (nominaListFilterMode === 'totals') return;
@@ -5079,7 +5090,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const emptyTr = document.createElement('tr');
                 emptyTr.className = 'ahorro-list-empty-row';
                 emptyTr.innerHTML = `<td colspan="3">Sin movimientos este mes</td>`;
-                elements.nominaTableBody.appendChild(emptyTr);
+                nominaListFrag.appendChild(emptyTr);
             } else {
                 // Movements list
                 drawerMovements.forEach((m) => {
@@ -5104,7 +5115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     };
 
-                    elements.nominaTableBody.appendChild(tr);
+                    nominaListFrag.appendChild(tr);
                 });
             }
         });
@@ -5118,7 +5129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td colspan="2">DISTRIBUCIÓN DE EGRESOS</td>
                 <td style="text-align: right; padding-right: 1rem;">${fmtEUR(totalEgresos)}</td>
             `;
-            elements.nominaTableBody.appendChild(sepTr);
+            nominaListFrag.appendChild(sepTr);
 
             egresosMap.forEach(egreso => {
                 if (egreso.amount === 0) return;
@@ -5134,9 +5145,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td class="balance">${fmtEUR(egreso.amount)}</td>
                 `;
-                elements.nominaTableBody.appendChild(tr);
+                nominaListFrag.appendChild(tr);
             });
         }
+
+        elements.nominaTableBody.appendChild(nominaListFrag);
     }
 
     function renderNomina() {
