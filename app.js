@@ -386,14 +386,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (concept.isAutomatic) {
                 concept.movements = [];
             } else {
-                const isNominaName = concept.name?.toLowerCase().includes('nomina') || concept.name?.toLowerCase().includes('nómina');
-                const hasEverHadExpenses = (concept.movements || []).some(m => !isProvision(m) && m.amount < 0);
-
-                if (isNominaName) {
-                    concept.type = 'income';
-                } else if (!concept.type || concept.type === 'expense') {
-                    // Transition to 'saving' if it has no expenses
-                    concept.type = hasEverHadExpenses ? 'expense' : 'saving';
+                if (!concept.type) {
+                    const isNominaName = concept.name?.toLowerCase().includes('nomina') || concept.name?.toLowerCase().includes('nómina');
+                    const hasEverHadExpenses = (concept.movements || []).some(m => !isProvision(m) && m.amount < 0);
+    
+                    if (isNominaName) {
+                        concept.type = 'income';
+                    } else {
+                        // Transition to 'saving' if it has no expenses
+                        concept.type = hasEverHadExpenses ? 'expense' : 'saving';
+                    }
                 }
             }
             return concept;
@@ -5296,9 +5298,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            const isIncome = concept.type === 'income' ||
-                concept.name?.toLowerCase().includes('nomina') ||
-                concept.name?.toLowerCase().includes('nómina');
+            const isIncome = concept.type === 'income';
 
             const isSavings = concept.type === 'saving';
 
@@ -11018,9 +11018,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (drawer) {
             // Default logic: 1st movement is income, others expense.
             // Nomina drawer is always income.
-            const isNomina = drawer.name.toLowerCase().includes('nomina') || drawer.name.toLowerCase().includes('nómina');
-
-            if (drawer.type === 'saving' || drawer.type === 'income' || isNomina) {
+            if (drawer.type === 'saving' || drawer.type === 'income') {
                 updateNominaMovementType('income');
                 if (elements.nominaMovementTypeContainer) elements.nominaMovementTypeContainer.classList.add('hidden');
             } else {
@@ -11054,8 +11052,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cb.checked = active.includes(parseInt(cb.value));
         });
 
-        const isNomina = drawer.name.toLowerCase().includes('nomina') || drawer.name.toLowerCase().includes('nómina');
-        if (drawer.type === 'saving' || drawer.type === 'income' || isNomina) {
+        if (drawer.type === 'saving' || drawer.type === 'income') {
             updateNominaMovementType('income');
             if (elements.nominaMovementTypeContainer) elements.nominaMovementTypeContainer.classList.add('hidden');
         } else {
