@@ -1308,42 +1308,36 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '';
 
         // 0. Pre-assign each nomina concept to the drawer that matches it MOST specifically
-        const conceptToDrawerMap = new Map();
+        const drawerIdToConcepts = new Map();
+        const drawerNameToConcepts = new Map();
+
         nominaData.forEach(concept => {
             const cNormalized = normalizeString(concept.name || '').trim();
             if (!cNormalized) return;
 
-            let bestDrawerKey = null;
-            let highestScore = 0;
+            // FIRST PRIORITY: Explicit link to a drawer ID
+            if (concept.linkedSavingsDrawerId) {
+                if (!drawerIdToConcepts.has(concept.linkedSavingsDrawerId)) drawerIdToConcepts.set(concept.linkedSavingsDrawerId, []);
+                drawerIdToConcepts.get(concept.linkedSavingsDrawerId).push(concept);
+                return; // Done
+            }
+
+            // FALLBACK: Name matching estricto
+            let bestDrawer = null;
 
             savingsDrawers.forEach(drawer => {
                 const dNorm = normalizeString(drawer.name || '').trim();
-                let score = 0;
-
-                // REGLA: Si son iguales, match perfecto
+                
+                // REGLA: Tienen que llamarse igual si no hay vínculo explícito
                 if (cNormalized === dNorm) {
-                    score = 1000;
-                } 
-                // REGLA: Si uno contiene al otro, PERO respetando el "muro" de gastos
-                else {
-                    const cHasG = cNormalized.includes('gastos');
-                    const dHasG = dNorm.includes('gastos');
-                    
-                    // Si ambos comparten el estado de "gastos" (o ninguno lo tiene), permitimos vincularlos
-                    if (cHasG === dHasG && (cNormalized.includes(dNorm) || dNorm.includes(cNormalized))) {
-                        score = dNorm.length;
-                    }
-                }
-
-                if (score > highestScore) {
-                    highestScore = score;
-                    bestDrawerKey = dNorm;
+                    bestDrawer = drawer;
                 }
             });
 
-            if (bestDrawerKey && highestScore > 0) {
-                if (!conceptToDrawerMap.has(bestDrawerKey)) conceptToDrawerMap.set(bestDrawerKey, []);
-                conceptToDrawerMap.get(bestDrawerKey).push(concept);
+            if (bestDrawer) {
+                const dNorm = normalizeString(bestDrawer.name || '').trim();
+                if (!drawerNameToConcepts.has(dNorm)) drawerNameToConcepts.set(dNorm, []);
+                drawerNameToConcepts.get(dNorm).push(concept);
             }
         });
 
@@ -1358,8 +1352,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return !isTransfer;
             });
 
-            // Retrieval by strict normalized key
-            const matchingConcepts = conceptToDrawerMap.get(dNorm) || [];
+            // Agrupa conceptos por ID o por Nombre
+            let matchingConcepts = drawerIdToConcepts.get(drawer.id) || [];
+            if (drawerNameToConcepts.has(dNorm)) matchingConcepts = matchingConcepts.concat(drawerNameToConcepts.get(dNorm));
 
             let pendingMovements = [];
             matchingConcepts.forEach(concept => {
@@ -1368,35 +1363,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     return isActive && m.amount < 0 && !m.paid;
                 });
 
-                // Deduplicate: If an item with similar name is already in realizedMovements, skip it
+                // Deduplicate: Solo elimina si es un pago exactamente igual en cantidad y parecido en nombre, o exacto en nombre
                 const deduplicated = allPending.filter(pm => {
-                    const pmSearch = normalizeString(pm.concept || pm.description || '').trim();
+                    const normStr = (s) => normalizeString(s).trim().replace(/\s+/g, ' ');
+                    const pmSearch = normStr(pm.concept || pm.description || '');
                     if (!pmSearch) return true;
                     
-                    const pmAmount = Math.abs(parseFloat(pm.amount) || 0);
+                    const parseVal = (v) => Math.abs(parseFloat(String(v).replace(',', '.')) || 0);
+                    const pmAmount = parseVal(pm.amount);
 
                     const alreadyRealized = realizedMovements.some(rm => {
-                        const rmConcept = normalizeString(rm.concept || '').trim();
-                        const rmAmount = Math.abs(parseFloat(rm.amount) || 0);
+                        const rmConcept = normStr(rm.concept || rm.description || '');
+                        const rmAmount = parseVal(rm.amount);
 
-                        // Rule 1: Amounts MUST match for generic names (Total, etc.)
-                        const amountMatch = (Math.abs(rmAmount - pmAmount) < 0.05); // Allow 5 cents diff
-                        
-                        // Rule 2: If the name is very specific, we DON'T strictly need the amount match
-                        // But if name is generic, we DO.
+                        const amountMatch = (Math.abs(rmAmount - pmAmount) < 0.05);
                         const nameIdentity = (rmConcept === pmSearch);
-                        const specificName = pmSearch.length > 5;
-
-                        if (specificName && (rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept))) {
-                            return true; // Match found by specific name
-                        }
                         
-                        if (amountMatch && (rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept))) {
-                            return true; // Match found by amount + any name match
-                        }
-                        
-                        return false;
+                        // Deduplicate if the name EXACTLY matches, OR if amount matches and names share significant content
+                        return nameIdentity || (amountMatch && (rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept)));
                     });
+                    
                     return !alreadyRealized;
                 });
                 pendingMovements = pendingMovements.concat(deduplicated);
