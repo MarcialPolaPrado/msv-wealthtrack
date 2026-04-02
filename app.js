@@ -1307,6 +1307,59 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return;
         container.innerHTML = '';
 
+        // 0. Pre-assign each nomina concept to the drawer that matches it MOST specifically
+        const conceptToDrawerMap = new Map();
+        nominaData.forEach(concept => {
+            const rawCName = concept.name || '';
+            const cNormalized = normalizeString(rawCName).trim();
+            if (!cNormalized) return;
+
+            let bestDrawerId = null;
+            let highestScore = 0; // Starts at 0, only positive scores win
+
+            savingsDrawers.forEach(drawer => {
+                const rawDName = drawer.name || '';
+                const dNormalized = normalizeString(rawDName).trim();
+                if (!dNormalized) return;
+
+                const cHasGastos = cNormalized.includes('gastos');
+                const dHasGastos = dNormalized.includes('gastos');
+
+                // Manual Veto for B100/Ahorro: 
+                // If drawer is specifically "b100" (the saving one), it NEVER accepts "gastos" concepts.
+                if (dNormalized === 'b100' && cHasGastos) return;
+
+                // Absolute Rule: If one has "gastos" and the other doesn't, skip
+                if (cHasGastos !== dHasGastos) return;
+
+                let score = 0;
+                
+                // Rule 1: Exact match
+                if (cNormalized === dNormalized) {
+                    score = 1000;
+                } 
+                // Rule 2: Word-based match
+                else {
+                    const cWords = cNormalized.split(/\s+/);
+                    const dWords = dNormalized.split(/\s+/);
+                    const isSubset = dWords.every(dw => cWords.includes(dw)) || cWords.every(cw => dWords.includes(cw));
+                    if (isSubset) {
+                        score = dNormalized.length;
+                    }
+                }
+
+                if (score > highestScore) {
+                    highestScore = score;
+                    bestDrawerId = drawer.id;
+                }
+            });
+
+            if (bestDrawerId && highestScore > 0) {
+                if (!conceptToDrawerMap.has(bestDrawerId)) conceptToDrawerMap.set(bestDrawerId, []);
+                conceptToDrawerMap.get(bestDrawerId).push(concept);
+            }
+        });
+
         savingsDrawers.forEach(drawer => {
             // 1. Get realized expenses in this drawer for this fiscal month (EXCLUDING TRANSFERS & INVESTMENTS)
             const realizedMovements = (drawer.movements || []).filter(m => {
@@ -1320,12 +1373,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return !isTransfer;
             });
 
-            // 2. Find ALL matching nomina concepts for this drawer
-            const matchingConcepts = nominaData.filter(c => {
-                const cName = normalizeString(c.name);
-                const dName = normalizeString(drawer.name);
-                return cName.includes(dName) || dName.includes(cName);
-            });
+            // 2. Use the pre-calculated concepts for this specific drawer
+            const matchingConcepts = conceptToDrawerMap.get(drawer.id) || [];
 
             let pendingMovements = [];
             matchingConcepts.forEach(concept => {
