@@ -12423,40 +12423,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Automatismos eliminados por petición del usuario
+            // Solo actualizamos la UI para mostrar qué fecha tiene el servidor
             if (diff > tolerance) {
-                // Server has newer data
-                if (isSameDevice) {
-                    // Same device — auto-load silently
-                    console.log('[NC Sync] Loading newer data from same device');
-                    isSyncingFromServer = true;
-                    applyGlobalData(result.data);
-                    isSyncingFromServer = false;
-                    NextcloudSync.setLocalModified(serverLastModified);
-                    updateSyncTimestampUI(serverLastModified);
-                    showToast('🔄 Datos actualizados desde Nextcloud', 'success');
-                } else {
-                    // Different device — ask the user
-                    const sourceDevice = result.deviceName || 'Desconocido';
-                    const sourceDate = serverDate.toLocaleString();
-                    showCustomConfirm(
-                        `📱 Hay datos más recientes en Nextcloud:\n\n` +
-                        `Dispositivo: ${sourceDevice}\n` +
-                        `Guardado: ${sourceDate}\n\n` +
-                        `¿Cargar esos datos? (Si no, se mantendrán los locales)`,
-                        () => {
-                            isSyncingFromServer = true;
-                            applyGlobalData(result.data);
-                            isSyncingFromServer = false;
-                            NextcloudSync.setLocalModified(serverLastModified);
-                            updateSyncTimestampUI(serverLastModified);
-                            showToast('✅ Datos cargados desde Nextcloud', 'success');
-                        },
-                        () => {
-                            // User chose to keep local — upload local data
-                            ncSafeUpload(true);
-                        }
-                    );
-                }
+                console.log('[NC Sync] Server has newer data, but automatic prompts are disabled.');
+                updateSyncTimestampUI(serverLastModified);
             } else {
                 console.log('[NC Sync] Local data is up to date');
                 updateSyncTimestampUI(NextcloudSync.getLocalModified());

@@ -136,6 +136,23 @@ const NextcloudSync = (() => {
     async function uploadData(config, appData) {
         await ensureFolder(config);
 
+        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
+        const destUrl = buildWebDavUrl(config, `${NC_FOLDER}/msv-data-prev.json`);
+        
+        // Renombre del anterior archivo JSON para mantener un backup
+        try {
+            await proxiedFetch(config, url, {
+                method: 'MOVE',
+                headers: {
+                    ...authHeaders(config),
+                    'Destination': destUrl,
+                    'Overwrite': 'T'
+                }
+            });
+        } catch (e) {
+            console.warn('[NC Sync] No se pudo renombrar backup anterior:', e);
+        }
+
         const now = new Date().toISOString();
         const payload = {
             version: 1,
@@ -145,7 +162,7 @@ const NextcloudSync = (() => {
             data: appData
         };
 
-        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
+
         const resp = await proxiedFetch(config, url, {
             method: 'PUT',
             headers: {
