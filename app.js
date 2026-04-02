@@ -1310,71 +1310,47 @@ document.addEventListener('DOMContentLoaded', () => {
         // 0. Pre-assign each nomina concept to the drawer that matches it MOST specifically
         const conceptToDrawerMap = new Map();
         nominaData.forEach(concept => {
-            const rawCName = concept.name || '';
-            const cNormalized = normalizeString(rawCName).trim();
+            const cNormalized = normalizeString(concept.name || '').trim();
             if (!cNormalized) return;
 
-            let bestDrawerId = null;
-            let highestScore = 0; // Starts at 0, only positive scores win
+            let bestDrawerKey = null;
+            let highestScore = 0;
 
             savingsDrawers.forEach(drawer => {
-                const rawDName = drawer.name || '';
-                const dNormalized = normalizeString(rawDName).trim();
-                if (!dNormalized) return;
-
-                const cHasGastos = cNormalized.includes('gastos');
-                const dHasGastos = dNormalized.includes('gastos');
-
-                // Manual Veto for B100/Ahorro: 
-                // If drawer is specifically "b100" (the saving one), it NEVER accepts "gastos" concepts.
-                if (dNormalized === 'b100' && cHasGastos) return;
-
-                // Absolute Rule: If one has "gastos" and the other doesn't, skip
-                if (cHasGastos !== dHasGastos) return;
-
+                const dNorm = normalizeString(drawer.name || '').trim();
                 let score = 0;
-                
-                // Rule 1: Exact match
-                if (cNormalized === dNormalized) {
+
+                // ABSOLUTE RULE: Names must be EXACTLY identical mapping 1-to-1
+                // This is the only way to prevent B100 from capturing B100 GASTOS!
+                if (cNormalized === dNorm) {
                     score = 1000;
-                } 
-                // Rule 2: Word-based match
-                else {
-                    const cWords = cNormalized.split(/\s+/);
-                    const dWords = dNormalized.split(/\s+/);
-                    const isSubset = dWords.every(dw => cWords.includes(dw)) || cWords.every(cw => dWords.includes(cw));
-                    if (isSubset) {
-                        score = dNormalized.length;
-                    }
                 }
 
                 if (score > highestScore) {
                     highestScore = score;
-                    bestDrawerId = drawer.id;
+                    bestDrawerKey = dNorm;
                 }
             });
 
-            if (bestDrawerId && highestScore > 0) {
-                if (!conceptToDrawerMap.has(bestDrawerId)) conceptToDrawerMap.set(bestDrawerId, []);
-                conceptToDrawerMap.get(bestDrawerId).push(concept);
+            if (bestDrawerKey && highestScore > 0) {
+                if (!conceptToDrawerMap.has(bestDrawerKey)) conceptToDrawerMap.set(bestDrawerKey, []);
+                conceptToDrawerMap.get(bestDrawerKey).push(concept);
             }
         });
 
         savingsDrawers.forEach(drawer => {
-            // 1. Get realized expenses in this drawer for this fiscal month (EXCLUDING TRANSFERS & INVESTMENTS)
+            const dNorm = normalizeString(drawer.name || '').trim();
             const realizedMovements = (drawer.movements || []).filter(m => {
                 const mDate = new Date(m.date);
                 if (isNaN(mDate.getTime()) || getFiscalMonth(mDate) !== currentFiscalMonthStr || m.amount >= 0) return false;
-                
-                const cat = normalizeString(m.category || '');
                 const conc = normalizeString(m.concept || m.description || '');
+                const cat = normalizeString(m.category || '');
                 const isTransfer = cat.includes('traspaso') || conc.includes('traspaso') || cat.includes('inversion') || conc.includes('inversion');
-                
                 return !isTransfer;
             });
 
-            // 2. Use the pre-calculated concepts for this specific drawer
-            const matchingConcepts = conceptToDrawerMap.get(drawer.id) || [];
+            // Retrieval by strict normalized key
+            const matchingConcepts = conceptToDrawerMap.get(dNorm) || [];
 
             let pendingMovements = [];
             matchingConcepts.forEach(concept => {
@@ -1408,6 +1384,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 pendingMovements = pendingMovements.concat(deduplicated);
             });
+
+            // FINAL GUARD: Absolute exclusion for B100 Saving account
+            // This prevents it from capturing NO movements (Nomina, Provisions, etc.)
+            if (dNorm === 'b100') {
+                pendingMovements = [];
+            }
 
             // Calculations
             const sumRealized = realizedMovements.reduce((s, m) => s + m.amount, 0);
