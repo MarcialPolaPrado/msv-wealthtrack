@@ -1368,17 +1368,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const alreadyRealized = realizedMovements.some(rm => {
                         const rmConcept = normalizeString(rm.concept || '').trim();
-                        const rmDesc = normalizeString(rm.description || '').trim();
                         const rmAmount = Math.abs(parseFloat(rm.amount) || 0);
                         
-                        // Rule 1: Concept matches exactly
-                        const nameMatch = (rmConcept && (rmConcept === pmSearch || rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept))) ||
-                                          (rmDesc && (rmDesc === pmSearch || rmDesc.includes(pmSearch) || pmSearch.includes(rmDesc)));
-                        
-                        // Rule 2: If amounts match exactly AND it shares some part of the name, it's a match
+                        // Rule 1: Amounts must match EXACTLY (to 2 decimal places)
                         const amountMatch = (Math.abs(rmAmount - pmAmount) < 0.01);
-                        
-                        return nameMatch || (amountMatch && pmSearch.length > 3 && (rmConcept.includes(pmSearch.substring(0,4)) || rmDesc.includes(pmSearch.substring(0,4))));
+                        if (!amountMatch) return false;
+
+                        // Rule 2: If the name is generic (like "total"), match must be EXACT
+                        if (pmSearch === 'total' || pmSearch.length < 4) {
+                            return rmConcept === pmSearch || rmConcept.includes(pmSearch);
+                        }
+
+                        // Rule 3: For specific names, allow partial match
+                        return rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept);
                     });
                     return !alreadyRealized;
                 });
