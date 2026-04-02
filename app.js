@@ -1365,6 +1365,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Deduplicate: Solo elimina si es un pago exactamente igual en cantidad y parecido en nombre, o exacto en nombre
                 const deduplicated = allPending.filter(pm => {
+                    if (pm.isMaxTotal) return true; // Max Total movements override deduplication dynamically
+
                     const normStr = (s) => normalizeString(s).trim().replace(/\s+/g, ' ');
                     const pmSearch = normStr(pm.concept || pm.description || '');
                     if (!pmSearch) return true;
@@ -1395,7 +1397,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Calculations
+            // Support for MaxTotal (Resting realized expenses)
             const sumRealized = realizedMovements.reduce((s, m) => s + m.amount, 0);
+            
+            pendingMovements = pendingMovements.map(pm => {
+                const pmConceptStr = (pm.concept || pm.name || '').toLowerCase().trim();
+                if (pm.isMaxTotal || pmConceptStr === 'total' || pmConceptStr === 'presupuesto restante') {
+                    // Reduce max budget by the absolute sum realized. Negative means budget remaining.
+                    const adjustedAmount = Math.min(0, Math.abs(sumRealized) - Math.abs(pm.amount));
+                    return { ...pm, amount: adjustedAmount, concept: pm.concept || 'Presupuesto Restante' };
+                }
+                return pm;
+            }).filter(pm => pm.amount < 0); // Hide if budget exhausted
+
             const sumPending = pendingMovements.reduce((s, m) => s + m.amount, 0);
             const currentBalance = drawer.balance || 0;
             const projectedBalance = currentBalance + sumPending; // sumPending is negative
@@ -5977,6 +5991,18 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.drawerGroupGroup?.classList.add('hidden');
         const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
         targetDrawerSelectGroup?.classList.add('hidden');
+        
+        const isMaxTotalCbBtnContainer = document.getElementById('maxTotalCheckboxContainer');
+        const isMaxTotalCbInp = document.getElementById('movementIsMaxTotalInput');
+        if (isMaxTotalCbBtnContainer && isMaxTotalCbInp) {
+            if (drawer.group && drawer.group.toLowerCase() === 'nomina') {
+                isMaxTotalCbBtnContainer.classList.remove('hidden');
+                isMaxTotalCbInp.checked = false; // Reset to false for new movements
+            } else {
+                isMaxTotalCbBtnContainer.classList.add('hidden');
+                isMaxTotalCbInp.checked = false;
+            }
+        }
 
         // Show toggle for manual movements
         if (elements.savingsMovementTypeContainer) {
@@ -7271,6 +7297,19 @@ document.addEventListener('DOMContentLoaded', () => {
         transferTargetGroup?.classList.add('hidden');
         elements.drawerGroupGroup?.classList.add('hidden');
         if (elements.drawerIconGroup) elements.drawerIconGroup.classList.add('hidden');
+        
+        const isMaxTotalCbBtnContainer = document.getElementById('maxTotalCheckboxContainer');
+        const isMaxTotalCbInp = document.getElementById('movementIsMaxTotalInput');
+        if (isMaxTotalCbBtnContainer && isMaxTotalCbInp) {
+            // Unhide UI if drawer is from Nomina Group or Ahorro Group
+            if (drawer.group && drawer.group.toLowerCase() === 'nomina') {
+                isMaxTotalCbBtnContainer.classList.remove('hidden');
+                isMaxTotalCbInp.checked = !!movement.isMaxTotal || (movement.concept && movement.concept.toLowerCase() === 'total');
+            } else {
+                isMaxTotalCbBtnContainer.classList.add('hidden');
+                isMaxTotalCbInp.checked = false;
+            }
+        }
 
         const targetDrawerSelectGroup = document.getElementById('targetDrawerSelectGroup');
         targetDrawerSelectGroup?.classList.add('hidden');
@@ -9417,7 +9456,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         amount: finalAmount,
                         description: concept,
                         category: category,
-                        isPeriodic: elements.savingsRecurringInput?.checked || false
+                        isPeriodic: elements.savingsRecurringInput?.checked || false,
+                        isMaxTotal: document.getElementById('movementIsMaxTotalInput')?.checked || false
                     });
 
                     // Recurring Sync Logic
@@ -9560,6 +9600,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     movement.category = category;
                     movement.date = date;
                     movement.isPeriodic = elements.savingsRecurringInput?.checked || false;
+                    movement.isMaxTotal = document.getElementById('movementIsMaxTotalInput')?.checked || false;
                     drawer.balance += (finalAmount - oldAmount);
 
                     // Recurring Sync Logic
@@ -9881,7 +9922,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         amount: amount,
                         concept: concept,
                         description: concept, // Standardize
-                        activeMonths: activeMonths
+                        activeMonths: activeMonths,
+                        isMaxTotal: document.getElementById('nominaMovementIsMaxTotalInput')?.checked || false
                     };
                 } else {
                     drawer.movements.push({
@@ -9889,9 +9931,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         date: new Date().toISOString().split('T')[0],
                         amount: amount,
                         concept: concept,
-                        description: concept, // Standardize
+                        description: concept,
                         activeMonths: activeMonths,
-                        paid: false
+                        paid: false,
+                        isMaxTotal: document.getElementById('nominaMovementIsMaxTotalInput')?.checked || false
                     });
                 }
 
@@ -10953,6 +10996,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.nominaMovementTargetId) elements.nominaMovementTargetId.value = drawerId;
         if (elements.nominaMovementEditIndex) elements.nominaMovementEditIndex.value = '';
         elements.nominaMonthsCheckboxes.querySelectorAll('input').forEach(cb => cb.checked = true);
+        
+        const isMaxTotalInp = document.getElementById('nominaMovementIsMaxTotalInput');
+        if (isMaxTotalInp) isMaxTotalInp.checked = false;
 
         const drawer = nominaData.find(d => d.id == drawerId);
 
@@ -10986,6 +11032,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.nominaMovementEditIndex) elements.nominaMovementEditIndex.value = index;
         if (elements.nominaMovementAmountInput) elements.nominaMovementAmountInput.value = Math.abs(mov.amount);
         if (elements.nominaMovementConceptInput) elements.nominaMovementConceptInput.value = mov.concept || mov.description || '';
+        
+        const isMaxTotalInp = document.getElementById('nominaMovementIsMaxTotalInput');
+        if (isMaxTotalInp) isMaxTotalInp.checked = !!mov.isMaxTotal || ((mov.concept || mov.description || '').toLowerCase() === 'total');
+
         const active = mov.activeMonths || [];
         elements.nominaMonthsCheckboxes.querySelectorAll('input').forEach(cb => {
             cb.checked = active.includes(parseInt(cb.value));
