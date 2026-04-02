@@ -11871,7 +11871,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'A1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                style: { theme: 'TableStyleMedium4', showRowStripes: true },
                 columns: [
                     { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Concepto', filterButton: true },
@@ -11888,7 +11888,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'K1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                style: { theme: 'TableStyleMedium11', showRowStripes: true },
                 columns: [
                     { name: 'Categoría', filterButton: true, totalsRowLabel: 'TOTAL' }, 
                     { name: 'Total', filterButton: true, totalsRowFunction: 'sum' }
@@ -11909,7 +11909,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'N1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                style: { theme: 'TableStyleMedium11', showRowStripes: true },
                 columns: [
                     { name: 'Cuenta', filterButton: true, totalsRowLabel: 'TOTAL' }, 
                     { name: 'Total', filterButton: true, totalsRowFunction: 'sum' },
@@ -11941,7 +11941,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'A1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                style: { theme: 'TableStyleMedium7', showRowStripes: true },
                 columns: [
                     { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Empresa', filterButton: true },
@@ -11956,7 +11956,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'F1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                style: { theme: 'TableStyleMedium14', showRowStripes: true },
                 columns: [
                     { name: 'Empresa', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Total Dividendos', filterButton: true, totalsRowFunction: 'sum' }
@@ -11980,7 +11980,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'A1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                style: { theme: 'TableStyleMedium3', showRowStripes: true },
                 columns: [
                     { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Concepto', filterButton: true },
@@ -11996,7 +11996,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'G1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                style: { theme: 'TableStyleMedium10', showRowStripes: true },
                 columns: [
                     { name: 'Mes', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Total Gastos', filterButton: true, totalsRowFunction: 'sum' }
@@ -12020,7 +12020,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'A1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                style: { theme: 'TableStyleMedium6', showRowStripes: true },
                 columns: [
                     { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Concepto', filterButton: true },
@@ -12036,7 +12036,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'G1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                style: { theme: 'TableStyleMedium13', showRowStripes: true },
                 columns: [
                     { name: 'Mes', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Total Ingresos', filterButton: true, totalsRowFunction: 'sum' }
@@ -12060,7 +12060,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'A1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                style: { theme: 'TableStyleMedium5', showRowStripes: true },
                 columns: [
                     { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Concepto', filterButton: true },
@@ -12076,7 +12076,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'G1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                style: { theme: 'TableStyleMedium12', showRowStripes: true },
                 columns: [
                     { name: 'Cuenta', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Total Ganancia', filterButton: true, totalsRowFunction: 'sum' }
@@ -12089,7 +12089,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'J1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium4', showRowStripes: true },
+                style: { theme: 'TableStyleMedium12', showRowStripes: true },
                 columns: [
                     { name: 'Categoría', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Total Ganancia', filterButton: true, totalsRowFunction: 'sum' }
@@ -12116,7 +12116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'A1',
                 headerRow: true,
                 totalsRow: true,
-                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                style: { theme: 'TableStyleMedium15', showRowStripes: true },
                 columns: [
                     { name: 'Fecha', filterButton: true, totalsRowLabel: 'TOTAL' },
                     { name: 'Concepto', filterButton: true },
@@ -12184,7 +12184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ref: 'A1',
                 headerRow: true,
                 totalsRow: false,
-                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                style: { theme: 'TableStyleMedium18', showRowStripes: true },
                 columns: [
                     { name: 'Período', filterButton: true },
                     { name: 'Ahorro', filterButton: true },
@@ -12242,6 +12242,39 @@ document.addEventListener('DOMContentLoaded', () => {
             // Background coloring (manual bar look) for columns B, C, D
             // Note: Since ExcelJS 4.4.0 might have limited dataBar support in some exports,
             // the 'Visual' column (6) with symbols is the most robust way.
+
+            // Explicitly force cell backgrounds to bypass cross-platform viewer limitations
+            // (e.g. Nextcloud Office, G.Sheets, Calc often ignore Excel Table styles)
+            const explicitStripeSheet = (sheet, headColor, evenColor) => {
+                const oddColor = 'FFFFFFFF'; // White
+                sheet.eachRow((row, rowNum) => {
+                    if (rowNum === 1) {
+                        row.eachCell((cell) => {
+                            if (!cell.fill || cell.fill.type === 'none') {
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headColor } };
+                            }
+                            let f = cell.font || {};
+                            cell.font = { ...f, bold: true, color: { argb: 'FFFFFFFF' } };
+                        });
+                        return;
+                    }
+                    const color = (rowNum % 2 === 0) ? evenColor : oddColor;
+                    row.eachCell((cell) => {
+                        if (!cell.fill || cell.fill.type === 'none') {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+                        }
+                    });
+                });
+            };
+
+            explicitStripeSheet(wsBolsa, 'FF2F75B5', 'FFEAF1F8');    // Blue
+            explicitStripeSheet(wsAhorro, 'FF548235', 'FFEBF4EB');   // Green
+            explicitStripeSheet(wsDivs, 'FFC65911', 'FFFEF1E8');     // Orange
+            explicitStripeSheet(wsGastos, 'FFC00000', 'FFFBEBEA');   // Red
+            explicitStripeSheet(wsIncomes, 'FF008080', 'FFECF6F8');  // Teal
+            explicitStripeSheet(wsEarnings, 'FF7030A0', 'FFF1EDF6'); // Purple
+            explicitStripeSheet(wsNomina, 'FF595959', 'FFF2F2F2');   // Grey
+            explicitStripeSheet(wsHist, 'FFBF8F00', 'FFFFF6E5');     // Gold/Yellow
 
             // 3. Generate and Buffer
             const buffer = await workbook.xlsx.writeBuffer();
