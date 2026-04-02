@@ -136,21 +136,29 @@ const NextcloudSync = (() => {
     async function uploadData(config, appData) {
         await ensureFolder(config);
 
-        const url = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
-        const destUrl = buildWebDavUrl(config, `${NC_FOLDER}/msv-data-prev.json`);
-        
-        // Renombre del anterior archivo JSON para mantener un backup
+        // Renombre del anterior archivo JSON usando GET + PUT para evitar problemas de CORS con el header 'Destination' del método MOVE
         try {
-            await proxiedFetch(config, url, {
-                method: 'MOVE',
-                headers: {
-                    ...authHeaders(config),
-                    'Destination': destUrl,
-                    'Overwrite': 'T'
-                }
+            const oldUrl = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
+            const oldResp = await proxiedFetch(config, oldUrl, {
+                method: 'GET',
+                headers: authHeaders(config)
             });
+
+            if (oldResp.ok) {
+                const oldPayloadStr = await oldResp.text();
+                const prevUrl = buildWebDavUrl(config, `${NC_FOLDER}/msv-data-prev.json`);
+                await proxiedFetch(config, prevUrl, {
+                    method: 'PUT',
+                    headers: {
+                        ...authHeaders(config),
+                        'Content-Type': 'application/json'
+                    },
+                    body: oldPayloadStr
+                });
+                console.log('[NC Sync] Backup -prev.json creado con éxito.');
+            }
         } catch (e) {
-            console.warn('[NC Sync] No se pudo renombrar backup anterior:', e);
+            console.warn('[NC Sync] No se pudo crear el backup -prev.json:', e);
         }
 
         const now = new Date().toISOString();
@@ -162,8 +170,8 @@ const NextcloudSync = (() => {
             data: appData
         };
 
-
-        const resp = await proxiedFetch(config, url, {
+        const newUrl = buildWebDavUrl(config, `${NC_FOLDER}/${NC_FILE}`);
+        const resp = await proxiedFetch(config, newUrl, {
             method: 'PUT',
             headers: {
                 ...authHeaders(config),
