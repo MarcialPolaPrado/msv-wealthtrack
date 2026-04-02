@@ -9246,7 +9246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sidebarNcBackupBtn')?.addEventListener('click', () => ncBackupData());
         document.getElementById('sidebarNcRestoreBtn')?.addEventListener('click', () => ncRestoreData());
         document.getElementById('sidebarNcExcelBtn')?.addEventListener('click', () => ncExportToExcel());
-        elements.sidebarSyncInfo?.addEventListener('click', () => {
+        elements.sidebarSyncInfo?.addEventListener('click', async () => {
             const oldOverlay = document.getElementById('customSyncConfirmOverlay');
             if (oldOverlay) oldOverlay.remove();
             
@@ -9263,7 +9263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 style="margin-bottom: 1rem; line-height: 1.5; font-weight: 700; color: white;">Sincronización Nextcloud</h3>
                     <p style="margin-bottom: 2rem; opacity: 0.8; font-size: 0.95rem;">¿Qué acción deseas realizar con Nextcloud?</p>
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <button id="syncWriteBtn" class="btn-primary" style="padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer;">Grabar (Sobrescribir servidor)</button>
+                        <button id="syncWriteBtn" class="btn-primary" style="padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer;">Grabar (Buscando fecha en servidor...)</button>
                         <button id="syncReadBtn" class="btn-secondary" style="padding: 1rem; border-radius: 12px; font-weight: 600; font-size: 1rem; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); color: white; cursor: pointer;">Leer (Cargar de servidor)</button>
                         <button id="syncCancelBtn" class="btn-secondary" style="padding: 0.9rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem; margin-top: 0.5rem; cursor: pointer;">Cancelar</button>
                     </div>
@@ -9282,6 +9282,27 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('syncCancelBtn').onclick = () => {
                 overlay.remove();
             };
+
+            const config = NextcloudSync.loadConfig();
+            const writeBtn = document.getElementById('syncWriteBtn');
+            if (config && writeBtn) {
+                try {
+                    const metadata = await NextcloudSync.getFileMetadata(config);
+                    if (metadata && metadata.lastModified) {
+                        const date = new Date(metadata.lastModified);
+                        const dia = date.getDate().toString().padStart(2, '0');
+                        const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+                        const hora = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                        writeBtn.textContent = `Grabar (Sobrescribir archivo del ${dia}/${mes} a las ${hora})`;
+                    } else {
+                        writeBtn.textContent = "Grabar (No se encontró archivo previo)";
+                    }
+                } catch (e) {
+                    writeBtn.textContent = "Grabar (Error obteniendo fecha)";
+                }
+            } else if (writeBtn) {
+                 writeBtn.textContent = "Grabar (Nextcloud no configurado)";
+            }
         });
 
         // Activity Listeners
