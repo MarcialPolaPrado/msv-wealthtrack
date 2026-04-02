@@ -257,6 +257,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${String(month + 1).padStart(2, '0')}`;
     }
 
+    function updateAhorroGastosMonthLabel() {
+        try {
+            const fiscalMonthStr = getFiscalMonth();
+            const parts = fiscalMonthStr.split('-');
+            const monthIdx = parseInt(parts[1], 10) - 1; // 0-indexed
+            
+            const monthNames = [
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+            ];
+            const capitalizedMonth = monthNames[monthIdx] || 'Mes';
+            
+            // Use direct query to ensure findings
+            const sidebarLabel = document.getElementById('ahorroGastosMonthName');
+            const titleLabel = document.getElementById('ahorroGastosTitleMonth');
+            
+            if (sidebarLabel) sidebarLabel.textContent = capitalizedMonth;
+            if (titleLabel) titleLabel.textContent = capitalizedMonth;
+        } catch (e) {
+            console.error("Error updating month label:", e);
+        }
+    }
+
     /**
      * returns {start: Date, end: Date} for the week containing refDateStr,
      * anchored to the fiscal month starting on fiscalDay.
@@ -840,7 +863,18 @@ document.addEventListener('DOMContentLoaded', () => {
         recurringMovementsList: document.getElementById('recurringMovementsList'),
         executeRecurringMovementsBtn: document.getElementById('executeRecurringMovementsBtn'),
         savingsRecurringInput: document.getElementById('savingsRecurringInput'),
-        closeRecurringMovementsModal: document.getElementById('closeRecurringMovementsModal')
+        closeRecurringMovementsModal: document.getElementById('closeRecurringMovementsModal'),
+        
+        // Ahorro Gastos View
+        ahorroGastosSection: document.getElementById('ahorroGastosSection'),
+        ahorroGastosBtn2: document.getElementById('ahorroGastosBtn2'),
+        ahorroGastosMonthName: document.getElementById('ahorroGastosMonthName'),
+        ahorroGastosTitleMonth: document.getElementById('ahorroGastosTitleMonth'),
+        totalRealizedExpenses: document.getElementById('totalRealizedExpenses'),
+        totalPendingExpenses: document.getElementById('totalPendingExpenses'),
+        estimatedFinalBalance: document.getElementById('estimatedFinalBalance'),
+        ahorroGastosRealizedList: document.getElementById('ahorroGastosRealizedList'),
+        ahorroGastosPendingList: document.getElementById('ahorroGastosPendingList')
     };
 
     const updateNominaMovementType = (type) => {
@@ -1136,6 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightSubmenu('ahorroListBtn2', currentView === 'ahorro' && ahorroViewMode === 'list');
         highlightSubmenu('ahorroEstadoBtn2', currentView === 'ahorroEstado');
         highlightSubmenu('ahorroCalendarBtn2', currentView === 'ahorroCalendar');
+        highlightSubmenu('ahorroGastosBtn2', currentView === 'ahorroGastos');
     }
 
     // --- Logic ---
@@ -1261,7 +1296,143 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Rendering ---
     let isFirstUpdateDone = false;
 
+    function renderAhorroGastos() {
+        if (!elements.ahorroGastosSection) return;
+        updateAhorroGastosMonthLabel();
+
+        const currentFiscalMonthStr = getFiscalMonth();
+        const currentMonthNum = parseInt(currentFiscalMonthStr.split('-')[1], 10);
+        
+        const container = document.getElementById('ahorroGastosAccountList');
+        if (!container) return;
+        container.innerHTML = '';
+
+        savingsDrawers.forEach(drawer => {
+            // 1. Get realized expenses in this drawer for this fiscal month (EXCLUDING TRANSFERS & INVESTMENTS)
+            const realizedMovements = (drawer.movements || []).filter(m => {
+                const mDate = new Date(m.date);
+                if (isNaN(mDate.getTime()) || getFiscalMonth(mDate) !== currentFiscalMonthStr || m.amount >= 0) return false;
+                
+                const cat = normalizeString(m.category || '');
+                const conc = normalizeString(m.concept || m.description || '');
+                const isTransfer = cat.includes('traspaso') || conc.includes('traspaso') || cat.includes('inversion') || conc.includes('inversion');
+                
+                return !isTransfer;
+            });
+
+            // 2. Find ALL matching nomina concepts for this drawer
+            const matchingConcepts = nominaData.filter(c => {
+                const cName = normalizeString(c.name);
+                const dName = normalizeString(drawer.name);
+                return cName.includes(dName) || dName.includes(cName);
+            });
+
+            let pendingMovements = [];
+            matchingConcepts.forEach(concept => {
+                const allPending = (concept.movements || []).filter(m => {
+                    const isActive = (m.activeMonths || []).map(Number).includes(currentMonthNum);
+                    return isActive && m.amount < 0 && !m.paid;
+                });
+
+                // Deduplicate: If an item with similar name is already in realizedMovements, skip it
+                const deduplicated = allPending.filter(pm => {
+                    const pmSearch = normalizeString(pm.concept || pm.description || '').trim();
+                    if (!pmSearch) return true;
+                    
+                    const pmAmount = Math.abs(parseFloat(pm.amount) || 0);
+
+                    const alreadyRealized = realizedMovements.some(rm => {
+                        const rmConcept = normalizeString(rm.concept || '').trim();
+                        const rmDesc = normalizeString(rm.description || '').trim();
+                        const rmAmount = Math.abs(parseFloat(rm.amount) || 0);
+                        
+                        // Rule 1: Concept matches exactly
+                        const nameMatch = (rmConcept && (rmConcept === pmSearch || rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept))) ||
+                                          (rmDesc && (rmDesc === pmSearch || rmDesc.includes(pmSearch) || pmSearch.includes(rmDesc)));
+                        
+                        // Rule 2: If amounts match exactly AND it shares some part of the name, it's a match
+                        const amountMatch = (Math.abs(rmAmount - pmAmount) < 0.01);
+                        
+                        return nameMatch || (amountMatch && pmSearch.length > 3 && (rmConcept.includes(pmSearch.substring(0,4)) || rmDesc.includes(pmSearch.substring(0,4))));
+                    });
+                    return !alreadyRealized;
+                });
+                pendingMovements = pendingMovements.concat(deduplicated);
+            });
+
+            // Calculations
+            const sumRealized = realizedMovements.reduce((s, m) => s + m.amount, 0);
+            const sumPending = pendingMovements.reduce((s, m) => s + m.amount, 0);
+            const currentBalance = drawer.balance || 0;
+            const projectedBalance = currentBalance + sumPending; // sumPending is negative
+
+            // Only show cards for accounts that have expenses (realized or pending)
+            if (realizedMovements.length === 0 && pendingMovements.length === 0) return;
+
+            const card = document.createElement('div');
+            card.className = 'card glass-panel';
+            card.style.padding = '1.5rem';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.gap = '1.2rem';
+            card.style.borderTop = '3px solid var(--primary)';
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5rem;">${drawer.icon || '📁'}</span>
+                        <span style="font-weight: 800; font-size: 1.1rem; color: white;">${drawer.name}</span>
+                    </div>
+                        <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px;">
+                            <div style="font-size: 0.85rem; font-weight: 700; opacity: 0.6; color: var(--text-muted);">${fmtEUR(currentBalance)}</div>
+                            <div style="width: 15px; height: 1px; background: rgba(255,255,255,0.15); margin: 2px 0;"></div>
+                            <div style="font-weight: 900; font-size: 1.15rem; color: ${projectedBalance < 0 ? 'var(--danger)' : 'var(--success)'}; line-height: 1.1;">${fmtEUR(projectedBalance)}</div>
+                            <div style="font-size: 0.6rem; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;">Saldo Final</div>
+                        </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Realized Section -->
+                    ${realizedMovements.length > 0 ? `
+                        <div>
+                            <div style="font-size: 0.65rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;">Gastos Realizados (${fmtEUR(Math.abs(sumRealized))})</div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                ${realizedMovements.map(m => `
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0;">
+                                        <span style="opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${m.concept || m.description || 'Gasto'}</span>
+                                        <span style="font-weight: 700; color: var(--danger);">${fmtEUR(m.amount)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Pending Section -->
+                    ${pendingMovements.length > 0 ? `
+                        <div style="padding-top: 0.5rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                            <div style="font-size: 0.65rem; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;">Gastos Pendientes (${fmtEUR(Math.abs(sumPending))})</div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                ${pendingMovements.map(m => `
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; color: rgba(245, 158, 11, 0.9);">
+                                        <span style="font-style: italic;">${m.concept || m.description || 'Pte. Pago'}</span>
+                                        <span style="font-weight: 800; border-bottom: 1px dotted currentColor;">${fmtEUR(m.amount)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        if (container.innerHTML === '') {
+            container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 4rem;">No hay gastos relevantes para este mes fiscal.</div>';
+        }
+    }
+
     function render() {
+        updateAhorroGastosMonthLabel();
         try {
             updateSidebarTogglesUI();
         // Toggle Bolsa Summary Visibility
@@ -1792,6 +1963,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.analisisSection) elements.analisisSection.classList.add('hidden');
         if (elements.ahorroCalendarSection) elements.ahorroCalendarSection.classList.add('hidden');
         if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.add('hidden');
+        if (elements.ahorroGastosSection) elements.ahorroGastosSection.classList.add('hidden');
         if (elements.ahorroHistoricoSection) elements.ahorroHistoricoSection.classList.add('hidden');
         if (elements.mobileActionBar) elements.mobileActionBar.classList.add('hidden');
 
@@ -1817,6 +1989,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (currentView === 'ahorroEstado') {
             if (elements.ahorroEstadoSection) elements.ahorroEstadoSection.classList.remove('hidden');
             renderAhorroEstado();
+        } else if (currentView === 'ahorroGastos') {
+            if (elements.ahorroGastosSection) elements.ahorroGastosSection.classList.remove('hidden');
+            renderAhorroGastos();
         } else if (currentView === 'ahorroHistorico') {
             if (elements.ahorroHistoricoSection) elements.ahorroHistoricoSection.classList.remove('hidden');
             renderAhorroHistorico();
@@ -1832,6 +2007,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'nomina': elements.nominaSection,
                 'analisis': elements.analisisSection,
                 'ahorroEstado': elements.ahorroEstadoSection,
+                'ahorroGastos': elements.ahorroGastosSection,
                 'ahorroHistorico': elements.ahorroHistoricoSection
             };
             const target = viewMap[currentView];
@@ -5527,7 +5703,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Sync Sidebar Items
         elements.wealthNavItems?.forEach(item => {
-            const isAh = (item.dataset.view === 'ahorro' && (view === 'ahorroCalendar' || view === 'ahorroEstado'));
+            const isAh = ((item.dataset.view === 'ahorro' || item.dataset.view === 'ahorroGastos') && (view === 'ahorroCalendar' || view === 'ahorroEstado' || view === 'ahorroGastos'));
             const isNom = (item.dataset.view === 'nomina' && view === 'analisis');
             item.classList.toggle('active', item.dataset.view === view || isAh || isNom);
         });
@@ -5583,6 +5759,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Use generalized render to handle visibility and specific rendering
         if (view === 'activity') {
             updateActivityDrawerFilterOptions();
+        }
+        if (view === 'ahorroGastos') {
+            updateAhorroGastosMonthLabel();
         }
         render();
     }
@@ -6176,6 +6355,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const overlay = document.createElement('div');
         overlay.id = 'drawerDetailsOverlay';
+
         overlay.style.cssText = `
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000;
             display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);
@@ -8524,7 +8704,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const isAh = (view === 'ahorro' && (currentView === 'ahorroCalendar' || currentView === 'ahorroEstado'));
+                // Updated isAh to include ahorroGastos
+                const isAh = (view === 'ahorro' && (currentView === 'ahorroCalendar' || currentView === 'ahorroEstado' || currentView === 'ahorroGastos'));
                 const isNom = (view === 'nomina' && currentView === 'analisis');
                 if (currentView === view || isAh || isNom) {
                     if (view === 'bolsa') toggleBolsaView();
@@ -8556,7 +8737,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeMobileSidebar();
             });
         });
-
         // Ensure clicking the header also triggers the main button
         document.querySelectorAll('.nav-item-header').forEach(header => {
             header.addEventListener('click', (e) => {
@@ -12373,6 +12553,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start
     const initApp = function () {
+        updateAhorroGastosMonthLabel();
         updateStorageStatus();
         const initialSync = NextcloudSync.getLocalModified();
         updateSyncTimestampUI(initialSync);
@@ -12396,7 +12577,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewParam = window.location.hash.split('view=')[1].split('&')[0];
             }
 
-            const validViews = ['bolsa', 'ahorro', 'nomina', 'analisis'];
+            const validViews = ['bolsa', 'ahorro', 'nomina', 'analisis', 'ahorroGastos'];
             if (viewParam && validViews.includes(viewParam)) {
                 console.log(`[DeepLink] Navegando a: ${viewParam}`);
                 switchView(viewParam);
