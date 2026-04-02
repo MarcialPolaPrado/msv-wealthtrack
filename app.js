@@ -12441,38 +12441,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Periodic check for server changes (e.g. from other devices)
     function ncStartPeriodicCheck() {
-        setInterval(async () => {
-            const config = NextcloudSync.loadConfig();
-            if (!config || ncSyncInProgress) return;
-
-            try {
-                const result = await NextcloudSync.downloadData(config);
-                if (result.ok) {
-                    const serverDate = new Date(result.lastModified);
-                    const lastKnown = ncLastServerModified ? new Date(ncLastServerModified) : new Date(0);
-                    const isSameDevice = result.deviceId === NextcloudSync.getDeviceId();
-
-                    if (serverDate > lastKnown && !isSameDevice) {
-                        console.log('[NC Sync] Background check: Newer data found on server');
-                        // Show notification to user
-                        showCustomConfirm(
-                            `📱 Hay datos más recientes en Nextcloud (desde ${result.deviceName || 'otro dispositivo'}).\n\n¿Quieres cargarlos ahora?`,
-                            () => {
-                                isSyncingFromServer = true;
-                                applyGlobalData(result.data);
-                                isSyncingFromServer = false;
-                                NextcloudSync.setLocalModified(result.lastModified);
-                                ncLastServerModified = result.lastModified;
-                                updateSyncTimestampUI(result.lastModified);
-                                showToast('✅ Datos actualizados desde Nextcloud', 'success');
-                            }
-                        );
-                    }
-                }
-            } catch (e) {
-                console.warn('[NC Sync] Periodic check failed:', e);
-            }
-        }, 5 * 60 * 1000); // 5 minutes
+        // Automatismos eliminados por petición del usuario
     }
 
     // Debounced auto-upload — called after data changes
