@@ -1320,10 +1320,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dNorm = normalizeString(drawer.name || '').trim();
                 let score = 0;
 
-                // ABSOLUTE RULE: Names must be EXACTLY identical mapping 1-to-1
-                // This is the only way to prevent B100 from capturing B100 GASTOS!
+                // REGLA: Si son iguales, match perfecto
                 if (cNormalized === dNorm) {
                     score = 1000;
+                } 
+                // REGLA: Si uno contiene al otro, PERO respetando el "muro" de gastos
+                else {
+                    const cHasG = cNormalized.includes('gastos');
+                    const dHasG = dNorm.includes('gastos');
+                    
+                    // Si ambos comparten el estado de "gastos" (o ninguno lo tiene), permitimos vincularlos
+                    if (cHasG === dHasG && (cNormalized.includes(dNorm) || dNorm.includes(cNormalized))) {
+                        score = dNorm.length;
+                    }
                 }
 
                 if (score > highestScore) {
@@ -1369,18 +1378,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     const alreadyRealized = realizedMovements.some(rm => {
                         const rmConcept = normalizeString(rm.concept || '').trim();
                         const rmAmount = Math.abs(parseFloat(rm.amount) || 0);
+
+                        // Rule 1: Amounts MUST match for generic names (Total, etc.)
+                        const amountMatch = (Math.abs(rmAmount - pmAmount) < 0.05); // Allow 5 cents diff
                         
-                        // Rule 1: Amounts must match EXACTLY (to 2 decimal places)
-                        const amountMatch = (Math.abs(rmAmount - pmAmount) < 0.01);
-                        if (!amountMatch) return false;
+                        // Rule 2: If the name is very specific, we DON'T strictly need the amount match
+                        // But if name is generic, we DO.
+                        const nameIdentity = (rmConcept === pmSearch);
+                        const specificName = pmSearch.length > 5;
 
-                        // Rule 2: If the name is generic (like "total"), match must be EXACT
-                        if (pmSearch === 'total' || pmSearch.length < 4) {
-                            return rmConcept === pmSearch || rmConcept.includes(pmSearch);
+                        if (specificName && (rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept))) {
+                            return true; // Match found by specific name
                         }
-
-                        // Rule 3: For specific names, allow partial match
-                        return rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept);
+                        
+                        if (amountMatch && (rmConcept.includes(pmSearch) || pmSearch.includes(rmConcept))) {
+                            return true; // Match found by amount + any name match
+                        }
+                        
+                        return false;
                     });
                     return !alreadyRealized;
                 });
