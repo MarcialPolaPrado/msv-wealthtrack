@@ -9247,9 +9247,41 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sidebarNcRestoreBtn')?.addEventListener('click', () => ncRestoreData());
         document.getElementById('sidebarNcExcelBtn')?.addEventListener('click', () => ncExportToExcel());
         elements.sidebarSyncInfo?.addEventListener('click', () => {
-            showCustomConfirm('¿Deseas sincronizar y guardar tus datos actuales en Nextcloud ahora mismo?', () => {
-                ncSafeUpload(true); // Manually trigger forced sync
-            });
+            const oldOverlay = document.getElementById('customSyncConfirmOverlay');
+            if (oldOverlay) oldOverlay.remove();
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'customSyncConfirmOverlay';
+            overlay.style.cssText = `
+                position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000;
+                display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+                padding: 1rem;
+            `;
+            overlay.innerHTML = `
+                <div class="glass-panel" style="background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 24px; padding: 2.5rem 2rem; width: min(400px, 90vw); text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+                    <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">☁️</div>
+                    <h3 style="margin-bottom: 1rem; line-height: 1.5; font-weight: 700; color: white;">Sincronización Nextcloud</h3>
+                    <p style="margin-bottom: 2rem; opacity: 0.8; font-size: 0.95rem;">¿Qué acción deseas realizar con Nextcloud?</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <button id="syncWriteBtn" class="btn-primary" style="padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer;">Grabar (Sobrescribir servidor)</button>
+                        <button id="syncReadBtn" class="btn-secondary" style="padding: 1rem; border-radius: 12px; font-weight: 600; font-size: 1rem; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); color: white; cursor: pointer;">Leer (Cargar de servidor)</button>
+                        <button id="syncCancelBtn" class="btn-secondary" style="padding: 0.9rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem; margin-top: 0.5rem; cursor: pointer;">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            document.getElementById('syncWriteBtn').onclick = () => {
+                overlay.remove();
+                ncSafeUpload(true); 
+            };
+            document.getElementById('syncReadBtn').onclick = () => {
+                overlay.remove();
+                ncRestoreData(); 
+            };
+            document.getElementById('syncCancelBtn').onclick = () => {
+                overlay.remove();
+            };
         });
 
         // Activity Listeners
@@ -12458,18 +12490,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const config = NextcloudSync.loadConfig();
         if (!config) return;
 
-        // Check if auto-upload is enabled
-        const autoUpload = localStorage.getItem('ncAutoUpload') !== 'false';
-        if (!autoUpload) return;
-
+        // Auto-upload is entirely disabled per user preference
+        
         // Mark local data as modified (ONLY if we are not in the initial load phase)
         if (!isInitialLoad) {
             NextcloudSync.setLocalModified(new Date().toISOString());
         }
 
-        // Debounce: wait 10 seconds of inactivity before uploading
         if (ncAutoSyncTimer) clearTimeout(ncAutoSyncTimer);
-        ncAutoSyncTimer = setTimeout(() => ncSafeUpload(false), 10000);
     }
 
     // Upload with conflict detection
