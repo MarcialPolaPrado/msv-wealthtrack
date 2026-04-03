@@ -817,7 +817,6 @@ document.addEventListener('DOMContentLoaded', () => {
         bottomNav: document.getElementById('bottomNavHub'),
         sidebarClockBtn: document.getElementById('sidebarClockBtn'),
         sidebarResetBtn: document.getElementById('sidebarResetBtn'),
-        sidebarMigrateInversionsBtn: document.getElementById('sidebarMigrateInversionsBtn'),
         sidebarDeleteAllBtn: document.getElementById('sidebarDeleteAllBtn'),
         sidebarActivityBtn: document.getElementById('sidebarActivityBtn'),
         wealthNavItems: document.querySelectorAll('.wealth-nav-item, .submenu-item'),
@@ -1464,7 +1463,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="font-size: 0.65rem; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;">Gastos Pendientes (${fmtEUR(Math.abs(sumPending))})</div>
                             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                                 ${pendingMovements.map(m => `
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; color: rgba(245, 158, 11, 0.9);">
+                                    <div class="pending-movement-clickable" style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 6px 8px; color: rgba(245, 158, 11, 0.9); cursor: pointer; transition: background 0.2s; border-radius: 6px;" 
+                                         onclick="showPendingMovementModal('${drawer.id}', '${(m.concept || m.description || 'Pte. Pago').replace(/'/g, "\\'")}', ${Math.abs(m.amount)})"
+                                         onmouseover="this.style.background='rgba(245, 158, 11, 0.1)'"
+                                         onmouseout="this.style.background='transparent'">
                                         <span style="font-style: italic;">${m.concept || m.description || 'Pte. Pago'}</span>
                                         <span style="font-weight: 800; border-bottom: 1px dotted currentColor;">${fmtEUR(m.amount)}</span>
                                     </div>
@@ -6046,6 +6048,25 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.style.display = 'flex';
     }
 
+    function showPendingMovementModal(drawerId, concept, amount) {
+        showAddMovementModal(drawerId);
+        // Overwrite defaults with pending data
+        const amountInput = document.getElementById('movementAmountInput');
+        const conceptInput = document.getElementById('movementConceptInput');
+        const dateInput = document.getElementById('savingsDateInput');
+
+        if (amountInput) amountInput.value = amount;
+        if (conceptInput) conceptInput.value = concept;
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+        
+        // Force expense type as it's a pending expense
+        updateSavingsMovementType('expense');
+        
+        const title = document.getElementById('savingsModalTitle');
+        if (title) title.textContent = title.textContent + ' (Gasto Pendiente)';
+    }
+    window.showPendingMovementModal = showPendingMovementModal;
+
     function showTransferModal(drawerId) {
         const sourceDrawer = savingsDrawers.find(d => d.id === drawerId);
         if (!sourceDrawer) return;
@@ -8172,29 +8193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // window.panicReset removed
 
 
-    async function migrateInversions() {
-        showCustomConfirm("Esta herramienta buscará movimientos que parezcan inversiones (con la palabra 'Inversión' o 'Bolsa' en la descripción) y los marcará con la categoría correcta para que se muestren en positivo automáticamente. ¿Deseas continuar?", () => {
-            let count = 0;
-            savingsDrawers.forEach(drawer => {
-                (drawer.movements || []).forEach(m => {
-                    const conceptLower = (m.concept || m.description || '').toLowerCase();
-                    if (conceptLower.includes('invers') || conceptLower.includes('bolsa')) {
-                        if (m.category !== 'Inversión') {
-                            m.category = 'Inversión';
-                            count++;
-                        }
-                    }
-                });
-            });
-            if (count > 0) {
-                if (window.saveSavings) window.saveSavings(savingsDrawers);
-                render();
-                alert(`Se han migrado ${count} movimientos a la categoría Inversión.`);
-            } else {
-                alert("No se encontraron nuevos movimientos para migrar.");
-            }
-        });
-    }
+
 
     async function forceAppUpdate() {
         showCustomConfirm('Esto borrará toda la caché del navegador para esta aplicación y forzará una recarga total. ¿Continuar?', async () => {
@@ -8960,7 +8959,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('clockMenuBtn')?.click();
         });
         elements.sidebarResetBtn?.addEventListener('click', () => forceAppUpdate());
-        elements.sidebarMigrateInversionsBtn?.addEventListener('click', () => migrateInversions());
         // --- Secure Delete All Button Hold logic ---
         let holdTimer = null;
         if (elements.sidebarDeleteAllBtn) {
