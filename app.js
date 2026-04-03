@@ -6061,6 +6061,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Force expense type as it's a pending expense
         updateSavingsMovementType('expense');
+
+        // Set category to 'Gasto' if it exists in the list
+        if (elements.savingsCategorySelect && expenseCategories.includes('Gasto')) {
+            elements.savingsCategorySelect.value = 'Gasto';
+        }
         
         const title = document.getElementById('savingsModalTitle');
         if (title) title.textContent = title.textContent + ' (Gasto Pendiente)';
