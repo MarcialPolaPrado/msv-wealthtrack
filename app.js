@@ -11550,7 +11550,7 @@ document.addEventListener('DOMContentLoaded', () => {
             () => {
                 applyGlobalData(data);
                 NextcloudSync.setLocalModified(result.lastModified);
-                updateNextcloudSyncUI();
+                initNextcloudUI();
                 showToast('✅ Datos restaurados desde Nextcloud', 'success');
             }
         );
