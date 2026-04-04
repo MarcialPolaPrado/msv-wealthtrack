@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- iOS support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WealthTrack">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link rel="manifest" href="manifest.json">
+    <title>WealthTrack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=202604041501">
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        // Global Error Handler for Mobile Debugging
+        function showGlobalError(msg, source, line, col, error) {
+            const errDiv = document.createElement('div');
+            errDiv.style.cssText = 'position:fixed; top:10px; left:10px; right:10px; background:rgba(220,38,38,0.95); color:white; padding:15px; border-radius:12px; z-index:999999; font-family:monospace; font-size:12px; box-shadow:0 10px 25px rgba(0,0,0,0.5); word-wrap:break-word; max-height: 80vh; overflow-y: auto; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);';
+            errDiv.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:8px;">
+                    <strong style="font-size:14px; text-transform:uppercase; letter-spacing:1px;">⚠️ Application Error</strong>
+                    <button onclick="this.closest('div').parentElement.remove()" style="background:rgba(255,255,255,0.2); border:none; color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">✕</button>
+                </div>
+                <div style="margin-bottom:8px;"><b>Msg:</b> <span style="color:#fca5a5;">${msg}</span></div>
+                ${source ? `<div style="margin-bottom:8px; word-break:break-all;"><b>Source:</b> ${source.split('/').pop()}:${line}:${col}</div>` : ''}
+                ${error && error.stack ? `<div style="margin-top:10px; background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; font-size:10px; opacity:0.8; white-space:pre-wrap;">${error.stack}</div>` : ''}
+            `;
+            // Ensure document.body exists
+            if (document.body) document.body.appendChild(errDiv);
+            else window.addEventListener('DOMContentLoaded', () => document.body.appendChild(errDiv));
+        }
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            showGlobalError(msg, url, lineNo, columnNo, error);
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(event) {
+            const msg = event.reason ? (event.reason.message || event.reason) : 'Unhandled Promise Rejection';
+            showGlobalError(msg, null, null, null, event.reason);
+        });
+    </script>
+</head>
+
+
+<body>
+    <!-- Welcome Overlay -->
+    <div id="welcomeOverlay" class="welcome-overlay hidden">
+        <div class="welcome-card glass-panel">
+            <div class="welcome-header">
+                <span id="welcomeEmoji" style="font-size: 3rem; display: block; margin-bottom: 1rem;">✨</span>
+                <h1 id="welcomeGreeting" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">¡Bienvenido!</h1>
+                <p id="welcomeSubtext" style="opacity: 0.6; font-size: 0.9rem; margin-bottom: 2rem;">WealthTrack está listo para tus finanzas.</p>
+            </div>
+            
+            <div class="welcome-info-grid" style="display: grid; gap: 1rem; margin-bottom: 2.5rem; width: 100%;">
+                <div class="welcome-info-item glass-panel" style="padding: 1.25rem; text-align: left; border-color: rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.7rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Fecha y Hora</div>
+                    <div id="welcomeDateTime" style="font-size: 1.1rem; font-weight: 600; color: white;">--/--/---- --:--</div>
+                </div>
+                <div id="welcomeNextcloudGroup" class="welcome-info-item glass-panel hidden" style="padding: 1.25rem; text-align: left; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
+                    <div style="font-size: 0.7rem; color: var(--success); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Copia de Seguridad</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center;">
+                        <div id="welcomeLocalSyncTime" style="font-size: 0.9rem; font-weight: 600; color: white; opacity: 0.7; display: flex; align-items: center; gap: 6px;">
+                            <span>📱</span> <span class="time-val">--/--/-- --:--</span>
+                        </div>
+                        <div id="welcomeNextcloudTime" style="font-size: 0.9rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px;">
+                            <span>☁️</span> <span class="time-val">Comprobando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="welcomeEnterBtn" class="btn btn-primary" style="width: 100%; padding: 1.25rem; font-size: 1.1rem; font-weight: 700; border-radius: 18px; box-shadow: 0 10px 20px rgba(var(--primary-rgb), 0.3);">
+                Comenzar
+            </button>
+        </div>
+    </div>
+
+    <div id="loginOverlay" class="login-overlay hidden">
+        <div class="login-card glass-panel">
+            <div class="logo" style="margin-bottom: 2rem; justify-content: center;">
+                <span class="logo-icon">✨</span>
+                <h1>Wealth<span class="highlight">Track</span></h1>
+            </div>
+            <h2>Acceso Privado</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Ingresa tus credenciales para continuar</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <input type="text" id="usernameInput" placeholder="Nombre de usuario" required
+                        autocomplete="username">
+                </div>
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label>Contraseña</label>
+                    <input type="password" id="passwordInput" placeholder="••••" required
+                        autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-primary full-width">Iniciar Sesión</button>
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <a href="?reset=1" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; opacity: 0.6;">
+                        ⚠️ Si tienes problemas con el menú, pulsa aquí para un <b>Hard Reset</b>
+                    </a>
+                </div>
+                <p id="loginError" class="error-text hidden"
+                    style="margin-top: 1rem; color: var(--danger); font-size: 0.9rem; text-align: center;">Credenciales
+                    incorrectas</p>
+            </form>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="app-container" id="mainApp">
+        <!-- Sidebar Toggle (Desktop) -->
+        <button class="sidebar-desktop-toggle-btn" id="sidebarCollapseBtn" title="Mostrar/Ocultar Menú">
+            <span class="collapse-icon">☰</span>
+        </button>
+
+        <!-- New Sidebar -->
+        <aside class="wealth-sidebar" id="wealthSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="logo-icon">✨</span>
+                    <div class="logo-text">
+                        <h1>Wealth<span class="highlight">Track</span></h1>
+                        <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
+                            id="logoVersion">v202604041452</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last Sync Time -->
+            <div id="sidebarSyncInfo" title="Haz clic para sincronizar manualmente con Nextcloud"
+                style="padding: 0 1.25rem; margin-bottom: 1.25rem; font-size: 0.65rem; font-family: 'Outfit', sans-serif; display: flex; flex-direction: column; gap: 4px; display: none; cursor: pointer;">
+                <span style="opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;">Última
+                    Sincronización</span>
+                <span id="lastSyncTime"
+                    style="color: var(--success); font-weight: 600; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2);">--:--</span>
+            </div>
+
+            <!-- Storage status bar -->
+            <div class="sidebar-storage" id="sidebarStorageIndicator"
+                style="padding: 0 1.25rem; margin-bottom: 2rem; width: 100%;">
+                <div
+                    style="display:flex; justify-content: space-between; font-size: 0.65rem; opacity: 0.7; margin-bottom: 6px; font-family: 'Outfit', sans-serif;">
+                    <span>Almacenamiento Local</span>
+                    <span id="storageUsageText" style="font-weight: 600;">0%</span>
+                </div>
+                <div
+                    style="width:100%; height: 5px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow:hidden; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="storageUsageBar"
+                        style="width: 0%; height: 100%; background: var(--primary); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px var(--primary-glow);">
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <p class="nav-group-title">Inversiones</p>
+                    <div class="nav-item-container" id="bolsaNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item" data-view="bolsa">
+                                <span class="nav-icon">📈</span>
+                                <span class="nav-text">Bolsa</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="bolsaCardsBtn2" class="submenu-item"><span>🗂️</span> Vista Tarjetas</button>
+                            <button id="bolsaListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
+                            <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir Inversión</button>
+                            <button id="bolsaRefreshBtn2" class="submenu-item"><span>🔄</span> Actualizar Datos</button>
+                            <button id="bolsaBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
+                            <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen Datos</button>
+                            <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios Manuales</button>
+                            <button id="exportDataBtn2" class="submenu-item"><span>💾</span> Exportar CSV</button>
+                            <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
+                            <button id="bolsaCalendarBtn2" class="submenu-item"><span>📅</span> Calendario</button>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-container active open" id="ahorroNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item active" data-view="ahorro">
+                                <span class="nav-icon">💰</span>
+                                <span class="nav-text">Ahorro</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="ahorroAccountsBtn2" class="submenu-item"><span>🎲</span> Vista Cuentas</button>
+                            <button id="ahorroGastosBtn2" class="submenu-item" data-view="ahorroGastos"><span>💸</span> <span id="ahorroGastosMonthName">Gastos del Mes</span></button>
+                            <button id="ahorroListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
+                            <button id="ahorroEstadoBtn2" class="submenu-item" data-view="ahorroEstado"><span>📈</span> Vista Estado</button>
+                            <button id="ahorroCalendarBtn2" class="submenu-item"><span>📅</span> Vista Calendario</button>
+                            <button id="ahorroBreakdownBtn2" class="submenu-item"><span>📊</span> Rendimientos (D+I+E)</button>
+                            <button id="ahorroHistoricoBtn2" class="submenu-item"><span>📉</span> Patrimonio Histórico</button>
+                            <button id="addAccountBtn2" class="submenu-item"><span>📁</span> Añadir Cuenta</button>
+
+                            <button id="addGlobalMovementBtn2" class="submenu-item"><span>💶</span> Nuevo
+                                Movimiento</button>
+                            <button id="recurringMovementsBtn2" class="submenu-item"><span>🔄</span> Mov. Periódicos</button>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-container" id="nominaNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item" data-view="nomina">
+                                <span class="nav-icon">💶</span>
+                                <span class="nav-text">Nómina</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="nominaCardsBtn2" class="submenu-item"><span>🗂️</span> Vista Tarjetas</button>
+                            <button id="nominaListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
+                            <button id="addNominaBtn2" class="submenu-item"><span>➕</span> Añadir Concepto</button>
+                            <button id="nominaAnalisisViewBtn2" class="submenu-item"><span>📈</span> Análisis Anual</button>
+                            <button id="fiscalCountdownBtn2" class="submenu-item"><span>⏳</span> Días Mes Fiscal: <span id="fiscalDaysLeft2">--</span></button>
+                        </div>
+                    </div>
+                    <div class="nav-item-container" id="activityNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item" data-view="activity" id="sidebarActivityBtn">
+                                <span class="nav-icon">🔄</span>
+                                <span class="nav-text">Actividad</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="sidebarFilterBuyBtn" class="submenu-item"><span>🛍️</span> Compra</button>
+                            <button id="sidebarFilterDivBtn" class="submenu-item"><span>💰</span> Div.</button>
+                            <button id="sidebarFilterIntBtn" class="submenu-item"><span>🏦</span> Int.</button>
+                            <button id="sidebarFilterEspBtn" class="submenu-item"><span>🚀</span> Esp.</button>
+                            <button id="sidebarFilterRendBtn" class="submenu-item"><span>📊</span> Rend.
+                                (D+I+E)</button>
+                            <button id="sidebarFilterStocksBtn" class="submenu-item"><span>📈</span> Acciones</button>
+                            <button id="sidebarFilterAllBtn" class="submenu-item"><span>🔄</span> Todo</button>
+                        </div>
+                    </div>
+                    <div class="nav-item-container" id="herramientasNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item">
+                                <span class="nav-icon">🛠️</span>
+                                <span class="nav-text">Herramientas</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="sidebarCategoriesBtn" class="submenu-item"><span>🏷️</span> Categorías</button>
+                            <button id="sidebarSubcategoriesBtn" class="submenu-item"><span>🖇️</span>
+                                Subcategorías</button>
+                            <button id="sidebarPrivacyToggleBtn" class="submenu-item"><span>👁️</span>
+                                Privacidad</button>
+                            <button id="sidebarSettingsBtn" class="submenu-item"><span>⚙️</span> Ajustes</button>
+                            <button id="sidebarResetBtn" class="submenu-item"
+                                style="color: var(--danger);"><span>🔄</span> Hard Reset</button>
+                            <button id="sidebarDeleteAllBtn" class="submenu-item locked" disabled
+                                style="color: var(--danger);"><span>🗑️</span> Borrar todo</button>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-container" id="datosNavContainer">
+                        <div class="nav-item-header">
+                            <button class="wealth-nav-item">
+                                <span class="nav-icon">📊</span>
+                                <span class="nav-text">Datos</span>
+                            </button>
+                            <span class="nav-item-chevron">▼</span>
+                        </div>
+                        <div class="sidebar-submenu">
+                            <button id="sidebarExportBtn" class="submenu-item"><span>💾</span> Exportar JSON</button>
+                            <button id="sidebarImportBtn" class="submenu-item"><span>📂</span> Importar JSON</button>
+                            <button id="sidebarClockBtn" class="submenu-item"><span>⏱️</span> Cuenta Atrás</button>
+                            <button id="sidebarNcBackupBtn" class="submenu-item"
+                                style="color: var(--success); background: rgba(16, 185, 129, 0.05);"><span>📤</span>
+                                Guardar Nextcloud</button>
+                            <button id="sidebarNcRestoreBtn" class="submenu-item"
+                                style="color: var(--accent); background: rgba(59, 130, 246, 0.05);"><span>📥</span>
+                                Restaurar Nextcloud</button>
+                            <button id="sidebarNcExcelBtn" class="submenu-item"
+                                style="color: #f1c40f; background: rgba(241, 196, 15, 0.05);"><span>📄</span>
+                                Generar Hoja Cálculo</button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer" style="margin-top: auto; padding-top: 2rem;">
+                <div id="updateTimer" class="digital-timer hidden">Sincronizando...</div>
+            </div>
+        </aside>
+
+        <!-- New Bottom Nav (Mobile) -->
+        <nav class="bottom-nav-hub" id="bottomNavHub">
+            <div class="drag-handle">
+                <button id="bottomNavMinimizeBtn" class="nav-control-btn" title="Minimizar">▼</button>
+                <div class="drag-indicator"></div>
+                <div class="move-icon" title="Arrastrar">✥</div>
+            </div>
+            <button class="bottom-nav-item" data-view="bolsa">
+                <span class="bottom-nav-icon">📈</span>
+                <span class="bottom-nav-text">Bolsa</span>
+            </button>
+            <button class="bottom-nav-item active" data-view="ahorro">
+                <span class="bottom-nav-icon">💰</span>
+                <span class="bottom-nav-text">Ahorro</span>
+            </button>
+            <button class="floating-action-btn" id="mobileMenuBtn">
+                <span>✨</span>
+            </button>
+            <button class="bottom-nav-item" data-view="nomina">
+                <span class="bottom-nav-icon">💶</span>
+                <span class="bottom-nav-text">Nómina</span>
+            </button>
+            <button class="bottom-nav-item" id="mobileMoreBtn">
+                <span class="bottom-nav-icon">☰</span>
+                <span class="bottom-nav-text">Menú</span>
+            </button>
+        </nav>
+
+        <main id="appMain">
+            <!-- Bolsa Section -->
+            <div id="bolsaSection" class="view-section hidden">
+                <!-- Stock List Actions -->
+                <div class="savings-container">
+                    <div id="bolsaHeaderActions"
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
+                        <div style="display:flex; align-items:center; gap:1rem;">
+                            <h2 style="margin:0" id="bolsaMobileTitle">Mis Acciones</h2>
+                            <button id="bolsaHighlightsToggleBtn" class="btn-sm"
+                                title="Mostrar/Ocultar Highlights Animados"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🚀</button>
+
+                            <button id="bolsaBreakdownBtn" class="btn-sm" title="Rendimientos"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">📉</button>
+                        </div>
+                        <div style="display:flex; gap: 0.8rem;">
+                            <button id="bolsaDataSourceToggleBtn" class="btn-secondary" title="Modo de Lectura de Datos"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem; border-color: rgba(59, 130, 246, 0.4); display: flex; align-items: center; gap: 5px;">
+                                <span id="dataSourceIcon">⚡</span>
+                                <span id="dataSourceLabel" style="font-size: 0.75rem; font-weight: 700;">Híbrido</span>
+                            </button>
+                            <button id="bolsaManualPriceBtn" class="btn-secondary" title="Ajuste Manual de Precios"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem; position: relative; border-color: rgba(245, 158, 11, 0.4);">
+                                ⚙️<span id="manualPriceBadge" class="hidden"
+                                    style="position: absolute; top: -5px; right: -5px; background: #f59e0b; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid #0f172a;">!</span>
+                            </button>
+                            <button id="exportDataBtn" class="btn-secondary" title="Exportar CSV"
+                                style="padding: 0.5rem 0.75rem; font-size: 1.1rem;">💾</button>
+                            <button id="bolsaAddStockBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
+                                title="Añadir Inversión">✨</button>
+                        </div>
+                    </div>
+
+                    <!-- Bolsa Highlights (Animated Summary) -->
+                    <div id="bolsaHighlights" class="hidden" style="margin-bottom: 2rem;"></div>
+                </div>
+
+                <!-- Dashboard Section -->
+                <section id="bolsaSummarySection" class="dashboard-grid">
+                    <!-- Portfolio Candle removed by user request -->
+                </section>
+
+
+
+
+                <!-- Stock List Section (Hidden on Mobile) -->
+                <section class="stock-list-section glass-panel">
+                    <div class="section-header" id="bolsaListHeader"
+                        style="display:flex; justify-content: space-between; align-items: center;">
+                        <h2>Detalles de Cartera</h2>
+                        <div class="view-toggle" style="display:flex; gap: 1.2rem;">
+                            <button id="bolsaViewToggleBtn" class="btn-sm" title="Cambiar Vista"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
+
+                        </div>
+                    </div>
+                    <div id="bolsaGrid" class="drawers-grid" style="margin-top: 1rem;">
+                        <!-- Cards will be injected by JS -->
+                    </div>
+                    <div class="table-container hidden">
+                        <table id="stockTable">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name">Asset <span class="sort-icon"></span></th>
+                                    <th data-sort="market">Market <span class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.price">Current Price <span class="sort-icon"></span></th>
+                                    <th data-sort="qty">Quantity <span class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.stockInvested">Invested <span class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.stockCurrentVal">Current Value (EUR) <span
+                                            class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.stockPL">P/L (€) <span class="sort-icon"></span></th>
+                                    <th data-sort="liveInfo.stockPLPercent">P/L (%) <span class="sort-icon"></span></th>
+                                    <th>Signals</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockTableBody">
+                                <!-- Rows will be injected by JS -->
+                            </tbody>
+                        </table>
+                        <div id="emptyState" class="empty-state hidden">
+                            <p>No investments found. Start by adding a stock.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="portfolioChartSection" class="glass-panel" style="margin-bottom: 2rem; padding: 1.5rem;">
+
+                    <div id="portfolioPieChart" style="min-height: 200px;"></div>
+                </section>
+            </div><!-- End Bolsa Section -->
+
+            <!-- Ahorro Section -->
+            <div id="ahorroSection" class="view-section hidden">
+                <div class="savings-container" style="margin-top: 1rem;">
+                    <div id="ahorroHeaderActions"
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <div style="display:flex; align-items:center; gap:1rem;">
+                            <h2 id="misCuentasTitle" style="margin:0">Mis Cuentas</h2>
+                            <button id="ahorroViewToggleBtn" class="btn-sm" title="Cambiar Vista"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
+                        </div>
+                        <div style="display:flex; gap: 0.8rem;">
+
+                            <button id="ahorroBreakdownBtn" class="btn-secondary" style="padding: 0.5rem 1rem;"
+                                title="Rendimientos">📈</button>
+                            <button id="addAccountBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
+                                title="Añadir Cuenta">📁</button>
+                        </div>
+                    </div>
+
+                    <!-- Summary area for Ahorro -->
+                    <section id="ahorroSummarySection" class="dashboard-grid" style="margin-bottom: 2rem;">
+                        <!-- Cards will be rendered here -->
+                    </section>
+
+                    <div id="drawersGrid" class="drawers-grid">
+                        <!-- Drawers will be rendered here -->
+                    </div>
+
+                    <!-- List View Container (Initially Hidden) -->
+                    <div id="ahorroTableContainer" class="table-container glass-panel hidden"
+                        style="margin-bottom: 2rem;">
+                        <div class="list-navigation"
+                            style="display:flex; flex-direction: column; gap:0.8rem; padding:1rem; border-bottom:1px solid var(--border-color);">
+                            <!-- Row 1: Filter Mode (Left) and Totals Toggle (Right) -->
+                            <div
+                                style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 1rem;">
+                                <select id="ahorroFilterMode"
+                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none; max-width: 100px; flex-shrink: 0;">
+                                    <option value="week">📅 Semana</option>
+                                    <option value="month">📅 Mes</option>
+                                    <option value="year">🗓️ Año</option>
+                                    <option value="all">♾️ Todo</option>
+                                </select>
+                                <button id="ahorroListFilterMode" class="totales-toggle-btn"
+                                    style="white-space: nowrap; flex-shrink: 0;">
+                                    📊 Totales
+                                </button>
+                            </div>
+                            <!-- Row 2: Navigation Controls (Right Aligned) -->
+                            <div
+                                style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; width: 100%;">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <button id="nextAhorroMonthBtn" class="btn-icon"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">🔼</button>
+                                    <button id="prevAhorroMonthBtn" class="btn-icon"
+                                        style="padding: 2px 8px; font-size: 0.8rem;">🔽</button>
+                                </div>
+                                <h3 id="ahorroCurrentMonthLabel"
+                                    style="margin:0; min-width:120px; text-align:center; font-family:var(--font-main); font-size: 1rem;">
+                                    Marzo 2024</h3>
+                            </div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid var(--primary);">
+                                        <th data-sort="name" colspan="2" onclick=""
+                                            style="padding: 1rem; text-align: left; cursor:pointer; user-select:none;">
+                                            Cuenta <span class="sort-icon-ahorro">↕️</span></th>
+                                        <th data-sort="balance" onclick=""
+                                            style="padding: 1rem; text-align: right; cursor:pointer; user-select:none;">
+                                            Importe <span class="sort-icon-ahorro">↕️</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ahorroTableBody">
+                                    <!-- Movements will be rendered here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Summary area for Detailed distribution -->
+                    <div id="ahorroDistributionSection">
+                        <!-- Summary Drawer Section -->
+                        <div id="ahorroSummaryDrawer" style="margin-top: 2rem;">
+                            <!-- Category distribution will be rendered here -->
+                        </div>
+
+                        <!-- Pie Chart Section -->
+                        <div style="margin-top: 2rem;">
+                            <div id="savingsPieChartContainer" class="glass-panel"
+                                style="padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;">
+                                <div id="savingsPieChart" style="width: 100%; display: block;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Ahorro Calendar Section -->
+            <div id="ahorroCalendarSection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header"
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h2 style="margin:0">Calendario de Ahorro Global</h2>
+                            <button class="icon-btn" id="ahorroCalendarViewToggleBtn" title="Cambiar Vista">🔲</button>
+                            <div style="display: flex; flex-direction: column; gap: 2px; align-items: center;">
+                                <select id="ahorroGlobalCalendarDrawerFilter" 
+                                    style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; outline: none; width: 150px; text-align: center;">
+                                    <option value="all">📁 Todas</option>
+                                </select>
+                                <div id="ahorroGlobalCalendarTotalBalance" style="font-size: 0.75rem; font-weight: 700; color: var(--success); opacity: 0.9; text-align: center; width: 100%;">Total: 0,00 €</div>
+                            </div>
+                        </div>
+                        <div
+                            style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                            <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
+                                <button id="ahorroGlobalCalendarMonthUp" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="ahorroGlobalCalendarMonthDown" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="ahorroGlobalCalendarMonthLabel"
+                                style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700; min-width: 120px;">
+                                --</h3>
+
+                            <div class="navigation-arrows"
+                                style="display: flex; flex-direction: column; gap: 2px; margin-left: 10px;">
+                                <button id="ahorroGlobalCalendarYearUp" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="ahorroGlobalCalendarYearDown" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="ahorroGlobalCalendarYearLabel"
+                                style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">
+                                --</h3>
+                        </div>
+                    </div>
+
+                    <div id="ahorroGlobalCalendarWrapper" class="glass-panel" style="margin-bottom: 2rem;">
+                        <div id="ahorroGlobalCalendarGrid" class="calendar-grid">
+                            <div class="calendar-day-head"><span class="day-full">Lun</span><span
+                                    class="day-short">L</span></div>
+                            <div class="calendar-day-head"><span class="day-full">Mar</span><span
+                                    class="day-short">M</span></div>
+                            <div class="calendar-day-head"><span class="day-full">Mié</span><span
+                                    class="day-short">X</span></div>
+                            <div class="calendar-day-head"><span class="day-full">Jue</span><span
+                                    class="day-short">J</span></div>
+                            <div class="calendar-day-head"><span class="day-full">Vie</span><span
+                                    class="day-short">V</span></div>
+                            <div class="calendar-day-head"><span class="day-full">Sáb</span><span
+                                    class="day-short">S</span></div>
+                            <div class="calendar-day-head"><span class="day-full">Dom</span><span
+                                    class="day-short">D</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ahorro Estado Section -->
+            <div id="ahorroEstadoSection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h2 style="margin:0">Estado de Ahorro</h2>
+                            <button class="icon-btn" id="ahorroEstadoViewToggleBtn" title="Cambiar Vista">🔲</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                            <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
+                                <button id="ahorroEstadoMonthUp" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="ahorroEstadoMonthDown" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="ahorroEstadoMonthLabel" style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700; min-width: 100px;">--</h3>
+
+                            <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px; margin-left: 10px;">
+                                <button id="ahorroEstadoYearUp" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="ahorroEstadoYearDown" class="nav-arrow" style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="ahorroEstadoYearLabel" style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">--</h3>
+                        </div>
+                    </div>
+
+                    <!-- Summary cards removed as requested by user -->
+
+                    <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h3 id="ahorroEstadoChartHeader" style="margin:0; cursor:pointer; display:flex; align-items:center; gap:8px;" title="Mostrar/Ocultar Gráfico">
+                                <span>Distribución por Cuenta</span>
+                                <span id="ahorroEstadoChartToggleIcon" style="font-size:0.8rem; opacity:0.6;">▼</span>
+                            </h3>
+                            <div class="view-toggle" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <button id="ahorroEstadoShowIncome" class="btn-sm" style="padding: 4px 12px; border: none; cursor: pointer; background: var(--primary); color: white; border-radius: 6px;">Ingresos</button>
+                                <button id="ahorroEstadoShowExpenses" class="btn-sm" style="padding: 4px 12px; border: none; cursor: pointer; background: transparent; color: var(--text-muted); border-radius: 6px;">Gastos</button>
+                            </div>
+                        </div>
+                        <div style="text-align: right; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                            Diferencia: <span id="ahorroEstadoDifference" style="font-weight: bold;"></span>
+                        </div>
+                        <div id="ahorroEstadoChartContent">
+                            <div id="ahorroEstadoPieChart" style="width: 100%; min-height: 250px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="table-container glass-panel" style="overflow-x: auto;">
+                        <table class="estado-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary);">
+                                    <th style="padding: 0.75rem; text-align: left;">Cuenta</th>
+                                    <th style="padding: 0.75rem; text-align: center;">Porcentaje</th>
+                                    <th style="padding: 0.75rem; text-align: right;">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ahorroEstadoTableBody">
+                                <!-- Data injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ahorro Historico Section -->
+            <div id="ahorroHistoricoSection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; padding-top:1rem;">
+                        <h2 style="margin:0">📉 Patrimonio Histórico</h2>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <div class="view-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:8px; border:1px solid var(--border-color);">
+                                <button id="historicoModeMonth" class="btn-sm" style="padding:4px 12px; border:none; cursor:pointer; background:var(--primary); color:white; border-radius:6px;">Mensual</button>
+                                <button id="historicoModeYear" class="btn-sm" style="padding:4px 12px; border:none; cursor:pointer; background:transparent; color:var(--text-muted); border-radius:6px;">Anual</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="font-size:0.8rem; opacity:0.55; margin-bottom:1.5rem;">ℹ️ El coste de Bolsa se calcula sumando tus entradas acumuladas. Registrando las ventas con cantidades negativas preservas el histórico correctamente.</p>
+                    <div id="ahorroHistoricoChart" style="min-height:200px; margin-bottom:2rem;"></div>
+                    <div class="table-container glass-panel" style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="border-bottom:2px solid var(--primary);">
+                                    <th style="padding:0.75rem; text-align:left;">Período</th>
+                                    <th style="padding:0.75rem; text-align:right;">Cuentas Ahorro</th>
+                                    <th style="padding:0.75rem; text-align:right;">Coste Bolsa</th>
+                                    <th style="padding:0.75rem; text-align:right;">Patrimonio Total</th>
+                                    <th style="padding:0.75rem; text-align:right;">&#916; Período</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ahorroHistoricoTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Activity Section -->
+            <div id="activitySection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header"
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h2 style="margin:0">Actividad Global</h2>
+                        </div>
+                        <div
+                            style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                            <input type="text" id="activitySearchInput" placeholder="Buscar..."
+                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; outline: none; width: 100px; height: 30px; box-sizing: border-box;">
+                            <select id="activityFilterMode"
+                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; cursor: pointer; outline: none; width: 100px; height: 30px; box-sizing: border-box;">
+                                <option value="week">📅 Semana</option>
+                                <option value="all">🌐 Todo</option>
+                                <option value="month">📅 Mes</option>
+                                <option value="year">🗓️ Año</option>
+                            </select>
+                            <select id="activityDrawerFilter"
+                                style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; cursor: pointer; outline: none; width: 120px; height: 30px; box-sizing: border-box;">
+                                <option value="all">📁 Todas las Cuentas</option>
+                            </select>
+                            <div class="navigation-arrows" style="display: flex; flex-direction: column; gap: 2px;">
+                                <button id="activityMonthUp" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔼</button>
+                                <button id="activityMonthDown" class="nav-arrow"
+                                    style="padding: 1px 6px; font-size: 0.7rem;">🔽</button>
+                            </div>
+                            <h3 id="activityMonthLabel"
+                                style="margin:0; text-align:center; font-family:var(--font-main); font-size: 1.1rem; color: var(--primary); font-weight: 700;">
+                                Marzo 2024</h3>
+                        </div>
+                    </div>
+                    <div id="activityTableContainer" class="table-container glass-panel"
+                        style="margin-bottom: 2rem; overflow-x: auto;">
+                        <table id="activityTable" style="width: 100%; border-collapse: collapse;">
+                            <colgroup>
+                                <col style="width: 15%"><!-- Fecha -->
+                                <col style="width: 30%"><!-- Concepto -->
+                                <col style="width: 22%"><!-- Categoría -->
+                                <col style="width: 23%"><!-- Importe -->
+                                <col style="width: 10%"><!-- Acción -->
+                            </colgroup>
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary); user-select: none;">
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;"
+                                        data-sort="date">Fecha
+                                        <span class="sort-icon"></span>
+                                    </th>
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;"
+                                        data-sort="concept">
+                                        Concepto <span class="sort-icon"></span></th>
+                                    <th style="padding: 0.5rem 1rem; text-align: left; cursor: pointer;"
+                                        data-sort="category">
+                                        Categoría <span class="sort-icon"></span></th>
+                                    <th style="padding: 0.5rem 1rem; text-align: right; cursor: pointer;"
+                                        data-sort="amount">
+                                        Importe <span class="sort-icon"></span></th>
+                                    <th style="padding: 0.5rem 1rem; text-align: center;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityTableBody">
+                                <!-- Rows injected here -->
+                            </tbody>
+                        </table>
+                        <div id="activityPaginationContainer" class="hidden"
+                            style="padding: 1rem; text-align: center; border-top: 1px solid var(--glass-border);">
+                            <button id="activityLoadMoreBtn" class="btn-secondary" style="padding: 0.5rem 2rem;">Cargar
+                                más movimientos</button>
+                            <p id="activityPaginationInfo"
+                                style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ahorro Gastos Section -->
+            <div id="ahorroGastosSection" class="view-section hidden">
+                <div class="savings-container">
+                    <div class="section-header" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-top: 1rem;">
+                        <h2 style="margin:0; font-size: 1.05rem; white-space: nowrap; width: 100%; overflow-x: auto; line-height: 1.5; padding-bottom: 2px;">
+                            <span style="vertical-align: middle;">💸 Gastos Fiscales: <span id="ahorroGastosTitleMonth">Cargando...</span></span>
+                            <span class="navigation-arrows" style="margin-left: 6px; vertical-align: middle; display: inline-block;">
+                                <button id="ahorroGastosPrevMonthBtn" class="nav-arrow" style="padding: 2px 6px; font-size: 0.75rem; display: inline-block; vertical-align: middle;">◀</button>
+                                <button id="ahorroGastosNextMonthBtn" class="nav-arrow" style="padding: 2px 6px; font-size: 0.75rem; display: inline-block; vertical-align: middle;">▶</button>
+                                <button id="ahorroGastosResetMonthBtn" class="nav-arrow hidden" style="padding: 2px 6px; font-size: 0.75rem; border-color:var(--primary); color:var(--primary); display: inline-block; vertical-align: middle;" title="Volver al mes actual">↻</button>
+                            </span>
+                        </h2>
+                    </div>
+
+                    <div id="ahorroGastosAccountList" style="display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));">
+                        <!-- Account cards injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nomina Section -->
+            <div id="nominaSection" class="view-section hidden">
+
+                <!-- Unified Title and Action Buttons -->
+                <div id="nominaHeaderActions"
+                    style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <h2 style="margin:0">Conceptos Mensuales</h2>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <button id="nominaAnalisisViewBtn" class="btn-secondary" title="Análisis"
+                                style="padding: 4.5px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(59, 130, 246, 0.1); color: var(--primary);">📊</button>
+                            <button id="nominaViewToggleBtn" class="btn-sm" title="Cambiar Vista"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05); color: white;">🗂️</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items: center; gap: 0.8rem;">
+                        <button id="fiscalCountdownBtn" class="btn-secondary" title="Días para el próximo mes fiscal"
+                            style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 8px; font-weight: 700; border: 2px solid var(--primary); background: var(--bg-card); color: var(--primary); font-family: var(--font-family); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            ⏳ <span id="fiscalDaysLeft" style="color: var(--primary);">--</span>
+                        </button>
+
+                        <button id="addNominaBtn" class="btn-primary" style="padding: 0.5rem 1rem;"
+                            title="Añadir Cuenta">💼</button>
+                    </div>
+                </div>
+
+                <!-- Hidden anchors kept for JS compatibility -->
+                <span id="totalNominaIncome" class="hidden"></span>
+                <span id="totalNominaExpense" class="hidden"></span>
+                <span id="totalNominaUndestined" class="hidden"></span>
+                <span id="totalNominaSaving" class="hidden"></span>
+                <span id="totalNominaNetSaving" class="hidden"></span>
+                <span id="paydayDate" class="hidden"></span>
+                <span id="paydayCountdown" class="hidden"></span>
+                <span id="currentFiscalMonthDisplay" class="hidden"></span>
+                <span id="fiscalMonthTitle" class="hidden"></span>
+
+                <!-- List View Container (Initially Hidden) -->
+                <div id="nominaTableContainer" class="table-container glass-panel hidden" style="margin-bottom: 2rem;">
+                    <div class="list-navigation"
+                        style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem; padding:1rem; border-bottom:1px solid var(--border-color); flex-wrap:wrap;">
+                        <button id="nominaListFilterMode" class="totales-toggle-btn">
+                            📊 Totales
+                        </button>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <button id="nextNominaMonthBtn" class="btn-icon"
+                                    style="padding: 2px 8px; font-size: 0.8rem;">🔼</button>
+                                <button id="prevNominaMonthBtn" class="btn-icon"
+                                    style="padding: 2px 8px; font-size: 0.8rem;">🔽</button>
+                            </div>
+                            <h3 id="nominaCurrentMonthLabel"
+                                style="margin:0; min-width:150px; text-align:center; font-family:var(--font-main);">
+                                Marzo 2024</h3>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary);">
+                                    <th data-sort="name" colspan="2"
+                                        style="padding: 1rem; text-align: left; cursor:pointer; user-select:none;">
+                                        Concepto <span class="sort-icon-nomina">↕️</span></th>
+                                    <th data-sort="balance"
+                                        style="padding: 1rem; text-align: right; cursor:pointer; user-select:none;">
+                                        Importe <span class="sort-icon-nomina">↕️</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="nominaTableBody">
+                                <!-- Movements will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Drawer Grid + Summary (expense summary rendered last by JS) -->
+                <div id="nominaGridContainer" class="savings-container">
+                    <div id="nominaGrid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;">
+                        <!-- Nomina cards will be rendered here -->
+                    </div>
+                    <!-- Summary table rendered by JS at the bottom -->
+                    <div id="nominaSummaryTable" style="margin-top: 2rem;"></div>
+                </div>
+            </div>
+
+            <!-- Analisis Section -->
+            <div id="analisisSection" class="view-section hidden">
+
+
+                <div class="savings-container">
+                    <div class="section-header"
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin:0" id="analisisMobileTitle">Distribución por Meses</h2>
+                        <div class="view-toggle"
+                            style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button id="analisisTableViewBtn" class="btn-sm active" title="Vista Lista"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: var(--primary); color: white;">📄</button>
+                            <button id="analisisCardViewBtn" class="btn-sm" title="Vista Cuentas"
+                                style="padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">🗂️</button>
+                        </div>
+                    </div>
+                    <div id="analisisGrid" class="drawers-grid hidden" style="margin-bottom: 2rem;">
+                        <!-- Cards will be rendered here -->
+                    </div>
+
+                    <div id="analisisTableContainer" class="table-container glass-panel"
+                        style="margin-bottom: 2rem; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary); user-select: none;">
+                                    <th style="padding: 1rem; text-align: left; cursor: pointer;" data-sort="month"
+                                        onclick="">Mes <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="income"
+                                        onclick="">Ingresos <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="expenses"
+                                        onclick="">Gastos <span class="sort-icon"></span></th>
+                                    <th style="padding: 1rem; text-align: right; cursor: pointer;" data-sort="netSaving"
+                                        onclick="">Ahorro Neto <span class="sort-icon"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="analisisTableBody">
+                                <!-- Rows will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="analisisDeficitContainer" style="margin-bottom: 2rem;"></div>
+
+                    <div
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin:0">Gráfica Mensual</h2>
+                    </div>
+                    <div id="analisisChartContainer" class="glass-panel"
+                        style="height: 350px; padding: 1.5rem; display: flex; flex-direction: column;">
+                        <!-- Chart or SVG will be rendered here -->
+                        <div id="analisisChart" style="flex-grow: 1; min-height: 250px;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- Mobile Action Bar removed as it is redundant with bottom-nav-hub -->
+        <div id="mobileActionBar" class="mobile-action-bar hidden" style="display:none !important;"></div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <div style="display: flex; flex-direction: column;">
+                    <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
+                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 202603221625</span>
+                </div>
+                <span id="closeSettingsModal" class="close-modal">&times;</span>
+            </div>
+            <form id="settingsForm" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="fiscalDayInput">Día de inicio del Mes Fiscal</label>
+                    <input type="number" id="fiscalDayInput" min="1" max="31" placeholder="Ej: 25" required>
+                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Los meses fiscales contarán a partir
+                        de este día.</small>
+                </div>
+                <div class="form-group">
+                    <label for="defaultTransferSourceSelect">Cuenta de Traspaso por Defecto (Opcional)</label>
+                    <select id="defaultTransferSourceSelect">
+                        <option value="">-- Sin traspaso por omisión --</option>
+                        <!-- Options injected by JS -->
+                    </select>
+                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Se seleccionará automáticamente al
+                        añadir una nueva inversión.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="bottomNavMode">Vista Principal en Navegación</label>
+                    <select id="bottomNavModeInput">
+                        <option value="nomina">Nómina</option>
+                        <option value="activity">Actividad</option>
+                    </select>
+                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Elige qué sección mostrar en el tercer botón de la barra inferior.</small>
+                </div>
+
+                <div class="form-group"
+                    style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                        <label style="font-weight: 700; color: white;">☁️ Sincronización Nextcloud</label>
+                    </div>
+
+                    <div id="ncStatus"
+                        style="font-size: 0.8rem; margin-bottom: 1rem; padding: 0.5rem; border-radius: 8px; background: rgba(255,255,255,0.05); text-align: center;">
+                        <div id="ncStatusText" style="opacity: 0.6;">No configurado</div>
+                        <div id="ncLastSync" style="font-size: 0.7rem; opacity: 0.4; margin-top: 0.2rem;"></div>
+                        <div id="ncDeviceInfo" style="font-size: 0.65rem; opacity: 0.35; margin-top: 0.2rem;"></div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                        <input type="url" id="ncUrlInput" placeholder="https://tu-nextcloud.com"
+                            style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
+                        <input type="text" id="ncUserInput" placeholder="Usuario" autocomplete="username"
+                            style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
+                        <input type="password" id="ncPasswordInput" placeholder="App Password"
+                            autocomplete="current-password"
+                            style="padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; font-size: 0.85rem;">
+                        <small style="opacity: 0.5; font-size: 0.7rem;">App Password: Nextcloud → Ajustes → Seguridad.</small>
+                    </div>
+
+                    <button type="button" id="ncTestBtn" class="btn-secondary"
+                        style="width: 100%; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        🔗 Probar Conexión
+                    </button>
+
+                    <div id="ncConnectedActions" class="hidden">
+                        <button type="button" id="ncBackupBtn" class="btn-primary"
+                            style="width: 100%; margin-bottom: 0.5rem; background: var(--success); border: none;">📤
+                            Guardar en Nextcloud</button>
+                        <button type="button" id="ncRestoreBtn" class="btn-secondary"
+                            style="width: 100%; margin-bottom: 0.5rem;">📥 Cargar desde Nextcloud</button>
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 1rem;">
+                    <button type="submit" class="btn-primary" style="width:100%" title="Guardar">💾</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Stock -->
+    <div id="addStockModal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <span class="close-modal" id="closeAddStockModal">&times;</span>
+            <h2 id="modalTitle">Add New Investment</h2>
+            <form id="addStockForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Stock Ticker / Name</label>
+                    <input type="text" id="tickerInput" placeholder="e.g., AAPL, SAN.MC" autocomplete="off" required>
+                    <div id="searchResults" class="search-results hidden"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Market</label>
+                        <select id="marketSelect">
+                            <option value="SP500">S&P 500</option>
+                            <option value="IBEX35">IBEX 35</option>
+                            <option value="NASDAQ">NASDAQ</option>
+                            <option value="XETRA">XETRA (DE)</option>
+                            <option value="Other">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="dateInput" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="qtyInput" step="0.000001" placeholder="0.000000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Invested (€)</label>
+                        <input type="number" id="priceInput" step="0.01" placeholder="0.00 €" required>
+                    </div>
+                </div>
+                <div class="form-group hidden" id="stockSourceInfoGroup">
+                    <label>Cuenta de Origen</label>
+                    <div id="stockSourceInfoDisplay"
+                        style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-weight: 600; color: var(--primary); border: 1px solid var(--border-color);">
+                        --</div>
+                </div>
+
+                <div class="form-group" id="fundSourceGroup">
+                    <label>Traspasar desde Ahorro (Opcional)</label>
+                    <select id="fundSourceSelect">
+                        <option value="">-- Sin traspaso --</option>
+                        <!-- Options injected by JS -->
+                    </select>
+                </div>
+                <button type="submit" id="submitStockBtn" class="btn-primary full-width" title="Guardar">💾</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Modal for Financial Details -->
+    <div id="financialDetailsModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <span class="close-modal" id="closeFinModal">&times;</span>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                <div id="financialModalIcon" style="font-size: 2.5rem;">🏢</div>
+                <div>
+                    <h2 id="financialModalTitle" style="margin-bottom: 0.2rem;">Company Name</h2>
+                    <p id="financialModalTicker" style="color: var(--text-muted); font-size: 1rem;">TICKER</p>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <div class="timeframe-tabs">
+                    <button class="time-tab active" data-tf="D">D</button>
+                    <button class="time-tab" data-tf="W">W</button>
+                    <button class="time-tab" data-tf="M">M</button>
+                    <button class="time-tab" data-tf="Y">A</button>
+                </div>
+                <div id="chartContainer" class="chart-container"></div>
+            </div>
+
+            <div class="financials-grid">
+                <div class="fin-item">
+                    <label title="Último dividendo bruto repartido por acción.">Last Dividend</label>
+                    <div id="finLastDiv" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label title="Próximo dividendo anunciado o estimado a repartir.">Next Dividend</label>
+                    <div id="finNextDiv" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label title="Fecha límite para tener acciones y cobrar el próximo dividendo.">Ex-Dividend
+                        Date</label>
+                    <div id="finExDiv" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label title="Fecha en la que se hará efectivo el abono del dividendo en la cuenta.">Payment
+                        Date</label>
+                    <div id="finPayDiv" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label title="Rentabilidad por dividendo anualizada respecto al precio actual.">Dividend
+                        Yield</label>
+                    <div id="finYield" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label
+                        title="Relación entre el precio de la acción y el beneficio por acción (Price/Earnings). Indica cuántas veces se paga el beneficio anual.">P/E
+                        Ratio</label>
+                    <div id="finPE" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label
+                        title="Relación entre el precio y el valor contable (Price/Book). Compara el valor de mercado con el valor en libros.">P/B
+                        Ratio</label>
+                    <div id="finPB" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label
+                        title="Relación entre el precio y las ventas (Price/Sales). Útil para valorar empresas con beneficios negativos.">P/S
+                        Ratio</label>
+                    <div id="finPS" class="fin-value">-</div>
+                </div>
+                <div class="fin-item">
+                    <label
+                        title="Beneficio neto por acción (Earnings Per Share). Indica la ganancia que corresponde a cada título.">EPS</label>
+                    <div id="finEPS" class="fin-value">-</div>
+                </div>
+            </div>
+
+            <div class="tech-section">
+                <h3
+                    style="margin: 1.5rem 0 1rem; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    Análisis Técnico (Simulado)</h3>
+                <div id="techAnalysisContainer" class="tech-analysis-container">
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <label>Tendencia</label>
+                            <div id="techTrend" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Soporte Fuerte</label>
+                            <div id="techSupport" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Resistencia</label>
+                            <div id="techResistance" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Rango de Compra</label>
+                            <div id="techBuyRange" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Stop Técnico</label>
+                            <div id="techStop" class="tech-value">-</div>
+                        </div>
+                        <div class="tech-item">
+                            <label>Volatilidad Promedio</label>
+                            <div id="techVolatility" class="tech-value">-</div>
+                        </div>
+                    </div>
+                    <div class="tech-extra">
+                        <div id="techMA" class="tech-ma-status"></div>
+                        <div id="techPatterns" class="tech-patterns"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Input Modal (New Drawer or New Movement) -->
+    <div id="savingsInputModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="savingsModalTitle">Nuevo Movimiento</h2>
+                <span id="closeSavingsModal" class="close-modal">&times;</span>
+            </div>
+            <form id="savingsInputForm">
+                <input type="hidden" id="savingsTargetId">
+                <input type="hidden" id="savingsActionType"> <!-- 'drawer' or 'movement' -->
+                <input type="hidden" id="savingsMovementIndex">
+
+                <div class="form-group hidden" id="drawerInfoGroup">
+                    <label>Cuenta</label>
+                    <div id="drawerInfoDisplay"
+                        style="padding: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 8px; font-weight: 600; color: var(--primary); border: 1px solid var(--border-color);">
+                        --</div>
+                </div>
+
+                <div class="form-group" id="drawerNameGroup">
+                    <label for="drawerNameInput">Nombre de la Cuenta</label>
+                    <input type="text" id="drawerNameInput" placeholder="Ej: Tesoro Público, Cuenta Meta">
+                </div>
+
+                <div class="form-group hidden" id="targetDrawerSelectGroup">
+                    <label for="targetDrawerSelect">Cuenta</label>
+                    <select id="targetDrawerSelect">
+                        <!-- Filled by JS -->
+                    </select>
+                </div>
+
+                <div class="form-group" id="drawerGroupGroup">
+                    <label for="drawerGroupInput">Grupo (Opcional)</label>
+                    <input type="text" id="drawerGroupInput" list="existingGroups"
+                        placeholder="Ej: Vivienda, Inversiones, Emergencia">
+                    <datalist id="existingGroups"></datalist>
+                </div>
+
+                <div class="form-group hidden" id="drawerIconGroup">
+                    <label>Icono de la Cuenta</label>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <input type="text" id="drawerIconInput" value="📁"
+                            style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
+                        <div id="quickEmojiList"
+                            style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; justify-content: center;">
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">📁</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🏦</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">💰</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">💳</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🏠</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🚗</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🍕</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">✈️</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🎁</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🎓</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🏥</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">🛒</span>
+                            <span class="emoji-opt" style="cursor:pointer; font-size: 1.2rem;">💡</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="movementAmountGroup">
+                    <div id="savingsMovementTypeContainer" class="hidden"
+                        style="display: flex; gap: 10px; margin-bottom: 0.8rem;">
+                        <button type="button" id="savingsMovementIncomeToggle" class="btn-secondary btn-sm"
+                            style="flex:1; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--border-color);">📈
+                            Ingreso</button>
+                        <button type="button" id="savingsMovementExpenseToggle" class="btn-secondary btn-sm"
+                            style="flex:1; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--border-color);">📉
+                            Gasto</button>
+                    </div>
+                    <input type="hidden" id="savingsMovementType" value="income">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="movementAmountInput">Importe (€)</label>
+                            <input type="number" id="movementAmountInput" step="0.01" placeholder="Ej: 50.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="savingsDateInput">Fecha</label>
+                            <input type="date" id="savingsDateInput" required>
+                        </div>
+                    </div>
+                    <small id="savingsMovementTypeHint" style="opacity:0.6; display:block; margin-top:0.3rem;">Usa
+                        importes negativos (-) para gastos.</small>
+                </div>
+
+                <div class="form-group hidden" id="transferTargetGroup">
+                    <label for="transferTargetSelect">Cuenta de Destino</label>
+                    <select id="transferTargetSelect">
+                        <!-- Options filled by JS -->
+                    </select>
+                </div>
+
+                <div class="form-group" id="movementConceptGroup">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <label for="movementConceptInput" style="margin-bottom: 0;">Concepto (Opcional)</label>
+                        <span id="smartConceptToggle"
+                            style="cursor: pointer; font-size: 1.2rem; filter: grayscale(1); opacity: 0.5; transition: all 0.2s;"
+                            title="Activar Concepto Inteligente (Sugiere categoría y subcategoría según historial)">💡</span>
+                    </div>
+                    <input type="text" id="movementConceptInput" list="historicConcepts"
+                        placeholder="Ej: Ingreso nómina, Compra letra">
+                    <datalist id="historicConcepts"></datalist>
+                    
+                    <!-- NUEVO: Checkbox para Marcar como Total Máximo -->
+                    <div id="maxTotalCheckboxContainer" class="hidden" style="margin-top: 0.8rem;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;">
+                            <input type="checkbox" id="movementIsMaxTotalInput">
+                            <span style="color: var(--primary);">Marcar como Gasto Total Máximo</span>
+                        </label>
+                        <small style="opacity:0.6; display:block; margin-top:0.3rem; margin-left: 21px;">Calcula el pendiente restando los gastos reales.</small>
+                    </div>
+                </div>
+
+                <div class="form-group hidden" id="savingsCategoryGroup">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label for="savingsCategorySelect" style="margin-bottom: 0;">Categoría</label>
+                        <button type="button" id="addNewCategoryBtn" class="btn-sm"
+                            style="background:none; border:none; color:var(--primary); cursor:pointer; font-size: 0.75rem;">+
+                            Añadir</button>
+                    </div>
+                    <select id="savingsCategorySelect">
+                        <!-- Options filled by JS based on type -->
+                    </select>
+                </div>
+
+                <div class="form-group hidden" id="savingsSubcategoryGroup">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label for="savingsSubcategorySelect" style="margin-bottom: 0;">Subcategoría (Opcional)</label>
+                        <button type="button" id="addNewSubcategoryBtn" class="btn-sm"
+                            style="background:none; border:none; color:var(--primary); cursor:pointer; font-size: 0.75rem;">+
+                            Añadir</button>
+                    </div>
+                    <select id="savingsSubcategorySelect">
+                        <!-- Options filled by JS based on type -->
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem;">
+                        <input type="checkbox" id="savingsRecurringInput">
+                        <span>Marcar como Periódico</span>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary" id="saveSavingsBtn" style="width:100%"
+                        title="Guardar">💾</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Goal Setting Modal -->
+    <div id="goalModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="goalModalTitle">Establecer Objetivo</h2>
+                <span id="closeGoalModal" class="close-modal">&times;</span>
+            </div>
+            <p id="goalModalDescription" style="font-size: 0.9rem; color: var(--text-muted); margin: 1rem 0;">Establece
+                el importe objetivo para esta cuenta. Introduce 0 para quitarlo.</p>
+            <form id="goalForm">
+                <div class="form-group">
+                    <label for="goalAmountInput">Importe Objetivo (€)</label>
+                    <input type="number" id="goalAmountInput" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="modal-actions" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn-primary" style="width: 100%;" title="Guardar">💾</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+    <!-- Nomina Input Modal (For creating/editing drawers) -->
+    <div id="nominaModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="nominaModalTitle">Añadir Nueva Cuenta</h2>
+                <span id="closeNominaModal" class="close-modal">&times;</span>
+            </div>
+            <form id="nominaForm">
+                <input type="hidden" id="nominaEditId">
+                <div class="form-group">
+                    <label for="nominaNameInput">Nombre del Concepto/Cuenta</label>
+                    <input type="text" id="nominaNameInput" placeholder="Ej: Salario, Alquiler, Luz" required>
+                </div>
+                <div class="form-group">
+                    <label for="nominaAmountInput">Saldo Inicial (€)</label>
+                    <input type="number" id="nominaAmountInput" step="0.01" placeholder="Ej: 1500.00" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="nominaTypeSelect">Tipo de Cuenta</label>
+                    <select id="nominaTypeSelect">
+                        <option value="income">📈 Ingreso (Añadir a ingresos)</option>
+                        <option value="saving">🏦 Ahorro (Añadir a ahorro)</option>
+                        <option value="expense">📉 Gasto (Añadir a gastos)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="nominaIconGroup">
+                    <label>Icono</label>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <input type="text" id="nominaIconInput" value="📁"
+                            style="flex: 0 0 60px; text-align: center; font-size: 1.5rem; padding: 0.5rem;">
+                        <div id="quickEmojiListNomina"
+                            style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; justify-content: center;">
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">📁</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🏦</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">💰</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">💳</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🏠</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🚗</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🍕</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">✈️</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🎁</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🎓</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🏥</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">🛒</span>
+                            <span class="emoji-opt-nomina" style="cursor:pointer; font-size: 1.2rem;">💡</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="nominaLinkedAhorroSelect">Vincular a Cuenta de Ahorro destino (Opcional)</label>
+                    <select id="nominaLinkedAhorroSelect">
+                        <option value="">-- No vincular --</option>
+                        <!-- Options injected by JS -->
+                    </select>
+                    <p style="font-size: 0.75rem; opacity: 0.7; margin-top: 4px;">Permite traspasar automáticamente el
+                        ahorro de esta cuenta al cajón de ahorro seleccionado.</p>
+                </div>
+                <div class="form-group">
+                    <label>Meses que afecta la provisión</label>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.75rem; opacity: 0.6;">Días en los que se cuenta este saldo
+                            inicial</span>
+                        <button type="button" id="selectAllDrawerMonths" class="btn-sm"
+                            style="background:transparent; color:var(--primary); border:1px solid var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer;">Todos</button>
+                    </div>
+                    <div id="nominaDrawerMonthsCheckboxes" class="months-grid">
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="1" checked> Ene</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="2" checked> Feb</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="3" checked> Mar</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="4" checked> Abr</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="5" checked> May</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="6" checked> Jun</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="7" checked> Jul</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="8" checked> Ago</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="9" checked> Sep</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="10" checked> Oct</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="11" checked> Nov</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="12" checked> Dic</label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary" style="width:100%" title="Guardar">💾</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ahorro Breakdown Modal -->
+    <div id="ahorroBreakdownModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="breakdownModalTitle">Resumen de Rendimientos</h2>
+                <span id="closeBreakdownModal" class="close-modal">&times;</span>
+            </div>
+            <div style="margin: 1.5rem 0;">
+                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem; align-items: center;">
+                    <select id="breakdownFilterType"
+                        style="flex: 1; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                        <option value="month">Mensual</option>
+                        <option value="year">Anual</option>
+                    </select>
+
+                    <div id="breakdownMonthContainer" style="flex: 2; display: flex; align-items: center; gap: 8px;">
+                        <input type="month" id="breakdownMonthInput"
+                            style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <button id="breakdownMonthUp" class="btn-icon"
+                                style="padding: 1px 6px; font-size: 0.6rem;">🔼</button>
+                            <button id="breakdownMonthDown" class="btn-icon"
+                                style="padding: 1px 6px; font-size: 0.6rem;">🔽</button>
+                        </div>
+                    </div>
+
+                    <div id="breakdownYearContainer" class="hidden"
+                        style="flex: 2; display: flex; align-items: center; gap: 8px;">
+                        <input type="number" id="breakdownYearInput" min="2000" max="2100"
+                            oninput="this.value = Math.abs(this.value)"
+                            style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <button id="breakdownYearUp" class="btn-icon"
+                                style="padding: 1px 6px; font-size: 0.6rem;">🔼</button>
+                            <button id="breakdownYearDown" class="btn-icon"
+                                style="padding: 1px 6px; font-size: 0.6rem;">🔽</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="breakdown-results glass-panel"
+                    style="padding: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px;">
+                    <div class="breakdown-row" data-category="Intereses"
+                        style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
+                        <span style="opacity: 0.8;">Intereses:</span>
+                        <span id="breakdownIntereses"
+                            style="font-weight: 600; color: var(--primary); font-size: 1.1rem;">€ 0,00</span>
+                    </div>
+                    <div class="breakdown-row" data-category="Dividendos"
+                        style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
+                        <span style="opacity: 0.8;">Dividendos:</span>
+                        <span id="breakdownDividendos"
+                            style="font-weight: 600; color: var(--success); font-size: 1.1rem;">€ 0,00</span>
+                    </div>
+                    <div class="breakdown-row" data-category="Especulación"
+                        style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; cursor: pointer; padding: 4px; border-radius: 6px;">
+                        <span style="opacity: 0.8;">Especulación:</span>
+                        <span id="breakdownEspeculacion" style="font-weight: 600; color: #f59e0b; font-size: 1.1rem;">€
+                            0,00</span>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; padding-top: 1.2rem; border-top: 1px solid var(--border-color); font-size: 1.4rem; font-weight: 700;">
+                        <span>Total:</span>
+                        <span id="breakdownTotal" class="highlight">€ 0,00</span>
+                    </div>
+                    <div id="breakdownBolsaPctContainer" class="hidden"
+                        style="margin-top: 0.5rem; text-align: right; font-size: 0.85rem; opacity: 0.7;">
+                        <span id="breakdownBolsaPct" style="color: var(--primary); font-weight: 600;">0,00%</span> de
+                        <span id="breakdownBolsaInvested">0,00 €</span> invertido
+                    </div>
+                </div>
+
+                <!-- Detail Section -->
+                <div id="breakdownDetailContainer" class="hidden"
+                    style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <h3 id="breakdownDetailTitle"
+                        style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-muted);">Detalle de Movimientos
+                    </h3>
+                    <div id="breakdownDetailList"
+                        style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+                        <!-- Details injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nomina Movement Modal -->
+    <div id="nominaMovementModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="nominaMovementModalTitle">Añadir Movimiento</h2>
+                <span id="closeNominaMovementModal" class="close-modal">&times;</span>
+            </div>
+            <form id="nominaMovementForm">
+                <input type="hidden" id="nominaMovementTargetId">
+                <input type="hidden" id="nominaMovementEditIndex">
+                <div class="form-group">
+                    <label for="nominaMovementAmountInput">Importe (€)</label>
+                    <div id="nominaMovementTypeContainer" style="display: flex; gap: 10px; margin-bottom: 0.8rem;">
+                        <button type="button" id="nominaMovementIncomeToggle" class="btn-secondary btn-sm"
+                            style="flex:1; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--border-color);">📈
+                            Ingreso</button>
+                        <button type="button" id="nominaMovementExpenseToggle" class="btn-secondary btn-sm"
+                            style="flex:1; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--border-color);">📉
+                            Gasto</button>
+                    </div>
+                    <input type="hidden" id="nominaMovementType" value="income">
+                    <input type="number" id="nominaMovementAmountInput" step="0.01" placeholder="Ej: 50.00" required>
+                    <small id="nominaMovementTypeHint" style="opacity:0.6; display:block; margin-top:0.3rem;">Este
+                        movimiento se contará como un ingreso (valor positivo).</small>
+                </div>
+                <div class="form-group">
+                    <label for="nominaMovementConceptInput">Concepto (Opcional)</label>
+                    <input type="text" id="nominaMovementConceptInput" placeholder="Ej: Pago extra, Devolución">
+                    
+                    <!-- NUEVO: Checkbox para Marcar como Total Máximo (Nómina) -->
+                    <div id="nominaMaxTotalCheckboxContainer" style="margin-top: 0.8rem;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;">
+                            <input type="checkbox" id="nominaMovementIsMaxTotalInput">
+                            <span style="color: var(--primary);">Marcar como Gasto Total Máximo</span>
+                        </label>
+                        <small style="opacity:0.6; display:block; margin-top:0.3rem; margin-left: 21px;">Calcula el pendiente restando los gastos reales a este importe.</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Meses que afecta</label>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.75rem; opacity: 0.6;">Marca los meses donde contará el valor</span>
+                        <button type="button" id="selectAllMonths" class="btn-sm"
+                            style="background:transparent; color:var(--primary); border:1px solid var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer;">Todos</button>
+                    </div>
+                    <div id="nominaMonthsCheckboxes" class="months-grid">
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="1" checked> Ene</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="2" checked> Feb</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="3" checked> Mar</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="4" checked> Abr</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="5" checked> May</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="6" checked> Jun</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="7" checked> Jul</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="8" checked> Ago</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="9" checked> Sep</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="10" checked> Oct</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="11" checked> Nov</label>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; white-space: nowrap;"><input
+                                type="checkbox" class="nomina-checkbox" value="12" checked> Dic</label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary" style="width:100%" title="Guardar">💾</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Month Detail Modal -->
+    <div id="monthDetailModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 800px; width: 95%;">
+            <div class="modal-header">
+                <h2 id="monthDetailTitle">Detalles del Mes</h2>
+                <span id="closeMonthDetailModal" class="close-modal">&times;</span>
+            </div>
+            <div id="monthDetailContent"
+                style="margin-top: 1rem; max-height: 70vh; overflow-y: auto; padding-right: 5px;">
+                <!-- Summary and movements will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Nomina History Modal -->
+    <div id="nominaHistoryModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="nominaHistoryTitle">Historial de Nomina</h2>
+                <span id="closeNominaHistoryModal" class="close-modal">&times;</span>
+            </div>
+            <div id="nominaMovementsList" class="movements-list"
+                style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+                <!-- Movements will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Fiscal Calendar Modal -->
+    <div id="fiscalCalendarModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="fiscalCalendarTitle">Calendario Fiscal</h2>
+                <span id="closeFiscalCalendarModal" class="close-modal">&times;</span>
+            </div>
+            <div id="fiscalCalendarContent" style="margin-top: 1.5rem;">
+                <!-- Calendar will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Clock Countdown Modal -->
+    <div id="clockCountdownModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 style="margin: 0; display:flex; align-items:center; gap:12px; width: 100%;">
+                    <span id="currentDateDisplay" style="font-size: 1.1rem; opacity: 0.7;">12/03/2026</span>
+                    <span id="currentTimeDisplay"
+                        style="font-family: monospace; font-size: 1.5rem; color: var(--primary); margin-left: auto;">00:00:00</span>
+                </h2>
+                <span id="closeClockModal" class="close-modal">&times;</span>
+            </div>
+            <div style="margin-top: 1rem;">
+                <form id="addCountdownForm"
+                    style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 1.5rem; align-items: stretch;">
+                    <input type="hidden" id="countdownEditId">
+                    <div style="flex: 1 1 120px; display:flex; flex-direction:column; min-width: 0;">
+                        <input type="text" id="countdownConceptInput" placeholder="Concepto..." autocomplete="off"
+                            required style="width: 100%; box-sizing:border-box; min-width: 0;">
+                    </div>
+                    <div style="flex: 0 1 135px; display:flex; flex-direction:column; min-width: 0;">
+                        <input type="date" id="countdownDateInput" required
+                            style="width: 100%; box-sizing:border-box; padding-left: 0.5rem; padding-right: 0.5rem; min-width: 0;">
+                    </div>
+                    <div style="display:flex; gap: 6px; flex: 0 0 auto;">
+                        <button type="submit" id="submitCountdownBtn" class="btn-primary"
+                            style="padding: 0 1rem; display:flex; align-items:center; justify-content:center;"
+                            title="Guardar">➕</button>
+                        <button type="button" id="cancelEditCountdownBtn" class="btn-secondary hidden"
+                            style="padding: 0 0.8rem; display:flex; align-items:center; justify-content:center; opacity: 0.8;"
+                            title="Cancelar">✕</button>
+                    </div>
+                </form>
+
+                <h3
+                    style="font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                    Cuentas Atrás</h3>
+                <div id="countdownsList"
+                    style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+                    <!-- Countdowns will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Price Adjustment Modal -->
+    <div id="manualPriceModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px;">
+            <div class="modal-header">
+                <div style="display: flex; flex-direction: column;">
+                    <h2 style="margin: 0;">Ajuste de Precios</h2>
+                    <span style="font-size: 0.7rem; opacity: 0.7; color: var(--warning);">Actualiza manualmente los
+                        valores que no tienen datos en vivo</span>
+                </div>
+                <span id="closeManualPriceModal" class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="manualPriceList"
+                    style="display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Items will be injected here -->
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 1.5rem; justify-content: space-between;">
+                <button id="clearManualPricesBtn" class="btn-secondary" style="font-size: 0.8rem;">Borrar Todo</button>
+                <button id="saveManualPricesBtn" class="btn-primary">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden technical elements -->
+    <input type="file" id="globalJsonInput" class="hidden" accept=".json">
+    <button id="clockMenuBtn" class="hidden"></button>
+
+    <!-- Configuration for secrets (ignored by git, see config.example.js) -->
+    <script src="storage.js?v=202604041501"></script>
+    <script src="mock_data.js?v=202604041501"></script>
+    <script src="nextcloud.js?v=202604041501"></script>
+    <script src="app.js?v=202604041501"></script>
+    <!-- Consolidated PWA Logic (Reliable) -->
+    <!-- Transfer Nomina to Ahorro Modal -->
+    <div id="transferToAhorroModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="transferModalTitle">Traspasar a Ahorro</h2>
+                <span id="closeTransferModal" class="close-modal">&times;</span>
+            </div>
+            <form id="transferToAhorroForm">
+                <input type="hidden" id="transferSourceDrawerId">
+                <div class="form-group">
+                    <label>Traspasar desde:</label>
+                    <p id="transferSourceDrawerName"
+                        style="font-weight: 600; color: var(--primary); margin-bottom: 1rem;">-</p>
+                </div>
+                <div class="form-group">
+                    <label>Destino:</label>
+                    <p id="transferTargetDrawerName"
+                        style="font-weight: 600; color: var(--success); margin-bottom: 1rem;">-</p>
+                </div>
+                <div class="form-group">
+                    <label for="transferDateInput">Fecha</label>
+                    <input type="date" id="transferDateInput" required>
+                </div>
+                <div class="form-group">
+                    <label for="transferAmountInput">Importe (€)</label>
+                    <input type="number" id="transferAmountInput" step="0.01" placeholder="0.00" required>
+                    <small style="opacity:0.6; display:block; margin-top:0.3rem;">Sugerencia basada en
+                        provisión.</small>
+                </div>
+                <div class="form-group">
+                    <label for="transferCategorySelect">Categoría</label>
+                    <select id="transferCategorySelect">
+                        <!-- Options filled by JS -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="transferSubcategorySelect">Subcategoría (Opcional)</label>
+                    <select id="transferSubcategorySelect">
+                        <!-- Options filled by JS -->
+                    </select>
+                </div>
+                <div class="modal-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" id="cancelTransferBtn" class="btn-secondary" style="flex: 1;"
+                        title="Cancelar">✕</button>
+                    <button type="submit" class="btn-primary" style="flex: 1; background: var(--success);"
+                        title="Aceptar">✅</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Categories Management Modal -->
+    <div id="categoriesModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px; width: 95%;">
+            <div class="modal-header">
+                <h2>Gestión de Categorías</h2>
+                <button class="close-btn" id="closeCategoriesModal">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <h3
+                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--success); display: flex; justify-content: space-between; align-items: center;">
+                    Ingresos
+                    <button id="addIncomeCategoryBtn" class="btn-secondary"
+                        style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Categoría</button>
+                </h3>
+                <div id="incomeCategoriesContainer"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <h3
+                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--danger); display: flex; justify-content: space-between; align-items: center;">
+                    Gastos
+                    <button id="addExpenseCategoryBtn" class="btn-secondary"
+                        style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Categoría</button>
+                </h3>
+                <div id="expenseCategoriesContainer"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 2rem;">
+                <button id="saveCategoriesBtn" class="btn-primary"
+                    style="width: 100%; font-weight: 700; padding: 1rem;">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subcategories Management Modal -->
+    <div id="subcategoriesModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px; width: 95%;">
+            <div class="modal-header">
+                <h2>Gestión de Subcategorías</h2>
+                <button class="close-btn" id="closeSubcategoriesModal">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <h3
+                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--success); display: flex; justify-content: space-between; align-items: center;">
+                    Ingresos
+                    <button id="addIncomeSubcategoryBtn" class="btn-secondary"
+                        style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Subcategoría</button>
+                </h3>
+                <div id="incomeSubcategoriesContainer"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <h3
+                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--danger); display: flex; justify-content: space-between; align-items: center;">
+                    Gastos
+                    <button id="addExpenseSubcategoryBtn" class="btn-secondary"
+                        style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">+ Subcategoría</button>
+                </h3>
+                <div id="expenseSubcategoriesContainer"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 2rem;">
+                <button id="saveSubcategoriesBtn" class="btn-primary"
+                    style="width: 100%; font-weight: 700; padding: 1rem;">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Calendar Modal -->
+    <!-- Bolsa Calendar Modal -->
+    <div id="bolsaCalendarModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 600px; width: 95%;">
+            <div class="modal-header">
+                <h2 id="bolsaCalendarTitle">📈 Calendario de Bolsa</h2>
+                <button class="close-btn" id="closeBolsaCalendarModal">&times;</button>
+            </div>
+            <div class="calendar-controls"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <button id="prevBolsaCalendarMonth" class="btn-icon">◀</button>
+                <span id="bolsaCalendarCurrentMonth" style="font-weight: 700; font-size: 1.1rem;">Mes Año</span>
+                <button id="nextBolsaCalendarMonth" class="btn-icon">▶</button>
+            </div>
+            <div class="calendar-grid" id="bolsaCalendarGrid">
+                <!-- Days of week -->
+                <div class="calendar-day-head"><span class="day-full">Lun</span><span class="day-short">L</span></div>
+                <div class="calendar-day-head"><span class="day-full">Mar</span><span class="day-short">M</span></div>
+                <div class="calendar-day-head"><span class="day-full">Mié</span><span class="day-short">X</span></div>
+                <div class="calendar-day-head"><span class="day-full">Jue</span><span class="day-short">J</span></div>
+                <div class="calendar-day-head"><span class="day-full">Vie</span><span class="day-short">V</span></div>
+                <div class="calendar-day-head"><span class="day-full">Sáb</span><span class="day-short">S</span></div>
+                <div class="calendar-day-head"><span class="day-full">Dom</span><span class="day-short">D</span></div>
+                <!-- Calendar cells filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <div id="savingsCalendarModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 600px; width: 95%;">
+            <div class="modal-header">
+                <h2 id="calendarModalTitle">Calendario de Movimientos</h2>
+                <button class="close-btn" id="closeCalendarModal">&times;</button>
+            </div>
+            <div class="calendar-controls"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <button id="prevCalendarMonth" class="btn-icon">◀</button>
+                <span id="calendarCurrentMonth" style="font-weight: 700; font-size: 1.1rem;">Mes Año</span>
+                <button id="nextCalendarMonth" class="btn-icon">▶</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Days of week -->
+                <div class="calendar-day-head"><span class="day-full">Lun</span><span class="day-short">L</span></div>
+                <div class="calendar-day-head"><span class="day-full">Mar</span><span class="day-short">M</span></div>
+                <div class="calendar-day-head"><span class="day-full">Mié</span><span class="day-short">X</span></div>
+                <div class="calendar-day-head"><span class="day-full">Jue</span><span class="day-short">J</span></div>
+                <div class="calendar-day-head"><span class="day-full">Vie</span><span class="day-short">V</span></div>
+                <div class="calendar-day-head"><span class="day-full">Sáb</span><span class="day-short">S</span></div>
+                <div class="calendar-day-head"><span class="day-full">Dom</span><span class="day-short">D</span></div>
+                <!-- Calendar cells filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <div id="recurringMovementsModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px; width: 95%;">
+            <div class="modal-header">
+                <h2>Movimientos Periódicos</h2>
+                <span id="closeRecurringMovementsModal" class="close-modal">&times;</span>
+            </div>
+            <div style="margin: 1rem 0;">
+                <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 1.2rem;">
+                    Estos son movimientos que has marcado como periódicos. Puedes volver a crearlos todos a la vez con la fecha que elijas.
+                </p>
+                <div id="recurringMovementsList" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem;">
+                    <!-- List of recurring items -->
+                </div>
+                <div class="modal-actions">
+                    <button id="executeRecurringMovementsBtn" class="btn-primary" style="width: 100%; padding: 1rem; font-weight: 700;">
+                        🔄 Ejecutar Movimientos Seleccionados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const APP_VERSION = '202604041459'; // NEW VERSION
+
+        // FORCE CACHE CLEARING (Overriding the Service Worker sticky cache)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                for (let name of names) caches.delete(name);
+            });
+        }
+
+        window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js?v=' + APP_VERSION).then(registration => {
+                    console.log('SW registered with scope:', registration.scope);
+
+                    registration.onupdatefound = () => {
+                        const installingWorker = registration.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('New version available. Showing notification.');
+                                if (typeof showUpdateNotification === 'function') {
+                                    showUpdateNotification(installingWorker);
+                                } else {
+                                    // Fallback if UI is not ready
+                                    installingWorker.postMessage({ type: 'SKIP_WAITING' });
+                                    setTimeout(() => window.location.reload(true), 1500);
+                                }
+                            }
+                        };
+                    };
+                }).catch(error => {
+                    console.error('SW registration failed:', error);
+                });
+
+                // Aggressive cache clearing if versions mismatch
+                const storedVersion = localStorage.getItem('app_version');
+                if (storedVersion !== APP_VERSION) {
+                    console.log('Version changed, clearing caches...');
+                    if ('caches' in window) {
+                        caches.keys().then(names => {
+                            for (let name of names) caches.delete(name);
+                        });
+                    }
+                    localStorage.setItem('app_version', APP_VERSION);
+                    window.location.reload(true);
+                }
+            });
+
+        function showUpdateNotification(worker = null) {
+            const toast = document.createElement('div');
+            toast.className = 'pwa-update-toast';
+            toast.innerHTML = `
+                <div class="pwa-toast-content">
+                    <span class="pwa-toast-icon">✨</span>
+                    <div class="pwa-toast-text">
+                        <strong>Nueva versión disponible</strong>
+                        <p>Actualiza para disfrutar de las últimas mejoras.</p>
+                    </div>
+                </div>
+                <button id="pwaReloadBtn" class="btn-primary btn-sm" title="Actualizar">Actualizar ✨</button>
+            `;
+            document.body.appendChild(toast);
+
+            // Animation
+            setTimeout(() => toast.classList.add('visible'), 100);
+
+            document.getElementById('pwaReloadBtn').addEventListener('click', () => {
+                if (worker) {
+                    worker.postMessage({ type: 'SKIP_WAITING' });
+                    // The oncontrollerchange listener in index.html/app.js will handle the reload
+                    // or we can just reload after a short delay
+                    setTimeout(() => window.location.reload(true), 500);
+                } else {
+                    window.location.reload(true);
+                }
+            });
+        }
+
+        // PWA Install & Reset Logic
+        let deferredPrompt;
+        const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+        const pwaResetBtn = document.getElementById('pwaResetBtn');
+        const pwaStatusText = document.getElementById('pwaStatusText');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
+            if (pwaStatusText) pwaStatusText.textContent = '🏠 App instalable';
+        });
+
+        if (pwaInstallBtn) {
+            pwaInstallBtn.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    pwaInstallBtn.classList.add('hidden');
+                }
+                deferredPrompt = null;
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            if (pwaInstallBtn) pwaInstallBtn.classList.add('hidden');
+            if (pwaStatusText) pwaStatusText.textContent = '✅ App instalada';
+        });
+
+        // Hard Reset: Unregister SW and clear Cache
+        const handleReset = async () => {
+            if (window.showCustomConfirm) {
+                window.showCustomConfirm('¿Realizar hard-reset de la App?\nSe borrará la caché del código y se reiniciará para descargar la última versión.\n\n(Tus datos guardados NO se perderán)', async () => {
+                    try {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (let registration of registrations) {
+                            await registration.unregister();
+                        }
+                        if ('caches' in window) {
+                            const keys = await caches.keys();
+                            for (let key of keys) {
+                                await caches.delete(key);
+                            }
+                        }
+                        window.location.reload(true);
+                    } catch (err) {
+                        console.error('Reset error:', err);
+                        if (window.showToast) window.showToast('Error durante el reset. Por favor, recarga manualmente.', 'error');
+                    }
+                });
+            } else {
+                if (confirm('¿Realizar hard-reset de la App?')) window.location.reload(true);
+            }
+        };
+
+        if (pwaResetBtn) pwaResetBtn.addEventListener('click', handleReset);
+        const mobileResetBtn = document.getElementById('mobileResetBtn');
+        if (mobileResetBtn) mobileResetBtn.addEventListener('click', handleReset);
+
+        // Emergency Reset via URL parameter (to fix "stuck menu" cache issues)
+        if (window.location.search.includes('reset=1')) {
+            console.log('Emergency reset triggered via URL...');
+            
+            var performReset = function() {
+                var promises = [];
+                
+                if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+                    promises.push(navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        var regPromises = [];
+                        for (var i = 0; i < registrations.length; i++) {
+                            regPromises.push(registrations[i].unregister());
+                        }
+                        return Promise.all(regPromises);
+                    }));
+                }
+                
+                if (window.caches && window.caches.keys) {
+                    promises.push(window.caches.keys().then(function(keys) {
+                        var cachePromises = [];
+                        for (var j = 0; j < keys.length; j++) {
+                            cachePromises.push(window.caches.delete(keys[j]));
+                        }
+                        return Promise.all(cachePromises);
+                    }));
+                }
+                
+                Promise.all(promises).then(function() {
+                    console.log('Reset complete, reloading...');
+                    window.location.href = window.location.pathname;
+                }).catch(function(err) {
+                    console.error('Reset error:', err);
+                    alert('Error parcial en el reset. Intenta limpiar la caché manualmente en ajustes del navegador.');
+                    window.location.href = window.location.pathname;
+                });
+            };
+            
+            performReset();
+        }
+    </script>
+</body>
+
+</html>

@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activityPageSize = 50;
     let activityCurrentLimit = 50;
     let bottomNavMode = localStorage.getItem('bottomNavMode') || 'nomina';
+    let ahorroGastosMonthOffset = 0;
 
     let calendarDrawerId = null;
     let calendarViewDate = new Date(); // Month/Year currently shown in the calendar modal
@@ -259,7 +260,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateAhorroGastosMonthLabel() {
         try {
-            const fiscalMonthStr = getFiscalMonth();
+            const targetDate = new Date();
+            targetDate.setMonth(targetDate.getMonth() + ahorroGastosMonthOffset);
+            
+            const fiscalMonthStr = getFiscalMonth(targetDate);
             const parts = fiscalMonthStr.split('-');
             const monthIdx = parseInt(parts[1], 10) - 1; // 0-indexed
             
@@ -268,13 +272,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
             ];
             const capitalizedMonth = monthNames[monthIdx] || 'Mes';
+            const yearStr = parseInt(parts[0], 10) !== new Date().getFullYear() ? ` ${parts[0]}` : '';
             
             // Use direct query to ensure findings
             const sidebarLabel = document.getElementById('ahorroGastosMonthName');
             const titleLabel = document.getElementById('ahorroGastosTitleMonth');
             
-            if (sidebarLabel) sidebarLabel.textContent = `Gastos ${capitalizedMonth}`;
-            if (titleLabel) titleLabel.textContent = capitalizedMonth;
+            if (sidebarLabel) sidebarLabel.textContent = `Gastos ${capitalizedMonth}${yearStr}`;
+            if (titleLabel) titleLabel.textContent = `${capitalizedMonth}${yearStr}`;
+
+            if (elements.ahorroGastosResetMonthBtn) {
+                elements.ahorroGastosResetMonthBtn.classList.toggle('hidden', ahorroGastosMonthOffset === 0);
+            }
         } catch (e) {
             console.error("Error updating month label:", e);
         }
@@ -869,6 +878,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Ahorro Gastos View
         ahorroGastosSection: document.getElementById('ahorroGastosSection'),
+        ahorroGastosPrevMonthBtn: document.getElementById('ahorroGastosPrevMonthBtn'),
+        ahorroGastosNextMonthBtn: document.getElementById('ahorroGastosNextMonthBtn'),
+        ahorroGastosResetMonthBtn: document.getElementById('ahorroGastosResetMonthBtn'),
         ahorroGastosBtn2: document.getElementById('ahorroGastosBtn2'),
         ahorroGastosMonthName: document.getElementById('ahorroGastosMonthName'),
         ahorroGastosTitleMonth: document.getElementById('ahorroGastosTitleMonth'),
@@ -1299,7 +1311,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!elements.ahorroGastosSection) return;
         updateAhorroGastosMonthLabel();
 
-        const currentFiscalMonthStr = getFiscalMonth();
+        const targetDate = new Date();
+        targetDate.setMonth(targetDate.getMonth() + ahorroGastosMonthOffset);
+        const currentFiscalMonthStr = getFiscalMonth(targetDate);
         const currentMonthNum = parseInt(currentFiscalMonthStr.split('-')[1], 10);
         
         const container = document.getElementById('ahorroGastosAccountList');
@@ -1431,12 +1445,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span style="font-size: 1.5rem;">${drawer.icon || '📁'}</span>
                         <span style="font-weight: 800; font-size: 1.1rem; color: white;">${drawer.name}</span>
                     </div>
+                    ${ahorroGastosMonthOffset === 0 ? `
                         <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px;">
                             <div style="font-size: 0.85rem; font-weight: 700; opacity: 0.6; color: var(--text-muted);">${fmtEUR(currentBalance)}</div>
                             <div style="width: 15px; height: 1px; background: rgba(255,255,255,0.15); margin: 2px 0;"></div>
                             <div style="font-weight: 900; font-size: 1.15rem; color: ${projectedBalance < 0 ? 'var(--danger)' : 'var(--success)'}; line-height: 1.1;">${fmtEUR(projectedBalance)}</div>
                             <div style="font-size: 0.6rem; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;">Saldo Final</div>
                         </div>
+                    ` : ''}
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 0.3rem;">
@@ -10615,6 +10631,20 @@ document.addEventListener('DOMContentLoaded', () => {
             renderNomina();
         });
 
+        elements.ahorroGastosPrevMonthBtn?.addEventListener('click', () => {
+            ahorroGastosMonthOffset -= 1;
+            renderAhorroGastos();
+        });
+
+        elements.ahorroGastosNextMonthBtn?.addEventListener('click', () => {
+            ahorroGastosMonthOffset += 1;
+            renderAhorroGastos();
+        });
+
+        elements.ahorroGastosResetMonthBtn?.addEventListener('click', () => {
+            ahorroGastosMonthOffset = 0;
+            renderAhorroGastos();
+        });
 
         // Click on breakdown rows
         document.querySelectorAll('.breakdown-row').forEach(row => {

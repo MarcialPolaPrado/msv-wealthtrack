@@ -74,7 +74,8 @@ do_backup() {
 do_server_interactive() {
     echo "[*] Servidor Interactivo en http://localhost:$PORT"
     open "http://localhost:$PORT"
-    python3 -m http.server $PORT --bind 0.0.0.0
+    python3 -c "import http.server, socketserver
+socketserver.TCPServer(('0.0.0.0', $PORT), http.server.SimpleHTTPRequestHandler).serve_forever()"
 }
 
 do_server_background() {
@@ -82,7 +83,8 @@ do_server_background() {
         echo "[!] El servidor YA está corriendo en el puerto $PORT."
     else
         echo "[*] Iniciando servidor desatendido en el fondo..."
-        nohup python3 -m http.server $PORT --bind 0.0.0.0 > "$LOG_FILE" 2>&1 &
+        nohup python3 -c "import http.server, socketserver
+socketserver.TCPServer(('0.0.0.0', $PORT), http.server.SimpleHTTPRequestHandler).serve_forever()" > "$LOG_FILE" 2>&1 &
         sleep 1
         open "http://localhost:$PORT"
         echo "[OK] Servidor iniciado. Log en $LOG_FILE"
