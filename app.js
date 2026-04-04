@@ -506,6 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeGreeting: document.getElementById('welcomeGreeting'),
         welcomeDateTime: document.getElementById('welcomeDateTime'),
         welcomeNextcloudGroup: document.getElementById('welcomeNextcloudGroup'),
+        welcomeLocalSyncTime: document.getElementById('welcomeLocalSyncTime'),
         welcomeNextcloudTime: document.getElementById('welcomeNextcloudTime'),
         welcomeEnterBtn: document.getElementById('welcomeEnterBtn'),
         connStatusDot: document.getElementById('connStatusDot'),
@@ -12742,9 +12743,43 @@ document.addEventListener('DOMContentLoaded', () => {
             const lastSync = NextcloudSync.getLocalModified();
             if (lastSync) {
                 elements.welcomeNextcloudGroup.classList.remove('hidden');
-                elements.welcomeNextcloudTime.textContent = new Date(lastSync).toLocaleString('es-ES', {
-                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
+                
+                const formatOpts = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+                
+                // Show local sync time immediately (from device history)
+                if (elements.welcomeLocalSyncTime) {
+                    const localVal = elements.welcomeLocalSyncTime.querySelector('.time-val');
+                    if (localVal) localVal.textContent = new Date(lastSync).toLocaleString('es-ES', formatOpts);
+                }
+
+                // Asynchronously fetch REAL server metadata for "true" backup date
+                if (elements.welcomeNextcloudTime) {
+                    const ncVal = elements.welcomeNextcloudTime.querySelector('.time-val');
+                    NextcloudSync.getFileMetadata(ncConfig).then(meta => {
+                        if (meta && meta.lastModified) {
+                            const serverDate = new Date(meta.lastModified);
+                            ncVal.textContent = serverDate.toLocaleString('es-ES', formatOpts);
+                            
+                            // Highlight if server has newer data than local
+                            const localDate = new Date(lastSync);
+                            if (serverDate.getTime() > localDate.getTime() + 5000) {
+                                ncVal.style.color = '#3b82f6';
+                                ncVal.style.textShadow = '0 0 10px rgba(59, 130, 246, 0.4)';
+                                // Optional animation to draw attention
+                                ncVal.animate([
+                                    { transform: 'scale(1)', opacity: 0.8 },
+                                    { transform: 'scale(1.05)', opacity: 1 },
+                                    { transform: 'scale(1)', opacity: 1 }
+                                ], { duration: 500, iterations: 2 });
+                            }
+                        } else {
+                            ncVal.textContent = "Desconocida";
+                        }
+                    }).catch(err => {
+                        console.warn("[Welcome] Failed to fetch NC metadata:", err);
+                        ncVal.textContent = "Error de conexión";
+                    });
+                }
             }
         }
 
