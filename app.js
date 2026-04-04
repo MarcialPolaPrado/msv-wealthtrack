@@ -507,7 +507,6 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeDateTime: document.getElementById('welcomeDateTime'),
         welcomeNextcloudGroup: document.getElementById('welcomeNextcloudGroup'),
         welcomeNextcloudTime: document.getElementById('welcomeNextcloudTime'),
-        welcomeSyncStatus: document.getElementById('welcomeSyncStatus'),
         welcomeEnterBtn: document.getElementById('welcomeEnterBtn'),
         connStatusDot: document.getElementById('connStatusDot'),
         marketStatusIcon: document.getElementById('marketStatusIcon'),
@@ -12746,30 +12745,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.welcomeNextcloudTime.textContent = new Date(lastSync).toLocaleString('es-ES', {
                     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
                 });
-
-                // Freshness check
-                const lastLocalUpdate = localStorage.getItem('msv_last_local_update');
-                if (lastLocalUpdate) {
-                    const localTime = new Date(lastLocalUpdate).getTime();
-                    const syncTime = new Date(lastSync).getTime();
-
-                    // Allow 1 minute grace period for safety
-                    if (localTime > syncTime + 60000) {
-                        elements.welcomeSyncStatus.textContent = '⚠️ Cambios locales pendientes';
-                        elements.welcomeSyncStatus.style.color = '#fbbf24'; // Warning orange
-                        elements.welcomeNextcloudGroup.style.background = 'rgba(251, 191, 36, 0.1)';
-                        elements.welcomeNextcloudGroup.style.borderColor = 'rgba(251, 191, 36, 0.3)';
-                    } else {
-                        elements.welcomeSyncStatus.textContent = '✅ Datos sincronizados';
-                        elements.welcomeSyncStatus.style.color = '#34d399'; // Success green
-                        elements.welcomeNextcloudGroup.style.background = 'rgba(16, 185, 129, 0.05)';
-                        elements.welcomeNextcloudGroup.style.borderColor = 'rgba(16, 185, 129, 0.2)';
-                    }
-                } else {
-                    elements.welcomeSyncStatus.textContent = '✅ Sincronizado';
-                    elements.welcomeSyncStatus.style.color = 'white';
-                    elements.welcomeSyncStatus.style.opacity = '0.6';
-                }
             }
         }
 

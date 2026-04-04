@@ -6,15 +6,9 @@ const LIVE_PRICES_KEY = 'msv_live_prices_v1';
 const LIVE_DATES_KEY = 'msv_live_dates_v1';
 const LIVE_SOURCES_KEY = 'msv_live_sources_v1';
 const RECURRING_SAVINGS_KEY = 'msv_recurring_savings_v1';
-const LOCAL_UPDATE_KEY = 'msv_last_local_update';
-
-window.trackLocalUpdate = () => {
-    localStorage.setItem(LOCAL_UPDATE_KEY, new Date().toISOString());
-};
 
 window.saveStocks = (stocks) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stocks));
-    window.trackLocalUpdate();
     if (window.updateStorageStatus) window.updateStorageStatus();
 };
 
@@ -25,7 +19,6 @@ window.loadStocks = () => {
 
 window.saveSavings = (drawers) => {
     localStorage.setItem(SAVINGS_KEY, JSON.stringify(drawers));
-    window.trackLocalUpdate();
     if (window.updateStorageStatus) window.updateStorageStatus();
 };
 
@@ -46,7 +39,6 @@ window.loadPrivacy = () => {
 
 window.saveNomina = (data) => {
     localStorage.setItem(NOMINA_KEY, JSON.stringify(data));
-    window.trackLocalUpdate();
     if (window.updateStorageStatus) window.updateStorageStatus();
 };
 
@@ -58,7 +50,6 @@ window.loadNomina = () => {
 const COUNTDOWNS_KEY = 'msv_countdowns_v1';
 window.saveCountdowns = (data) => {
     localStorage.setItem(COUNTDOWNS_KEY, JSON.stringify(data));
-    window.trackLocalUpdate();
     if (window.updateStorageStatus) window.updateStorageStatus();
 };
 
@@ -70,7 +61,6 @@ window.loadCountdowns = () => {
 const MANUAL_PRICES_KEY = 'msv_manual_prices_v1';
 window.saveManualPrices = (data) => {
     localStorage.setItem(MANUAL_PRICES_KEY, JSON.stringify(data));
-    window.trackLocalUpdate();
     if (window.updateStorageStatus) window.updateStorageStatus();
 };
 
@@ -138,7 +128,6 @@ window.loadLiveSources = () => {
 
 window.saveRecurringSavings = (data) => {
     localStorage.setItem(RECURRING_SAVINGS_KEY, JSON.stringify(data));
-    window.trackLocalUpdate();
 };
 
 window.loadRecurringSavings = () => {

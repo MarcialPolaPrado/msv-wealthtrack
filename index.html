@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202604040724">
+    <link rel="stylesheet" href="styles.css?v=202604040728">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -69,7 +69,6 @@
                 <div id="welcomeNextcloudGroup" class="welcome-info-item glass-panel hidden" style="padding: 1.25rem; text-align: left; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
                     <div style="font-size: 0.7rem; color: var(--success); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Copia de Seguridad</div>
                     <div id="welcomeNextcloudTime" style="font-size: 1.1rem; font-weight: 600; color: white;">Sincronizado</div>
-                    <div id="welcomeSyncStatus" style="font-size: 0.7rem; margin-top: 0.3rem; font-weight: 500;">Comprobando estado...</div>
                 </div>
             </div>
 
@@ -126,7 +125,7 @@
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
                         <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
-                            id="logoVersion">v202604040724</p>
+                            id="logoVersion">v202604040728</p>
                     </div>
                 </div>
             </div>
@@ -1739,10 +1738,10 @@
     <button id="clockMenuBtn" class="hidden"></button>
 
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
-    <script src="storage.js?v=202604040724"></script>
-    <script src="mock_data.js?v=202604040724"></script>
-    <script src="nextcloud.js?v=202604040724"></script>
-    <script src="app.js?v=202604040724"></script>
+    <script src="storage.js?v=202604040728"></script>
+    <script src="mock_data.js?v=202604040728"></script>
+    <script src="nextcloud.js?v=202604040728"></script>
+    <script src="app.js?v=202604040728"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1955,7 +1954,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202604040724'; // NEW VERSION
+        const APP_VERSION = '202604040728'; // NEW VERSION
 
         // FORCE CACHE CLEARING (Overriding the Service Worker sticky cache)
         if ('serviceWorker' in navigator) {
