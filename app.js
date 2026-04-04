@@ -1075,10 +1075,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateStorageStatus = () => {
         if (!elements.storageUsageBar || !elements.storageUsageText) return;
 
-        // Trigger Nextcloud auto-upload if not in initial load
-        if (!isInitialLoad && typeof ncScheduleAutoUpload === 'function') {
-            ncScheduleAutoUpload();
-        }
+        // Nextcloud auto-upload disabled as per user request
 
         try {
             const data = getGlobalDataObject();
@@ -1421,11 +1418,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const card = document.createElement('div');
             card.className = 'card glass-panel';
-            card.style.padding = '1.5rem';
+            card.style.padding = '0.6rem 0.8rem';
             card.style.display = 'flex';
             card.style.flexDirection = 'column';
-            card.style.gap = '1.2rem';
-            card.style.borderTop = '3px solid var(--primary)';
+            card.style.gap = '0.4rem';
+            card.style.border = '3px solid var(--primary)';
 
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem;">
@@ -1441,15 +1438,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.3rem;">
                     <!-- Realized Section -->
                     ${realizedMovements.length > 0 ? `
                         <div>
-                            <div style="font-size: 0.65rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;">Gastos Realizados (${fmtEUR(Math.abs(sumRealized))})</div>
-                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div style="font-size: 0.65rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Gastos Realizados (${fmtEUR(Math.abs(sumRealized))})</div>
+                            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
                                 ${realizedMovements.map(m => `
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0;">
-                                        <span style="opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${m.concept || m.description || 'Gasto'}</span>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 2px 0;">
+                                        <span style="opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;">${m.concept || m.description || 'Gasto'}</span>
                                         <span style="font-weight: 700; color: var(--danger);">${fmtEUR(m.amount)}</span>
                                     </div>
                                 `).join('')}
@@ -1459,11 +1456,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     <!-- Pending Section -->
                     ${pendingMovements.length > 0 ? `
-                        <div style="padding-top: 0.5rem; border-top: 1px dashed rgba(255,255,255,0.1);">
-                            <div style="font-size: 0.65rem; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;">Gastos Pendientes (${fmtEUR(Math.abs(sumPending))})</div>
-                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="padding-top: 0.3rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                            <div style="font-size: 0.65rem; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;">Gastos Pendientes (${fmtEUR(Math.abs(sumPending))})</div>
+                            <div style="display: flex; flex-direction: column; gap: 0.2rem;">
                                 ${pendingMovements.map(m => `
-                                    <div class="pending-movement-clickable" style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 6px 8px; color: rgba(245, 158, 11, 0.9); cursor: pointer; transition: background 0.2s; border-radius: 6px;" 
+                                    <div class="pending-movement-clickable" style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 6px; color: rgba(245, 158, 11, 0.9); cursor: pointer; transition: background 0.2s; border-radius: 6px;" 
                                          onclick="showPendingMovementModal('${drawer.id}', '${(m.concept || m.description || 'Pte. Pago').replace(/'/g, "\\'")}', ${Math.abs(m.amount)})"
                                          onmouseover="this.style.background='rgba(245, 158, 11, 0.1)'"
                                          onmouseout="this.style.background='transparent'">
@@ -7849,7 +7846,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Nextcloud Config
         const ncCfg = getNcConfigFromInputs();
-        if (ncCfg) NextcloudSync.saveConfig(ncCfg.url, ncCfg.user, ncCfg.password, ncCfg.proxy);
+        if (ncCfg) NextcloudSync.saveConfig(ncCfg.url, ncCfg.user, ncCfg.password, "");
 
         // Bottom Nav Mode
         if (elements.bottomNavModeInput) {
@@ -8742,8 +8739,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.mobileAddStockBtn?.addEventListener('click', openAddStockModal);
 
         elements.settingsBtn?.addEventListener('click', openSettingsModal);
-        elements.mobileSettingsBtn?.addEventListener('click', openSettingsModal);
-        elements.forceUpdateBtn?.addEventListener('click', forceAppUpdate);
         elements.closeSettingsModal?.addEventListener('click', () => toggleSettingsModal(false));
         elements.settingsForm?.addEventListener('submit', saveSettings);
 
@@ -9231,19 +9226,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize Nextcloud UI on load
         initNextcloudUI();
 
-        document.getElementById('ncAutoUpload')?.addEventListener('change', (e) => {
-            localStorage.setItem('ncAutoUpload', e.target.checked);
-            if (e.target.checked) ncScheduleAutoUpload();
-        });
 
-        // Start Nextcloud auto-sync check on load (short delay to ensure core variables are ready)
-        // Start Nextcloud auto-sync check on load
-        setTimeout(() => {
-            ncSyncOnLoad().then(() => {
-                // After initial sync, start background periodic check every 5 minutes
-                ncStartPeriodicCheck();
-            });
-        }, 500);
+        // Nextcloud background sync disabled as per user request
 
         // ── Nextcloud sidebar buttons ──
         document.getElementById('sidebarNcBackupBtn')?.addEventListener('click', () => ncBackupData());
@@ -11451,8 +11435,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const urlInput = document.getElementById('ncUrlInput');
         const userInput = document.getElementById('ncUserInput');
         const passInput = document.getElementById('ncPasswordInput');
-        const proxyInput = document.getElementById('ncProxyInput');
-        const autoUploadInput = document.getElementById('ncAutoUpload');
         const statusText = document.getElementById('ncStatusText');
         const deviceInfo = document.getElementById('ncDeviceInfo');
         const lastSync = document.getElementById('ncLastSync');
@@ -11462,13 +11444,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (urlInput) urlInput.value = config.url;
             if (userInput) userInput.value = config.user;
             if (passInput) passInput.value = config.password;
-            if (proxyInput) proxyInput.value = config.proxy || '';
             if (statusText) statusText.textContent = '✅ Configurado';
             if (connectedActions) connectedActions.classList.remove('hidden');
-        }
-
-        if (autoUploadInput) {
-            autoUploadInput.checked = localStorage.getItem('ncAutoUpload') !== 'false';
         }
 
         if (deviceInfo) {
@@ -11485,13 +11462,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = document.getElementById('ncUrlInput')?.value?.trim();
         const user = document.getElementById('ncUserInput')?.value?.trim();
         const password = document.getElementById('ncPasswordInput')?.value;
-        const proxy = document.getElementById('ncProxyInput')?.value?.trim() || '';
 
         if (!url || !user || !password) {
             showToast('Rellena URL, usuario y App Password', 'warning');
             return null;
         }
-        return { url, user, password, proxy };
+        return { url, user, password, proxy: "" };
     }
 
     async function ncTestConnection() {
@@ -12482,19 +12458,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Debounced auto-upload — called after data changes
     function ncScheduleAutoUpload() {
-        if (isSyncingFromServer) return; // Don't upload while applying server data
-
-        const config = NextcloudSync.loadConfig();
-        if (!config) return;
-
-        // Auto-upload is entirely disabled per user preference
-        
-        // Mark local data as modified (ONLY if we are not in the initial load phase)
+        // Auto-upload is entirely disabled per user preference.
+        // We only update the local modified timestamp if needed for conflict detection.
         if (!isInitialLoad) {
             NextcloudSync.setLocalModified(new Date().toISOString());
         }
-
-        if (ncAutoSyncTimer) clearTimeout(ncAutoSyncTimer);
     }
 
     // Upload with conflict detection
@@ -12751,9 +12719,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const emojiEl = document.getElementById('welcomeEmoji');
         if (emojiEl) emojiEl.textContent = emoji;
 
-        // Date and Time
-        const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
-        elements.welcomeDateTime.textContent = new Date().toLocaleString('es-ES', options);
+        // Date and Time (Dynamic Clock)
+        const updateClock = () => {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const dateStr = now.toLocaleDateString('es-ES', dateOptions);
+            const timeStr = now.toLocaleTimeString('es-ES', timeOptions);
+            
+            // Format: "Lunes, 4 de abril | 12:34:56"
+            elements.welcomeDateTime.innerHTML = `${dateStr} <span style="margin: 0 8px; opacity: 0.3;">|</span> <span style="font-family: monospace; font-weight: 800; letter-spacing: 1px;">${timeStr}</span>`;
+        };
+        
+        updateClock();
+        const clockInterval = setInterval(updateClock, 1000);
 
         // Nextcloud Sync Status
         const ncConfig = NextcloudSync.loadConfig();
@@ -12772,6 +12751,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Close button
         elements.welcomeEnterBtn.onclick = () => {
+            clearInterval(clockInterval);
             elements.welcomeOverlay.classList.add('hidden');
             // Check if login is needed AFTER welcome
             if (typeof checkLogin === 'function') checkLogin();
