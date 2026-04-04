@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202604041501">
+    <link rel="stylesheet" href="styles.css?v=202604042100">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -76,6 +76,10 @@
                             <span>☁️</span> <span class="time-val">Comprobando...</span>
                         </div>
                     </div>
+                    <div id="welcomeNcMismatchRow" class="hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
+                        <p id="welcomeNcMismatchText" style="font-size: 0.8rem; opacity: 0.88; margin: 0 0 10px 0; line-height: 1.45; color: rgba(255,255,255,0.92);"></p>
+                        <button type="button" id="welcomeNcMismatchBtn" class="btn btn-secondary" style="width: 100%; padding: 0.65rem 1rem; font-size: 0.88rem; font-weight: 600; border-radius: 12px;"></button>
+                    </div>
                 </div>
             </div>
 
@@ -132,7 +136,7 @@
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
                         <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
-                            id="logoVersion">v202604041452</p>
+                            id="logoVersion">v202604042100</p>
                     </div>
                 </div>
             </div>
@@ -1752,10 +1756,10 @@
     <button id="clockMenuBtn" class="hidden"></button>
 
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
-    <script src="storage.js?v=202604041501"></script>
-    <script src="mock_data.js?v=202604041501"></script>
-    <script src="nextcloud.js?v=202604041501"></script>
-    <script src="app.js?v=202604041501"></script>
+    <script src="storage.js?v=202604042100"></script>
+    <script src="mock_data.js?v=202604042100"></script>
+    <script src="nextcloud.js?v=202604042100"></script>
+    <script src="app.js?v=202604042100"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1968,7 +1972,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '202604041459'; // NEW VERSION
+        const APP_VERSION = '202604042100'; // NEW VERSION
 
         // FORCE CACHE CLEARING (Overriding the Service Worker sticky cache)
         if ('serviceWorker' in navigator) {

@@ -517,6 +517,9 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeNextcloudGroup: document.getElementById('welcomeNextcloudGroup'),
         welcomeLocalSyncTime: document.getElementById('welcomeLocalSyncTime'),
         welcomeNextcloudTime: document.getElementById('welcomeNextcloudTime'),
+        welcomeNcMismatchRow: document.getElementById('welcomeNcMismatchRow'),
+        welcomeNcMismatchText: document.getElementById('welcomeNcMismatchText'),
+        welcomeNcMismatchBtn: document.getElementById('welcomeNcMismatchBtn'),
         welcomeEnterBtn: document.getElementById('welcomeEnterBtn'),
         connStatusDot: document.getElementById('connStatusDot'),
         marketStatusIcon: document.getElementById('marketStatusIcon'),
@@ -11535,6 +11538,7 @@ document.addEventListener('DOMContentLoaded', () => {
             NextcloudSync.setLocalModified(result.timestamp);
             const lastSync = document.getElementById('ncLastSync');
             if (lastSync) lastSync.textContent = `Última sync: ${new Date(result.timestamp).toLocaleString()}`;
+            refreshWelcomeNextcloudPanel();
             showToast('✅ Datos guardados en Nextcloud', 'success');
         } else {
             showToast('❌ ' + result.error, 'error', 5000);
@@ -11581,6 +11585,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyGlobalData(data);
                 NextcloudSync.setLocalModified(result.lastModified);
                 initNextcloudUI();
+                refreshWelcomeNextcloudPanel();
                 showToast('✅ Datos restaurados desde Nextcloud', 'success');
             }
         );
@@ -12296,7 +12301,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
             const fileName = `msv-export-${timestamp}.xlsx`;
 
-            // 4. Download
+            // 4. Descarga local
             if (typeof saveAs !== 'undefined') {
                 saveAs(blob, fileName);
             } else {
@@ -12309,7 +12314,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }
-            showToast('✅ Hoja de cálculo generada con éxito');
+
+            // 5. Si Nextcloud está configurado, intentar copia en carpeta datos/
+            const ncCfg = NextcloudSync.loadConfig();
+            if (ncCfg) {
+                const up = await NextcloudSync.uploadDatosFile(
+                    ncCfg,
+                    fileName,
+                    buffer,
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                );
+                if (up.ok) {
+                    showToast('✅ Descargada y guardada en Nextcloud (carpeta datos)', 'success');
+                } else {
+                    showToast(`✅ Descargada · Nextcloud: ${up.error}`, 'warning', 5000);
+                }
+            } else {
+                showToast('✅ Hoja de cálculo generada con éxito');
+            }
 
         } catch (error) {
             console.error('Error exportando a Excel:', error);
@@ -12481,6 +12503,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('[NC Sync] Error on load:', err);
         } finally {
             isInitialLoad = false;
+            refreshWelcomeNextcloudPanel();
         }
     }
 
@@ -12575,6 +12598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.ok) {
             ncLastServerModified = result.timestamp;
             updateSyncTimestampUI(result.timestamp);
+            refreshWelcomeNextcloudPanel();
             console.log('[NC Sync] Auto-upload OK:', result.timestamp);
         }
     }
@@ -12725,6 +12749,91 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Updates 📱 / ☁️ timestamps on the welcome overlay from storage + server metadata.
+     * Call after ncSyncOnLoad or any successful upload so 📱 matches setLocalModified (avoids stale snapshot).
+     * If 📱 vs ☁️ differ beyond tolerance, offers load/upload actions (same flows as Ajustes).
+     */
+    function refreshWelcomeNextcloudPanel() {
+        const welcomeTimeToleranceMs = 5000;
+        const ncConfig = NextcloudSync.loadConfig();
+        if (!ncConfig || !elements.welcomeNextcloudGroup) return;
+        const lastSync = NextcloudSync.getLocalModified();
+        if (!lastSync) {
+            elements.welcomeNextcloudGroup.classList.add('hidden');
+            if (elements.welcomeNcMismatchRow) elements.welcomeNcMismatchRow.classList.add('hidden');
+            return;
+        }
+        elements.welcomeNextcloudGroup.classList.remove('hidden');
+
+        if (elements.welcomeNcMismatchRow) {
+            elements.welcomeNcMismatchRow.classList.add('hidden');
+            if (elements.welcomeNcMismatchBtn) elements.welcomeNcMismatchBtn.onclick = null;
+        }
+
+        const formatOpts = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+
+        if (elements.welcomeLocalSyncTime) {
+            const localVal = elements.welcomeLocalSyncTime.querySelector('.time-val');
+            if (localVal) localVal.textContent = new Date(lastSync).toLocaleString('es-ES', formatOpts);
+        }
+
+        if (elements.welcomeNextcloudTime) {
+            const ncVal = elements.welcomeNextcloudTime.querySelector('.time-val');
+            NextcloudSync.getFileMetadata(ncConfig).then(meta => {
+                if (meta && meta.lastModified) {
+                    const serverDate = new Date(meta.lastModified);
+                    ncVal.textContent = serverDate.toLocaleString('es-ES', formatOpts);
+
+                    const localDate = new Date(NextcloudSync.getLocalModified() || lastSync);
+                    const delta = serverDate.getTime() - localDate.getTime();
+
+                    if (delta > welcomeTimeToleranceMs) {
+                        ncVal.style.color = '#3b82f6';
+                        ncVal.style.textShadow = '0 0 10px rgba(59, 130, 246, 0.4)';
+                        ncVal.animate([
+                            { transform: 'scale(1)', opacity: 0.8 },
+                            { transform: 'scale(1.05)', opacity: 1 },
+                            { transform: 'scale(1)', opacity: 1 }
+                        ], { duration: 500, iterations: 2 });
+                    } else {
+                        ncVal.style.color = '';
+                        ncVal.style.textShadow = '';
+                    }
+
+                    const row = elements.welcomeNcMismatchRow;
+                    const txt = elements.welcomeNcMismatchText;
+                    const btn = elements.welcomeNcMismatchBtn;
+                    if (row && txt && btn) {
+                        if (Math.abs(delta) <= welcomeTimeToleranceMs) {
+                            row.classList.add('hidden');
+                            btn.onclick = null;
+                        } else if (delta > welcomeTimeToleranceMs) {
+                            txt.textContent =
+                                'La copia en Nextcloud es más reciente que la fecha registrada en este dispositivo.';
+                            btn.textContent = 'Cargar desde Nextcloud';
+                            btn.onclick = () => { ncRestoreData(); };
+                            row.classList.remove('hidden');
+                        } else {
+                            txt.textContent =
+                                'Esta copia local parece más reciente que el archivo en la nube.';
+                            btn.textContent = 'Subir a Nextcloud';
+                            btn.onclick = () => { ncBackupData(); };
+                            row.classList.remove('hidden');
+                        }
+                    }
+                } else {
+                    ncVal.textContent = 'Desconocida';
+                    if (elements.welcomeNcMismatchRow) elements.welcomeNcMismatchRow.classList.add('hidden');
+                }
+            }).catch(err => {
+                console.warn('[Welcome] Failed to fetch NC metadata:', err);
+                ncVal.textContent = 'Error de conexión';
+                if (elements.welcomeNcMismatchRow) elements.welcomeNcMismatchRow.classList.add('hidden');
+            });
+        }
+    }
+
+    /**
      * Shows a premium welcome screen on app startup
      */
     function showWelcomeScreen() {
@@ -12767,51 +12876,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateClock();
         const clockInterval = setInterval(updateClock, 1000);
 
-        // Nextcloud Sync Status
-        const ncConfig = NextcloudSync.loadConfig();
-        if (ncConfig) {
-            const lastSync = NextcloudSync.getLocalModified();
-            if (lastSync) {
-                elements.welcomeNextcloudGroup.classList.remove('hidden');
-                
-                const formatOpts = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-                
-                // Show local sync time immediately (from device history)
-                if (elements.welcomeLocalSyncTime) {
-                    const localVal = elements.welcomeLocalSyncTime.querySelector('.time-val');
-                    if (localVal) localVal.textContent = new Date(lastSync).toLocaleString('es-ES', formatOpts);
-                }
-
-                // Asynchronously fetch REAL server metadata for "true" backup date
-                if (elements.welcomeNextcloudTime) {
-                    const ncVal = elements.welcomeNextcloudTime.querySelector('.time-val');
-                    NextcloudSync.getFileMetadata(ncConfig).then(meta => {
-                        if (meta && meta.lastModified) {
-                            const serverDate = new Date(meta.lastModified);
-                            ncVal.textContent = serverDate.toLocaleString('es-ES', formatOpts);
-                            
-                            // Highlight if server has newer data than local
-                            const localDate = new Date(lastSync);
-                            if (serverDate.getTime() > localDate.getTime() + 5000) {
-                                ncVal.style.color = '#3b82f6';
-                                ncVal.style.textShadow = '0 0 10px rgba(59, 130, 246, 0.4)';
-                                // Optional animation to draw attention
-                                ncVal.animate([
-                                    { transform: 'scale(1)', opacity: 0.8 },
-                                    { transform: 'scale(1.05)', opacity: 1 },
-                                    { transform: 'scale(1)', opacity: 1 }
-                                ], { duration: 500, iterations: 2 });
-                            }
-                        } else {
-                            ncVal.textContent = "Desconocida";
-                        }
-                    }).catch(err => {
-                        console.warn("[Welcome] Failed to fetch NC metadata:", err);
-                        ncVal.textContent = "Error de conexión";
-                    });
-                }
-            }
-        }
+        refreshWelcomeNextcloudPanel();
 
         // Show overlay
         elements.welcomeOverlay.classList.remove('hidden');

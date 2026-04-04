@@ -8,6 +8,8 @@ const NextcloudSync = (() => {
     const LOCAL_MODIFIED_KEY = 'nc_local_modified';
     const NC_FOLDER = 'MSV';
     const NC_FILE = 'msv-data.json';
+    /** Carpeta en la raíz de Archivos del usuario para exportaciones Excel */
+    const NC_DATOS_FOLDER = 'datos';
     
     // ── Device Identification ──────────────────────────────
     function getDeviceId() {
@@ -130,6 +132,42 @@ const NextcloudSync = (() => {
                 headers: authHeaders(config)
             });
         } catch { /* 201=created, 405=exists — both fine */ }
+    }
+
+    async function ensureDatosFolder(config) {
+        const url = buildWebDavUrl(config, NC_DATOS_FOLDER);
+        try {
+            await proxiedFetch(config, url, {
+                method: 'MKCOL',
+                headers: authHeaders(config)
+            });
+        } catch { /* 201=created, 405=exists — both fine */ }
+    }
+
+    /**
+     * Sube un fichero binario (p. ej. .xlsx) bajo la carpeta datos/
+     * @param {string} fileName - solo el nombre del archivo, sin rutas
+     */
+    async function uploadDatosFile(config, fileName, body, contentType) {
+        const safeName = String(fileName || '').replace(/[/\\]/g, '_');
+        if (!safeName) return { ok: false, error: 'Nombre de archivo no válido' };
+
+        await ensureDatosFolder(config);
+        const path = `${NC_DATOS_FOLDER}/${safeName}`;
+        const url = buildWebDavUrl(config, path);
+        const resp = await proxiedFetch(config, url, {
+            method: 'PUT',
+            headers: {
+                ...authHeaders(config),
+                'Content-Type': contentType || 'application/octet-stream'
+            },
+            body
+        });
+
+        if (resp.ok || resp.status === 201 || resp.status === 204) {
+            return { ok: true };
+        }
+        return { ok: false, error: `Error al subir (${resp.status})` };
     }
 
     // ── Upload Data ────────────────────────────────────────
@@ -265,6 +303,7 @@ const NextcloudSync = (() => {
         testConnection,
         uploadData,
         downloadData,
-        getFileMetadata
+        getFileMetadata,
+        uploadDatosFile
     };
 })();
