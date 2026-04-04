@@ -507,6 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeDateTime: document.getElementById('welcomeDateTime'),
         welcomeNextcloudGroup: document.getElementById('welcomeNextcloudGroup'),
         welcomeNextcloudTime: document.getElementById('welcomeNextcloudTime'),
+        welcomeSyncStatus: document.getElementById('welcomeSyncStatus'),
         welcomeEnterBtn: document.getElementById('welcomeEnterBtn'),
         connStatusDot: document.getElementById('connStatusDot'),
         marketStatusIcon: document.getElementById('marketStatusIcon'),
@@ -11452,7 +11453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             deviceInfo.textContent = `📱 ${NextcloudSync.getDeviceName()} · ID: ${NextcloudSync.getDeviceId().substr(-6)}`;
         }
 
-        const savedLastSync = localStorage.getItem('nc_last_sync');
+        const savedLastSync = NextcloudSync.getLocalModified();
         if (savedLastSync && lastSync) {
             lastSync.textContent = `Última sync: ${new Date(savedLastSync).toLocaleString()}`;
         }
@@ -11501,7 +11502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await NextcloudSync.uploadData(config, appData);
 
         if (result.ok) {
-            localStorage.setItem('nc_last_sync', result.timestamp);
+            NextcloudSync.setLocalModified(result.timestamp);
             const lastSync = document.getElementById('ncLastSync');
             if (lastSync) lastSync.textContent = `Última sync: ${new Date(result.timestamp).toLocaleString()}`;
             showToast('✅ Datos guardados en Nextcloud', 'success');
@@ -11548,6 +11549,8 @@ document.addEventListener('DOMContentLoaded', () => {
             `¿Reemplazar tus datos actuales?`,
             () => {
                 applyGlobalData(data);
+                NextcloudSync.setLocalModified(result.lastModified);
+                updateNextcloudSyncUI();
                 showToast('✅ Datos restaurados desde Nextcloud', 'success');
             }
         );
@@ -12700,7 +12703,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Display current URL / hostname
         const subtextEl = document.getElementById('welcomeSubtext');
         if (subtextEl) {
-            subtextEl.innerHTML = `WealthTrack está listo para tus finanzas.<br><span style="font-size: 0.8rem; color: var(--accent); opacity: 0.8; margin-top: 0.5rem; display: inline-block;">📍 Accesible desde: <strong>${window.location.hostname || 'localhost'}</strong></span>`;
+            subtextEl.innerHTML = `<span style="font-size: 1.1rem; color: white; opacity: 1; margin-top: 0.5rem; display: inline-block;">📍 Accesible desde: <strong>${window.location.hostname || 'localhost'}</strong></span>`;
         }
 
         // Calculate greeting
@@ -12743,6 +12746,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.welcomeNextcloudTime.textContent = new Date(lastSync).toLocaleString('es-ES', {
                     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
                 });
+
+                // Freshness check
+                const lastLocalUpdate = localStorage.getItem('msv_last_local_update');
+                if (lastLocalUpdate) {
+                    const localTime = new Date(lastLocalUpdate).getTime();
+                    const syncTime = new Date(lastSync).getTime();
+
+                    // Allow 1 minute grace period for safety
+                    if (localTime > syncTime + 60000) {
+                        elements.welcomeSyncStatus.textContent = '⚠️ Cambios locales pendientes';
+                        elements.welcomeSyncStatus.style.color = '#fbbf24'; // Warning orange
+                        elements.welcomeNextcloudGroup.style.background = 'rgba(251, 191, 36, 0.1)';
+                        elements.welcomeNextcloudGroup.style.borderColor = 'rgba(251, 191, 36, 0.3)';
+                    } else {
+                        elements.welcomeSyncStatus.textContent = '✅ Datos sincronizados';
+                        elements.welcomeSyncStatus.style.color = '#34d399'; // Success green
+                        elements.welcomeNextcloudGroup.style.background = 'rgba(16, 185, 129, 0.05)';
+                        elements.welcomeNextcloudGroup.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                    }
+                } else {
+                    elements.welcomeSyncStatus.textContent = '✅ Sincronizado';
+                    elements.welcomeSyncStatus.style.color = 'white';
+                    elements.welcomeSyncStatus.style.opacity = '0.6';
+                }
             }
         }
 
