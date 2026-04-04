@@ -167,7 +167,7 @@ git add .
 set /p M="Mensaje del commit (Enter para Auto): "
 if "!M!"=="" set M=Actualización %V%
 git commit -m "!M!"
-git push
+git push --force
 if %errorlevel% neq 0 (
     echo [ERROR] Falló la subida.
 ) else (

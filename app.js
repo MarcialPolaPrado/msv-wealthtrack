@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const sidebarLabel = document.getElementById('ahorroGastosMonthName');
             const titleLabel = document.getElementById('ahorroGastosTitleMonth');
             
-            if (sidebarLabel) sidebarLabel.textContent = capitalizedMonth;
+            if (sidebarLabel) sidebarLabel.textContent = `Gastos ${capitalizedMonth}`;
             if (titleLabel) titleLabel.textContent = capitalizedMonth;
         } catch (e) {
             console.error("Error updating month label:", e);
