@@ -1,12 +1,12 @@
-const CACHE_NAME = 'msv-wealthtrack-v202604041334';
+const CACHE_NAME = 'msv-wealthtrack-v202604101727';
 const ASSETS = [
     './',
     './index.html',
-    './styles.css?v=202604041334',
-    './app.js?v=202604041334',
-    './storage.js?v=202604041334',
-    './mock_data.js?v=202604041334',
-    './nextcloud.js?v=202604041334',
+    './styles.css?v=202604101727',
+    './app.js?v=202604101727',
+    './storage.js?v=202604101727',
+    './mock_data.js?v=202604101727',
+    './nextcloud.js?v=202604101727',
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
@@ -51,19 +51,24 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     const isNavigation = event.request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html');
+    const isVersionedAsset = (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) && url.searchParams.has('v');
 
-    if (isNavigation) {
-        // Network-First for main page to ensure version updates are seen
+    if (isNavigation || isVersionedAsset) {
+        // Stale-While-Revalidate for main page and versioned assets
+        // This ensures INSTANT boot on mobile from cache, while updating in background
         event.respondWith(
-            fetch(event.request).then((networkResponse) => {
-                if (networkResponse && networkResponse.status === 200) {
-                    const responseClone = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseClone);
-                    });
-                }
-                return networkResponse;
-            }).catch(() => caches.match(event.request))
+            caches.match(event.request).then((cachedResponse) => {
+                const fetchPromise = fetch(event.request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, responseClone);
+                        });
+                    }
+                    return networkResponse;
+                }).catch(() => { });
+                return cachedResponse || fetchPromise;
+            })
         );
     } else {
         // Stale-While-Revalidate for other assets
