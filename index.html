@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0f172a">
+    <meta http-equiv="Cache-Control" content="max-age=0, must-revalidate">
 
     <!-- iOS support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,10 +18,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=202604041334">
+    <link rel="stylesheet" href="styles.css?v=202604081415">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         // Global Error Handler for Mobile Debugging
         function showGlobalError(msg, source, line, col, error) {
@@ -54,17 +56,39 @@
 <body>
     <!-- Welcome Overlay -->
     <div id="welcomeOverlay" class="welcome-overlay hidden">
-        <div class="welcome-card glass-panel">
+        <div class="welcome-card glass-panel" style="width:100%; max-width:520px; padding:1.4rem 1rem 1.4rem; margin: 0 auto 2rem;">
             <div class="welcome-header">
                 <span id="welcomeEmoji" style="font-size: 3rem; display: block; margin-bottom: 1rem;">✨</span>
                 <h1 id="welcomeGreeting" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">¡Bienvenido!</h1>
                 <p id="welcomeSubtext" style="opacity: 0.6; font-size: 0.9rem; margin-bottom: 2rem;">WealthTrack está listo para tus finanzas.</p>
             </div>
             
-            <div class="welcome-info-grid" style="display: grid; gap: 1rem; margin-bottom: 2.5rem; width: 100%;">
+            <div class="welcome-info-grid" style="display:grid; gap:0.7rem; margin-bottom:1rem; width:100%;">
                 <div class="welcome-info-item glass-panel" style="padding: 1.25rem; text-align: left; border-color: rgba(255,255,255,0.05);">
                     <div style="font-size: 0.7rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Fecha y Hora</div>
                     <div id="welcomeDateTime" style="font-size: 1.1rem; font-weight: 600; color: white;">--/--/---- --:--</div>
+                </div>
+                <div id="welcomeFiscalSummaryGroup" class="welcome-info-item glass-panel" style="padding: 1.1rem 1.25rem; text-align: left; border-color: rgba(59,130,246,0.2); background: rgba(59,130,246,0.06);">
+                    <div style="font-size: 0.7rem; color: var(--primary); opacity: 0.9; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.55rem;">Mes Fiscal Actual</div>
+                    <div id="welcomeFiscalMonthLabel" style="font-size: 0.82rem; opacity: 0.72; margin-bottom: 0.6rem;">--</div>
+                    <div class="welcome-fiscal-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.4rem;">
+                        <div class="welcome-fiscal-item" style="display:flex; justify-content:space-between; align-items:baseline; gap:0.6rem; min-width:0;">
+                            <div class="welcome-fiscal-label" style="font-size:0.64rem; opacity:0.6; text-transform:uppercase; letter-spacing:0.06em;">Ingresos</div>
+                            <div id="welcomeFiscalIncome" class="welcome-fiscal-value" style="font-size:0.95rem; font-weight:700; line-height:1.2; color: var(--success); white-space:nowrap;">€ --</div>
+                        </div>
+                        <div class="welcome-fiscal-item" style="display:flex; justify-content:space-between; align-items:baseline; gap:0.6rem; min-width:0;">
+                            <div class="welcome-fiscal-label" style="font-size:0.64rem; opacity:0.6; text-transform:uppercase; letter-spacing:0.06em;">Gastos</div>
+                            <div id="welcomeFiscalExpense" class="welcome-fiscal-value" style="font-size:0.95rem; font-weight:700; line-height:1.2; color: var(--danger); white-space:nowrap;">€ --</div>
+                        </div>
+                        <div id="welcomeFiscalPendingRow" class="welcome-fiscal-item" style="display:flex; justify-content:space-between; align-items:baseline; gap:0.6rem; min-width:0;">
+                            <div class="welcome-fiscal-label" style="font-size:0.64rem; opacity:0.6; text-transform:uppercase; letter-spacing:0.06em;">Gastos Pendientes</div>
+                            <div id="welcomeFiscalPending" class="welcome-fiscal-value" style="font-size:0.95rem; font-weight:700; line-height:1.2; color: #f59e0b; white-space:nowrap;">€ --</div>
+                        </div>
+                        <div class="welcome-fiscal-item" style="display:flex; justify-content:space-between; align-items:baseline; gap:0.6rem; min-width:0;">
+                            <div class="welcome-fiscal-label" style="font-size:0.64rem; opacity:0.6; text-transform:uppercase; letter-spacing:0.06em;">Diferencia</div>
+                            <div id="welcomeFiscalDiff" class="welcome-fiscal-value" style="font-size:0.96rem; font-weight: 800; line-height:1.2; color: var(--text-main); white-space:nowrap;">€ --</div>
+                        </div>
+                    </div>
                 </div>
                 <div id="welcomeNextcloudGroup" class="welcome-info-item glass-panel hidden" style="padding: 1.25rem; text-align: left; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
                     <div style="font-size: 0.7rem; color: var(--success); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Copia de Seguridad</div>
@@ -83,6 +107,9 @@
                 </div>
             </div>
 
+            <a id="welcomeNextcloudAccessLink" class="hidden" href="#" target="_blank" rel="noopener noreferrer" style="display:block; width:100%; margin: 0 0 0.8rem 0; padding: 0.7rem 0.9rem; border-radius: 12px; text-align:center; font-size: 0.9rem; font-weight: 700; color: #93c5fd; text-decoration: none; border: 1px solid rgba(59,130,246,0.35); background: rgba(59,130,246,0.1);">
+                ☁️ Abrir Nextcloud
+            </a>
             <button id="welcomeEnterBtn" class="btn btn-primary" style="width: 100%; padding: 1.25rem; font-size: 1.1rem; font-weight: 700; border-radius: 18px; box-shadow: 0 10px 20px rgba(var(--primary-rgb), 0.3);">
                 Comenzar
             </button>
@@ -136,7 +163,7 @@
                     <div class="logo-text">
                         <h1>Wealth<span class="highlight">Track</span></h1>
                         <p style="margin: 0; font-size: 0.6rem; color: var(--text-muted); opacity: 0.6;"
-                            id="logoVersion">v202604041334</p>
+                            id="logoVersion">v202604081415</p>
                     </div>
                 </div>
             </div>
@@ -180,11 +207,14 @@
                         <div class="sidebar-submenu">
                             <button id="bolsaCardsBtn2" class="submenu-item"><span>🗂️</span> Vista Tarjetas</button>
                             <button id="bolsaListBtn2" class="submenu-item"><span>📋</span> Vista Listado</button>
+                            <button id="bolsaRecuperadoBtn" class="submenu-item wealth-nav-item" data-view="bolsaRecuperado"><span>💸</span> Recuperado</button>
                             <button id="sidebarAddStockBtn2" class="submenu-item"><span>✨</span> Añadir Inversión</button>
                             <button id="bolsaRefreshBtn2" class="submenu-item"><span>🔄</span> Actualizar Datos</button>
                             <button id="bolsaBreakdownBtn2" class="submenu-item"><span>📉</span> Rendimientos</button>
                             <button id="bolsaDataSourceToggleBtn2" class="submenu-item"><span>🌐</span> Origen Datos</button>
                             <button id="bolsaManualPriceBtn2" class="submenu-item"><span>✏️</span> Precios Manuales</button>
+                            <button id="bolsaComparePdfBtn" class="submenu-item"><span>📄</span> Cotejar PDF</button>
+                            <input type="file" id="bolsaPdfInput" accept=".pdf" class="hidden">
                             <button id="exportDataBtn2" class="submenu-item"><span>💾</span> Exportar CSV</button>
                             <button id="bolsaHighlightsToggleBtn2" class="submenu-item"><span>💡</span> Highlights</button>
                             <button id="bolsaCalendarBtn2" class="submenu-item"><span>📅</span> Calendario</button>
@@ -414,6 +444,26 @@
                         </table>
                         <div id="emptyState" class="empty-state hidden">
                             <p>No investments found. Start by adding a stock.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="bolsaRecuperadoContainer" class="table-container hidden">
+                        <table id="recuperadoTable">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name">Nombre de la acción <span class="sort-icon"></span></th>
+                                    <th data-sort="invested">Importe invertido <span class="sort-icon"></span></th>
+                                    <th data-sort="recovered">Dinero recuperado <span class="sort-icon"></span></th>
+                                    <th data-sort="difference">Diferencia <span class="sort-icon"></span></th>
+                                    <th data-sort="percentage">Porcentaje <span class="sort-icon"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="recuperadoTableBody">
+                                <!-- Rows will be injected by JS -->
+                            </tbody>
+                        </table>
+                        <div id="recuperadoEmptyState" class="empty-state hidden">
+                            <p>No data found.</p>
                         </div>
                     </div>
                 </section>
@@ -655,6 +705,7 @@
                             <div class="view-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:8px; border:1px solid var(--border-color);">
                                 <button id="historicoModeMonth" class="btn-sm" style="padding:4px 12px; border:none; cursor:pointer; background:var(--primary); color:white; border-radius:6px;">Mensual</button>
                                 <button id="historicoModeYear" class="btn-sm" style="padding:4px 12px; border:none; cursor:pointer; background:transparent; color:var(--text-muted); border-radius:6px;">Anual</button>
+                                <button id="historicoModeAll" class="btn-sm" style="padding:4px 12px; border:none; cursor:pointer; background:transparent; color:var(--text-muted); border-radius:6px;">Todo</button>
                             </div>
                         </div>
                     </div>
@@ -925,7 +976,7 @@
             <div class="modal-header">
                 <div style="display: flex; flex-direction: column;">
                     <h2 id="settingsModalTitle" style="margin: 0;">Ajustes</h2>
-                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 202603221625</span>
+                    <span id="versionDisplay" style="font-size: 0.65rem; opacity: 0.5;">Versión: 202604081720</span>
                 </div>
                 <span id="closeSettingsModal" class="close-modal">&times;</span>
             </div>
@@ -991,6 +1042,11 @@
                             Guardar en Nextcloud</button>
                         <button type="button" id="ncRestoreBtn" class="btn-secondary"
                             style="width: 100%; margin-bottom: 0.5rem;">📥 Cargar desde Nextcloud</button>
+                        <label id="ncAutoBackupLabel" style="display: flex; align-items: center; gap: 10px; margin-top: 0.75rem; cursor: pointer; font-size: 0.85rem; padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.2);">
+                            <input type="checkbox" id="ncAutoBackupCheckbox" style="width: 16px; height: 16px; accent-color: var(--success); cursor: pointer; flex-shrink: 0;">
+                            <span>☁️ <strong>Backup automático</strong> al guardar JSON</span>
+                        </label>
+                        <small style="opacity:0.5; display:block; margin-top:0.3rem; margin-left: 0.3rem; font-size: 0.7rem;">Si está activado, cada vez que exportes el JSON también se copia en Nextcloud.</small>
                     </div>
                 </div>
 
@@ -1475,6 +1531,7 @@
                         style="flex: 1; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; outline: none;">
                         <option value="month">Mensual</option>
                         <option value="year">Anual</option>
+                        <option value="all">Todo</option>
                     </select>
 
                     <div id="breakdownMonthContainer" style="flex: 2; display: flex; align-items: center; gap: 8px;">
@@ -1751,15 +1808,71 @@
         </div>
     </div>
 
+    <!-- PDF Comparison Modal -->
+    <div id="pdfCompareModal" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 1000px; width: 95%;">
+            <div class="modal-header">
+                <div>
+                    <h2 style="margin:0;">Cotejar Cartera con PDF</h2>
+                    <p style="font-size: 0.8rem; opacity: 0.6; margin: 4px 0 0 0;">Trade Republic - Verificación de Títulos y Precios</p>
+                </div>
+                <span id="closePdfCompareModal" class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem 0;">
+                <div id="pdfCompareStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="glass-panel" style="padding: 1rem; text-align: center; border-color: rgba(59, 130, 246, 0.2);">
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; margin-bottom: 0.3rem;">Activos PDF</div>
+                        <div id="pdfActiveCount" style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">0</div>
+                    </div>
+                    <div class="glass-panel" style="padding: 1rem; text-align: center; border-color: rgba(16, 185, 129, 0.2);">
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; margin-bottom: 0.3rem;">Coincidencias</div>
+                        <div id="pdfMatchCount" style="font-size: 1.5rem; font-weight: 800; color: var(--success);">0</div>
+                    </div>
+                    <div class="glass-panel" style="padding: 1rem; text-align: center; border-color: rgba(239, 68, 68, 0.2);">
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; margin-bottom: 0.3rem;">Diferencias</div>
+                        <div id="pdfDiffCount" style="font-size: 1.5rem; font-weight: 800; color: var(--danger);">0</div>
+                    </div>
+                </div>
+
+                <div id="pdfDebugView" class="hidden" style="margin-bottom: 2rem;">
+                    <p style="font-size: 0.75rem; color: var(--warning); margin-bottom: 0.5rem;">⚠️ No se han detectado activos automáticamente. Texto extraído para depuración:</p>
+                    <textarea id="pdfDebugText" readonly style="width: 100%; height: 150px; background: rgba(0,0,0,0.3); color: #aaa; font-family: monospace; font-size: 0.7rem; border-radius: 8px; border: 1px solid var(--border-color); padding: 8px;"></textarea>
+                </div>
+
+                <div class="table-container">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--primary); background: rgba(255,255,255,0.02);">
+                                <th style="text-align: left;">Activo (Nombre)</th>
+                                <th style="text-align: center;">Título (App)</th>
+                                <th style="text-align: center;">Título (PDF)</th>
+                                <th style="text-align: right;">Precio App</th>
+                                <th style="text-align: right;">Precio PDF</th>
+                                <th style="text-align: center;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pdfCompareTableBody">
+                            <!-- Comparison rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 1.5rem 0 0 0; display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border-color);">
+                <button type="button" id="cancelPdfCompareBtn" class="btn btn-secondary">Cancelar</button>
+                <button type="button" id="applyPdfPricesBtn" class="btn btn-primary" style="padding: 0.8rem 2rem;">Actualizar Precios Manuales</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden technical elements -->
     <input type="file" id="globalJsonInput" class="hidden" accept=".json">
     <button id="clockMenuBtn" class="hidden"></button>
 
     <!-- Configuration for secrets (ignored by git, see config.example.js) -->
-    <script src="storage.js?v=202604041334"></script>
-    <script src="mock_data.js?v=202604041334"></script>
-    <script src="nextcloud.js?v=202604041334"></script>
-    <script src="app.js?v=202604041334"></script>
+    <script src="storage.js?v=202604101727"></script>
+    <script src="mock_data.js?v=202604101727"></script>
+    <script src="nextcloud.js?v=202604101727"></script>
+    <script src="app.js?v=202604101727"></script>
     <!-- Consolidated PWA Logic (Reliable) -->
     <!-- Transfer Nomina to Ahorro Modal -->
     <div id="transferToAhorroModal" class="modal hidden">
@@ -1972,8 +2085,19 @@
     </div>
 
     <script>
-        const APP_VERSION = '202604041334'; // NEW VERSION
+        const APP_VERSION = '202604101727'; // bump when deploying so mobile/CDN caches pick up new assets
 
+        (function stripVersionBustParams() {
+            try {
+                const u = new URL(window.location.href);
+                if (!u.searchParams.has('_v') && !u.searchParams.has('_swv')) return;
+                u.searchParams.delete('_v');
+                u.searchParams.delete('_swv');
+                window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+            } catch (e) { /* ignore */ }
+        })();
+
+        /*
         // FORCE CACHE CLEARING (Overriding the Service Worker sticky cache)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -1987,10 +2111,16 @@
                 for (let name of names) caches.delete(name);
             });
         }
+        */
 
         window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js?v=' + APP_VERSION).then(registration => {
                     console.log('SW registered with scope:', registration.scope);
+
+                    // Check for updates periodically
+                    setInterval(() => {
+                        registration.update();
+                    }, 1000 * 60 * 30); // 30 minutes
 
                     registration.onupdatefound = () => {
                         const installingWorker = registration.installing;
@@ -2011,17 +2141,31 @@
                     console.error('SW registration failed:', error);
                 });
 
-                // Aggressive cache clearing if versions mismatch
-                const storedVersion = localStorage.getItem('app_version');
+                // Upgrade or stale HTML shell (mobile often caches index.html aggressively)
+                const storedVersion = localStorage.getItem('app_version') || '';
+                const reloadWithBust = (reason) => {
+                    console.log(reason);
+                    const next = new URL(window.location.href);
+                    next.searchParams.set('_swv', String(Date.now()));
+                    window.location.replace(next.pathname + next.search + next.hash);
+                };
                 if (storedVersion !== APP_VERSION) {
-                    console.log('Version changed, clearing caches...');
-                    if ('caches' in window) {
-                        caches.keys().then(names => {
-                            for (let name of names) caches.delete(name);
-                        });
+                    if (!storedVersion || APP_VERSION > storedVersion) {
+                        console.log('Version upgrade, clearing caches...');
+                        const afterCaches = () => {
+                            localStorage.setItem('app_version', APP_VERSION);
+                            const next = new URL(window.location.href);
+                            next.searchParams.set('_v', APP_VERSION);
+                            window.location.replace(next.pathname + next.search + next.hash);
+                        };
+                        if ('caches' in window) {
+                            caches.keys().then(names => Promise.all(names.map(n => caches.delete(n)))).then(afterCaches).catch(afterCaches);
+                        } else {
+                            afterCaches();
+                        }
+                    } else {
+                        reloadWithBust('Stale HTML shell (cached); forcing network reload');
                     }
-                    localStorage.setItem('app_version', APP_VERSION);
-                    window.location.reload(true);
                 }
             });
 
